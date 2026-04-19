@@ -1,0 +1,29 @@
+.opponent-container {
+	display: flex;
+	padding: 5px;
+	background-color: #7bc288;
+	text-align: left;
+}
+
+.opponent-avatar {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.opponent-info {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.black {
+	color: black;
+}
+
+.white {
+	color: white;
+}
+
+.captured-pieces {
+	height: 24px;
+}

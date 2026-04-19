@@ -1,0 +1,66 @@
+{
+	"page": {
+		"home": {
+			"title": "Trang chủ"
+		},
+		"history": {
+			"title": "Lịch sử"
+		},
+		"about": {
+			"title": "Thông tin"
+		}
+	},
+	"menu": {
+		"setting": {
+			"button": "Cài đặt"
+		},
+		"app-name": "Cờ vua",
+		"home": "Trang chủ",
+		"users": "Người dùng",
+		"analytics": "Phân tích",
+		"logout": "Đăng xuất"
+	},
+	"settings": {
+		"header": "Cài đặt",
+		"language": "Ngôn ngữ",
+		"dark-mode": "Chế độ tối",
+		"close": "Đóng"
+	},
+	"popup": {
+		"confirm": {
+			"ok": "Ok",
+			"cancel": "Huỷ"
+		}
+	},
+	"home": {
+		"turn": {
+			"title": "Lượt đánh"
+		}
+	},
+	"game": {
+		"king": {
+			"captured": "Tướng đã bị bắt. Game kết thúc"
+		}
+	},
+	"login": {
+		"form": {
+			"title": "Đăng nhập",
+			"error1": "Đăng nhập không thành công. Hãy kiểm tra lại",
+			"forgot-password": "Quên mật khẩu",
+			"register": "Đăng ký",
+			"submit": "Đăng nhập"
+		},
+		"username": {
+			"label": "Tên người dùng",
+			"placeholder": "Tên người dùng",
+			"error1": "Tên người dùng bắt buộc nhập"
+		},
+		"password": {
+			"label": "Mật khẩu",
+			"placeholder": "Mật khẩu",
+			"error1": "Mật khẩu bắt buộc nhập",
+			"show": "Hiện mật khẩu",
+			"hide": "Ẩn mật khẩu"
+		}
+	}
+}

@@ -1,0 +1,42 @@
+.cursor-pointer {
+	cursor: pointer;
+}
+
+.flex {
+	display: flex;
+	justify-content: space-around;
+}
+
+@for $i from 1 through 20 {
+	$length: 1px * $i;
+	.top-#{$i} {
+		top: $length;
+	}
+	.mt-#{$i} {
+		margin-top: $length !important;
+	}
+	.mr-#{$i} {
+		margin-right: $length !important;
+	}
+	.ml-#{$i} {
+		margin-left: $length !important;
+	}
+	.mb-#{$i} {
+		margin-bottom: $length !important;
+	}
+	.pt-#{$i} {
+		padding-top: $length !important;
+	}
+	.pr-#{$i} {
+		padding-right: $length !important;
+	}
+	.pl-#{$i} {
+		padding-left: $length !important;
+	}
+	.pb-#{$i} {
+		padding-bottom: $length !important;
+	}
+	.fsx-#{$i} {
+		font-size: $length;
+	}
+}

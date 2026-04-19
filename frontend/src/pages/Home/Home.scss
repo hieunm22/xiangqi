@@ -1,0 +1,168 @@
+.game-container {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	padding: 24px 12px;
+}
+
+.xiangqi-board {
+	--board-width: 512px;
+	--board-height: 612px;
+	--cell-size: 64px;
+	--river-gap: 36px;
+	--line-color: #5b2f12;
+	--wood: #deb46f;
+
+	padding: 18px;
+	border-radius: 14px;
+	background:
+		radial-gradient(circle at 12% 8%, #eed39b 0, transparent 42%),
+		radial-gradient(circle at 88% 90%, #d59f57 0, transparent 48%),
+		linear-gradient(135deg, #e8bf77, #d8a661 50%, #cb9450);
+	box-shadow:
+		0 12px 28px rgba(53, 25, 8, 0.24),
+		inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.board-frame {
+	position: relative;
+	width: var(--board-width);
+	height: var(--board-height);
+	border: 3px solid var(--line-color);
+	background: rgba(248, 226, 175, 0.4);
+}
+
+.line {
+	position: absolute;
+	background: var(--line-color);
+	pointer-events: none;
+
+	&.horizontal {
+		left: 0;
+		width: 100%;
+		height: 2px;
+		transform: translateY(-1px);
+	}
+
+	&.vertical {
+		width: 2px;
+		transform: translateX(-1px);
+
+		&.top {
+			top: 0;
+			height: calc(var(--cell-size) * 4);
+		}
+
+		&.bottom {
+			top: calc(var(--cell-size) * 5 + var(--river-gap));
+			height: calc(var(--cell-size) * 4);
+		}
+	}
+}
+
+.palace-line {
+	position: absolute;
+	height: 2px;
+	transform-origin: 0 50%;
+	background: var(--line-color);
+	pointer-events: none;
+}
+
+.river-text {
+	position: absolute;
+	top: calc(var(--cell-size) * 4 + var(--river-gap) / 2);
+	transform: translate(-50%, -48%);
+	margin: 0;
+	font-size: clamp(28px, 4vw, 36px);
+	line-height: 1;
+	font-weight: 600;
+	font-family: "Noto Serif SC", "Songti SC", serif;
+	letter-spacing: 6px;
+	color: #7a3f1c;
+	user-select: none;
+  margin-top: 10px;
+
+	&.left {
+		padding-left: 6px;
+	}
+
+	&.right {
+		padding-left: 6px;
+	}
+}
+
+.cross-point {
+	position: absolute;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--line-color);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.marker {
+	position: absolute;
+	width: 0;
+	height: 0;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+
+	.corner {
+		position: absolute;
+		width: 9px;
+		height: 9px;
+		border-color: var(--line-color);
+		border-style: solid;
+
+		&.bottom-right {
+			left: 5px;
+			top: 5px;
+			border-width: 2px 0 0 2px;
+		}
+
+		&.top-right {
+			left: 5px;
+			top: -15px;
+			border-width: 0 0 2px 2px;
+		}
+
+		&.bottom-left {
+			left: -15px;
+			top: 5px;
+			border-width: 2px 2px 0 0;
+		}
+
+		&.top-left {
+			left: -15px;
+			top: -15px;
+			border-width: 0 2px 2px 0;
+		}
+	}
+
+	&.left-edge {
+		.corner.top-left,
+		.corner.bottom-left {
+			display: none;
+		}
+	}
+
+	&.right-edge {
+		.corner.top-right,
+		.corner.bottom-right {
+			display: none;
+		}
+	}
+}
+
+@media (max-width: 720px) {
+	.xiangqi-board {
+		padding: 12px;
+	}
+
+	.board-frame {
+		width: min(var(--board-width), calc(100vw - 52px));
+		height: auto;
+		aspect-ratio: 512 / 612;
+	}
+}

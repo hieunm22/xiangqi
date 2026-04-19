@@ -1,0 +1,66 @@
+{
+	"page": {
+		"home": {
+			"title": "Home"
+		},
+		"history": {
+			"title": "History"
+		},
+		"about": {
+			"title": "About"
+		}
+	},
+	"menu": {
+		"setting": {
+			"button": "Settings"
+		},
+		"app-name": "Chess game",
+		"home": "Home",
+		"users": "Users",
+		"analytics": "Analytic",
+		"logout": "Logout"
+	},
+	"settings": {
+		"header": "Settings",
+		"language": "Language",
+		"dark-mode": "Dark mode",
+		"close": "Close"
+	},
+	"popup": {
+		"confirm": {
+			"ok": "Ok",
+			"cancel": "Cancel"
+		}
+	},
+	"home": {
+		"turn": {
+			"title": "Turn"
+		}
+	},
+	"game": {
+		"king": {
+			"captured": "General has been captured. Game over"
+		}
+	},
+	"login": {
+		"form": {
+			"title": "Login",
+			"error1": "Login failed. Please check your credentials ",
+			"forgot-password": "Forgot password",
+			"register": "Register",
+			"submit": "Login"
+		},
+		"username": {
+			"label": "User name",
+			"placeholder": "User name",
+			"error1": "User name is required"
+		},
+		"password": {
+			"label": "Password",
+			"placeholder": "Password",
+			"error1": "Password is required",
+			"show": "Show password",
+			"hide": "Hide password"
+		}
+	}
+}
