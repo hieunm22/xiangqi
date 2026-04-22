@@ -1,7 +1,7 @@
 {
-  "name": "chess.api",
+  "name": "xiangqi.api",
   "version": "1.0.0",
-  "description": "Chess backend API with Swagger docs",
+  "description": "Xiangqi backend API with Swagger docs",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",

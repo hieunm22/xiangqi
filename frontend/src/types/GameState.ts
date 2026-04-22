@@ -1,10 +1,10 @@
 export interface GameState {
 	board: (CellProps | null)[]
-	selected: CellProps | null
+	selected: number | null
 	availableMoves: number[]
-	teamTurn: Team | null
+	teamTurn: Team
 	capturedPieces: {
-		white: Piece[]
+		red: Piece[]
 		black: Piece[]
 	}
 }
@@ -14,9 +14,8 @@ export interface CellProps {
 	piece: Piece
 	team: Team
 	animateTo?: number
-	canBeEnPassant?: boolean
 }
 
-export type Team = "white" | "black"
+export type Team = "red" | "black"
 
-export type Piece = "pawn" | "knight" | "bishop" | "rook" | "queen" | "king"
+export type Piece = "general" | "advisor" | "elephant" | "horse" | "chariot" | "cannon" | "soldier"

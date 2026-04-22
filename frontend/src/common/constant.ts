@@ -2,9 +2,11 @@ import type { DropdownProps } from "types/Common"
 
 export const LS_DARKMODE = "dark-mode"
 export const LS_LANGUAGE = "language"
-export const LS_BOARD = "board"
+export const LS_BOARD = "board-xiangqi"
 export const LS_CAPTURED_PIECES = "captured-pieces"
 export const LS_TURN = "turn"
+export const BOARD_COLUMNS = 9
+export const BOARD_ROWS = 10
 
 export const COUNTRIES_DROPDOWN: DropdownProps[] = [
 	{

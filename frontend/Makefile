@@ -10,14 +10,13 @@ reset:
 	git reset --hard
 
 destroy:
-	docker container stop chess
-	docker container rm chess
-	docker image rm chess
+	docker container stop xiangqi
+	docker container rm xiangqi
+	docker image rm xiangqi
 
 docker:
-	docker build -t chess -f Dockerfile .
-	docker run --name chess -ditp 7777:80 --restart unless-stopped chess
-	rm -rf dist
+	docker build -t xiangqi -f Dockerfile .
+	docker run --name xiangqi -ditp 9999:80 --restart unless-stopped xiangqi
 
 publish:
 	yarn build

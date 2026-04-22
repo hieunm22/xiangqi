@@ -10,10 +10,10 @@ type OpponentProps = {
 
 const Opponent = ({ team, name }: OpponentProps) => {
 	const { state } = useGameToolkit()
-	const oponentTeam = team === "white" ? "black" : "white"
+	const oponentTeam = team === "red" ? "black" : "red"
 	const capturePiecesCls = classnames("captured-pieces", {
-		black: team === "white",
-		white: team === "black"
+		black: team === "red",
+		red: team === "black"
 	})
 	const opponentCls = classnames("opponent-container", team)
 

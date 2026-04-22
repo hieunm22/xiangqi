@@ -61,6 +61,7 @@ export default function LayoutUnAuth() {
 	}
 
 	const handleShowSettings = () => {
+		(document.activeElement as HTMLElement)?.blur()
 		setOpenSettings(true)
 	}
 
@@ -82,6 +83,7 @@ export default function LayoutUnAuth() {
 				open={openSettings}
 				onClose={handleCloseSettings}
 				maxWidth="xs"
+				disableRestoreFocus
 			>
 				<DialogTitle padding="5px 20px !important">
 					<TTypography content="settings.header" sx={textCenterStyle} />
@@ -109,6 +111,7 @@ export default function LayoutUnAuth() {
 						<Button
 							className="btn btn-primary mt-20 center"
 							variant="outlined"
+							size="small"
 							onClick={() => setOpenSettings(false)}
 						>
 							{translate("settings.close")}

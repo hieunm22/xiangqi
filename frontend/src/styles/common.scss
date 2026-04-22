@@ -7,7 +7,7 @@
 	justify-content: space-around;
 }
 
-@for $i from 1 through 20 {
+@for $i from 1 through 50 {
 	$length: 1px * $i;
 	.top-#{$i} {
 		top: $length;

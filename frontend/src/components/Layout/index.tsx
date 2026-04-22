@@ -22,15 +22,20 @@ import {
 	useTheme
 } from "@mui/material"
 import i18n from "locales/i18n"
-import { COUNTRIES_DROPDOWN, LS_CAPTURED_PIECES, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
-import { TTypography } from "components/TranslationTag"
+import {
+	COUNTRIES_DROPDOWN,
+	LS_CAPTURED_PIECES,
+	LS_DARKMODE,
+	LS_LANGUAGE
+} from "common/constant"
+import { TI, TTypography } from "components/TranslationTag"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
+import { initNewGame } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
-import "./Layout.scss"
-import { initNewGame } from "common/helper"
 import { setGameState } from "toolkit/slice/game"
+import "./Layout.scss"
 
 const fullWidth = 240
 const miniWidth = 60
@@ -87,6 +92,7 @@ export default function Layout() {
 	}
 
 	const handleShowSettings = () => {
+		(document.activeElement as HTMLElement)?.blur()
 		setOpenSettings(true)
 		setMobileOpen(false)
 	}
@@ -94,7 +100,7 @@ export default function Layout() {
 	const restartGame = () => {
 		const init = initNewGame()
 		dispatch(setGameState(init))
-		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify({ white: [], black: [] }))
+		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify({ red: [], black: [] }))
 	}
 
 	const menuItems = [
@@ -127,7 +133,7 @@ export default function Layout() {
 				{menuItems.map(item => (
 					<ListItem key={item.text} disablePadding>
 						<ListItemButton onClick={item.click} disabled={item.disabled}>
-							<i className={`fas ${item.icon} mr-10 fsx-20`} title={translate(item.text)} />
+							<TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />
 							{drawerOpen && <TTypography content={item.text} sx={{ fontSize: 14 }} />}
 						</ListItemButton>
 					</ListItem>
@@ -169,7 +175,6 @@ export default function Layout() {
 					variant="temporary"
 					open={mobileOpen}
 					onClose={handleMobileToggle}
-					ModalProps={{ keepMounted: true }}
 					sx={{
 						display: { xs: "block", sm: "none" },
 						"& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerOpen ? fullWidth : miniWidth },
@@ -213,13 +218,14 @@ export default function Layout() {
 					p: 1,
 				}}
 			>
-				{mobileOpen && <Toolbar />}
+				{isMobile && <Toolbar />}
 				<Outlet />
 
 				<Dialog
 					open={openSettings}
 					onClose={handleCloseSettings}
 					maxWidth="xs"
+					disableRestoreFocus
 				>
 					<DialogTitle padding="5px 20px !important">
 						<TTypography content="settings.header" sx={textCenterStyle} />
@@ -247,6 +253,7 @@ export default function Layout() {
 							<Button
 								className="btn btn-primary mt-20 center"
 								variant="outlined"
+								size="small"
 								onClick={() => setOpenSettings(false)}
 							>
 								{translate("settings.close")}

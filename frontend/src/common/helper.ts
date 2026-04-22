@@ -1,23 +1,26 @@
+import { BOARD_COLUMNS, BOARD_ROWS } from "./constant"
 import type { CellProps, Piece, Team } from "types/GameState"
 
 const initGameState: (Piece | null)[] = [
-	"rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook",
-	"pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
-	null, null, null, null, null, null, null, null,
-	null, null, null, null, null, null, null, null,
-	null, null, null, null, null, null, null, null,
-	null, null, null, null, null, null, null, null,
-	"pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
-	"rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"
+	"chariot", "horse", "elephant", "advisor", "general", "advisor", "elephant", "horse", "chariot",
+	null, null, null, null, null, null, null, null, null,
+	null, "cannon", null, null, null, null, null, "cannon", null,
+	"soldier", null, "soldier", null, "soldier", null, "soldier", null, "soldier",
+	null, null, null, null, null, null, null, null, null,
+	null, null, null, null, null, null, null, null, null,
+	"soldier", null, "soldier", null, "soldier", null, "soldier", null, "soldier",
+	null, "cannon", null, null, null, null, null, "cannon", null,
+	null, null, null, null, null, null, null, null, null,
+	"chariot", "horse", "elephant", "advisor", "general", "advisor", "elephant", "horse", "chariot",
 ]
 
 export function initNewGame() {
-	const board = Array.from({ length: 64 }, (_, id): CellProps | null => {
+	const board = Array.from({ length: BOARD_COLUMNS * BOARD_ROWS }, (_, id): CellProps | null => {
 		if (initGameState[id] === null) return null
 		return {
 			id,
 			piece: initGameState[id],
-			team: id < 32 ? "black" : "white"
+			team: id < BOARD_COLUMNS * BOARD_ROWS / 2 ? "black" : "red" as Team
 		}
 	})
 
@@ -25,186 +28,275 @@ export function initNewGame() {
 		board,
 		selected: null,
 		availableMoves: [],
-		teamTurn: "white" as Team,
+		teamTurn: "red" as Team,
 		capturedPieces: {
-			white: [],
+			red: [],
 			black: []
 		}
-	}
-}
-
-export function findPiece(pieces: CellProps[], position: number): CellProps | null {
-	for (const p of pieces) {
-		if (p.id === position) return p
-	}
-	return null
-}
-
-function slide(offset: number, current: number, occupied: CellProps[]): number[] {
-	const moves: number[] = []
-	let pos = current
-	const findCurrentPieceResult = findPiece(occupied, current) as CellProps
-
-	while (true) {
-		const next = pos + offset
-
-		if (next < 0 || next >= 64) break
-
-		const colDiff = Math.abs((pos % 8) - (next % 8))
-		if (colDiff > 2) break // wrapped across board
-
-		const findNextPieceResult = findPiece(occupied, next)
-		if (findNextPieceResult) {
-			if (findNextPieceResult.team !== findCurrentPieceResult.team) {
-				moves.push(next) // can capture opponent piece
-			}
-			return moves // stop after capturing, regardless of team
-		}
-
-		// there's a piece in the next position and that piece is on the same team, stop sliding
-		moves.push(next)
-		pos = next
-
-		// stop horizontal wrap
-		if (offset === 1 && next % 8 === 7) break
-		if (offset === -1 && next % 8 === 0) break
-	}
-
-	return moves
+	}	
 }
 
 export function getAvailableMoves(
 	gameState: (CellProps | null)[],
-	selectedIndex: number,
+	selectedId: number | null,
 	direction: 1 | -1
 ): number[] {
-	const selectedTile = gameState[selectedIndex]
-	if (!selectedTile || !selectedTile.piece) {
+	if (selectedId === null) {
 		return []
 	}
-
-	const pieceType = selectedTile.piece
 	const moves: number[] = []
-	const occupiedIndexes = gameState.filter(tile => tile !== null)
-	switch (pieceType) {
-		case "pawn":
-			const forwardTile = gameState[selectedIndex + direction * 8]
-			if (forwardTile === null) {
-				// If there isn't a piece directly in front, the pawn can move forward
-				moves.push(selectedIndex + direction * 8)
+	const selectedPiece = gameState[selectedId]!
+	const totalCells = BOARD_COLUMNS * BOARD_ROWS
+
+	const scanLinearDirections = (
+		onEncounter: (targetCell: CellProps | null, next: number, state: { foundScreen: boolean }) => "continue" | "break"
+	) => {
+		const scan = (
+			step: number,
+			isValidNext: (next: number, current: number) => boolean
+		) => {
+			let current = selectedId
+			const state = { foundScreen: false }
+
+			while (true) {
+				const next = current + step
+				if (!isValidNext(next, current)) break
+
+				const targetCell = gameState[next]
+				const action = onEncounter(targetCell, next, state)
+				if (action === "break") break
+
+				current = next
 			}
-			const captureOffsets = [direction * 7, direction * 9]
-			for (const offset of captureOffsets) {
-				const captureIndex = selectedIndex + offset
-				if (captureIndex >= 0 && captureIndex < 64) {
-					const captureTile = gameState[captureIndex]
-					if (captureTile && captureTile.team !== selectedTile.team) {
-						moves.push(captureIndex)
+		}
+
+		scan(-BOARD_COLUMNS, next => next >= 0) // up
+		scan(BOARD_COLUMNS, next => next < totalCells) // down
+		scan(-1, (next, current) => next >= 0 && ~~(next / BOARD_COLUMNS) === ~~(current / BOARD_COLUMNS)) // left
+		scan(1, (next, current) => next < totalCells && ~~(next / BOARD_COLUMNS) === ~~(current / BOARD_COLUMNS)) // right
+	}
+
+	const isInPalace = (index: number, team: Team) => {
+		if (index < 0 || index >= totalCells) return false
+		const col = index % BOARD_COLUMNS
+		if (col < 3 || col > 5) return false
+		if (team === "black") return index < 3 * BOARD_COLUMNS
+		return index >= 7 * BOARD_COLUMNS
+	}
+
+	const pushIfEnemyOrEmpty = (targetIndex: number) => {
+		if (targetIndex < 0 || targetIndex >= totalCells) return
+		const targetCell = gameState[targetIndex]
+		if (!targetCell || targetCell.team !== selectedPiece.team) {
+			moves.push(targetIndex)
+		}
+	}
+
+	switch (selectedPiece.piece) {
+		case "soldier":
+			if (direction === 1) {
+				moves.push(selectedId + BOARD_COLUMNS) // Move forward
+				if (selectedId >= 5 * BOARD_COLUMNS) { // After crossing the river
+					moves.push(selectedId + 1) // Move right
+					moves.push(selectedId - 1) // Move left
+				}
+			}
+			if (direction === -1) {
+				moves.push(selectedId - BOARD_COLUMNS) // Move forward
+				if (selectedId < 5 * BOARD_COLUMNS) { // After crossing the river
+					moves.push(selectedId + 1) // Move right
+					moves.push(selectedId - 1) // Move left
+				}
+			}
+			break
+
+		case "cannon":
+			scanLinearDirections((targetCell, next, state) => {
+				if (!state.foundScreen) {
+					if (!targetCell) {
+						moves.push(next)
+						return "continue"
 					}
+
+					state.foundScreen = true
+					return "continue"
+				}
+
+				if (!targetCell) {
+					return "continue"
+				}
+
+				if (targetCell.team !== selectedPiece.team) {
+					moves.push(next)
+				}
+
+				return "break"
+			})
+			break
+
+		case "chariot":
+			scanLinearDirections((targetCell, next) => {
+				if (!targetCell) {
+					moves.push(next)
+					return "continue"
+				}
+
+				if (targetCell.team !== selectedPiece.team) {
+					moves.push(next)
+				}
+
+				return "break"
+			})
+			break
+
+		case "horse":
+			const selectedCol = selectedId % BOARD_COLUMNS
+			const selectedRow = ~~(selectedId / BOARD_COLUMNS)
+
+			const toIndex = (row: number, col: number) => row * BOARD_COLUMNS + col
+			const inBounds = (row: number, col: number) =>
+				row >= 0 && row < BOARD_ROWS && col >= 0 && col < BOARD_COLUMNS
+
+			const pushHorseTarget = (row: number, col: number) => {
+				if (!inBounds(row, col)) return
+				const targetIndex = toIndex(row, col)
+				const targetCell = gameState[targetIndex]
+				if (!targetCell || targetCell.team !== selectedPiece.team) {
+					moves.push(targetIndex)
 				}
 			}
 
-			if (
-				(direction === -1 && selectedIndex >= 48) ||
-				(direction === 1 && selectedIndex < 16)
-			) {
-				const move1CellsId = selectedIndex + direction * 8
-				const move2CellsId = selectedIndex + direction * 16
-				// Check if the pawn is in its initial position and can move two squares
-				if (gameState[move2CellsId] === null && gameState[move1CellsId] === null) {
-					moves.push(move2CellsId) // Move forward two squares from initial position
+			// Up leg
+			if (selectedRow > 0 && !gameState[toIndex(selectedRow - 1, selectedCol)]) {
+				pushHorseTarget(selectedRow - 2, selectedCol - 1)
+				pushHorseTarget(selectedRow - 2, selectedCol + 1)
+			}
+
+			// Down leg
+			if (selectedRow < BOARD_ROWS - 1 && !gameState[toIndex(selectedRow + 1, selectedCol)]) {
+				pushHorseTarget(selectedRow + 2, selectedCol - 1)
+				pushHorseTarget(selectedRow + 2, selectedCol + 1)
+			}
+
+			// Left leg
+			if (selectedCol > 0 && !gameState[toIndex(selectedRow, selectedCol - 1)]) {
+				pushHorseTarget(selectedRow - 1, selectedCol - 2)
+				pushHorseTarget(selectedRow + 1, selectedCol - 2)
+			}
+
+			// Right leg
+			if (selectedCol < BOARD_COLUMNS - 1 && !gameState[toIndex(selectedRow, selectedCol + 1)]) {
+				pushHorseTarget(selectedRow - 1, selectedCol + 2)
+				pushHorseTarget(selectedRow + 1, selectedCol + 2)
+			}
+
+			break
+		case "elephant":
+			const riverBoundary = (BOARD_COLUMNS * BOARD_ROWS) / 2
+
+			const pushElephantIfValid = (targetIndex: number) => {
+				if (targetIndex < 0 || targetIndex >= totalCells) return
+				if (selectedPiece.team === "black" && targetIndex >= riverBoundary) return
+				if (selectedPiece.team === "red" && targetIndex < riverBoundary) return
+
+				const targetCell = gameState[targetIndex]
+				if (!targetCell || targetCell.team !== selectedPiece.team) {
+					moves.push(targetIndex)
 				}
 			}
 
-			// check for en passant
-			const enPassantOffsets = [direction * 7, direction * 9]
-			for (const offset of enPassantOffsets) {
-				const adjacentIndex = selectedIndex + offset - direction * 8
-				const captureIndex = selectedIndex + offset
-				if (captureIndex < 0 || captureIndex >= 64) {
-					continue
-				}
-				const adjacentTile = gameState[adjacentIndex]
-				if (adjacentTile?.canBeEnPassant === true) {
-					moves.push(captureIndex) // Add en passant capture move
-				}
+			const selectedModForElephant = selectedId % BOARD_COLUMNS
+
+			const upLeftIndex = selectedId - BOARD_COLUMNS - 1
+			if (selectedModForElephant >= 2 && selectedId >= 2 * BOARD_COLUMNS && !gameState[upLeftIndex]) {
+				pushElephantIfValid(selectedId - 2 * BOARD_COLUMNS - 2)
+			}
+
+			const upRightIndex = selectedId - BOARD_COLUMNS + 1
+			if (selectedModForElephant <= BOARD_COLUMNS - 3 && selectedId >= 2 * BOARD_COLUMNS && !gameState[upRightIndex]) {
+				pushElephantIfValid(selectedId - 2 * BOARD_COLUMNS + 2)
+			}
+
+			const downLeftIndex = selectedId + BOARD_COLUMNS - 1
+			if (selectedModForElephant >= 2 && selectedId < totalCells - 2 * BOARD_COLUMNS && !gameState[downLeftIndex]) {
+				pushElephantIfValid(selectedId + 2 * BOARD_COLUMNS - 2)
+			}
+
+			const downRightIndex = selectedId + BOARD_COLUMNS + 1
+			if (selectedModForElephant <= BOARD_COLUMNS - 3 && selectedId < totalCells - 2 * BOARD_COLUMNS && !gameState[downRightIndex]) {
+				pushElephantIfValid(selectedId + 2 * BOARD_COLUMNS + 2)
 			}
 			break
-		case "knight":
-			const offsets = [-17, -15, -10, -6, 6, 10, 15, 17] // L-shaped moves
 
-			for (const offset of offsets) {
-				const target = selectedIndex + offset
-				if (target < 0 || target >= 64) continue
+		case "advisor":
+			const advisorMod = selectedId % BOARD_COLUMNS
 
-				const targetTile = gameState[target]
-				if (targetTile && targetTile.team === selectedTile.team)
-					continue // can't move to a tile occupied by same team
+			if (advisorMod > 0) {
+				const upLeft = selectedId - BOARD_COLUMNS - 1
+				if (isInPalace(upLeft, selectedPiece.team)) pushIfEnemyOrEmpty(upLeft)
 
-				const colDiff = Math.abs((selectedIndex % 8) - (target % 8))
-				if (colDiff === 1 || colDiff === 2) moves.push(target)
+				const downLeft = selectedId + BOARD_COLUMNS - 1
+				if (isInPalace(downLeft, selectedPiece.team)) pushIfEnemyOrEmpty(downLeft)
+			}
+
+			if (advisorMod < BOARD_COLUMNS - 1) {
+				const upRight = selectedId - BOARD_COLUMNS + 1
+				if (isInPalace(upRight, selectedPiece.team)) pushIfEnemyOrEmpty(upRight)
+
+				const downRight = selectedId + BOARD_COLUMNS + 1
+				if (isInPalace(downRight, selectedPiece.team)) pushIfEnemyOrEmpty(downRight)
 			}
 
 			break
-		case "bishop":
-			const bishopOffsets = [7, -7, 9, -9]
-			for (const offset of bishopOffsets) {
-				const slideMove = slide(offset, selectedIndex, occupiedIndexes)
-				moves.push(...slideMove)
-			}
-			break
-		case "rook":
-			const rookOffsets = [1, -1, 8, -8]
-			for (const offset of rookOffsets) {
-				const slideMove = slide(offset, selectedIndex, occupiedIndexes)
-				moves.push(...slideMove)
-			}
-			break
-		case "queen":
-			const queenOffsets = [1, -1, 8, -8, 7, -7, 9, -9]
-			for (const offset of queenOffsets) {
-				const slideMove = slide(offset, selectedIndex, occupiedIndexes)
-				moves.push(...slideMove)
-			}
-			break
-		case "king":
-			const kingOffsets = [1, -1, 8, -8, 7, -7, 9, -9]
-			for (const offset of kingOffsets) {
-				const target = selectedIndex + offset
-				if (target < 0 || target >= 64) continue
+		case "general":
+			const up = selectedId - BOARD_COLUMNS
+			if (isInPalace(up, selectedPiece.team)) pushIfEnemyOrEmpty(up)
 
-				const targetTile = gameState[target]
-				if (targetTile && targetTile.team === selectedTile.team)
-					continue // can't move to a tile occupied by same team
+			const down = selectedId + BOARD_COLUMNS
+			if (isInPalace(down, selectedPiece.team)) pushIfEnemyOrEmpty(down)
 
-				const colDiff = Math.abs((selectedIndex % 8) - (target % 8))
-				if (colDiff <= 1) moves.push(target)
+			const selectedModForGeneral = selectedId % BOARD_COLUMNS
+			if (selectedModForGeneral > 0) {
+				const left = selectedId - 1
+				if (isInPalace(left, selectedPiece.team)) pushIfEnemyOrEmpty(left)
 			}
-			// check if castling is possible
-			const castlingOffsets = [2, -2]
-			for (const offset of castlingOffsets) {
-				if (selectedTile.piece !== "king" || ![4, 60].includes(selectedIndex)) continue
-				const rookIndex = offset === 2 ? selectedIndex + 3 : selectedIndex - 4
-				const rookTile = gameState[rookIndex]
-				// check if no pieces between king and rook and rook is in the correct position for castling
-				const queenCastlingOffset = gameState[selectedIndex + offset + offset / 2]
-				if (
-					rookTile &&
-					rookTile.piece === "rook" &&
-					rookTile.team === selectedTile.team &&
-					!gameState[selectedIndex + offset] &&
-					!gameState[selectedIndex + offset / 2] &&
-					(queenCastlingOffset === null || queenCastlingOffset.piece === "rook")
-				) {
-					moves.push(selectedIndex + offset) // add castling move
+
+			if (selectedModForGeneral < BOARD_COLUMNS - 1) {
+				const right = selectedId + 1
+				if (isInPalace(right, selectedPiece.team)) pushIfEnemyOrEmpty(right)
+			}
+
+			// Flying general: can capture enemy general if no piece blocks in the same file.
+			const scanForEnemyGeneral = (step: number) => {
+				let current = selectedId
+				while (true) {
+					const next = current + step
+					if (next < 0 || next >= totalCells) break
+					const targetCell = gameState[next]
+					if (!targetCell) {
+						current = next
+						continue
+					}
+
+					if (targetCell.piece === "general" && targetCell.team !== selectedPiece.team) {
+						moves.push(next)
+					}
+					break
 				}
 			}
 
+			scanForEnemyGeneral(-BOARD_COLUMNS)
+			scanForEnemyGeneral(BOARD_COLUMNS)
+
 			break
+
 		default:
 			break
 	}
-	moves.sort((a, b) => a - b) // Sort moves in ascending order
+	// Sort moves in ascending order
+	moves.sort((a, b) => a - b)
 
-	return moves
+	// Filter out moves that are out of bounds
+	return moves.filter(f => f >= 0 && f < BOARD_COLUMNS * BOARD_ROWS)
 }
+

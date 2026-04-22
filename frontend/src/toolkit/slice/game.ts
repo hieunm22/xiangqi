@@ -5,9 +5,9 @@ const initialState: GameState = {
 	board: [],
 	selected: null,
 	availableMoves: [],
-	teamTurn: null,
+	teamTurn: "red",
 	capturedPieces: {
-		white: [],
+		red: [],
 		black: []
 	}
 }

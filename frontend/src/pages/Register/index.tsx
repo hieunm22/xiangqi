@@ -8,8 +8,8 @@ export default function RegisterPage() {
 				minHeight: "100vh",
 				display: "flex",
 				alignItems: "center",
-        width: "100%",
-        justifyContent: "center",
+				width: "100%",
+				justifyContent: "center",
 			}}
 		>
 			<Stack spacing={1.5} alignItems="center">

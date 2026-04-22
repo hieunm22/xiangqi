@@ -1,11 +1,23 @@
-@media screen and (max-width: 400px) {
+@media screen and (max-width: 376px) {
 	:root {
-		--tile-size: 40px;
-		--board-padding: 20px;
+		--board-width: calc(var(--cell-size) * 8 + 6px);
+		--board-height: calc(var(--cell-size) * 9 + 6px);
+		--cell-size: 40px;
+		--piece-size: 32px;
+		--river-gap: 0px;
+		--line-color: #5b2f12;
+		--wood: #deb46f;
 	}
 
 	.piece {
-		font-size: 30px;
-		// margin-top: 5px;
+		font-size: 18px;
 	}
+
+	.xiangqi-board {
+		padding: 15px;
+	}
+
+  .player-info-row {
+    width: calc(var(--board-width) + 30px);
+  }
 }
