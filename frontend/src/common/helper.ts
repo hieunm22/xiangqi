@@ -92,20 +92,26 @@ export function getAvailableMoves(
 		}
 	}
 
+	const pushSideMoveIfSameRow = (selectedId: number, targetIndex: number) => {
+		const selectedRowForSoldier = ~~(selectedId / BOARD_COLUMNS)
+		if (~~(targetIndex / BOARD_COLUMNS) !== selectedRowForSoldier) return
+		pushIfEnemyOrEmpty(targetIndex)
+	}
+
 	switch (selectedPiece.piece) {
 		case "soldier":
 			if (direction === 1) {
-				moves.push(selectedId + BOARD_COLUMNS) // Move forward
+				pushIfEnemyOrEmpty(selectedId + BOARD_COLUMNS) // Move forward
 				if (selectedId >= 5 * BOARD_COLUMNS) { // After crossing the river
-					moves.push(selectedId + 1) // Move right
-					moves.push(selectedId - 1) // Move left
+					pushSideMoveIfSameRow(selectedId, selectedId + 1) // Move right
+					pushSideMoveIfSameRow(selectedId, selectedId - 1) // Move left
 				}
 			}
 			if (direction === -1) {
-				moves.push(selectedId - BOARD_COLUMNS) // Move forward
+				pushIfEnemyOrEmpty(selectedId - BOARD_COLUMNS) // Move forward
 				if (selectedId < 5 * BOARD_COLUMNS) { // After crossing the river
-					moves.push(selectedId + 1) // Move right
-					moves.push(selectedId - 1) // Move left
+					pushSideMoveIfSameRow(selectedId, selectedId + 1) // Move right
+					pushSideMoveIfSameRow(selectedId, selectedId - 1) // Move left
 				}
 			}
 			break
