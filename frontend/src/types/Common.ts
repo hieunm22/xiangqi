@@ -29,3 +29,8 @@ export interface ElementWithAnimationType {
 export interface ComponentWithChild {
 	children: React.ReactNode
 }
+
+export interface ConfirmProps {
+	title?: string
+	message: string
+}

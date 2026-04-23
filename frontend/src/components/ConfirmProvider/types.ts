@@ -1,6 +1,6 @@
 export interface ConfirmOptions {
 	title?: string
-	description?: string
+	message?: string
 	disableBackdropClick?: boolean
 }
 

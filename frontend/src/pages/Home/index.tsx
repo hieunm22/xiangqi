@@ -8,6 +8,7 @@ import {
 	LS_TURN
 } from "common/constant"
 import { pieceSymbolByType } from "./constant"
+import { openConfirm } from "components/ConfirmProvider"
 import PieceItem from "./components/Piece"
 import { getAvailableMoves } from "common/helper"
 import { setGameState } from "toolkit/slice/game"
@@ -91,6 +92,7 @@ export default function HomePage() {
 				team: gameStateClone[oldIndex]!.team,
 				animateTo: id
 			}
+
 			dispatch(setGameState({
 				...state,
 				board: gameStateClone
@@ -130,6 +132,13 @@ export default function HomePage() {
 			selected: null,
 			teamTurn: state.teamTurn === "red" ? "black" : "red"
 		}))
+
+		if (oldTarget?.piece === "general") {
+			openConfirm({
+				message: "Game Over",
+				title: `${state.teamTurn === "red" ? "Red" : "Black"} wins!`
+			})
+		}
 	}
 
 	return (

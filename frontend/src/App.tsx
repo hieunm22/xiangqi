@@ -7,6 +7,8 @@ import {
 	type PaletteMode
 } from "@mui/material"
 import { LS_DARKMODE } from "common/constant"
+import AlertProvider from "components/AlertProvider"
+import ConfirmProvider from "components/ConfirmProvider"
 import Layout from "components/Layout"
 import HomePage from "pages/Home"
 import LoginPage from "pages/Login"
@@ -71,7 +73,7 @@ function App() {
 					<Route path="/register" element={<RegisterPage />} />
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/" element={<HomePage />} />
+					<Route path="/" element={<ConfirmProvider><AlertProvider><HomePage /></AlertProvider></ConfirmProvider>} />
 				</Route>
 				<Route path="*" element={<Navigate to="/login" replace />} />
 			</Routes>

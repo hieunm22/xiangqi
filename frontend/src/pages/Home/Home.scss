@@ -12,12 +12,15 @@
 	.row-#{$i} {
 		top: calc(var(--cell-size) * #{$i});
 	}
+
 	.col-#{$i} {
 		left: calc(var(--cell-size) * #{$i});
 	}
+
 	.row-#{$i}-piece {
 		top: calc(var(--cell-size) * #{$i} - var(--piece-size) / 2);
 	}
+
 	.col-#{$i}-piece {
 		left: calc(var(--cell-size) * #{$i} - var(--piece-size) / 2);
 	}
@@ -242,14 +245,14 @@
 	border: none;
 	width: var(--piece-size);
 	height: var(--piece-size);
-	
+
 	&.available {
 		box-shadow: 0 0 0 2px darkgreen;
 	}
 }
 
 .player-info-row {
-	width: calc(var(--board-width) + 60px);
+	width: calc(var(--board-width) + 2 * var(--board-padding));
 	display: flex;
 	gap: 12px;
 }
@@ -267,11 +270,11 @@
 	box-shadow: 0 6px 12px rgba(52, 24, 8, 0.16);
 	box-sizing: border-box;
 	transition: box-shadow 180ms ease, transform 180ms ease;
-  opacity: 0.3;
+	opacity: 0.3;
 
 	&.active-turn {
 		box-shadow: 0 0 0 2px transparent, 0 8px 14px rgba(52, 24, 8, 0.24);
-    opacity: 1;
+		opacity: 1;
 	}
 
 	&.is-mirrored {
@@ -365,26 +368,4 @@
 	font-size: 13px;
 	line-height: 1;
 	background: rgba(255, 255, 255, 0.45);
-}
-
-@media (max-width: 600px) {
-	.player-info-row {
-		width: calc(100vw - 48px);
-	}
-
-	.player-info-card {
-		width: 50%;
-		padding: 8px;
-		gap: 8px;
-	}
-
-	.player-avatar {
-		width: 40px;
-		height: 40px;
-		font-size: 18px;
-	}
-
-	.player-name {
-		font-size: 13px;
-	}
 }

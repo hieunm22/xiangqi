@@ -30,7 +30,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				</div>
 				<div className={classnames("captured-pieces", `team-${capturedTeam}`)}>
 					{capturedPieces.map((symbol, index) => (
-						<span className="captured-piece" key={`${capturedPieces[index]}-${index}`}>
+						<span className="captured-piece" key={`${symbol}-${index}`}>
 							{pieceSymbolByType[capturedTeam][symbol]}
 						</span>
 					))}

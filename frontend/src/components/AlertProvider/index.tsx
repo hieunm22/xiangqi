@@ -9,22 +9,22 @@ import {
 	Typography
 } from "@mui/material"
 import { translate } from "locales/translate"
-import { ComponentWithChild } from "types/Common"
-import { ConfirmOptions, InternalHandler, QueueProps } from "./types"
+import { ComponentWithChild, ConfirmProps as AlertOptions } from "types/Common"
+import { AlertHandler, AlertQueueItem } from "./types"
 
-let handler: InternalHandler | null = null
+let handler: AlertHandler | null = null
 
-export function openConfirm(options: ConfirmOptions = {}): Promise<boolean> {
-	if (!handler) return Promise.resolve(false)
+export function openAlert(options: AlertOptions): Promise<void> {
+	if (!handler) return Promise.resolve()
 	return handler(options)
 }
 
-export const ConfirmProvider = ({ children }: ComponentWithChild) => {
-	const [queue, setQueue] = useState<QueueProps[]>([])
+export const AlertProvider = ({ children }: ComponentWithChild) => {
+	const [queue, setQueue] = useState<AlertQueueItem[]>([])
 
 	useEffect(() => {
-		handler = (options: ConfirmOptions) => {
-			return new Promise<boolean>(resolve => {
+		handler = (options: AlertOptions) => {
+			return new Promise<void>(resolve => {
 				setQueue([{ id: Date.now() + Math.random(), options, resolve }])
 			})
 		}
@@ -36,15 +36,9 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 
 	const current = queue[0] ?? null
 
-	const onCancel = () => {
-		if (!current) return
-		current.resolve(false)
-		setQueue([])
-	}
-
 	const onOk = () => {
 		if (!current) return
-		current.resolve(true)
+		current.resolve()
 		setQueue([])
 	}
 
@@ -65,29 +59,22 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 			>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" sx={textCenterStyle}>
-						{current?.options.title ?? translate("popup.confirm.title")}
+						{current?.options.title ?? translate("popup.alert.title")}
 					</Typography>
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent>
-					<Typography sx={{ textAlign: "center", mb: 2 }}>
-						{current?.options.message && translate(current.options.message)}
+					<Typography sx={{ textAlign: "center", mb: 1 }}>
+						{current?.options.message}
 					</Typography>
-					<Grid container justifyContent="center" gap={2}>
+					<Grid container justifyContent="center">
 						<Button
+							className="btn btn-primary mt-20 center"
 							variant="outlined"
 							size="small"
 							onClick={onOk}
 						>
-							{translate("popup.button-ok")}
-						</Button>
-						<Button
-							variant="outlined"
-							color="inherit"
-							size="small"
-							onClick={onCancel}
-						>
-							{translate("popup.button-cancel")}
+							{translate("settings.close")}
 						</Button>
 					</Grid>
 				</DialogContent>
@@ -96,4 +83,4 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 	)
 }
 
-export default ConfirmProvider
+export default AlertProvider
