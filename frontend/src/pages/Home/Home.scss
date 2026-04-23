@@ -118,7 +118,7 @@
 	top: calc(var(--cell-size) * 4 + var(--river-gap) / 2);
 	transform: translate(-50%, -48%);
 	margin: 0;
-	font-size: clamp(28px, 4vw, 36px);
+	font-size: clamp(28px, 4vw, 28px);
 	line-height: 1;
 	font-weight: 600;
 	font-family: "Noto Serif SC", "Songti SC", serif;
