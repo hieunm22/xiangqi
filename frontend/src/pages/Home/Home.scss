@@ -258,12 +258,12 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		border: solid 2px darkgreen;
-		background: darkgreen;
+		border: solid 2px #9f00ff;
+		background: #9f00ff;
 	}
 
 	&.available {
-		box-shadow: 0 0 0 2px darkgreen;
+		box-shadow: 0 0 0 2px #9f00ff;
 	}
 }
 

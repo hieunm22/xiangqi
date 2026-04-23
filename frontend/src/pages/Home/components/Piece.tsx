@@ -39,7 +39,7 @@ const PieceWrapper = styled.div<PieceItemProps>`
 	${props => isSelected(props) && props.$cell.animateTo === undefined
 		? "box-shadow: 0 0 0 2px darkblue;"
 		: "border: none;"}
-	${props => props.$available ? "box-shadow: 0 0 0 2px darkgreen;" : ""}
+	${props => props.$available ? "box-shadow: 0 0 0 2px #9f00ff;" : ""}
 `
 
 const PieceItem = (props: PieceItemProps) => {

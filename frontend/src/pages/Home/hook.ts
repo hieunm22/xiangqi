@@ -145,14 +145,6 @@ const useHomeHook = () => {
 			teamTurn: enemyTeam
 		}))
 
-		const isEnemyGeneralInCheck = isGeneralInCheck(gameStateClone, enemyTeam)
-		if (isEnemyGeneralInCheck) {
-			openAlert({
-				title: translate("popup.alert.title"),
-				message: translate("game.general.in-check")
-			})
-		}
-
 		if (oldTarget?.piece === "general") {
 			openConfirm({
 				message: translate("game.general.captured"),

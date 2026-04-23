@@ -84,6 +84,8 @@ export default function Layout() {
 		}
 	}
 
+	const logout = () => navigate("/login")
+
 	const textCenterStyle = {
 		display: "flex",
 		justifyContent: "center",
@@ -142,7 +144,7 @@ export default function Layout() {
 
 			<List>
 				<ListItem disablePadding>
-					<ListItemButton>
+					<ListItemButton onClick={logout}>
 						<i className="fas fa-right-from-bracket" />
 						{drawerOpen && <TTypography content="menu.logout" sx={{ fontSize: 14, ml: 1 }} />}
 					</ListItemButton>
