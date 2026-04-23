@@ -57,7 +57,10 @@ export default function HomePage() {
 									"piece-wrapper-empty": true,
 									[`row-${row}-piece`]: true,
 									[`col-${col}-piece`]: true,
+									// [`row-${row}-empty`]: true,
+									// [`col-${col}-empty`]: true,
 									"available": isAvailable,
+									// "available-empty": isAvailable,
 									"cursor-pointer": isAvailable && state.selected !== null
 								})
 								return (

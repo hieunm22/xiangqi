@@ -24,6 +24,14 @@
 	.col-#{$i}-piece {
 		left: calc(var(--cell-size) * #{$i} - var(--piece-size) / 2);
 	}
+
+	.row-#{$i}-empty {
+		top: calc(var(--cell-size) * #{$i} - 5px);
+	}
+
+	.col-#{$i}-empty {
+		left: calc(var(--cell-size) * #{$i} - 5px);
+	}
 }
 
 .game-container {
@@ -245,6 +253,14 @@
 	border: none;
 	width: var(--piece-size);
 	height: var(--piece-size);
+
+	&.available-empty {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		border: solid 2px darkgreen;
+		background: darkgreen;
+	}
 
 	&.available {
 		box-shadow: 0 0 0 2px darkgreen;
