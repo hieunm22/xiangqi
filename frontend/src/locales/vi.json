@@ -38,7 +38,7 @@
 		}
 	},
 	"game": {
-		"king": {
+		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc"
 		}
 	},

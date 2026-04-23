@@ -17,6 +17,7 @@ import useGameToolkit from "hooks/useGameToolkit"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import { Piece, Team } from "types/GameState"
 import "./Home.scss"
+import { translate } from "locales/translate"
 
 export default function HomePage() {
 	useAutoTitle("page.home.title")
@@ -135,8 +136,8 @@ export default function HomePage() {
 
 		if (oldTarget?.piece === "general") {
 			openConfirm({
-				message: "Game Over",
-				title: `${state.teamTurn === "red" ? "Red" : "Black"} wins!`
+				message: translate("game.general.captured"),
+				title: "Game Over",
 			})
 		}
 	}

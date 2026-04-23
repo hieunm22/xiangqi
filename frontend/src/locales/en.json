@@ -38,7 +38,7 @@
 		}
 	},
 	"game": {
-		"king": {
+		"general": {
 			"captured": "General has been captured. Game over"
 		}
 	},

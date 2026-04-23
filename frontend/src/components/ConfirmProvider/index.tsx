@@ -79,7 +79,7 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 							size="small"
 							onClick={onOk}
 						>
-							{translate("popup.button-ok")}
+							{translate("popup.confirm.ok")}
 						</Button>
 						<Button
 							variant="outlined"
@@ -87,7 +87,7 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 							size="small"
 							onClick={onCancel}
 						>
-							{translate("popup.button-cancel")}
+							{translate("popup.confirm.cancel")}
 						</Button>
 					</Grid>
 				</DialogContent>
