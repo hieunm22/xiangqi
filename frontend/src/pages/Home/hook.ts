@@ -91,7 +91,8 @@ const useHomeHook = () => {
 	const onAnimateEnd = async () => {
 		const gameStateClone = [...state.board]
 		const selectedId = state.selected!
-		const targetId = gameStateClone[selectedId]!.animateTo!
+		const targetId = gameStateClone[selectedId]!.animateTo
+    if (targetId === undefined) return
 		const oldTarget = gameStateClone[targetId]
 		const movedTeam = gameStateClone[selectedId]!.team
 
@@ -122,9 +123,7 @@ const useHomeHook = () => {
 			
 			dispatch(setGameState({
 				...state,
-				board: revertedBoard,
-				availableMoves: [],
-				selected: null
+				board: revertedBoard
 			}))
 			return
 		}
