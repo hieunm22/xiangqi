@@ -7,17 +7,18 @@ import {
 	LS_CAPTURED_PIECES,
 	LS_TURN
 } from "common/constant"
-import { pieceSymbolByType } from "./constant"
+import { markerPositions, pieceSymbolByType } from "./constant"
+import { openAlert } from "components/AlertProvider"
 import { openConfirm } from "components/ConfirmProvider"
 import PieceItem from "./components/Piece"
-import { getAvailableMoves } from "common/helper"
+import { getAvailableMoves, initNewGame, isGeneralInCheck } from "common/helper"
+import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import { Piece, Team } from "types/GameState"
 import "./Home.scss"
-import { translate } from "locales/translate"
 
 export default function HomePage() {
 	useAutoTitle("page.home.title")
@@ -51,23 +52,6 @@ export default function HomePage() {
 		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify(state.capturedPieces))
 	}, [state.capturedPieces])
 	
-	const markerPositions: Array<[number, number]> = [
-		[1, 2],
-		[7, 2],
-		[0, 3],
-		[2, 3],
-		[4, 3],
-		[6, 3],
-		[8, 3],
-		[0, 6],
-		[2, 6],
-		[4, 6],
-		[6, 6],
-		[8, 6],
-		[1, 7],
-		[7, 7],
-	]
-
 	const markerClass = (col: number, row: number) => classnames("marker", {
 		"left-edge": col === 0,
 		"right-edge": col === BOARD_COLUMNS - 1,
@@ -109,22 +93,53 @@ export default function HomePage() {
 		}))
 	}
 
-	const onAnimateEnd = () => {
+	const onAnimateEnd = async () => {
 		const gameStateClone = [...state.board]
 		const selectedId = state.selected!
 		const targetId = gameStateClone[selectedId]!.animateTo!
 		const oldTarget = gameStateClone[targetId]
-		const capturedPiecesClone = structuredClone(state.capturedPieces)
-		if (oldTarget && oldTarget.team !== gameStateClone[selectedId]!.team) {
-			const team = gameStateClone[selectedId]!.team
-			capturedPiecesClone[team].push(oldTarget.piece)
-		}
+		const movedTeam = gameStateClone[selectedId]!.team
+
+		// Create new board state with the move applied
 		gameStateClone[targetId] = {
 			id: targetId,
 			piece: gameStateClone[selectedId]!.piece,
-			team: gameStateClone[selectedId]!.team,
+			team: movedTeam,
 		}
 		gameStateClone[selectedId] = null
+
+		// Check if this move puts the moving team's general in check
+		const isMovedTeamGeneralInCheck = isGeneralInCheck(gameStateClone, movedTeam)
+
+		if (isMovedTeamGeneralInCheck) {
+			// Revert the move if it puts general in check - restore original board state
+			const revertedBoard = [...state.board]
+			revertedBoard[selectedId] = {
+				id: selectedId,
+				piece: revertedBoard[selectedId]!.piece,
+				team: revertedBoard[selectedId]!.team,
+			}
+			
+			await openAlert({
+				title: "popup.alert.title",
+				message: "game.general.in-check"
+			})
+			
+			dispatch(setGameState({
+				...state,
+				board: revertedBoard,
+				availableMoves: [],
+				selected: null
+			}))
+			return
+		}
+
+		// Move is valid, commit it
+		const capturedPiecesClone = structuredClone(state.capturedPieces)
+		if (oldTarget && oldTarget.team !== movedTeam) {
+			capturedPiecesClone[movedTeam].push(oldTarget.piece)
+		}
+
 		dispatch(setGameState({
 			...state,
 			availableMoves: [],
@@ -138,8 +153,14 @@ export default function HomePage() {
 			openConfirm({
 				message: translate("game.general.captured"),
 				title: "Game Over",
+				onOk: onOkConfirm
 			})
 		}
+	}
+
+	const onOkConfirm = () => {
+		const init = initNewGame()
+		dispatch(setGameState(init))
 	}
 
 	return (

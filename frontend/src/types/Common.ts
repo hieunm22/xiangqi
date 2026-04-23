@@ -6,6 +6,8 @@ export interface ReduxStore {
 	game: GameState
 }
 
+export type EmptyVoid = () => void
+
 export interface DropdownProps {
 	key: string
 	icon?: string

@@ -59,13 +59,13 @@ export const AlertProvider = ({ children }: ComponentWithChild) => {
 			>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" sx={textCenterStyle}>
-						{current?.options.title ?? translate("popup.alert.title")}
+						{translate(current?.options.title ?? "popup.alert.title")}
 					</Typography>
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent>
 					<Typography sx={{ textAlign: "center", mb: 1 }}>
-						{current?.options.message}
+						{translate(current?.options.message)}
 					</Typography>
 					<Grid container justifyContent="center">
 						<Button

@@ -1,7 +1,10 @@
+import { EmptyVoid } from "types/Common"
+
 export interface ConfirmOptions {
 	title?: string
 	message?: string
 	disableBackdropClick?: boolean
+	onOk?: EmptyVoid
 }
 
 export interface QueueProps {

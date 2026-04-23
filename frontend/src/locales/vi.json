@@ -27,6 +27,9 @@
 		"close": "Đóng"
 	},
 	"popup": {
+		"alert": {
+			"title": "Cảnh báo"
+		},
 		"confirm": {
 			"ok": "Ok",
 			"cancel": "Huỷ"
@@ -39,7 +42,8 @@
 	},
 	"game": {
 		"general": {
-			"captured": "Tướng đã bị bắt. Game kết thúc"
+			"captured": "Tướng đã bị bắt. Game kết thúc",
+			"in-check": "Tướng của bạn đang bị chiếu"
 		}
 	},
 	"login": {

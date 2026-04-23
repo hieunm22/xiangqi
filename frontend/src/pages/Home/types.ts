@@ -1,3 +1,4 @@
+import { EmptyVoid } from "types/Common"
 import { CellProps, Piece, Team } from "types/GameState"
 
 export interface PieceItemProps {
@@ -9,8 +10,8 @@ export interface PieceItemProps {
 	$top: number
 	$turn: Team
 
-	$animateEnd?: () => void
-	$click?: () => void
+	$animateEnd?: EmptyVoid
+	$click?: EmptyVoid
 }
 
 export interface PlayerInfoCardProps {

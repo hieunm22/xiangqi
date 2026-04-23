@@ -46,6 +46,7 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 		if (!current) return
 		current.resolve(true)
 		setQueue([])
+		current.options.onOk?.()
 	}
 
 	const textCenterStyle = {
@@ -65,13 +66,13 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 			>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" sx={textCenterStyle}>
-						{current?.options.title ?? translate("popup.confirm.title")}
+						{translate(current?.options.title ?? "popup.confirm.title")}
 					</Typography>
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent>
 					<Typography sx={{ textAlign: "center", mb: 2 }}>
-						{current?.options.message && translate(current.options.message)}
+						{translate(current?.options.message && current.options.message)}
 					</Typography>
 					<Grid container justifyContent="center" gap={2}>
 						<Button

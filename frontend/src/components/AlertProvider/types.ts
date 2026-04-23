@@ -1,8 +1,8 @@
-import { ConfirmProps as AlertOptions } from "types/Common"
+import { ConfirmProps as AlertOptions, EmptyVoid } from "types/Common"
 export interface AlertQueueItem {
 	id: number
 	options: AlertOptions
-	resolve: () => void
+	resolve: EmptyVoid
 }
 
 export type AlertHandler = (options: AlertOptions) => Promise<void>

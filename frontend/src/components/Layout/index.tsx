@@ -24,7 +24,6 @@ import {
 import i18n from "locales/i18n"
 import {
 	COUNTRIES_DROPDOWN,
-	LS_CAPTURED_PIECES,
 	LS_DARKMODE,
 	LS_LANGUAGE
 } from "common/constant"
@@ -100,7 +99,6 @@ export default function Layout() {
 	const restartGame = () => {
 		const init = initNewGame()
 		dispatch(setGameState(init))
-		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify({ red: [], black: [] }))
 	}
 
 	const menuItems = [

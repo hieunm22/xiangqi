@@ -306,3 +306,25 @@ export function getAvailableMoves(
 	return moves.filter(f => f >= 0 && f < BOARD_COLUMNS * BOARD_ROWS)
 }
 
+export function isGeneralInCheck(
+	board: (CellProps | null)[],
+	team: Team
+): boolean {
+	const generalIndex = board.findIndex(cell => cell?.piece === "general" && cell.team === team)
+	if (generalIndex < 0) return false
+
+	const enemyTeam: Team = team === "red" ? "black" : "red"
+
+	for (let id = 0; id < board.length; id += 1) {
+		const cell = board[id]
+		if (!cell || cell.team !== enemyTeam) continue
+
+		const enemyDirection = cell.team === "red" ? -1 : 1
+		const moves = getAvailableMoves(board, id, enemyDirection)
+		if (moves.includes(generalIndex)) {
+			return true
+		}
+	}
+
+	return false
+}
