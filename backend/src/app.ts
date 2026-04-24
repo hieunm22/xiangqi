@@ -18,7 +18,7 @@ app.use("/api", authRoutes)
 app.get("/", (_req: Request, res: Response) => {
 	res.json({
 		success: true,
-		message: "Welcome to Chess API",
+		message: "Welcome to Xiangqi API",
 		docs: "/docs"
 	})
 })

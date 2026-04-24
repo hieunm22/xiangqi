@@ -22,7 +22,7 @@ const router = Router()
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Chess API is running
+ *                   example: Xiangqi API is running
  *                 timestamp:
  *                   type: string
  *                   format: date-time
@@ -30,7 +30,7 @@ const router = Router()
 router.get("/health", (_req: Request, res: Response) => {
 	res.status(200).json({
 		success: true,
-		message: "Chess API is running",
+		message: "Xiangqi API is running",
 		timestamp: new Date().toISOString()
 	})
 })

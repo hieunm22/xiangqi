@@ -4,13 +4,13 @@ const options: Options = {
 	definition: {
 		openapi: "3.0.3",
 		info: {
-			title: "Chess API",
+			title: "Xiangqi API",
 			version: "1.0.0",
-			description: "Backend API documentation for Chess project"
+			description: "Backend API documentation for Xiangqi project"
 		},
 		servers: [
 			{
-				url: "http://localhost:5000",
+				url: "http://localhost:8000",
 				description: "Local development server"
 			}
 		]
