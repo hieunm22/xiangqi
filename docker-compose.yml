@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: xiangqi-postgres
+    environment:
+      POSTGRES_DB: xiangqi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "<database_password>"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /Users/macbook/projects/hieunm/.postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+  # docker run -d --name xiangqi-postgres -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -v /Users/macbook/projects/hieunm/.postgres:/var/lib/postgresql/data postgres:17

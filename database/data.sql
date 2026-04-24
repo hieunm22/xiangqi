@@ -1,3 +1,13 @@
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE TABLE IF NOT EXISTS auth.users (
+	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+	user_name VARCHAR(50) NOT NULL UNIQUE,
+	password VARCHAR(36) NOT NULL,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	display_name TEXT NOT NULL,
+	gender BOOLEAN NOT NULL
+)
 
 INSERT INTO auth.users (id, user_name, password, email, display_name, gender) OVERRIDING SYSTEM VALUE VALUES
 (1, 'ming.hieu.1312', 'DA7E2532550C01A49F955FDD8F22B7FF', 'hieuami@gmail.com', 'Ming Hieu', true),
@@ -83,4 +93,4 @@ INSERT INTO auth.users (id, user_name, password, email, display_name, gender) OV
 (81, 'cuakute', 'DA7E2532550C01A49F955FDD8F22B7FF', 'uyennguyenmai@gmail.com', 'Uyên Nguyễn Mai', false),
 (82, 'flora.2o4', 'DA7E2532550C01A49F955FDD8F22B7FF', 'nguyenthihoa1207204@gmail.com', 'Nguyễn Hoa', false),
 (83, 'nmaicutes1', 'DA7E2532550C01A49F955FDD8F22B7FF', 'nmai36833@gmail.com', 'Ngoc Mai', false),
-(84, 'lehongly', 'DA7E2532550C01A49F955FDD8F22B7FF', 'lehongly2101@gmail.com', 'Ngoc Mai', false)
+(84, 'lehongly', 'DA7E2532550C01A49F955FDD8F22B7FF', 'lehongly2101@gmail.com', 'Lê Hồng Ly', false)

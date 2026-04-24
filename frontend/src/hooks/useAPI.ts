@@ -7,11 +7,11 @@ import { LoginBodyType } from "pages/Login/types"
 
 const EP = { // end points
 	// login endpoints
-	login: "/home/add-more-users",
+	login: "/auth/login",
 
-	refreshToken: "/home/refresh-token",
+	refreshToken: "/auth/refresh-token",
 
-	logout: "/home/logout",
+	logout: "/auth/logout",
 }
 
 export const useAPI = () => {
