@@ -59,6 +59,14 @@ function App() {
 
 	const theme = useMemo(createThemeCallback, [state.darkMode])
 
+	const HomePageElement = (
+		<ConfirmProvider>
+			<AlertProvider>
+				<HomePage />
+			</AlertProvider>
+		</ConfirmProvider>
+	)
+
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
@@ -73,7 +81,7 @@ function App() {
 					<Route path="/register" element={<RegisterPage />} />
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/" element={<ConfirmProvider><AlertProvider><HomePage /></AlertProvider></ConfirmProvider>} />
+					<Route path="/" element={HomePageElement} />
 				</Route>
 				<Route path="*" element={<Navigate to="/login" replace />} />
 			</Routes>

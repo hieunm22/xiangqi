@@ -92,7 +92,7 @@ const useHomeHook = () => {
 		const gameStateClone = [...state.board]
 		const selectedId = state.selected!
 		const targetId = gameStateClone[selectedId]!.animateTo
-    if (targetId === undefined) return
+		if (targetId === undefined) return
 		const oldTarget = gameStateClone[targetId]
 		const movedTeam = gameStateClone[selectedId]!.team
 
