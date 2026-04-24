@@ -1,5 +1,5 @@
-import app from "./app"
 import "./env"
+import app from "./app"
 
 const PORT = Number(process.env.PORT) || 8000
 

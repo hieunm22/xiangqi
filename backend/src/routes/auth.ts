@@ -1,32 +1,12 @@
 import { Request, Response, Router } from "express"
 import crypto from "crypto"
-import { Pool } from "pg"
 import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import multer from "multer"
+import prisma from "../prisma"
 
 const router = Router()
 const upload = multer()
-
-const databaseUrl = process.env.DATABASE_URL?.trim()
-if (!databaseUrl) {
-	throw new Error("DATABASE_URL is not set")
-}
-
-let parsedDbUrl: URL
-try {
-	parsedDbUrl = new URL(databaseUrl)
-} catch {
-	throw new Error("DATABASE_URL is not a valid URL")
-}
-
-if (!parsedDbUrl.password) {
-	throw new Error("DATABASE_URL must include a database password")
-}
-
-const pool = new Pool({
-	connectionString: databaseUrl
-})
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!
@@ -111,14 +91,19 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 				.digest("hex")
 				.toUpperCase()
 
-		console.log('hashedPassword :>> ', hashedPassword);
+		const user = await prisma.user.findFirst({
+			where: {
+				OR: [
+					{ id: Number(username) },
+					{ user_name: username },
+					{ email: username }
+				],
+				password: hashedPassword
+			},
+			select: { id: true, user_name: true }
+		})
 
-		const result = await pool.query<{ id: number; user_name: string }>(
-			"SELECT id, user_name FROM auth.users WHERE (user_name = $1 OR id = $1::int OR email = $1) AND password = $2",
-			[username, hashedPassword]
-		)
-
-		if (result.rows.length === 0) {
+		if (!user) {
 			res.status(401).json({
 				success: false,
 				error: "Invalid username or password",
@@ -129,10 +114,9 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 			return
 		}
 
-		const user = result.rows[0]
 		const sessionId = crypto.randomUUID()
 		const payload = {
-			sub: user.id,
+			sub: Number(user.id),
 			jti: sessionId,
 			timezoneOffset: Number(timezoneOffset ?? 0)
 		}
@@ -145,7 +129,7 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 		const refresh_token = crypto.randomUUID()
 
 		// Store refresh token in Redis with key login-session:<userid>, expiration 30 days
-		await redis.set(`login-session:${user.id}`, refresh_token, "EX", 30 * 24 * 60 * 60)
+		await redis.set(`login-session:${user.id.toString()}`, refresh_token, "EX", 30 * 24 * 60 * 60)
 		
 		res.status(200).json({
 			success: true,
