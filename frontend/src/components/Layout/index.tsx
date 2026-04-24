@@ -24,7 +24,6 @@ import {
 import i18n from "locales/i18n"
 import {
 	COUNTRIES_DROPDOWN,
-	LS_CAPTURED_PIECES,
 	LS_DARKMODE,
 	LS_LANGUAGE
 } from "common/constant"
@@ -85,6 +84,8 @@ export default function Layout() {
 		}
 	}
 
+	const logout = () => navigate("/login")
+
 	const textCenterStyle = {
 		display: "flex",
 		justifyContent: "center",
@@ -100,7 +101,6 @@ export default function Layout() {
 	const restartGame = () => {
 		const init = initNewGame()
 		dispatch(setGameState(init))
-		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify({ red: [], black: [] }))
 	}
 
 	const menuItems = [
@@ -108,7 +108,7 @@ export default function Layout() {
 		{ text: "menu.users", icon: "fa-users", click: () => navigate("/users"), disabled: true },
 		{ text: "menu.analytics", icon: "fa-chart-mixed", click: () => navigate("/analytics"), disabled: true },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		{ text: "Restart", icon: "fa-rotate", click: restartGame }
+		...(!isMobile ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -144,7 +144,7 @@ export default function Layout() {
 
 			<List>
 				<ListItem disablePadding>
-					<ListItemButton>
+					<ListItemButton onClick={logout}>
 						<i className="fas fa-right-from-bracket" />
 						{drawerOpen && <TTypography content="menu.logout" sx={{ fontSize: 14, ml: 1 }} />}
 					</ListItemButton>
@@ -158,13 +158,14 @@ export default function Layout() {
 		<Box sx={{ display: "flex" }}>
 			<CssBaseline />
 
-			{isMobile && <AppBar
-				position="fixed"
-				sx={{ width: "100%" }}
-			>
+			{isMobile && <AppBar position="fixed" sx={{ width: "100%" }}>
 				<Toolbar>
 					<IconButton color="inherit" edge="start" onClick={handleMobileToggle} sx={{ mr: 2 }}>
 						<i className="fas fa-bars" />
+					</IconButton>
+					<Box sx={{ flexGrow: 1 }} />
+					<IconButton color="inherit" edge="end" onClick={restartGame} aria-label="restart game">
+						<i className="fas fa-rotate" />
 					</IconButton>
 				</Toolbar>
 			</AppBar>}

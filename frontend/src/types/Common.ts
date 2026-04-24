@@ -6,6 +6,8 @@ export interface ReduxStore {
 	game: GameState
 }
 
+export type EmptyVoid = () => void
+
 export interface DropdownProps {
 	key: string
 	icon?: string
@@ -28,4 +30,9 @@ export interface ElementWithAnimationType {
 
 export interface ComponentWithChild {
 	children: React.ReactNode
+}
+
+export interface ConfirmProps {
+	title?: string
+	message: string
 }

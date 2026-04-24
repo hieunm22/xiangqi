@@ -27,6 +27,9 @@
 		"close": "Close"
 	},
 	"popup": {
+		"alert": {
+			"title": "Warning"
+		},
 		"confirm": {
 			"ok": "Ok",
 			"cancel": "Cancel"
@@ -38,8 +41,9 @@
 		}
 	},
 	"game": {
-		"king": {
-			"captured": "General has been captured. Game over"
+		"general": {
+			"captured": "General has been captured. Game over",
+			"in-check": "Your general is under attack"
 		}
 	},
 	"login": {

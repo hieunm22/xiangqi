@@ -41,6 +41,7 @@ def write_json(filename, data):
   text = text.replace("    ", "\t")
   with open(filename, "w", encoding="utf-8") as f:
     f.write(text)
+    f.write("\n\n")
 
 write_json("frontend/src/locales/en.json", nested_en)
 write_json("frontend/src/locales/vi.json", nested_vi)

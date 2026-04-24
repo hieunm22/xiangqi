@@ -92,20 +92,26 @@ export function getAvailableMoves(
 		}
 	}
 
+	const pushSideMoveIfSameRow = (selectedId: number, targetIndex: number) => {
+		const selectedRowForSoldier = ~~(selectedId / BOARD_COLUMNS)
+		if (~~(targetIndex / BOARD_COLUMNS) !== selectedRowForSoldier) return
+		pushIfEnemyOrEmpty(targetIndex)
+	}
+
 	switch (selectedPiece.piece) {
 		case "soldier":
 			if (direction === 1) {
-				moves.push(selectedId + BOARD_COLUMNS) // Move forward
+				pushIfEnemyOrEmpty(selectedId + BOARD_COLUMNS) // Move forward
 				if (selectedId >= 5 * BOARD_COLUMNS) { // After crossing the river
-					moves.push(selectedId + 1) // Move right
-					moves.push(selectedId - 1) // Move left
+					pushSideMoveIfSameRow(selectedId, selectedId + 1) // Move right
+					pushSideMoveIfSameRow(selectedId, selectedId - 1) // Move left
 				}
 			}
 			if (direction === -1) {
-				moves.push(selectedId - BOARD_COLUMNS) // Move forward
+				pushIfEnemyOrEmpty(selectedId - BOARD_COLUMNS) // Move forward
 				if (selectedId < 5 * BOARD_COLUMNS) { // After crossing the river
-					moves.push(selectedId + 1) // Move right
-					moves.push(selectedId - 1) // Move left
+					pushSideMoveIfSameRow(selectedId, selectedId + 1) // Move right
+					pushSideMoveIfSameRow(selectedId, selectedId - 1) // Move left
 				}
 			}
 			break
@@ -300,3 +306,25 @@ export function getAvailableMoves(
 	return moves.filter(f => f >= 0 && f < BOARD_COLUMNS * BOARD_ROWS)
 }
 
+export function isGeneralInCheck(
+	board: (CellProps | null)[],
+	team: Team
+): boolean {
+	const generalIndex = board.findIndex(cell => cell?.piece === "general" && cell.team === team)
+	if (generalIndex < 0) return false
+
+	const enemyTeam: Team = team === "red" ? "black" : "red"
+
+	for (let id = 0; id < board.length; id += 1) {
+		const cell = board[id]
+		if (!cell || cell.team !== enemyTeam) continue
+
+		const enemyDirection = cell.team === "red" ? -1 : 1
+		const moves = getAvailableMoves(board, id, enemyDirection)
+		if (moves.includes(generalIndex)) {
+			return true
+		}
+	}
+
+	return false
+}
