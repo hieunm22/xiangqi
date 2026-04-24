@@ -47,6 +47,9 @@
 		}
 	},
 	"login": {
+		"page": {
+			"title": "Đăng nhập"
+		},
 		"form": {
 			"title": "Đăng nhập",
 			"error1": "Đăng nhập không thành công. Hãy kiểm tra lại",

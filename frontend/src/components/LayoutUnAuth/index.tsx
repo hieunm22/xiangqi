@@ -76,7 +76,7 @@ export default function LayoutUnAuth() {
 				size="small"
 				onClick={handleShowSettings}
 			>
-				Setting
+				{translate("menu.setting.button")}
 			</Button>
 
 			<Dialog

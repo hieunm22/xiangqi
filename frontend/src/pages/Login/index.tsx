@@ -1,11 +1,10 @@
-import { FormEvent, useState } from "react"
+import { SubmitEvent, useState } from "react"
 import classnames from "classnames"
 import {
 	Alert,
 	Box,
 	Button,
 	CircularProgress,
-	InputAdornment,
 	Link,
 	Paper,
 	Stack,
@@ -14,9 +13,12 @@ import {
 import { Link as RouterLink } from "react-router-dom"
 import { TI, TTextField } from "components/TranslationTag"
 import { translate } from "locales/translate"
+import useAutoTitle from "hooks/useAutoTitle"
+import { useAPI } from "hooks/useAPI"
 import "./Login.scss"
 
 export default function LoginPage() {
+	useAutoTitle(translate("login.page.title"))
 	const [username, setUsername] = useState("")
 	const [password, setPassword] = useState("")
 	const [userNameError, setUsernameError] = useState<string | null>(null)
@@ -25,6 +27,7 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
+	const { login } = useAPI()
 
 	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUsername(event.target.value)
@@ -40,7 +43,7 @@ export default function LoginPage() {
 		}
 	}
 
-	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError(null)
 		setMessage(null)
@@ -56,14 +59,7 @@ export default function LoginPage() {
 
 		try {
 			// TODO: Replace with the real authentication endpoint and token/session handling.
-			const response = await fetch("/api/login", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({ username, password })
-			})
-
+			const response = await login({ username, password, timezoneOffset: new Date().getTimezoneOffset() })
 			if (!response.ok) {
 				throw new Error(translate("login.form.error1"))
 			}
@@ -93,8 +89,8 @@ export default function LoginPage() {
 				justifyContent: "center",
 			}}
 		>
-			<Paper elevation={4} sx={{ width: "100%", maxWidth: 450, p: 4, borderRadius: 3 }}>
-				<Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
 					<Typography variant="h5" component="h1" fontWeight={700}>
 						{translate("login.form.title")}
 					</Typography>
@@ -113,9 +109,7 @@ export default function LoginPage() {
 						slotProps={{
 							input: {
 								startAdornment: (
-									<InputAdornment position="start">
-										<i className="fas fa-user" />
-									</InputAdornment>
+									<i className="fas fa-user start-icon" />
 								)
 							}
 						}}
@@ -135,18 +129,14 @@ export default function LoginPage() {
 						slotProps={{
 							input: {
 								startAdornment: (
-									<InputAdornment position="start">
-										<i className="fas fa-lock" />
-									</InputAdornment>
+									<i className="fas fa-lock start-icon" />
 								),
 								endAdornment: (
-									<InputAdornment position="end">
-										<TI
-											className={eyeIconClass}
-											title={showPassword ? "login.password.hide" : "login.password.show"}
-											onClick={() => setShowPassword(prev => !prev)}
-										/>
-									</InputAdornment>
+									<TI
+										className={eyeIconClass}
+										title={showPassword ? "login.password.hide" : "login.password.show"}
+										onClick={() => setShowPassword(prev => !prev)}
+									/>
 								)
 							}
 						}}

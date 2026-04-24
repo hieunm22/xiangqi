@@ -1,4 +1,4 @@
-import { BOARD_COLUMNS, BOARD_ROWS } from "./constant"
+import { BOARD_COLUMNS, BOARD_ROWS, LS_LANGUAGE, LS_TOKEN_KEY } from "./constant"
 import type { CellProps, Piece, Team } from "types/GameState"
 
 const initGameState: (Piece | null)[] = [
@@ -327,4 +327,13 @@ export function isGeneralInCheck(
 	}
 
 	return false
+}
+
+export function getLanguage() {
+	const lang = localStorage.getItem(LS_LANGUAGE)
+	return lang || "en"
+}
+
+export function getToken() {
+	return localStorage.getItem(LS_TOKEN_KEY) || ""
 }

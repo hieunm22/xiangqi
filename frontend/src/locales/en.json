@@ -47,6 +47,9 @@
 		}
 	},
 	"login": {
+		"page": {
+			"title": "Login"
+		},
 		"form": {
 			"title": "Login",
 			"error1": "Login failed. Please check your credentials ",

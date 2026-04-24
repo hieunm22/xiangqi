@@ -1,5 +1,6 @@
 import type { DropdownProps } from "types/Common"
 
+export const LS_TOKEN_KEY = "xiangqi-token"
 export const LS_DARKMODE = "dark-mode"
 export const LS_LANGUAGE = "language"
 export const LS_BOARD = "board-xiangqi"
