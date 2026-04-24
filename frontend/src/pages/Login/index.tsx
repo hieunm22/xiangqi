@@ -59,7 +59,12 @@ export default function LoginPage() {
 
 		try {
 			// TODO: Replace with the real authentication endpoint and token/session handling.
-			const response = await login({ username, password, timezoneOffset: new Date().getTimezoneOffset() })
+			const response = await login({
+				username,
+				password,
+				deviceName: navigator.userAgent,
+				timezoneOffset: new Date().getTimezoneOffset()
+			})
 			if (!response.ok) {
 				throw new Error(translate("login.form.error1"))
 			}

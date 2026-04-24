@@ -17,7 +17,7 @@ for (const envFile of envFiles) {
 	}
 }
 
-const requiredEnv = ["DATABASE_URL", "JWT_SECRET", "JWT_REFRESH_SECRET"]
+const requiredEnv = ["DATABASE_URL", "JWT_SECRET"]
 const missingEnv = requiredEnv.filter((key) => !process.env[key]?.trim())
 
 if (missingEnv.length > 0) {

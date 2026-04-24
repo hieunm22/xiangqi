@@ -4,12 +4,12 @@ import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import multer from "multer"
 import prisma from "../prisma"
+import { LoginRequest } from "../types/auth.type"
 
 const router = Router()
 const upload = multer()
 
 const JWT_SECRET = process.env.JWT_SECRET!
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
 
 const redis = new Redis({
@@ -42,6 +42,8 @@ const redis = new Redis({
  *                 type: string
  *               timezoneOffset:
  *                 type: number
+ *               deviceName:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Login successful
@@ -67,11 +69,7 @@ const redis = new Redis({
  *         description: Internal server error
  */
 router.post("/auth/login", upload.none(), async (req: Request, res: Response) => {
-	const { username, password, timezoneOffset } = req.body as {
-		username?: string
-		password?: string
-		timezoneOffset?: string
-	}
+	const { username, password, timezoneOffset, deviceName } = req.body as LoginRequest
 
 	if (!username?.trim() || !password?.trim()) {
 		res.status(400).json({
@@ -125,11 +123,21 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 			expiresIn: "1h",
 			issuer: JWT_ISSUER
 		})
-		// refresh_token should be a guid id, no need to use JWT_REFRESH_SECRET
-		const refresh_token = crypto.randomUUID()
 
-		// Store refresh token in Redis with key login-session:<userid>, expiration 30 days
-		await redis.set(`login-session:${user.id.toString()}`, refresh_token, "EX", 30 * 24 * 60 * 60)
+		// Store session in Redis with key login-session:<user-id>:<session-id>, expiration 1h
+		const sessionValue = JSON.stringify({
+			userId: Number(user.id),
+			deviceName: deviceName?.trim() || "",
+			clientId: sessionId,
+			createdAt: new Date().toISOString(),
+			isValid: true
+		})
+		await redis.set(`login-session:${user.id}:${sessionId}`, sessionValue, "EX", 60 * 60)
+
+		// refresh_token should be a guid id
+		const refresh_token = crypto.randomUUID()
+		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
+		await redis.set(`refresh-token:${user.id}:${sessionId}`, refresh_token, "EX", 30 * 24 * 60 * 60)
 		
 		res.status(200).json({
 			success: true,
