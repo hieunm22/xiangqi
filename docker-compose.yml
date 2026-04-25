@@ -11,17 +11,39 @@ services:
     volumes:
       - /Users/macbook/projects/hieunm/.postgres:/var/lib/postgresql/data
     restart: unless-stopped
-  # docker run -d --name xiangqi-postgres --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -v /Users/macbook/projects/hieunm/.postgres:/var/lib/postgresql/data postgres:17
-
-  cache:
-    container_name: xiangqi-cache
-    image: redis:8.2
-    ports:
-      - "6379:6379"
-    restart: "unless-stopped"
     networks:
       - xiangqi-network
-  # docker run --name xiangqi-cache -ditp 6379:6379 --network xiangqi-network --restart unless-stopped redis:8.2
+  # docker run -d --name xiangqi-postgres --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -v ./database/.postgres:/var/lib/postgresql/data postgres:17
+
+  # cache:
+  #   container_name: xiangqi-cache
+  #   image: redis:8.2
+  #   ports:
+  #     - "6379:6379"
+  #   restart: "unless-stopped"
+  #   networks:
+  #     - xiangqi-network
+  # # docker run --name xiangqi-cache -ditp 6379:6379 --network xiangqi-network --restart unless-stopped redis:8.2
+
+  backend:
+    container_name: xiangqi-api
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:<database_password>@xiangqi-postgres:5432/xiangqi"
+      JWT_SECRET: "<jwt_secret>"
+      REDIS_HOST: "cache"
+      REDIS_PORT: "6379"
+    depends_on:
+      - postgres
+      - cache
+    restart: unless-stopped
+    networks:
+      - xiangqi-network
+  # docker run -ditp 5001:8000 -e DATABASE_URL="postgresql://postgres:<database_password>@xiangqi-postgres:5432/xiangqi" -e JWT_SECRET="<jwt-secret>" -e REDIS_HOST="cache" --network xiangqi-network --name xiangqi-api xiangqi-api
 
 networks:
   xiangqi-network:

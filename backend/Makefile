@@ -10,13 +10,13 @@ reset:
 	git reset --hard
 
 destroy:
-	docker container stop xiangqi-web
-	docker container rm xiangqi-web
-	docker image rm xiangqi-web
+	docker container stop xiangqi-api
+	docker container rm xiangqi-api
+	docker image rm xiangqi-api
 
 docker:
-	docker build -t xiangqi-web -f Dockerfile .
-	docker run --name xiangqi-web -ditp 3004:80 --restart unless-stopped xiangqi-web
+	docker build -t xiangqi-api -f Dockerfile .
+	docker run --name xiangqi-api -ditp 5001:80 --restart unless-stopped xiangqi-api
 
 publish:
 	yarn build
