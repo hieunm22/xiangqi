@@ -1,4 +1,7 @@
 node_modules
-dist
+src
+tsconfig.json
+.env
 .env.local
+.env.backend
 *.log
