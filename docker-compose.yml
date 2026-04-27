@@ -32,18 +32,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:<database_password>@xiangqi-postgres:5432/xiangqi"
-      JWT_SECRET: "<jwt_secret>"
-      REDIS_HOST: "cache"
-      REDIS_PORT: "6379"
+    env_file:
+      - ./backend/.env.local
     depends_on:
       - postgres
-      - cache
     restart: unless-stopped
     networks:
       - xiangqi-network
-  # docker run -ditp 5001:8000 -e DATABASE_URL="postgresql://postgres:<database_password>@xiangqi-postgres:5432/xiangqi" -e JWT_SECRET="<jwt-secret>" -e REDIS_HOST="cache" --network xiangqi-network --name xiangqi-api xiangqi-api
+  # run this command in the backend directory to build and run the container
+  # docker run -ditp 5001:8000 --env-file ./.env.local --network xiangqi-network --name xiangqi-api xiangqi-api
 
 networks:
   xiangqi-network:
