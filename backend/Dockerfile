@@ -7,9 +7,6 @@ ENV NODE_ENV=production
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production
 
-COPY prisma ./prisma
-RUN npx prisma generate
-
 COPY dist ./dist
 
 EXPOSE 8000
