@@ -4,7 +4,7 @@ import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import multer from "multer"
 import prisma from "../prisma"
-import { LoginRequest } from "../types/auth.type"
+import { LoginRequest, LoginResponse, LoginSession } from "../types/auth.type"
 
 const router = Router()
 const upload = multer()
@@ -54,9 +54,8 @@ const redis = new Redis({
  *               properties:
  *                 success:
  *                   type: boolean
- *                 error:
+ *                 message:
  *                   type: string
- *                   nullable: true
  *                 status_code:
  *                   type: integer
  *                 access_token:
@@ -69,16 +68,22 @@ const redis = new Redis({
  *         description: Internal server error
  */
 router.post("/auth/login", upload.none(), async (req: Request, res: Response) => {
-	const { username, password, timezoneOffset, deviceName } = req.body as LoginRequest
+	const {
+    username,
+    password,
+    timezoneOffset,
+    deviceName
+  } = req.body as LoginRequest
 
 	if (!username?.trim() || !password?.trim()) {
 		res.status(400).json({
 			success: false,
-			error: "Username and password are required",
+			message: "Username and password are required",
 			status_code: 400,
 			access_token: "",
-			refresh_token: ""
-		})
+			refresh_token: "",
+      token_type: "Bearer"
+		} as LoginResponse)
 		return
 	}
 
@@ -104,11 +109,12 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 		if (!user) {
 			res.status(401).json({
 				success: false,
-				error: "Invalid username or password",
+				message: "Invalid username or password",
 				status_code: 401,
 				access_token: "",
-				refresh_token: ""
-			})
+				refresh_token: "",
+        token_type: "Bearer"
+			} as LoginResponse)
 			return
 		}
 
@@ -124,14 +130,14 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 			issuer: JWT_ISSUER
 		})
 
-		// Store session in Redis with key login-session:<user-id>:<session-id>, expiration 1h
+		// Store session in Redis with key login-session:<user-id>:<session-id>, expiration in 1h
 		const sessionValue = JSON.stringify({
 			userId: Number(user.id),
 			deviceName: deviceName?.trim() || "",
 			clientId: sessionId,
 			createdAt: new Date().toISOString(),
 			isValid: true
-		})
+		} as LoginSession)
 		await redis.set(`login-session:${user.id}:${sessionId}`, sessionValue, "EX", 60 * 60)
 
 		// refresh_token should be a guid id
@@ -141,19 +147,21 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 		
 		res.status(200).json({
 			success: true,
-			error: null,
+			message: "Login successful",
 			status_code: 200,
 			access_token,
-			refresh_token
+			refresh_token,
+      token_type: "Bearer"
 		})
 	} catch (err) {
 		console.error("Login error:", err)
 		res.status(500).json({
 			success: false,
-			error: "Internal server error",
+			message: "Internal server error",
 			status_code: 500,
 			access_token: "",
-			refresh_token: ""
+			refresh_token: "",
+      token_type: "Bearer"
 		})
 	}
 })
