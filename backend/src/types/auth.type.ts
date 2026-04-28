@@ -5,7 +5,7 @@ export interface LoginRequest {
 	deviceName?: string
 }
 
-export interface LoginResponse {
+export interface LoginSuccessResponse {
 	success: boolean
 	message: string
 	status_code: number

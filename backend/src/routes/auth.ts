@@ -4,7 +4,11 @@ import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import multer from "multer"
 import prisma from "../prisma"
-import { LoginRequest, LoginResponse, LoginSession } from "../types/auth.type"
+import {
+  LoginRequest,
+  LoginSuccessResponse,
+  LoginSession
+} from "../types/auth.type"
 
 const router = Router()
 const upload = multer()
@@ -83,7 +87,7 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 			access_token: "",
 			refresh_token: "",
       token_type: "Bearer"
-		} as LoginResponse)
+		} as LoginSuccessResponse)
 		return
 	}
 
@@ -114,7 +118,7 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 				access_token: "",
 				refresh_token: "",
         token_type: "Bearer"
-			} as LoginResponse)
+			} as LoginSuccessResponse)
 			return
 		}
 

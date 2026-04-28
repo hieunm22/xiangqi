@@ -7,15 +7,15 @@ import {
 	CircularProgress,
 	Link,
 	Paper,
-	Stack,
-	Typography
+	Stack
 } from "@mui/material"
 import { Link as RouterLink } from "react-router-dom"
-import { TI, TTextField } from "components/TranslationTag"
+import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import "./Login.scss"
+import { LoginSuccessResponse } from "./types"
 
 export default function LoginPage() {
 	useAutoTitle(translate("login.page.title"))
@@ -50,27 +50,29 @@ export default function LoginPage() {
 		setLoading(true)
 		if (!username.trim()) {
 			setUsernameError(translate("login.username.error1"))
+			setLoading(false)
 			return
 		}
 		if (!password.trim()) {
 			setPasswordError(translate("login.password.error1"))
+			setLoading(false)
 			return
 		}
 
 		try {
-			// TODO: Replace with the real authentication endpoint and token/session handling.
-			const response = await login({
+			const response: LoginSuccessResponse = await login({
 				username,
 				password,
 				deviceName: navigator.userAgent,
 				timezoneOffset: new Date().getTimezoneOffset()
 			})
-			if (!response.ok) {
-				throw new Error(translate("login.form.error1"))
+			if (!response.success) {
+				throw new Error(translate(response.message || "login.form.error1"))
 			}
 
 			setMessage(translate("login.form.success"))
 		} catch (submitError) {
+			setLoading(false)
 			const submitMessage =
 				submitError instanceof Error ? submitError.message : "Unexpected error while logging in."
 			setError(submitMessage)
@@ -96,10 +98,12 @@ export default function LoginPage() {
 		>
 			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
 				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
-					<Typography variant="h5" component="h1" fontWeight={700}>
-						{translate("login.form.title")}
-					</Typography>
-
+					<TTypography
+						variant="h5"
+						component="h1"
+						fontWeight={700}
+						content="login.form.title"
+					/>
 					<TTextField
 						label="login.username.label"
 						placeholder="login.username.placeholder"
