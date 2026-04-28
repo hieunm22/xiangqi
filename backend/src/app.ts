@@ -9,7 +9,22 @@ import authRoutes from "./routes/auth"
 
 const app = express()
 
-app.use(cors())
+const rawOrigins = process.env.CORS_ORIGINS ?? "http://localhost:3001"
+const allowedOrigins = rawOrigins.split(",").map((o) => o.trim()).filter(Boolean)
+
+app.use(
+	cors({
+		origin: (requestOrigin, callback) => {
+			// Allow server-to-server calls (no origin) or whitelisted origins
+			if (!requestOrigin || allowedOrigins.includes(requestOrigin)) {
+				callback(null, requestOrigin || true)
+			} else {
+				callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`))
+			}
+		},
+		credentials: true,
+	})
+)
 app.use(express.json())
 
 app.use("/api", healthRoutes)

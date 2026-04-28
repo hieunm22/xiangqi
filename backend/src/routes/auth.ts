@@ -165,7 +165,7 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 			status_code: 500,
 			access_token: "",
 			refresh_token: "",
-      token_type: "Bearer"
+			token_type: "Bearer"
 		})
 	}
 })

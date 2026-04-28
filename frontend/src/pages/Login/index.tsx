@@ -9,7 +9,8 @@ import {
 	Paper,
 	Stack
 } from "@mui/material"
-import { Link as RouterLink } from "react-router-dom"
+import { Link as RouterLink, useNavigate } from "react-router-dom"
+import { LS_TOKEN_KEY } from "common/constant"
 import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -28,6 +29,7 @@ export default function LoginPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
 	const { login } = useAPI()
+	const navigate = useNavigate()
 
 	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUsername(event.target.value)
@@ -64,17 +66,20 @@ export default function LoginPage() {
 				username,
 				password,
 				deviceName: navigator.userAgent,
-				timezoneOffset: new Date().getTimezoneOffset()
+				timezoneOffset: new Date().getTimezoneOffset() / -60
 			})
 			if (!response.success) {
 				throw new Error(translate(response.message || "login.form.error1"))
 			}
 
-			setMessage(translate("login.form.success"))
+			setMessage(translate(response.message || "login.form.success"))
+			localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+			navigate("/")
 		} catch (submitError) {
 			setLoading(false)
-			const submitMessage =
-				submitError instanceof Error ? submitError.message : "Unexpected error while logging in."
+			const submitMessage = submitError instanceof Error
+				? translate(submitError.message)
+				: translate("login.form.unexpected-error")
 			setError(submitMessage)
 		} finally {
 			setLoading(false)
