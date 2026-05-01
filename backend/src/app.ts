@@ -1,16 +1,15 @@
-import cors from "cors"
 import express, { Request, Response } from "express"
 import swaggerUi from "swagger-ui-express"
-
-import healthRoutes from "./routes/health"
 import swaggerSpec from "./swagger"
+import cors from "cors"
 
-import authRoutes from "./routes/auth"
+import authRoutes from "./routes/auth/login"
+import validateTokenRoutes from "./routes/auth/validate-token"
 
 const app = express()
 
 const rawOrigins = process.env.CORS_ORIGINS ?? "http://localhost:3001"
-const allowedOrigins = rawOrigins.split(",").map((o) => o.trim()).filter(Boolean)
+const allowedOrigins = rawOrigins.split(",").map(o => o.trim()).filter(Boolean)
 
 app.use(
 	cors({
@@ -27,9 +26,6 @@ app.use(
 )
 app.use(express.json())
 
-app.use("/api", healthRoutes)
-app.use("/api", authRoutes)
-
 app.get("/", (_req: Request, res: Response) => {
 	res.json({
 		success: true,
@@ -38,7 +34,9 @@ app.get("/", (_req: Request, res: Response) => {
 	})
 })
 
-app.use("/api", healthRoutes)
+app.use("/api", authRoutes)
+app.use("/api", validateTokenRoutes)
+
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 export default app

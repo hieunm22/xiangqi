@@ -75,7 +75,7 @@ export const useAPI = () => {
 	// 		})
 	// }
 
-	const login = (form: LoginBodyType) => requestWithCookie.url(EP.login)
+	const login = (form: LoginBodyType) => request.url(EP.login)
 							.addon(FormDataAddon)
 							.formData(form)
 							.post()

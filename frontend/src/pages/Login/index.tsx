@@ -15,8 +15,8 @@ import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
-import "./Login.scss"
 import { LoginSuccessResponse } from "./types"
+import "./Login.scss"
 
 export default function LoginPage() {
 	useAutoTitle(translate("login.page.title"))

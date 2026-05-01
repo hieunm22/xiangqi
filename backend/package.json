@@ -4,7 +4,7 @@
   "description": "Xiangqi backend API with Swagger docs",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "dev": "nodemon --legacy-watch --watch src --ext ts --exec ts-node src/server.ts",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/server.js",
