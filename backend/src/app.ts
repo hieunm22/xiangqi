@@ -11,6 +11,13 @@ const app = express()
 const rawOrigins = process.env.CORS_ORIGINS ?? "http://localhost:3001"
 const allowedOrigins = rawOrigins.split(",").map(o => o.trim()).filter(Boolean)
 
+// Allow Swagger UI (same host as the API server) to make requests
+const port = process.env.PORT ?? "8000"
+const swaggerOrigin = `http://localhost:${port}`
+if (!allowedOrigins.includes(swaggerOrigin)) {
+	allowedOrigins.push(swaggerOrigin)
+}
+
 app.use(
 	cors({
 		origin: (requestOrigin, callback) => {

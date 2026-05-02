@@ -17,7 +17,7 @@ const redis = new Redis({
  * @swagger
  * /api/auth/validate-token:
  *   post:
- *     summary: Validate the access token from the xiangqi-token header
+ *     summary: Validate the access token from the request header
  *     tags:
  *       - Auth
  *     parameters:

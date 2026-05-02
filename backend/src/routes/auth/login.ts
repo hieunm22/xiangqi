@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express"
 import crypto from "crypto"
+import multer from "multer"
 import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import prisma from "../../prisma"
@@ -10,6 +11,7 @@ import {
 } from "../../types/auth.type"
 
 const router = Router()
+const upload = multer()
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
@@ -37,6 +39,7 @@ const redis = new Redis({
  *               - username
  *               - password
  *               - timezoneOffset
+ *               - deviceName
  *             properties:
  *               username:
  *                 type: string
@@ -69,7 +72,7 @@ const redis = new Redis({
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/login", async (req: Request, res: Response) => {
+router.post("/auth/login", upload.none(), async (req: Request, res: Response) => {
 	const {
     username,
     password,

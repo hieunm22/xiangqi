@@ -16,6 +16,7 @@ destroy:
 	docker image rm xiangqi-api
 
 docker:
+	rm -rf dist
 	npx prisma generate
 	yarn build
 	cp -r src/generated dist/
