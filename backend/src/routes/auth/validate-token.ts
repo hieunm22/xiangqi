@@ -20,13 +20,9 @@ const redis = new Redis({
  *     summary: Validate the access token from the request header
  *     tags:
  *       - Auth
- *     parameters:
- *       - in: header
- *         name: xiangqi-token
- *         required: true
- *         schema:
- *           type: string
- *         description: JWT access token
+ *     security:
+ *       - basicAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Token is valid
@@ -36,7 +32,8 @@ const redis = new Redis({
  *         description: Internal server error
  */
 router.post("/auth/validate-token", async (req: Request, res: Response) => {
-	const token = req.headers["xiangqi-token"] as string | undefined
+	const authHeader = req.headers.authorization
+	const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined
 
 	if (!token?.trim()) {
 		res.status(401).json({ success: false, message: "Token not provided", status_code: 401 })

@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express"
+import { Request, Response, Router, urlencoded } from "express"
 import crypto from "crypto"
 import multer from "multer"
 import Redis from "ioredis"
@@ -29,6 +29,7 @@ const redis = new Redis({
  *     summary: Authenticate user
  *     tags:
  *       - Auth
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
@@ -65,14 +66,27 @@ const redis = new Redis({
  *                   type: integer
  *                 access_token:
  *                   type: string
+ *                   description: JWT token to be used in Authorization header for subsequent requests
  *                 refresh_token:
  *                   type: string
+ *                   description: Refresh token stored in httpOnly cookie and response
+ *                 token_type:
+ *                   type: string
+ *                   example: Bearer
+ *       400:
+ *         description: Bad request (Authorization header attached or missing credentials)
  *       401:
  *         description: Invalid credentials
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/login", upload.none(), async (req: Request, res: Response) => {
+router.post("/auth/login", (req, res, next) => {
+	const contentType = req.headers["content-type"] ?? ""
+	if (contentType.includes("application/x-www-form-urlencoded")) {
+		return urlencoded({ extended: false })(req, res, next)
+	}
+	return upload.none()(req, res, next)
+}, async (req: Request, res: Response) => {
 	const {
     username,
     password,
@@ -149,7 +163,14 @@ router.post("/auth/login", upload.none(), async (req: Request, res: Response) =>
 		const refresh_token = crypto.randomUUID()
 		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
 		await redis.set(`refresh-token:${user.id}:${sessionId}`, refresh_token, "EX", 30 * 24 * 60 * 60)
-		
+
+		res.cookie("refresh-token", refresh_token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in ms
+		})
+
 		res.status(200).json({
 			success: true,
 			message: "Login successful",

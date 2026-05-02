@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
     networks:
       - xiangqi-network
-  # docker run -d --name xiangqi-postgres --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -p 5432:5432 -v ./database/.postgres:/var/lib/postgresql/data postgres:17
+  # docker run -ditp 5432:5432 --name xiangqi-postgres --restart unless-stopped --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -v ./database/.postgres:/var/lib/postgresql/data postgres:17
 
   # cache:
   #   container_name: xiangqi-cache

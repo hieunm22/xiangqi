@@ -13,6 +13,30 @@ const options: Options = {
 				url: "http://localhost:8000",
 				description: "Local development server"
 			}
+		],
+		components: {
+			securitySchemes: {
+				basicAuth: {
+					type: "oauth2",
+					flows: {
+						password: {
+							tokenUrl: "/api/auth/login",
+							scopes: {}
+						}
+					},
+					"x-tokenName": "access_token"
+				},
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+					description: "JWT access token from login endpoint"
+				}
+			}
+		},
+		security: [
+			{ basicAuth: [] },
+			{ bearerAuth: [] }
 		]
 	},
 	apis: [
