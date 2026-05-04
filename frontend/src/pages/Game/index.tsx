@@ -6,9 +6,9 @@ import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import useHomeHook from "./hook"
 import { Piece } from "types/GameState"
-import "./Home.scss"
+import "./Game.scss"
 
-export default function HomePage() {
+export default function GamePage() {
 	const {
 		state,
 

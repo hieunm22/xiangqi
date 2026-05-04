@@ -25,12 +25,14 @@ import i18n from "locales/i18n"
 import {
 	COUNTRIES_DROPDOWN,
 	LS_DARKMODE,
-	LS_LANGUAGE
+	LS_LANGUAGE,
+	LS_TOKEN_KEY
 } from "common/constant"
 import { TI, TTypography } from "components/TranslationTag"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
-import { initNewGame } from "common/helper"
+import { getToken, initNewGame } from "common/helper"
 import useToolkit from "hooks/useToolkit"
+import { useAPI } from "hooks/useAPI"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
@@ -45,6 +47,7 @@ export default function Layout() {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [openSettings, setOpenSettings] = useState(false)
 	const navigate = useNavigate()
+	const { logout } = useAPI()
 	const { state, dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -84,7 +87,20 @@ export default function Layout() {
 		}
 	}
 
-	const logout = () => navigate("/login")
+	const logoutClick = async () => {
+		const token = getToken()
+
+		try {
+			if (token) {
+				await logout(token)
+			}
+		} catch (error) {
+			console.error("Logout failed:", error)
+		} finally {
+			localStorage.removeItem(LS_TOKEN_KEY)
+			navigate("/login")
+		}
+	}
 
 	const textCenterStyle = {
 		display: "flex",
@@ -103,10 +119,11 @@ export default function Layout() {
 		dispatch(setGameState(init))
 	}
 
+	const userImage = `https://clf.hieunm.io.vn/images/1_5.jpg`
+
 	const menuItems = [
-		{ text: "menu.home", icon: "fa-home", click: () => navigate("/") },
-		{ text: "menu.users", icon: "fa-users", click: () => navigate("/users"), disabled: true },
-		{ text: "menu.analytics", icon: "fa-chart-mixed", click: () => navigate("/analytics"), disabled: true },
+		{ text: "menu.home", icon: "fa-home", click: () => navigate("/dashboard") },
+		{ text: "menu.profile", image: userImage, click: () => navigate("/profile?id=1") },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
 		...(!isMobile ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
 	]
@@ -132,8 +149,9 @@ export default function Layout() {
 			<List>
 				{menuItems.map(item => (
 					<ListItem key={item.text} disablePadding>
-						<ListItemButton onClick={item.click} disabled={item.disabled}>
-							<TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />
+						<ListItemButton onClick={item.click}>
+							{item.icon && <TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />}
+							{item.image && <img className="menu-profile" src={item.image} alt={item.text} width={30} height={30} />}
 							{drawerOpen && <TTypography content={item.text} sx={{ fontSize: 14 }} />}
 						</ListItemButton>
 					</ListItem>
@@ -144,7 +162,7 @@ export default function Layout() {
 
 			<List>
 				<ListItem disablePadding>
-					<ListItemButton onClick={logout}>
+					<ListItemButton onClick={logoutClick}>
 						<i className="fas fa-right-from-bracket" />
 						{drawerOpen && <TTypography content="menu.logout" sx={{ fontSize: 14, ml: 1 }} />}
 					</ListItemButton>

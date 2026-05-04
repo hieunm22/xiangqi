@@ -16,9 +16,14 @@
 		},
 		"app-name": "Cờ tướng",
 		"home": "Trang chủ",
-		"users": "Người dùng",
+		"profile": "Trang cá nhân",
 		"analytics": "Phân tích",
 		"logout": "Đăng xuất"
+	},
+	"dashboard": {
+		"page": {
+			"title": "Danh sách bàn game"
+		}
 	},
 	"settings": {
 		"header": "Cài đặt",
@@ -47,6 +52,9 @@
 		}
 	},
 	"login": {
+		"page": {
+			"title": "Đăng nhập"
+		},
 		"form": {
 			"title": "Đăng nhập",
 			"error1": "Đăng nhập không thành công. Hãy kiểm tra lại",
@@ -66,5 +74,11 @@
 			"show": "Hiện mật khẩu",
 			"hide": "Ẩn mật khẩu"
 		}
+	},
+	"notfound": {
+		"title": "Trang không tìm thấy",
+		"description": "Trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.",
+		"home": "Về trang chủ",
+		"back": "Quay lại"
 	}
 }

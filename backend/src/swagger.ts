@@ -1,21 +1,51 @@
 import swaggerJsdoc, { Options } from "swagger-jsdoc"
 
+const apiHost = process.env.API_HOST || "http://localhost:8000"
+
 const options: Options = {
 	definition: {
 		openapi: "3.0.3",
 		info: {
-			title: "Chess API",
+			title: "Xiangqi API",
 			version: "1.0.0",
-			description: "Backend API documentation for Chess project"
+			description: "Backend API documentation for Xiangqi project"
 		},
 		servers: [
 			{
-				url: "http://localhost:5000",
-				description: "Local development server"
+				url: apiHost,
+				description: process.env.NODE_ENV === "production" ? "Production server" : "Local development server"
 			}
+		],
+		components: {
+			securitySchemes: {
+				basicAuth: {
+					type: "oauth2",
+					flows: {
+						password: {
+							tokenUrl: "/api/auth/login",
+							scopes: {}
+						}
+					},
+					"x-tokenName": "access_token"
+				},
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+					description: "JWT access token from login endpoint"
+				}
+			}
+		},
+		security: [
+			{ basicAuth: [] },
+			{ bearerAuth: [] }
 		]
 	},
-	apis: ["./src/routes/*.ts", "./dist/routes/*.js"]
+	apis: [
+		process.env.NODE_ENV === "production"
+			? "./dist/routes/**/*.js"
+			: "./src/routes/**/*.ts"
+	]
 }
 
 const swaggerSpec = swaggerJsdoc(options)

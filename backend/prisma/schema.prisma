@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["auth"]
+}
+
+model User {
+  id           BigInt  @id @default(autoincrement())
+  user_name    String  @unique @db.VarChar(50)
+  password     String  @db.VarChar(36)
+  email        String  @unique @db.VarChar(255)
+  avatar_seq   Int     @default(0)
+  display_name String  @db.Text
+  gender       Boolean
+
+  @@map("users")
+  @@schema("auth")
+}

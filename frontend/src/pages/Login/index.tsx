@@ -1,22 +1,25 @@
-import { FormEvent, useState } from "react"
+import { SubmitEvent, useEffect, useState } from "react"
 import classnames from "classnames"
 import {
 	Alert,
 	Box,
 	Button,
 	CircularProgress,
-	InputAdornment,
 	Link,
 	Paper,
-	Stack,
-	Typography
+	Stack
 } from "@mui/material"
-import { Link as RouterLink } from "react-router-dom"
-import { TI, TTextField } from "components/TranslationTag"
+import { Link as RouterLink, useNavigate } from "react-router-dom"
+import { LS_TOKEN_KEY } from "common/constant"
+import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
+import useAutoTitle from "hooks/useAutoTitle"
+import { useAPI } from "hooks/useAPI"
+import { LoginSuccessResponse } from "./types"
 import "./Login.scss"
 
 export default function LoginPage() {
+	useAutoTitle(translate("login.page.title"))
 	const [username, setUsername] = useState("")
 	const [password, setPassword] = useState("")
 	const [userNameError, setUsernameError] = useState<string | null>(null)
@@ -25,6 +28,16 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
+	const { login } = useAPI()
+	const navigate = useNavigate()
+
+	useEffect(() => {
+		// is this check development environment correct?
+		if (import.meta.env.DEV) {
+			setUsername("1")
+			setPassword("1")
+		}
+	}, [])
 
 	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUsername(event.target.value)
@@ -40,38 +53,41 @@ export default function LoginPage() {
 		}
 	}
 
-	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError(null)
 		setMessage(null)
 		setLoading(true)
 		if (!username.trim()) {
 			setUsernameError(translate("login.username.error1"))
+			setLoading(false)
 			return
 		}
 		if (!password.trim()) {
 			setPasswordError(translate("login.password.error1"))
+			setLoading(false)
 			return
 		}
 
 		try {
-			// TODO: Replace with the real authentication endpoint and token/session handling.
-			const response = await fetch("/api/login", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({ username, password })
+			const response: LoginSuccessResponse = await login({
+				username,
+				password,
+				deviceName: navigator.userAgent,
+				timezoneOffset: new Date().getTimezoneOffset() / -60
 			})
-
-			if (!response.ok) {
-				throw new Error(translate("login.form.error1"))
+			if (!response.success) {
+				throw new Error(translate(response.message || "login.form.error1"))
 			}
 
-			setMessage(translate("login.form.success"))
+			setMessage(translate(response.message || "login.form.success"))
+			localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+			navigate("/dashboard")
 		} catch (submitError) {
-			const submitMessage =
-				submitError instanceof Error ? submitError.message : "Unexpected error while logging in."
+			setLoading(false)
+			const submitMessage = submitError instanceof Error
+				? translate(submitError.message)
+				: translate("login.form.unexpected-error")
 			setError(submitMessage)
 		} finally {
 			setLoading(false)
@@ -93,12 +109,14 @@ export default function LoginPage() {
 				justifyContent: "center",
 			}}
 		>
-			<Paper elevation={4} sx={{ width: "100%", maxWidth: 450, p: 4, borderRadius: 3 }}>
-				<Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-					<Typography variant="h5" component="h1" fontWeight={700}>
-						{translate("login.form.title")}
-					</Typography>
-
+			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
+					<TTypography
+						variant="h5"
+						component="h1"
+						fontWeight={700}
+						content="login.form.title"
+					/>
 					<TTextField
 						label="login.username.label"
 						placeholder="login.username.placeholder"
@@ -113,9 +131,7 @@ export default function LoginPage() {
 						slotProps={{
 							input: {
 								startAdornment: (
-									<InputAdornment position="start">
-										<i className="fas fa-user" />
-									</InputAdornment>
+									<i className="fas fa-user start-icon" />
 								)
 							}
 						}}
@@ -135,18 +151,14 @@ export default function LoginPage() {
 						slotProps={{
 							input: {
 								startAdornment: (
-									<InputAdornment position="start">
-										<i className="fas fa-lock" />
-									</InputAdornment>
+									<i className="fas fa-lock start-icon" />
 								),
 								endAdornment: (
-									<InputAdornment position="end">
-										<TI
-											className={eyeIconClass}
-											title={showPassword ? "login.password.hide" : "login.password.show"}
-											onClick={() => setShowPassword(prev => !prev)}
-										/>
-									</InputAdornment>
+									<TI
+										className={eyeIconClass}
+										title={showPassword ? "login.password.hide" : "login.password.show"}
+										onClick={() => setShowPassword(prev => !prev)}
+									/>
 								)
 							}
 						}}

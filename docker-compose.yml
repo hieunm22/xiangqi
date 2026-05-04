@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: xiangqi-postgres
+    environment:
+      POSTGRES_DB: xiangqi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "<database_password>"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /Users/macbook/projects/hieunm/.postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - xiangqi-network
+  # docker run -ditp 5432:5432 --name xiangqi-postgres --restart unless-stopped --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -v ./database/.postgres:/var/lib/postgresql/data postgres:17
+
+  # cache:
+  #   container_name: xiangqi-cache
+  #   image: redis:8.2
+  #   ports:
+  #     - "6379:6379"
+  #   restart: "unless-stopped"
+  #   networks:
+  #     - xiangqi-network
+  # # docker run --name xiangqi-cache -ditp 6379:6379 --network xiangqi-network --restart unless-stopped redis:8.2
+
+  backend:
+    container_name: xiangqi-api
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env.local
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - xiangqi-network
+  # run this command in the backend directory to build and run the container
+  # docker run -ditp 5001:8000 --env-file ./.env.local --network xiangqi-network --name xiangqi-api xiangqi-api
+
+networks:
+  xiangqi-network:
+    driver: bridge

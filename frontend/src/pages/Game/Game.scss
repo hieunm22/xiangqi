@@ -328,10 +328,17 @@
 	font-size: 16px;
 	line-height: 1.2;
 	font-weight: 600;
-	color: #40210f;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+
+	.player-info-card.team-red & {
+		color: red;
+	}
+
+	.player-info-card.team-black & {
+		color: black;
+	}
 }
 
 .player-general {

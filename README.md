@@ -83,7 +83,7 @@ npm install
 npm run dev
 ```
 
-The frontend dev server starts at **http://localhost:3001**.
+The frontend dev server starts at **http://localhost:3004**.
 
 ### Build for Production
 

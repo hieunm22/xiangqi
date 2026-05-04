@@ -1,24 +1,74 @@
 import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	BOARD_COLUMNS,
 	LS_BOARD,
 	LS_CAPTURED_PIECES,
+	LS_TOKEN_KEY,
 	LS_TURN
 } from "common/constant"
 import { openAlert } from "components/AlertProvider"
 import { openConfirm } from "components/ConfirmProvider"
-import { getAvailableMoves, initNewGame, isGeneralInCheck } from "common/helper"
+import {
+  getAvailableMoves,
+  getToken,
+  initNewGame,
+  isGeneralInCheck
+} from "common/helper"
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
+import { useAPI } from "hooks/useAPI"
 import { Team } from "types/GameState"
 
 const useHomeHook = () => {
 	useAutoTitle("page.home.title")
 	const { state, dispatch } = useGameToolkit()
+	const { validateToken, refreshToken, logout } = useAPI()
+	const navigate = useNavigate()
 	const getStoredTurn = () => (localStorage.getItem(LS_TURN) as Team) || "red"
+
+	useEffect(() => {
+		const checkAuth = async () => {
+			const token = getToken()
+			if (!token) {
+				localStorage.removeItem(LS_TOKEN_KEY)
+				navigate("/login")
+				return
+			}
+
+			const validateResponse = await validateToken(token)
+			if (validateResponse?.success) {
+				return
+			}
+
+			console.warn("Token validation failed", {
+				reason: validateResponse?.reason || "unknown",
+				message: validateResponse?.message || "No message"
+			})
+
+			if (validateResponse?.reason === "expired") {
+				const refreshResponse = await refreshToken(token)
+				if (refreshResponse?.success && refreshResponse?.access_token) {
+					localStorage.setItem(LS_TOKEN_KEY, refreshResponse.access_token)
+					return
+				}
+				// Refresh failed — session is from gone server-side, just clear local state
+				localStorage.removeItem(LS_TOKEN_KEY)
+				navigate("/login")
+				return
+			}
+
+			// Token is invalid (not expired) — call logout to clean up any server-side session
+			await logout(token)
+			localStorage.removeItem(LS_TOKEN_KEY)
+			navigate("/login")
+		}
+
+		checkAuth()
+	}, [navigate])
 	
 	useEffect(() => {
 		const currentTurn = getStoredTurn()
@@ -92,7 +142,7 @@ const useHomeHook = () => {
 		const gameStateClone = [...state.board]
 		const selectedId = state.selected!
 		const targetId = gameStateClone[selectedId]!.animateTo
-    if (targetId === undefined) return
+		if (targetId === undefined) return
 		const oldTarget = gameStateClone[targetId]
 		const movedTeam = gameStateClone[selectedId]!.team
 

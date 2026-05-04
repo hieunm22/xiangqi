@@ -16,9 +16,14 @@
 		},
 		"app-name": "Xiangqi",
 		"home": "Home",
-		"users": "Users",
+		"profile": "Profile",
 		"analytics": "Analytic",
 		"logout": "Logout"
+	},
+	"dashboard": {
+		"page": {
+			"title": "Dashboard"
+		}
 	},
 	"settings": {
 		"header": "Settings",
@@ -47,6 +52,9 @@
 		}
 	},
 	"login": {
+		"page": {
+			"title": "Login"
+		},
 		"form": {
 			"title": "Login",
 			"error1": "Login failed. Please check your credentials ",
@@ -66,5 +74,11 @@
 			"show": "Show password",
 			"hide": "Hide password"
 		}
+	},
+	"notfound": {
+		"title": "Page Not Found",
+		"description": "The page you are looking for does not exist or has been moved.",
+		"home": "Go to Home",
+		"back": "Go Back"
 	}
 }
