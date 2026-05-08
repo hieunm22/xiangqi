@@ -1,8 +1,9 @@
 import { ChangeEvent, useEffect, useState } from "react"
-import { Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import classnames from "classnames"
 import {
 	AppBar,
+	Avatar,
 	Box,
 	Button,
 	CssBaseline,
@@ -16,6 +17,8 @@ import {
 	List,
 	ListItem,
 	ListItemButton,
+	Menu,
+	MenuItem,
 	Switch,
 	Toolbar,
 	useMediaQuery,
@@ -24,13 +27,15 @@ import {
 import i18n from "locales/i18n"
 import {
 	COUNTRIES_DROPDOWN,
+	HOME_PATH,
+	LOGIN_PATH,
 	LS_DARKMODE,
 	LS_LANGUAGE,
 	LS_TOKEN_KEY
 } from "common/constant"
 import { TI, TTypography } from "components/TranslationTag"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
-import { getToken, initNewGame } from "common/helper"
+import { decodePayload, getToken, initNewGame, requireImage } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import { useAPI } from "hooks/useAPI"
 import { setDarkMode } from "toolkit/slice/home"
@@ -46,8 +51,12 @@ export default function Layout() {
 	const [language, setLanguage] = useState("en")
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [openSettings, setOpenSettings] = useState(false)
+	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
+	const [userDisplayName, setUserDisplayName] = useState("")
+	const [userImage, setUserImage] = useState("")
 	const navigate = useNavigate()
-	const { logout } = useAPI()
+	const location = useLocation()
+	const { logout, getUserById } = useAPI()
 	const { state, dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -66,6 +75,27 @@ export default function Layout() {
 	useEffect(() => {
 		const isDarkMode = localStorage.getItem(LS_DARKMODE) === "dark"
 		setDarkModeAction(isDarkMode)
+	}, [])
+
+	useEffect(() => {
+		const getUserInfo = async () => {
+			const token = getToken()
+			const claims = decodePayload(token)
+			if (!claims?.sub) return
+
+			const user = await getUserById(claims.sub)
+			if (!user?.data) return
+			const { id, display_name, avatar_seq } = user.data
+			const avatarPath = avatar_seq === 0
+				? `/images/${id}.jpg`
+				: `/images/${id}_${avatar_seq}.jpg`
+
+			const avatar = requireImage(avatarPath)
+			setUserImage(avatar)
+			setUserDisplayName(display_name)
+		}
+
+		getUserInfo()
 	}, [])
 
 	const onChangeLanguage = (e: any) => {
@@ -98,7 +128,7 @@ export default function Layout() {
 			console.error("Logout failed:", error)
 		} finally {
 			localStorage.removeItem(LS_TOKEN_KEY)
-			navigate("/login")
+			navigate(LOGIN_PATH)
 		}
 	}
 
@@ -119,13 +149,27 @@ export default function Layout() {
 		dispatch(setGameState(init))
 	}
 
-	const userImage = `https://clf.hieunm.io.vn/images/1_5.jpg`
+	const displayName = userDisplayName
+	const userMenuOpen = Boolean(userMenuAnchor)
 
+	const handleOpenUserMenu = (e: React.MouseEvent<HTMLElement>) => {
+		setUserMenuAnchor(e.currentTarget)
+	}
+
+	const handleCloseUserMenu = () => {
+		setUserMenuAnchor(null)
+	}
+
+	const handleGoProfile = () => {
+		navigate("/profile?id=1")
+		handleCloseUserMenu()
+	}
+
+	const showRestart = !isMobile && location.pathname.startsWith("/game")
 	const menuItems = [
-		{ text: "menu.home", icon: "fa-home", click: () => navigate("/dashboard") },
-		{ text: "menu.profile", image: userImage, click: () => navigate("/profile?id=1") },
+		{ text: "menu.home", icon: "fa-home", click: () => navigate(HOME_PATH) },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		...(!isMobile ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
+		...(showRestart ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -150,8 +194,7 @@ export default function Layout() {
 				{menuItems.map(item => (
 					<ListItem key={item.text} disablePadding>
 						<ListItemButton onClick={item.click}>
-							{item.icon && <TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />}
-							{item.image && <img className="menu-profile" src={item.image} alt={item.text} width={30} height={30} />}
+							<TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />
 							{drawerOpen && <TTypography content={item.text} sx={{ fontSize: 14 }} />}
 						</ListItemButton>
 					</ListItem>
@@ -176,15 +219,93 @@ export default function Layout() {
 		<Box sx={{ display: "flex" }}>
 			<CssBaseline />
 
+			<Box
+				sx={{
+					position: "fixed",
+					top: 12,
+					right: 12,
+					zIndex: theme.zIndex.appBar + 2,
+					display: { xs: "none", sm: "block" }
+				}}
+			>
+				<Button
+					onClick={handleOpenUserMenu}
+					variant="outlined"
+					size="small"
+					sx={{
+						textTransform: "none",
+						display: "flex",
+						gap: 1,
+						borderRadius: 2,
+						backgroundColor: "background.paper",
+						boxShadow: 1,
+						pl: 1,
+						pr: 1.5
+					}}
+				>
+					<Avatar src={userImage} alt={displayName} sx={{ width: 28, height: 28 }} />
+					<span>{displayName}</span>
+				</Button>
+
+				<Menu
+					anchorEl={userMenuAnchor}
+					open={userMenuOpen}
+					onClose={handleCloseUserMenu}
+					anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+					transformOrigin={{ vertical: "top", horizontal: "right" }}
+					slotProps={{
+						paper: {
+							sx: {
+								minWidth: userMenuAnchor?.offsetWidth,
+								width: "max-content",
+								mt: "3px"
+							}
+						},
+						list: { dense: true, sx: { left: 1, py: 0.5 } }
+					}}
+				>
+					<MenuItem onClick={handleGoProfile} sx={{ gap: 1 }}>
+						<i className="fas fa-user fsx-14" />
+						{translate("menu.profile")}
+					</MenuItem>
+					<Divider />
+					<MenuItem onClick={logoutClick} sx={{ gap: 1 }}>
+						<i className="fas fa-right-from-bracket fsx-14" />
+						{translate("menu.logout")}
+					</MenuItem>
+				</Menu>
+			</Box>
+
 			{isMobile && <AppBar position="fixed" sx={{ width: "100%" }}>
 				<Toolbar>
 					<IconButton color="inherit" edge="start" onClick={handleMobileToggle} sx={{ mr: 2 }}>
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
-					<IconButton color="inherit" edge="end" onClick={restartGame} aria-label="restart game">
-						<i className="fas fa-rotate" />
-					</IconButton>
+					{location.pathname === "/game" && (
+						<IconButton color="inherit" onClick={restartGame} aria-label="restart game">
+							<i className="fas fa-rotate" />
+						</IconButton>
+					)}
+					<Button
+						onClick={handleOpenUserMenu}
+						variant="outlined"
+						size="small"
+						sx={{
+							textTransform: "none",
+							display: "flex",
+							gap: 1,
+							borderRadius: 2,
+							color: "inherit",
+							borderColor: "rgba(255,255,255,0.5)",
+							pl: 1,
+							pr: 1.5,
+							ml: 1
+						}}
+					>
+						<Avatar src={userImage} alt={displayName} sx={{ width: 24, height: 24 }} />
+						<span>{displayName}</span>
+					</Button>
 				</Toolbar>
 			</AppBar>}
 

@@ -1,11 +1,10 @@
-import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useParams } from "react-router-dom"
 import classnames from "classnames"
 import {
 	BOARD_COLUMNS,
 	LS_BOARD,
 	LS_CAPTURED_PIECES,
-	LS_TOKEN_KEY,
 	LS_TURN
 } from "common/constant"
 import { openAlert } from "components/AlertProvider"
@@ -14,65 +13,56 @@ import {
   getAvailableMoves,
   getToken,
   initNewGame,
-  isGeneralInCheck
+  isGeneralInCheck,
+	requireImage
 } from "common/helper"
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
+import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
-import { useAPI } from "hooks/useAPI"
 import { Team } from "types/GameState"
+import { JoinedUser } from "./types"
 
 const useHomeHook = () => {
 	useAutoTitle("page.home.title")
 	const { state, dispatch } = useGameToolkit()
-	const { validateToken, refreshToken, logout } = useAPI()
-	const navigate = useNavigate()
+	const { joinGame } = useAPI()
 	const getStoredTurn = () => (localStorage.getItem(LS_TURN) as Team) || "red"
+	const [gameStatus, setGameStatus] = useState(1)
+	const [joinedUsers, setJoinedUsers] = useState<JoinedUser[]>([])
+	const { id: gameId } = useParams()
 
 	useEffect(() => {
-		const checkAuth = async () => {
+		const loadCurrentGame = async () => {
 			const token = getToken()
-			if (!token) {
-				localStorage.removeItem(LS_TOKEN_KEY)
-				navigate("/login")
+			if (!token || !gameId) {
 				return
 			}
 
-			const validateResponse = await validateToken(token)
-			if (validateResponse?.success) {
+			const response = await joinGame(token, gameId)
+			if (!response?.success || !response?.data) {
 				return
 			}
 
-			console.warn("Token validation failed", {
-				reason: validateResponse?.reason || "unknown",
-				message: validateResponse?.message || "No message"
-			})
-
-			if (validateResponse?.reason === "expired") {
-				const refreshResponse = await refreshToken(token)
-				if (refreshResponse?.success && refreshResponse?.access_token) {
-					localStorage.setItem(LS_TOKEN_KEY, refreshResponse.access_token)
-					return
-				}
-				// Refresh failed — session is from gone server-side, just clear local state
-				localStorage.removeItem(LS_TOKEN_KEY)
-				navigate("/login")
-				return
-			}
-
-			// Token is invalid (not expired) — call logout to clean up any server-side session
-			await logout(token)
-			localStorage.removeItem(LS_TOKEN_KEY)
-			navigate("/login")
+			setGameStatus(1)
+			setJoinedUsers(
+				(response.data || []).map((user: any) => ({
+					id: Number(user.id),
+					display_name: String(user.display_name || ""),
+					avatar_url: requireImage(user.avatar_url),
+					team: user.team === "red" || user.team === "black" ? user.team : null
+				}))
+			)
 		}
 
-		checkAuth()
-	}, [navigate])
+		loadCurrentGame()
+		// should merge 2 useEffects into 1
+	}, [])
 	
 	useEffect(() => {
 		const currentTurn = getStoredTurn()
-		const savedBoard = localStorage.getItem(LS_BOARD)
+		const savedBoard = localStorage.getItem(LS_BOARD) || "[]"
 		const capturedPieces = localStorage.getItem(LS_CAPTURED_PIECES) || "{\"red\":[],\"black\":[]}"
 		dispatch(setGameState({
 			availableMoves: [],
@@ -209,6 +199,8 @@ const useHomeHook = () => {
 	}
 
 	return {
+		gameStatus,
+		joinedUsers,
 		state,
 
 		markerClass,

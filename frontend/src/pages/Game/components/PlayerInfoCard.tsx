@@ -7,6 +7,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		username,
 		team,
+		avatarUrl,
 		mirrored = false
 	} = props
 	const avatarInitial = username.trim().charAt(0).toUpperCase() || "U"
@@ -22,7 +23,11 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	return (
 		<div className={containerClass}>
 			<div className="player-avatar">
-				{avatarInitial}
+				{avatarUrl ? (
+					<img className="player-avatar-image" src={avatarUrl} alt={username} />
+				) : (
+					avatarInitial
+				)}
 			</div>
 			<div className="player-meta">
 				<div className="player-name">{username}</div>

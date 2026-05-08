@@ -1,6 +1,7 @@
-import { Request, Response, Router } from "express"
+import { Response, Router } from "express"
 import Redis from "ioredis"
 import jwt from "jsonwebtoken"
+import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 import { REFRESH_TOKEN_KEY } from "../../common/constant"
 
 const router = Router()
@@ -45,58 +46,15 @@ const redis = new Redis({
  *       401:
  *         description: Unauthorized
  */
-router.post("/auth/refresh-token", async (req: Request, res: Response) => {
+router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedRequest, res: Response) => {
 	const refreshTokenCookie = req.cookies?.[REFRESH_TOKEN_KEY]
-	const authHeader = req.headers.authorization
+	const userId = req.auth?.userId
+	const sessionId = req.auth?.sessionId
 
 	if (!refreshTokenCookie) {
 		res.status(401).json({
 			success: false,
 			message: "Missing refresh token cookie",
-			status_code: 401,
-			access_token: "",
-			token_type: "Bearer"
-		})
-		return
-	}
-
-	if (!authHeader?.startsWith("Bearer ")) {
-		res.status(401).json({
-			success: false,
-			message: "Missing or invalid Authorization header",
-			status_code: 401,
-			access_token: "",
-			token_type: "Bearer"
-		})
-		return
-	}
-
-	const expiredToken = authHeader.slice(7)
-
-	let payload: jwt.JwtPayload
-	try {
-		payload = jwt.verify(expiredToken, JWT_SECRET, {
-			issuer: JWT_ISSUER,
-			ignoreExpiration: true
-		}) as jwt.JwtPayload
-	} catch {
-		res.status(401).json({
-			success: false,
-			message: "Invalid access token",
-			status_code: 401,
-			access_token: "",
-			token_type: "Bearer"
-		})
-		return
-	}
-
-	const userId = payload.sub
-	const sessionId = payload.jti
-
-	if (!userId || !sessionId) {
-		res.status(401).json({
-			success: false,
-			message: "Invalid token payload",
 			status_code: 401,
 			access_token: "",
 			token_type: "Bearer"
@@ -118,7 +76,8 @@ router.post("/auth/refresh-token", async (req: Request, res: Response) => {
 	}
 
 	// Issue new access token — keep all original payload fields, update only exp
-	const { iat, exp, iss, ...restPayload } = payload
+	const payload = req.auth?.payload
+	const { iat, exp, iss, ...restPayload } = payload || {}
 	const access_token = jwt.sign(restPayload, JWT_SECRET, {
 		expiresIn: "1h",
 		issuer: JWT_ISSUER

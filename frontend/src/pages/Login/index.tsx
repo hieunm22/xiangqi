@@ -10,7 +10,7 @@ import {
 	Stack
 } from "@mui/material"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
-import { LS_TOKEN_KEY } from "common/constant"
+import { HOME_PATH, LS_TOKEN_KEY } from "common/constant"
 import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
 			setMessage(translate(response.message || "login.form.success"))
 			localStorage.setItem(LS_TOKEN_KEY, response.access_token)
-			navigate("/dashboard")
+			navigate(HOME_PATH)
 		} catch (submitError) {
 			setLoading(false)
 			const submitMessage = submitError instanceof Error

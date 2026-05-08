@@ -5,18 +5,46 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["auth"]
+  schemas  = ["auth", "game"]
 }
 
 model User {
-  id           BigInt  @id @default(autoincrement())
-  user_name    String  @unique @db.VarChar(50)
-  password     String  @db.VarChar(36)
-  email        String  @unique @db.VarChar(255)
-  avatar_seq   Int     @default(0)
-  display_name String  @db.Text
+  id           BigInt     @id @default(autoincrement())
+  user_name    String     @unique @db.VarChar(50)
+  password     String     @db.VarChar(36)
+  email        String     @unique @db.VarChar(255)
+  display_name String
   gender       Boolean
+  avatar_seq   Int        @default(0)
+  game_users   GameUser[]
 
   @@map("users")
   @@schema("auth")
+}
+
+model Game {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  status     Int        @db.SmallInt
+  red_first  Boolean    @default(true)
+  bet_amount Int        @default(10)
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at DateTime   @default(now()) @db.Timestamptz(6)
+  game_users GameUser[]
+
+  @@map("games")
+  @@schema("game")
+}
+
+model GameUser {
+  game_id   String   @db.Uuid
+  user_id   BigInt
+  team      String?  @db.VarChar(10)
+  joined_at DateTime @default(now()) @db.Timestamptz(6)
+  games     Game     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([game_id, user_id])
+  @@map("game_users")
+  @@schema("game")
 }

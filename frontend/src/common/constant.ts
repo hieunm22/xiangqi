@@ -39,3 +39,6 @@ export const COUNTRIES_DROPDOWN: DropdownProps[] = [
 	// 	disabled: true
 	// }
 ]
+
+export const HOME_PATH = "/"
+export const LOGIN_PATH = "/login"

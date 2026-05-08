@@ -5,10 +5,13 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --legacy-watch --watch src --ext ts --exec ts-node src/server.ts",
-    "build": "tsc",
+    "build": "tsc && cp -R src/generated dist/",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/server.js",
-    "test": "echo \"No tests configured\""
+    "test": "echo \"No tests configured\"",
+    "migrate:new": "npx prisma migrate dev",
+    "migrate:deploy": "npx prisma migrate deploy",
+    "migrate:export-sql": "npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script > ../database/data.sql"
   },
   "keywords": [],
   "author": "",

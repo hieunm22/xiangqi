@@ -4,10 +4,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock prisma.config.ts ./
 RUN yarn install --frozen-lockfile --production
 
 COPY dist ./dist
+COPY prisma ./prisma
 
 EXPOSE 8000
 

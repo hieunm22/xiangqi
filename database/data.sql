@@ -1,21 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS auth;
-
-CREATE TABLE IF NOT EXISTS auth.users (
-	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	user_name VARCHAR(50) NOT NULL UNIQUE,
-	password VARCHAR(36) NOT NULL,
-	email VARCHAR(255) NOT NULL UNIQUE,
-	avatar_seq INT NOT NULL DEFAULT 0,
-	avatar_url TEXT GENERATED ALWAYS AS (
-		CASE
-			WHEN avatar_seq = 0 THEN '/images/' || id::text || '.jpg'
-			ELSE '/images/' || id::text || '_' || avatar_seq::text || '.jpg'
-		END
-	) STORED,
-	display_name TEXT NOT NULL,
-	gender BOOLEAN NOT NULL
-)
-
 INSERT INTO auth.users (id, user_name, password, email, display_name, gender) OVERRIDING SYSTEM VALUE VALUES
 (1, 'ming.hieu.1312', 'DA7E2532550C01A49F955FDD8F22B7FF', 'hieuami@gmail.com', 'Ming Hieu', true),
 (2, 'thuyhoa.pham.313', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thuyhoapham91@gmail.com', 'Thuy Hoa Pham', false),

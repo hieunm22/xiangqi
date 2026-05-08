@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import {
-	Button,
 	Dialog,
 	DialogContent,
 	DialogTitle,
@@ -8,6 +7,7 @@ import {
 	Grid,
 	Typography
 } from "@mui/material"
+import { TButton } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import { ComponentWithChild } from "types/Common"
 import { ConfirmOptions, InternalHandler, QueueProps } from "./types"
@@ -75,21 +75,18 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 						{translate(current?.options.message && current.options.message)}
 					</Typography>
 					<Grid container justifyContent="center" gap={2}>
-						<Button
-							variant="outlined"
+						<TButton
+							variant="contained"
 							size="small"
+							value="popup.confirm.ok"
 							onClick={onOk}
-						>
-							{translate("popup.confirm.ok")}
-						</Button>
-						<Button
+						/>
+						<TButton
 							variant="outlined"
-							color="inherit"
 							size="small"
+							value="popup.confirm.cancel"
 							onClick={onCancel}
-						>
-							{translate("popup.confirm.cancel")}
-						</Button>
+						/>
 					</Grid>
 				</DialogContent>
 			</Dialog>

@@ -337,3 +337,40 @@ export function getLanguage() {
 export function getToken() {
 	return localStorage.getItem(LS_TOKEN_KEY) || ""
 }
+
+function normalizeBase64Str(encoded: string) {
+	const normalized = encoded.replace("_", "/").replace("-", "+")
+	switch (normalized.length % 4) {
+		case 2:
+			return normalized + "=="
+		case 3:
+			return normalized + "="
+		default:
+			return normalized
+	}
+}
+
+export function requireImage(url: string) {
+	if (!url) {
+		return "https://clf.hieunm.io.vn/public/notfound.png"
+	}
+
+	if (url.startsWith("https://") || url.startsWith("http://")) {
+		return url
+	}
+
+	return `${import.meta.env.VITE_PUBLIC_DISTRIBUTION}${url}`
+}
+
+export function decodePayload(token: string | null) {
+	if (!token) {
+		return null
+	}
+	try {
+		const payload = token.split(".")[1]
+		const decode = atob(normalizeBase64Str(payload))
+		return JSON.parse(decode)
+	} catch (e) {
+		return null
+	}
+}

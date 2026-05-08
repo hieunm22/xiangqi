@@ -18,11 +18,36 @@
 		"home": "Trang chủ",
 		"profile": "Trang cá nhân",
 		"analytics": "Phân tích",
-		"logout": "Đăng xuất"
+		"logout": "Đăng xuất",
+		"games": "Trò chơi"
 	},
 	"dashboard": {
 		"page": {
 			"title": "Danh sách bàn game"
+		},
+		"filters": {
+			"all": "Tất cả",
+			"available": "Chờ",
+			"playing": "Đang chơi"
+		},
+		"feedback": {
+			"empty": "Không có bàn chơi phù hợp với bộ lọc đã chọn.",
+			"error": "Không tải được danh sách bàn chơi.",
+			"result-count": "Tìm thấy {{count}} bàn chơi"
+		},
+		"game": {
+			"id": "Mã bàn"
+		},
+		"status": {
+			"unknown": "Không xác định"
+		},
+		"popup": {
+			"title": "Tạo bàn mới",
+			"piece-selection": "Chọn quân",
+			"red-first": "Đỏ tiên",
+			"bet-amount": "Giá trị cược",
+			"game-name-label": "Tên bàn chơi",
+			"game-name-helptext": "không được để trống"
 		}
 	},
 	"settings": {
@@ -36,6 +61,7 @@
 			"title": "Cảnh báo"
 		},
 		"confirm": {
+			"title": "Xác nhận",
 			"ok": "Ok",
 			"cancel": "Huỷ"
 		}
@@ -46,6 +72,11 @@
 		}
 	},
 	"game": {
+		"actions": {
+			"start-game": "Bắt đầu game",
+			"surrender": "Đầu hàng",
+			"back-home": "Thoát game"
+		},
 		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc",
 			"in-check": "Tướng của bạn đang bị chiếu"
@@ -82,3 +113,4 @@
 		"back": "Quay lại"
 	}
 }
+

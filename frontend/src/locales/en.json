@@ -18,11 +18,36 @@
 		"home": "Home",
 		"profile": "Profile",
 		"analytics": "Analytic",
-		"logout": "Logout"
+		"logout": "Logout",
+		"games": "Games"
 	},
 	"dashboard": {
 		"page": {
 			"title": "Dashboard"
+		},
+		"filters": {
+			"all": "All",
+			"available": "Available",
+			"playing": "Playing"
+		},
+		"feedback": {
+			"empty": "No game tables match the selected filter.",
+			"error": "Unable to load game tables.",
+			"result-count": "Found {{count}} tables"
+		},
+		"game": {
+			"id": "Board ID"
+		},
+		"status": {
+			"unknown": "Unknown"
+		},
+		"popup": {
+			"title": "Create new game",
+			"piece-selection": "Select team",
+			"red-first": "Red first",
+			"bet-amount": "Bet amount",
+			"game-name-label": "Game table name",
+			"game-name-helptext": "is required"
 		}
 	},
 	"settings": {
@@ -36,6 +61,7 @@
 			"title": "Warning"
 		},
 		"confirm": {
+			"title": "Confirm",
 			"ok": "Ok",
 			"cancel": "Cancel"
 		}
@@ -46,6 +72,11 @@
 		}
 	},
 	"game": {
+		"actions": {
+			"start-game": "Start game",
+			"surrender": "Surrender",
+			"back-home": "Back to home"
+		},
 		"general": {
 			"captured": "General has been captured. Game over",
 			"in-check": "Your general is under attack"
@@ -82,3 +113,4 @@
 		"back": "Go Back"
 	}
 }
+

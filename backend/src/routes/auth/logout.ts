@@ -1,7 +1,8 @@
-import { Request, Response, Router } from "express"
+import { Response, Router } from "express"
 import Redis from "ioredis"
-import jwt from "jsonwebtoken"
+import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "../../common/constant"
+import prisma from "../../prisma"
 
 const router = Router()
 
@@ -29,33 +30,20 @@ const redis = new Redis({
  *       500:
  *         description: Internal server error
  */
-router.delete("/auth/logout", async (req: Request, res: Response) => {
-	const authHeader = req.headers.authorization
-
-	if (!authHeader?.startsWith("Bearer ")) {
-		res.status(401).json({
-			success: false,
-			message: "Missing or invalid Authorization header",
-			status_code: 401
-		})
-		return
-	}
-
-	const token = authHeader.slice(7)
-	const payload = jwt.decode(token) as jwt.JwtPayload | null
-	const userId = payload?.sub
-	const sessionId = payload?.jti
-
-	if (!userId || !sessionId) {
-		res.status(401).json({
-			success: false,
-			message: "Invalid token payload",
-			status_code: 401
-		})
-		return
-	}
+router.delete("/auth/logout", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+	const userId = req.auth?.userId
+	const sessionId = req.auth?.sessionId
 
 	try {
+		// delete user from all games they are participating in
+		if (userId) {
+			await prisma.gameUser.deleteMany({
+				where: {
+					user_id: Number(userId)
+				}
+			})
+		}
+
 		const loginSessionKey = `${LOGIN_SESSION_KEY}:${userId}:${sessionId}`
 		const refreshTokenKey = `${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`
 		const sessionExists = await redis.exists(loginSessionKey)

@@ -4,10 +4,18 @@ import swaggerSpec from "./swagger"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
-import authRoutes from "./routes/auth/login"
-import validateTokenRoutes from "./routes/auth/validate-token"
-import refreshTokenRoutes from "./routes/auth/refresh-token"
+import getUsersRoutes from "./routes/auth/get-user"
+import loginRoutes from "./routes/auth/login"
 import logoutRoutes from "./routes/auth/logout"
+import refreshTokenRoutes from "./routes/auth/refresh-token"
+import validateTokenRoutes from "./routes/auth/validate-token"
+
+import createGameRoutes from "./routes/game/create-game"
+import fetchGamesRoutes from "./routes/game/fetch-games"
+import joinGameRoutes from "./routes/game/join-game"
+import leaveGameRoutes from "./routes/game/leave-game"
+import loadGameRoutes from "./routes/game/load-game"
+import setGameStatusRoutes from "./routes/game/set-game-status"
 
 const app = express()
 
@@ -41,10 +49,18 @@ app.get("/", (_req: Request, res: Response) => {
 	res.redirect("/docs")
 })
 
-app.use("/api", authRoutes)
+app.use("/api", getUsersRoutes)
+app.use("/api", loginRoutes)
+app.use("/api", logoutRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
-app.use("/api", logoutRoutes)
+
+app.use("/api", createGameRoutes)
+app.use("/api", fetchGamesRoutes)
+app.use("/api", joinGameRoutes)
+app.use("/api", leaveGameRoutes)
+app.use("/api", loadGameRoutes)
+app.use("/api", setGameStatusRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec))

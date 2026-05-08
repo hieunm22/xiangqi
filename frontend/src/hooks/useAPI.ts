@@ -1,18 +1,25 @@
 import { useNavigate } from "react-router-dom"
 import wretch, { WretchOptions } from "wretch"
 import FormDataAddon from "wretch/addons/formData"
-import { LS_TOKEN_KEY } from "common/constant"
+import { LOGIN_PATH, LS_TOKEN_KEY } from "common/constant"
 import { getLanguage, getToken } from "common/helper"
 import { LoginBodyType } from "pages/Login/types"
+import { CreateGameRequest } from "pages/Dashboard/types"
 
 const EP = { // end points
-	// login endpoints
+	// auth endpoints
+	getUser: "/auth/user",
 	login: "/auth/login",
-
+	logout: "/auth/logout",
 	refreshToken: "/auth/refresh-token",
 	validateToken: "/auth/validate-token",
 
-	logout: "/auth/logout",
+	// game endpoints
+	createGame: "/game/create-game",
+	fetchGames: "/game/fetch-games",
+	getGameInfo: "/game/info",
+	joinGame: "/game/join",
+	leaveGame: "/game/leave",
 }
 
 export const useAPI = () => {
@@ -72,11 +79,41 @@ export const useAPI = () => {
 					console.error("Token refresh failed", err)
 					await logout(accessToken)
 					localStorage.removeItem(LS_TOKEN_KEY)
-					navigate("/login")
+					navigate(LOGIN_PATH)
 					throw err
 				}
 			})
 	}
+
+	const createGame = async (token: string, body: CreateGameRequest) => authFetch(EP.createGame)
+							.auth(`Bearer ${token}`)
+							.post(body)
+							.json(createGameCallback)
+							.catch(handleError)
+
+	const getUserById = async (userId: number) => request.url(`${EP.getUser}/${userId}`)
+							.get()
+							.json(getUserCallback)
+							.catch(handleError)
+
+	const getGameById = async (token: string, gameId: string) => authFetch(`${EP.getGameInfo}/${gameId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getGameCallback)
+							.catch(handleError)
+
+	const joinGame = async (token: string, gameId: string) => authFetch(EP.joinGame)
+							.auth(`Bearer ${token}`)
+							.post({ id: gameId })
+							.json(joinGameCallback)
+							.catch(handleError)
+
+	const leaveGame = async (token: string, gameId: string) => authFetch(EP.leaveGame)
+							.auth(`Bearer ${token}`)
+							.json({ id: gameId })
+							.delete()
+							.json(leaveGameCallback)
+							.catch(handleError)
 
 	const login = (form: LoginBodyType) => requestWithCookie.url(EP.login)
 							.addon(FormDataAddon)
@@ -98,10 +135,44 @@ export const useAPI = () => {
 							.catch(handleError)
 
 	const validateToken = (token: string) => requestWithCookie.url(EP.validateToken)
-								.auth(`Bearer ${token}`)
-								.post()
-								.json(validateTokenCallback)
-								.catch(handleError)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(validateTokenCallback)
+							.catch(handleError)
+
+	const fetchGames = async (token: string, status?: number) => {
+		const query = status === undefined ? "" : `?status=${status}`
+
+		return await authFetch(EP.fetchGames + query)
+			.auth(`Bearer ${token}`)
+			.get()
+			.json(fetchGamesCallback)
+			.catch(handleError)
+	}
+
+	const createGameCallback = (response: any) => {
+		return response
+	}
+
+	const fetchGamesCallback = (response: any) => {
+		return response
+	}
+
+	const getGameCallback = (response: any) => {
+		return response
+	}
+
+	const getUserCallback = (response: any) => {
+		return response
+	}
+
+	const joinGameCallback = (response: any) => {
+		return response
+	}
+
+	const leaveGameCallback = (response: any) => {
+		return response
+	}
 
 	const loginCallback = (response: any) => {
 		return response
@@ -138,8 +209,14 @@ export const useAPI = () => {
 	return {
 		authFetch,
 
+		createGame,
+		getGameById,
+		getUserById,
+		joinGame,
+		leaveGame,
 		login,
 		logout,
+		fetchGames,
 		refreshToken,
 		validateToken
 	}

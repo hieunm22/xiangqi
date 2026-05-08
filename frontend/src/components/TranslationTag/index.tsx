@@ -1,5 +1,6 @@
 import { forwardRef } from "react"
 import {
+	Button,
 	TextField,
 	Typography,
 	type TextFieldProps,
@@ -15,7 +16,7 @@ import type {
 	TSpanProps
 } from "./types"
 
-const TButton = forwardRef<HTMLButtonElement, Partial<TButtonProps>>((props, ref) => {
+const TButton = forwardRef<HTMLButtonElement, TButtonProps>((props, ref) => {
 	const translatedProps = {
 		...props,
 		value: typeof props.value === "string" ? t(props.value) : props.value,
@@ -23,9 +24,9 @@ const TButton = forwardRef<HTMLButtonElement, Partial<TButtonProps>>((props, ref
 	}
 
 	return (
-		<button ref={ref} {...translatedProps}>
+		<Button ref={ref} {...translatedProps}>
 			{props.children ?? translatedProps.value}
-		</button>
+		</Button>
 	)
 })
 

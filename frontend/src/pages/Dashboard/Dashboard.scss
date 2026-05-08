@@ -1,0 +1,151 @@
+.dashboard {
+	padding: 24px 16px;
+
+	@media (min-width: 900px) {
+		padding: 24px 32px;
+	}
+
+	&__filter-btn {
+		width: 120px;
+		max-width: 30%;
+		border-radius: 8px !important;
+		padding: 6px 12px !important;
+	}
+
+	&__loading {
+		display: flex;
+		justify-content: center;
+		padding: 8px 0;
+	}
+
+	&__game-card {
+		border-radius: 12px !important;
+		height: 100%;
+		cursor: pointer;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 12px;
+
+		&:hover {
+			opacity: 0.7;
+			background-color: rgba(127, 127, 127, 0.15);
+		}
+
+		&.create {
+			min-height: 132px;
+		}
+	}
+
+	&__create-card-content {
+		height: 100%;
+		min-height: 100px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__create-card-plus {
+		font-size: 48px !important;
+		font-weight: 700 !important;
+		line-height: 1;
+		color: inherit;
+	}
+
+	&__status-chip {
+		align-self: flex-start;
+	}
+
+	&__card-header {
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	&__game-name {
+		flex: 1;
+		min-width: 0;
+		text-align: left;
+	}
+
+	&__game-bet {
+		font-weight: 700 !important;
+		white-space: nowrap;
+	}
+
+	.bet-icon {
+		color: #fbc02d;
+		font-size: 20px;
+	}
+
+	&__status-icon {
+		font-size: 28px;
+		align-self: flex-start;
+
+		&.available {
+			color: #2e7d32;
+		}
+
+		&.playing {
+			color: #e65100;
+		}
+	}
+
+	&__card-meta {
+		min-height: 28px;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	&__avatar-group {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 2px;
+		min-width: 0;
+		max-width: 100%;
+
+		&.primary {
+			gap: 8px;
+ 		}
+
+		&.secondary {
+			min-height: 28px;
+			gap: 0;
+			flex-wrap: wrap;
+			justify-content: flex-start;
+
+			.dashboard__avatar {
+				margin-left: -10px;
+
+				&:first-child {
+					margin-left: 0;
+				}
+			}
+		}
+	}
+
+	&__avatar {
+		width: 28px !important;
+		height: 28px !important;
+		object-fit: cover;
+		border: solid 2px;
+	}
+
+	&__piece-btn.MuiButton-root {
+		min-width: 56px;
+		min-height: 56px;
+		padding: 6px 12px;
+		font-size: 24px;
+		font-weight: 700;
+		border-radius: 50%;
+
+		&:not(.active) {
+			opacity: 0.5;
+		}
+	}
+}
+
+.red-first {
+	margin-left: 0;
+	margin-right: 10px;
+}

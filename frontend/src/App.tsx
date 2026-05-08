@@ -6,7 +6,7 @@ import {
 	ThemeProvider,
 	type PaletteMode
 } from "@mui/material"
-import { LS_DARKMODE } from "common/constant"
+import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
 import ConfirmProvider from "components/ConfirmProvider"
 import Layout from "components/Layout"
@@ -82,7 +82,7 @@ function App() {
 			<CssBaseline />
 			<Routes>
 				<Route element={<LayoutUnAuth />}>
-					<Route path="/login" element={<LoginPage />} />
+					<Route path={LOGIN_PATH} element={<LoginPage />} />
 				</Route>
 				<Route element={<LayoutUnAuth />}>
 					<Route path="/lost-password" element={<LostPasswordPage />} />
@@ -91,10 +91,10 @@ function App() {
 					<Route path="/register" element={<RegisterPage />} />
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/dashboard" element={DashboardPageElement} />
+					<Route path={HOME_PATH} element={DashboardPageElement} />
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/" element={GamePageElement} />
+					<Route path="/game/:id" element={GamePageElement} />
 				</Route>
 			<Route path="*" element={<NotFoundPage />} />
 		</Routes>

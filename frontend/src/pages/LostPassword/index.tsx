@@ -1,5 +1,6 @@
-import { Box, Link, Stack, Typography } from "@mui/material"
 import { Link as RouterLink } from "react-router-dom"
+import { Box, Link, Stack, Typography } from "@mui/material"
+import { LOGIN_PATH } from "common/constant"
 
 export default function LostPasswordPage() {
 	return (
@@ -17,7 +18,7 @@ export default function LostPasswordPage() {
 					Lost Password
 				</Typography>
 				<Typography color="text.secondary">Reset password flow is not implemented yet.</Typography>
-				<Link component={RouterLink} to="/login" underline="hover">
+				<Link component={RouterLink} to={LOGIN_PATH} underline="hover">
 					Back to login
 				</Link>
 			</Stack>

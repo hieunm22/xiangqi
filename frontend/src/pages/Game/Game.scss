@@ -4,6 +4,7 @@
 	--cell-size: 50px;
 	--piece-size: 40px;
 	--river-gap: 30px;
+	--board-padding: 30px;
 	--line-color: #5b2f12;
 	--wood: #deb46f;
 }
@@ -267,10 +268,14 @@
 	}
 }
 
-.player-info-row {
+.player-info-row, .game-action-row {
 	width: calc(var(--board-width) + 2 * var(--board-padding));
 	display: flex;
 	gap: 12px;
+}
+
+.game-action-row {
+	justify-content: space-between;
 }
 
 .player-info-card {
@@ -315,6 +320,14 @@
 	background: linear-gradient(145deg, #8a5a2b, #c38644);
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 	flex: 0 0 auto;
+	overflow: hidden;
+}
+
+.player-avatar-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 
 .player-meta {

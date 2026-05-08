@@ -1,5 +1,12 @@
 import { useNavigate } from "react-router-dom"
-import { Box, Button, Container, Stack, Typography } from "@mui/material"
+import {
+	Box,
+	Button,
+	Container,
+	Stack,
+	Typography
+} from "@mui/material"
+import { HOME_PATH } from "common/constant"
 import useAutoTitle from "hooks/useAutoTitle"
 import { translate } from "locales/translate"
 import "./NotFound.scss"
@@ -26,7 +33,7 @@ export default function NotFoundPage() {
 				</Typography>
 
 				<Stack direction="row" spacing={2} justifyContent="center">
-					<Button variant="contained" size="large" onClick={() => navigate("/dashboard")}>
+					<Button variant="contained" size="large" onClick={() => navigate(HOME_PATH)}>
 						{translate("notfound.home")}
 					</Button>
 					<Button variant="outlined" size="large" onClick={() => navigate(-1)}>
