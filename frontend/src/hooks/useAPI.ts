@@ -3,8 +3,10 @@ import wretch, { WretchOptions } from "wretch"
 import FormDataAddon from "wretch/addons/formData"
 import { LOGIN_PATH, LS_TOKEN_KEY } from "common/constant"
 import { getLanguage, getToken } from "common/helper"
-import { LoginBodyType } from "pages/Login/types"
-import { CreateGameRequest } from "pages/Dashboard/types"
+import { CreateRoomRequest } from "pages/Dashboard/types"
+import { LoginBodyType, LoginSuccessResponse } from "pages/Login/types"
+import { ForgotPasswordBodyType } from "pages/LostPassword/types"
+import { ResetPasswordBodyType } from "pages/ResetPassword/types"
 
 const EP = { // end points
 	// auth endpoints
@@ -12,14 +14,17 @@ const EP = { // end points
 	login: "/auth/login",
 	logout: "/auth/logout",
 	refreshToken: "/auth/refresh-token",
+	register: "/auth/register",
 	validateToken: "/auth/validate-token",
+	forgotPassword: "/auth/forgot-password",
+	resetPassword: "/auth/reset-password",
 
-	// game endpoints
-	createGame: "/game/create-game",
-	fetchGames: "/game/fetch-games",
-	getGameInfo: "/game/info",
-	joinGame: "/game/join",
-	leaveGame: "/game/leave",
+	// room endpoints
+	createRoom: "/room/create-room",
+	fetchRooms: "/room/fetch-rooms",
+	getRoomInfo: "/room/info",
+	joinRoom: "/room/join",
+	leaveRoom: "/room/leave",
 }
 
 export const useAPI = () => {
@@ -48,15 +53,15 @@ export const useAPI = () => {
 	}
 
 	const refreshAccessToken = async (currentToken: string) => {
-		const newAccessToken = await requestWithCookie
+		const response: LoginSuccessResponse = await requestWithCookie
 			.auth(`Bearer ${currentToken}`)
 			.url(EP.refreshToken)
 			.options(wretchOptions)
 			.post() // refresh token should get from cookie from backend
-			.text()
+			.json()
 
-		localStorage.setItem(LS_TOKEN_KEY, newAccessToken)
-		return newAccessToken
+		localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+		return response.access_token
 	}
 
 	const authFetch = (path: string) => {
@@ -85,10 +90,10 @@ export const useAPI = () => {
 			})
 	}
 
-	const createGame = async (token: string, body: CreateGameRequest) => authFetch(EP.createGame)
-							.auth(`Bearer ${token}`)
-							.post(body)
-							.json(createGameCallback)
+const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(EP.createRoom)
+						.auth(`Bearer ${token}`)
+						.post(body)
+						.json(createRoomCallback)
 							.catch(handleError)
 
 	const getUserById = async (userId: number) => request.url(`${EP.getUser}/${userId}`)
@@ -96,23 +101,23 @@ export const useAPI = () => {
 							.json(getUserCallback)
 							.catch(handleError)
 
-	const getGameById = async (token: string, gameId: string) => authFetch(`${EP.getGameInfo}/${gameId}`)
+	const getRoomById = async (token: string, roomId: number) => authFetch(`${EP.getRoomInfo}/${roomId}`)
 							.auth(`Bearer ${token}`)
 							.get()
-							.json(getGameCallback)
+							.json(getRoomCallback)
 							.catch(handleError)
 
-	const joinGame = async (token: string, gameId: string) => authFetch(EP.joinGame)
+	const joinRoom = async (token: string, roomId: number) => authFetch(EP.joinRoom)
 							.auth(`Bearer ${token}`)
-							.post({ id: gameId })
-							.json(joinGameCallback)
+							.post({ id: roomId })
+							.json(joinRoomCallback)
 							.catch(handleError)
 
-	const leaveGame = async (token: string, gameId: string) => authFetch(EP.leaveGame)
+	const leaveRoom = async (token: string, roomId: number) => authFetch(EP.leaveRoom)
 							.auth(`Bearer ${token}`)
-							.json({ id: gameId })
+							.json({ id: roomId })
 							.delete()
-							.json(leaveGameCallback)
+							.json(leaveRoomCallback)
 							.catch(handleError)
 
 	const login = (form: LoginBodyType) => requestWithCookie.url(EP.login)
@@ -121,6 +126,29 @@ export const useAPI = () => {
 							.post()
 							.json(loginCallback)
 							.catch(handleError)
+
+	const register = (form: any) => requestWithCookie.url(EP.register)
+							.json(form)
+							.post()
+							.json(registerCallback)
+							.catch(handleError)
+	const forgotPassword = (form: ForgotPasswordBodyType) => requestWithCookie.url(EP.forgotPassword)
+						.json(form)
+						.post()
+						.json(forgotPasswordCallback)
+						.catch(handleError)
+
+	const resetPasswordValidate = async (userId: number, token: string) => request
+						.url(`${EP.resetPassword}?id=${userId}&token=${token}`)
+						.get()
+						.json(resetPasswordValidateCallback)
+						.catch(handleError)
+
+	const resetPassword = (form: ResetPasswordBodyType) => requestWithCookie.url(EP.resetPassword)
+						.json(form)
+						.post()
+						.json(resetPasswordCallback)
+						.catch(handleError)
 	
 	const logout = (token: string) => requestWithCookie.url(EP.logout)
 							.auth(`Bearer ${token}`)
@@ -140,25 +168,25 @@ export const useAPI = () => {
 							.json(validateTokenCallback)
 							.catch(handleError)
 
-	const fetchGames = async (token: string, status?: number) => {
+	const fetchRooms = async (token: string, status?: number) => {
 		const query = status === undefined ? "" : `?status=${status}`
 
-		return await authFetch(EP.fetchGames + query)
+		return await authFetch(EP.fetchRooms + query)
 			.auth(`Bearer ${token}`)
 			.get()
-			.json(fetchGamesCallback)
+			.json(fetchRoomsCallback)
 			.catch(handleError)
 	}
 
-	const createGameCallback = (response: any) => {
+	const createRoomCallback = (response: any) => {
 		return response
 	}
 
-	const fetchGamesCallback = (response: any) => {
+	const fetchRoomsCallback = (response: any) => {
 		return response
 	}
 
-	const getGameCallback = (response: any) => {
+	const getRoomCallback = (response: any) => {
 		return response
 	}
 
@@ -166,15 +194,31 @@ export const useAPI = () => {
 		return response
 	}
 
-	const joinGameCallback = (response: any) => {
+	const joinRoomCallback = (response: any) => {
 		return response
 	}
 
-	const leaveGameCallback = (response: any) => {
+	const leaveRoomCallback = (response: any) => {
 		return response
 	}
 
 	const loginCallback = (response: any) => {
+		return response
+	}
+
+	const registerCallback = (response: any) => {
+		return response
+	}
+
+	const forgotPasswordCallback = (response: any) => {
+		return response
+	}
+
+	const resetPasswordValidateCallback = (response: any) => {
+		return response
+	}
+
+	const resetPasswordCallback = (response: any) => {
 		return response
 	}
 
@@ -209,14 +253,18 @@ export const useAPI = () => {
 	return {
 		authFetch,
 
-		createGame,
-		getGameById,
+		createRoom,
+		getRoomById,
 		getUserById,
-		joinGame,
-		leaveGame,
+		joinRoom,
+		leaveRoom,
 		login,
 		logout,
-		fetchGames,
+		register,
+		forgotPassword,
+		resetPasswordValidate,
+		resetPassword,
+		fetchRooms,
 		refreshToken,
 		validateToken
 	}

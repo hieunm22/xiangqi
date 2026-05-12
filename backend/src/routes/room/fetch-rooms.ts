@@ -6,11 +6,11 @@ const router = Router()
 
 /**
  * @swagger
- * /api/game/fetch-games:
+ * /api/room/fetch-rooms:
  *   get:
- *     summary: Fetch all games
+ *     summary: Fetch all rooms
  *     tags:
- *       - Game
+ *       - Room
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -20,16 +20,16 @@ const router = Router()
  *         required: false
  *         schema:
  *           type: integer
- *         description: Filter by game status
+ *         description: Filter by room status
  *     responses:
  *       200:
- *         description: Games fetched successfully
+ *         description: Rooms fetched successfully
  *       400:
  *         description: Invalid status query parameter
  *       500:
  *         description: Internal server error
  */
-router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	const statusQuery = req.query.status
 
 	if (
@@ -40,7 +40,7 @@ router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest,
 			success: false,
 			message: "Query parameter 'status' must be an integer",
 			status_code: 400,
-			games: []
+			rooms: []
 		})
 		return
 	}
@@ -48,7 +48,7 @@ router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest,
 	const status = statusQuery !== undefined ? Number(statusQuery) : undefined
 
 	try {
-		const games = await prisma.game.findMany({
+		const rooms = await prisma.room.findMany({
 			...(status !== undefined && { where: { status } }),
 			orderBy: { created_at: "desc" },
 			select: {
@@ -59,7 +59,7 @@ router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest,
 				bet_amount: true,
 				created_at: true,
 				updated_at: true,
-				game_users: {
+				room_users: {
 					orderBy: {
 						joined_at: "asc"
 					},
@@ -76,11 +76,12 @@ router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest,
 			}
 		})
 
-		const formattedGames = games.map(game => {
-			const { game_users, ...rest } = game
+		const formattedRooms = rooms.map(room => {
+			const { room_users, ...rest } = room
 			return {
 				...rest,
-				users: game_users.map(gu => ({
+				id: Number(room.id),
+				users: room_users.map(gu => ({
 					...gu.users,
 					id: Number(gu.users.id),
 					avatar_seq: Number(gu.users.avatar_seq),
@@ -94,17 +95,17 @@ router.get("/game/fetch-games", requireAuth(), async (req: AuthenticatedRequest,
 
 		res.status(200).json({
 			success: true,
-			message: "Fetch games successfully",
+			message: "Fetch rooms successfully",
 			status_code: 200,
-			games: formattedGames
+			rooms: formattedRooms
 		})
 	} catch (err) {
-		console.error("Fetch games error:", err)
+		console.error("Fetch rooms error:", err)
 		res.status(500).json({
 			success: false,
 			message: "Internal server error",
 			status_code: 500,
-			games: []
+			rooms: []
 		})
 	}
 })

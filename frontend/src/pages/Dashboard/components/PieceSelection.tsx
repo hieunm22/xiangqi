@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react"
 import classnames from "classnames"
 import { Button, Stack } from "@mui/material"
-import { pieceSymbolByType } from "pages/Game/constant"
+import { pieceSymbolByType } from "pages/Room/constant"
 import { PieceButtonProps, PieceSelectionContextValue } from "../types"
 
 export const PieceSelectionContext = createContext<PieceSelectionContextValue | null>(null)

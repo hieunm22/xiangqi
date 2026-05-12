@@ -1,16 +1,10 @@
 import { Response, Router } from "express"
-import Redis from "ioredis"
 import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "../../common/constant"
+import redis from "../../common/redis"
 import prisma from "../../prisma"
 
 const router = Router()
-
-const redis = new Redis({
-	host: process.env.REDIS_HOST?.trim() || "localhost",
-	port: Number(process.env.REDIS_PORT) || 6379,
-	db: 4
-})
 
 /**
  * @swagger
@@ -35,9 +29,9 @@ router.delete("/auth/logout", requireAuth(), async (req: AuthenticatedRequest, r
 	const sessionId = req.auth?.sessionId
 
 	try {
-		// delete user from all games they are participating in
+		// delete user from all rooms they are participating in
 		if (userId) {
-			await prisma.gameUser.deleteMany({
+			await prisma.roomUser.deleteMany({
 				where: {
 					user_id: Number(userId)
 				}

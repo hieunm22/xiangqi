@@ -35,7 +35,7 @@
 	}
 }
 
-.game-container {
+.room-container {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
@@ -268,18 +268,18 @@
 	}
 }
 
-.player-info-row, .game-action-row {
+.player-info-row, .room-action-row {
 	width: calc(var(--board-width) + 2 * var(--board-padding));
 	display: flex;
 	gap: 12px;
 }
 
-.game-action-row {
+.room-action-row {
 	justify-content: space-between;
 }
 
 .player-info-card {
-	width: calc((var(--board-width) + 60px - 12px) / 2);
+	width: calc((var(--board-width) + 2 * var(--board-padding) - 12px) / 2);
 	min-height: 72px;
 	display: flex;
 	align-items: center;
@@ -306,6 +306,19 @@
 			align-items: flex-end;
 		}
 	}
+
+	&.empty-slot {
+		justify-content: center;
+		align-items: center;
+		gap: 0;
+		background: #d0d0d0;
+		opacity: 1;
+		box-shadow: none;
+
+		&:hover {
+			opacity: 0.5;
+		}
+	}
 }
 
 .player-avatar {
@@ -321,6 +334,20 @@
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 	flex: 0 0 auto;
 	overflow: hidden;
+
+	&.empty {
+		width: 100%;
+		height: 100%;
+		border-radius: 10px;
+		background: transparent;
+		box-shadow: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 48px;
+		color: #808080;
+		cursor: pointer;
+	}
 }
 
 .player-avatar-image {

@@ -1,9 +1,9 @@
 import { Request, Response, Router, urlencoded } from "express"
 import crypto from "crypto"
 import multer from "multer"
-import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import prisma from "../../prisma"
+import redis from "../../common/redis"
 import {
   LoginRequest,
   LoginSuccessResponse,
@@ -16,12 +16,6 @@ const upload = multer()
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
-
-const redis = new Redis({
-	host: process.env.REDIS_HOST?.trim() || "localhost",
-	port: Number(process.env.REDIS_PORT) || 6379,
-	db: 4
-})
 
 /**
  * @swagger
@@ -163,7 +157,7 @@ router.post("/auth/login", (req, res, next) => {
 		// refresh_token should be a guid id
 		const refresh_token = crypto.randomUUID()
 		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
-		await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", 30 * 24 * 60 * 60)
+		// await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", 30 * 24 * 60 * 60)
 
 		res.cookie(REFRESH_TOKEN_KEY, refresh_token, {
 			httpOnly: true,

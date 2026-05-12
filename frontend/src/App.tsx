@@ -12,9 +12,10 @@ import ConfirmProvider from "components/ConfirmProvider"
 import Layout from "components/Layout"
 import LayoutUnAuth from "components/LayoutUnAuth"
 import Dashboard from "pages/Dashboard"
-import GamePage from "pages/Game"
+import RoomPage from "pages/Room"
 import LoginPage from "pages/Login"
 import LostPasswordPage from "pages/LostPassword"
+import ResetPasswordPage from "pages/ResetPassword"
 import NotFoundPage from "pages/NotFound"
 import RegisterPage from "pages/Register"
 import useToolkit from "hooks/useToolkit"
@@ -69,10 +70,10 @@ function App() {
 		</ConfirmProvider>
 	)
 
-	const GamePageElement = (
+	const RoomPageElement = (
 		<ConfirmProvider>
 			<AlertProvider>
-				<GamePage />
+				<RoomPage />
 			</AlertProvider>
 		</ConfirmProvider>
 	)
@@ -88,16 +89,19 @@ function App() {
 					<Route path="/lost-password" element={<LostPasswordPage />} />
 				</Route>
 				<Route element={<LayoutUnAuth />}>
+					<Route path="/reset-password" element={<ResetPasswordPage />} />
+				</Route>
+				<Route element={<LayoutUnAuth />}>
 					<Route path="/register" element={<RegisterPage />} />
 				</Route>
 				<Route element={<Layout />}>
 					<Route path={HOME_PATH} element={DashboardPageElement} />
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/game/:id" element={GamePageElement} />
+					<Route path="/room/:id" element={RoomPageElement} />
 				</Route>
-			<Route path="*" element={<NotFoundPage />} />
-		</Routes>
+				<Route path="*" element={<NotFoundPage />} />
+			</Routes>
 		</ThemeProvider>
 	)
 }

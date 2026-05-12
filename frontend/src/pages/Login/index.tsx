@@ -1,7 +1,6 @@
 import { SubmitEvent, useEffect, useState } from "react"
 import classnames from "classnames"
 import {
-	Alert,
 	Box,
 	Button,
 	CircularProgress,
@@ -11,6 +10,7 @@ import {
 } from "@mui/material"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 import { HOME_PATH, LS_TOKEN_KEY } from "common/constant"
+import Alert from "components/AlertWithIcon"
 import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -28,7 +28,7 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
-	const { login } = useAPI()
+	const { login, validateToken } = useAPI()
 	const navigate = useNavigate()
 
 	useEffect(() => {
@@ -37,6 +37,30 @@ export default function LoginPage() {
 			setUsername("1")
 			setPassword("1")
 		}
+	}, [])
+
+	useEffect(() => {
+		async function validateTokenAsync(token: string) {
+			try {
+				const response = await validateToken(token)
+
+				if (response?.success) {
+					navigate(HOME_PATH, { replace: true })
+					return
+				}
+
+				localStorage.removeItem(LS_TOKEN_KEY)
+			} finally {
+				localStorage.removeItem(LS_TOKEN_KEY)
+			}
+		}
+
+		const token = localStorage.getItem(LS_TOKEN_KEY)
+
+		if (!token) {
+			return
+		}
+		validateTokenAsync(token)
 	}, [])
 
 	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,12 +83,12 @@ export default function LoginPage() {
 		setMessage(null)
 		setLoading(true)
 		if (!username.trim()) {
-			setUsernameError(translate("login.username.error1"))
+			setUsernameError(translate("common.input.is-required"))
 			setLoading(false)
 			return
 		}
 		if (!password.trim()) {
-			setPasswordError(translate("login.password.error1"))
+			setPasswordError(translate("common.input.is-required"))
 			setLoading(false)
 			return
 		}

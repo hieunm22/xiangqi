@@ -1,6 +1,5 @@
 import { createContext, useContext, useState } from "react"
 import {
-	Alert,
 	Stack,
 	Dialog,
 	DialogTitle,
@@ -13,44 +12,45 @@ import {
 	MenuItem,
 	DialogActions
 } from "@mui/material"
+import Alert from "components/AlertWithIcon"
 import { TButton, TTextField } from "components/TranslationTag"
 import { PieceSelection, PieceSelectionContext } from "./PieceSelection"
 import { translate } from "locales/translate"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { Team } from "types/GameState"
-import { CreateGameContextValue, CreateGameRequest } from "../types"
+import { CreateRoomContextValue, CreateRoomRequest } from "../types"
 import { useNavigate } from "react-router-dom"
 
-export const CreateGameDialogContext = createContext<CreateGameContextValue | null>(null)
+export const CreateRoomDialogContext = createContext<CreateRoomContextValue | null>(null)
 
-const useCreateGameDialogContext = () => {
-	const context = useContext(CreateGameDialogContext)
+const useCreateRoomDialogContext = () => {
+	const context = useContext(CreateRoomDialogContext)
 
 	if (!context) {
-		throw new Error("CreateGameDialog must be used within CreateGameDialogContext.Provider")
+		throw new Error("CreateRoomDialog must be used within CreateRoomDialogContext.Provider")
 	}
 
 	return context
 }
 
-export const CreateGameDialog = () => {
-	const { open, setOpen } = useCreateGameDialogContext()
-	const { createGame } = useAPI()
-	const [gameName, setGameName] = useState("")
-	const [gameNameError, setGameNameError] = useState(false)
+export const CreateRoomDialog = () => {
+	const { open, setOpen } = useCreateRoomDialogContext()
+	const { createRoom } = useAPI()
+	const [roomName, setRoomName] = useState("")
+	const [roomNameError, setRoomNameError] = useState(false)
 	const [isRedFirst, setIsRedFirst] = useState(true)
 	const [betAmount, setBetAmount] = useState(10)
 	const [selectedColor, setSelectedColor] = useState<Team>("red")
 	const [submitting, setSubmitting] = useState(false)
 	const [submitError, setSubmitError] = useState("")
 	const betOptions = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
-	const isGameNameEmpty = gameName.trim().length === 0
+	const isRoomNameEmpty = roomName.trim().length === 0
 	const navigate = useNavigate()
 
 	const resetForm = () => {
-		setGameName("")
-		setGameNameError(false)
+		setRoomName("")
+		setRoomNameError(false)
 		setIsRedFirst(true)
 		setBetAmount(10)
 		setSelectedColor("red")
@@ -58,14 +58,14 @@ export const CreateGameDialog = () => {
 		setSubmitError("")
 	}
 
-	const handleGameNameBlur = () => {
-		setGameNameError(gameName.trim().length === 0)
+	const handleRoomNameBlur = () => {
+		setRoomNameError(roomName.trim().length === 0)
 	}
 
 	const formatBetAmount = (amount: number) => amount >= 1000 ? `${amount / 1000}k` : amount
 
-	const handleCreateGame = async () => {
-		if (isGameNameEmpty || submitting) {
+	const handleCreateRoom = async () => {
+		if (isRoomNameEmpty || submitting) {
 			return
 		}
 
@@ -73,13 +73,13 @@ export const CreateGameDialog = () => {
 		setSubmitError("")
 
 		const token = getToken()
-		const body: CreateGameRequest = {
-			tableName: gameName.trim(),
+		const body: CreateRoomRequest = {
+			tableName: roomName.trim(),
 			teamName: selectedColor,
 			redFirst: isRedFirst,
 			betAmount
 		}
-		const response = await createGame(token, body)
+		const response = await createRoom(token, body)
 
 		setSubmitting(false)
 
@@ -88,9 +88,15 @@ export const CreateGameDialog = () => {
 			return
 		}
 
+		const createdRoomId = Number(response?.room?.id ?? response?.gameId)
+		if (!Number.isInteger(createdRoomId) || createdRoomId <= 0) {
+			setSubmitError(translate("dashboard.feedback.error"))
+			return
+		}
+
 		handleClose()
-		// navigate to the newly created game page
-		navigate(`/game/${response.gameId}`)
+		// navigate to the newly created room page
+		navigate(`/room/${createdRoomId}`)
 	}
 
 	const handleClose = () => {
@@ -106,7 +112,7 @@ export const CreateGameDialog = () => {
 			fullWidth
 			maxWidth="sm"
 		>
-			<DialogTitle>{translate("dashboard.popup.title")}</DialogTitle>
+			<DialogTitle>{translate("dashboard.room.create")}</DialogTitle>
 			<DialogContent>
 				<Stack spacing={2} sx={{ pt: 1 }}>
 					{submitError && <Alert severity="error">{submitError}</Alert>}
@@ -116,12 +122,12 @@ export const CreateGameDialog = () => {
 						variant="standard"
 						required
 						autoFocus
-						label="dashboard.popup.game-name-label"
-						value={gameName}
-						onChange={event => setGameName(event.target.value)}
-						onBlur={handleGameNameBlur}
-						error={gameNameError}
-						helperText={gameNameError ? "dashboard.popup.game-name-helptext" : " "}
+						label="dashboard.popup.room-name-label"
+						value={roomName}
+						onChange={event => setRoomName(event.target.value)}
+						onBlur={handleRoomNameBlur}
+						error={roomNameError}
+						helperText={roomNameError ? "dashboard.popup.room-name-helptext" : " "}
 					/>
 
 					<FormControl>
@@ -159,8 +165,8 @@ export const CreateGameDialog = () => {
 			<DialogActions sx={{ px: 3, pb: 2 }}>
 				<TButton
 					variant="contained"
-					onClick={handleCreateGame}
-					disabled={isGameNameEmpty || submitting}
+					onClick={handleCreateRoom}
+					disabled={isRoomNameEmpty || submitting}
 					value="popup.confirm.ok"
 				/>
 				<TButton

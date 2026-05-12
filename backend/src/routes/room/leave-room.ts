@@ -4,20 +4,17 @@ import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 
 const router = Router()
 
-interface LeaveGameRequest {
-	id: string
+interface LeaveRoomRequest {
+	id: number
 }
-
-const UUID_REGEX =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 /**
  * @swagger
- * /api/game/leave:
+ * /api/room/leave:
  *   delete:
- *     summary: Leave a game table
+ *     summary: Leave a room
  *     tags:
- *       - Game
+ *       - Room
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -31,11 +28,11 @@ const UUID_REGEX =
  *               - id
  *             properties:
  *               id:
- *                 type: string
- *                 format: uuid
+ *                 type: integer
+ *                 format: int64
  */
-router.delete("/game/leave", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
-	const { id } = req.body as LeaveGameRequest
+router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+	const { id } = req.body as LeaveRoomRequest
 	const userId = req.auth?.userId
 
 	if (!userId) {
@@ -47,39 +44,54 @@ router.delete("/game/leave", requireAuth(), async (req: AuthenticatedRequest, re
 		return
 	}
 
-	if (!id || typeof id !== "string" || !UUID_REGEX.test(id)) {
+	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a valid UUID",
+			message: "Field 'id' is required and must be a positive integer",
 			status_code: 400
 		})
 		return
 	}
 
 	try {
-		const deleted = await prisma.gameUser.deleteMany({
+		const roomId = BigInt(id)
+		const deletedRoomUser = await prisma.roomUser.deleteMany({
 			where: {
-				game_id: id,
+				room_id: roomId,
 				user_id: BigInt(userId)
 			}
 		})
 
-		if (deleted.count === 0) {
+		if (deletedRoomUser.count === 0) {
 			res.status(404).json({
 				success: false,
-				message: "Player is not in this game",
+				message: "Player is not in this room",
 				status_code: 404
 			})
 			return
 		}
 
+		const countRemainingPlayers = await prisma.roomUser.count({
+			where: {
+				room_id: roomId
+			}
+		})
+
+		if (countRemainingPlayers === 0) {
+			await prisma.room.delete({
+				where: {
+					id: roomId
+				}
+			})
+		}
+
 		res.status(200).json({
 			success: true,
-			message: "Leave game successfully",
+			message: "Leave room successfully",
 			status_code: 200
 		})
 	} catch (err) {
-		console.error("Leave game error:", err)
+		console.error("Leave room error:", err)
 		res.status(500).json({
 			success: false,
 			message: "Internal server error",

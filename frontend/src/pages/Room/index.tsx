@@ -1,95 +1,36 @@
-import React, { useMemo } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import React from "react"
 import classnames from "classnames"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
 import { TButton } from "components/TranslationTag"
-import { openConfirm } from "components/ConfirmProvider"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
-import { decodePayload, getToken } from "common/helper"
-import useHomeHook from "./hook"
-import { useAPI } from "hooks/useAPI"
+import { translate } from "locales/translate"
+import useRoomHook from "./hook"
 import { Piece } from "types/GameState"
-import "./Game.scss"
+import "./Room.scss"
 
-export default function GamePage() {
-	const navigate = useNavigate()
-	const { id: gameId } = useParams()
+export default function RoomPage() {
 
 	const {
-		gameStatus,
-		joinedUsers,
+		firstJoinedUser,
+		isFirstJoinedPlayer,
+		isInCurrentRoom,
+		isPlayer,
+		roomStatus,
+		secondJoinedUser,
 		state,
 
+		handleBackToHome,
+		handleStartGame,
+		handleSurrender,
 		markerClass,
 		onPieceClick,
 		onAnimateEnd
-	} = useHomeHook()
-
-	const { leaveGame } = useAPI()
-
-	const currentUserId = useMemo(() => {
-		const token = getToken()
-		const payload = decodePayload(token)
-		const id = Number(payload?.sub)
-		return Number.isNaN(id) ? null : id
-	}, [])
-
-	const playerIds = joinedUsers.slice(0, 2).map(user => Number(user.id))
-	const firstJoinedUser = joinedUsers[0]
-	const secondJoinedUser = joinedUsers[1]
-	const isInCurrentGame = currentUserId !== null && joinedUsers.some(user => Number(user.id) === currentUserId)
-	const isFirstJoinedPlayer = currentUserId !== null && playerIds[0] === currentUserId
-	const isPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-
-	const handleStartGame = async () => {
-		if (!isFirstJoinedPlayer) {
-			return
-		}
-
-		// TODO: Call API to update game status from 1 -> 2
-	}
-
-	const handleSurrender = async () => {
-		if (!isPlayer || gameStatus !== 2) {
-			return
-		}
-
-		// TODO: Implement surrender API logic
-	}
-
-	const leaveCurrentGame = async () => {
-		const token = getToken()
-		if (!token || !gameId) {
-			navigate("/")
-			return
-		}
-
-		await leaveGame(token, gameId)
-		navigate("/")
-	}
-
-	const handleBackToHome = async () => {
-		if (!isInCurrentGame) {
-			return
-		}
-
-		if (isPlayer) {
-			const confirmed = await openConfirm({
-				title: "popup.confirm.title",
-				message: "Bạn có chắc muốn rời bàn chơi?"
-			})
-			if (!confirmed) {
-				return
-			}
-		}
-
-		await leaveCurrentGame()
-	}
+	} = useRoomHook()
 
 	return (
-		<div className="game-container">
+		<div className="room-container">
 			<div className="xiangqi-board">
 				<div className="board-frame">
 					{Array.from({ length: BOARD_ROWS - 2 }, (_, i) => i + 1).map(row => (
@@ -165,43 +106,44 @@ export default function GamePage() {
 			</div>
 			<div className="player-info-row">
 				<PlayerInfoCard
-					username={firstJoinedUser?.display_name || "Waiting player..."}
+					username={firstJoinedUser?.display_name || translate("room.info.waiting-user")}
 					team={firstJoinedUser?.team === "red" ? "red" : "black"}
 					avatarUrl={firstJoinedUser?.avatar_url || null}
 					capturedPieces={state.capturedPieces.black}
 				/>
 				<PlayerInfoCard
-					username={secondJoinedUser?.display_name || "Waiting player..."}
+					username={secondJoinedUser?.display_name || translate("room.info.waiting-user")}
 					team={secondJoinedUser?.team === "black" ? "black" : "red"}
 					avatarUrl={secondJoinedUser?.avatar_url || null}
 					capturedPieces={state.capturedPieces.red}
 					mirrored
+					isEmpty={!secondJoinedUser}
 				/>
 			</div>
-			<div className="game-action-row">
+			<div className="room-action-row">
 				<TButton
 					variant="contained"
 					size="medium"
 					color="success"
 					onClick={handleStartGame}
 					sx={{ visibility: isFirstJoinedPlayer ? "visible" : "hidden" }}
-					value="game.actions.start-game"
+					value="room.actions.start-room"
 				/>
 				<TButton
 					variant="contained"
 					size="medium"
 					color="warning"
 					onClick={handleSurrender}
-					sx={{ visibility: isPlayer && gameStatus === 2 ? "visible" : "hidden" }}
-					value="game.actions.surrender"
+					sx={{ visibility: isPlayer && roomStatus === 2 ? "visible" : "hidden" }}
+					value="room.actions.surrender"
 				/>
 				<TButton
 					variant="contained"
 					size="medium"
 					color="error"
 					onClick={handleBackToHome}
-					sx={{ visibility: isInCurrentGame ? "visible" : "hidden" }}
-					value="game.actions.back-home"
+					sx={{ visibility: isInCurrentRoom ? "visible" : "hidden" }}
+					value="room.actions.back-home"
 				/>
 			</div>
 		</div>

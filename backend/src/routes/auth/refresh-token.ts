@@ -1,19 +1,14 @@
 import { Response, Router } from "express"
-import Redis from "ioredis"
 import jwt from "jsonwebtoken"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 import { REFRESH_TOKEN_KEY } from "../../common/constant"
+// import redis from "../../common/redis"
+import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import { LoginSuccessResponse } from "../../types/auth.type"
 
 const router = Router()
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
-
-const redis = new Redis({
-	host: process.env.REDIS_HOST?.trim() || "localhost",
-	port: Number(process.env.REDIS_PORT) || 6379,
-	db: 4
-})
 
 /**
  * @swagger
@@ -58,22 +53,22 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 			status_code: 401,
 			access_token: "",
 			token_type: "Bearer"
-		})
+		} as LoginSuccessResponse)
 		return
 	}
 
-	const cachedRefreshToken = await redis.get(`${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`)
+	// const cachedRefreshToken = await redis.get(`${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`)
 
-	if (!cachedRefreshToken || cachedRefreshToken !== refreshTokenCookie) {
-		res.status(401).json({
-			success: false,
-			message: "Refresh token mismatch or expired",
-			status_code: 401,
-			access_token: "",
-			token_type: "Bearer"
-		})
-		return
-	}
+	// if (!cachedRefreshToken || cachedRefreshToken !== refreshTokenCookie) {
+	// 	res.status(401).json({
+	// 		success: false,
+	// 		message: "Refresh token mismatch or expired",
+	// 		status_code: 401,
+	// 		access_token: "",
+	// 		token_type: "Bearer"
+	// 	} as LoginSuccessResponse)
+	// 	return
+	// }
 
 	// Issue new access token — keep all original payload fields, update only exp
 	const payload = req.auth?.payload
@@ -89,7 +84,7 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 		status_code: 200,
 		access_token,
 		token_type: "Bearer"
-	})
+	} as LoginSuccessResponse)
 })
 
 export default router

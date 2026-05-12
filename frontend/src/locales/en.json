@@ -1,4 +1,16 @@
 {
+	"common": {
+		"input": {
+			"is-required": "is required"
+		},
+		"password": {
+			"policy-1": "Must contain lower case character",
+			"policy-2": "Must contain upper case character",
+			"policy-3": "Must contain digit",
+			"policy-4": "Must contain a special character",
+			"policy-5": "Text length at least 8"
+		}
+	},
 	"page": {
 		"home": {
 			"title": "Home"
@@ -19,11 +31,11 @@
 		"profile": "Profile",
 		"analytics": "Analytic",
 		"logout": "Logout",
-		"games": "Games"
+		"rooms": "Rooms"
 	},
 	"dashboard": {
 		"page": {
-			"title": "Dashboard"
+			"title": "Room list"
 		},
 		"filters": {
 			"all": "All",
@@ -31,23 +43,22 @@
 			"playing": "Playing"
 		},
 		"feedback": {
-			"empty": "No game tables match the selected filter.",
-			"error": "Unable to load game tables.",
+			"empty": "No room tables match the selected filter.",
+			"error": "Unable to load room tables.",
 			"result-count": "Found {{count}} tables"
-		},
-		"game": {
-			"id": "Board ID"
 		},
 		"status": {
 			"unknown": "Unknown"
 		},
+		"room": {
+			"create": "Create room"
+		},
 		"popup": {
-			"title": "Create new game",
 			"piece-selection": "Select team",
 			"red-first": "Red first",
 			"bet-amount": "Bet amount",
-			"game-name-label": "Game table name",
-			"game-name-helptext": "is required"
+			"room-name-label": "Room table name",
+			"room-name-helptext": "is required"
 		}
 	},
 	"settings": {
@@ -71,15 +82,19 @@
 			"title": "Turn"
 		}
 	},
-	"game": {
+	"room": {
 		"actions": {
-			"start-game": "Start game",
+			"start-room": "Start room",
 			"surrender": "Surrender",
-			"back-home": "Back to home"
+			"back-home": "Back to home",
+			"confirm-leave": "Are you sure you want to leave room?"
 		},
 		"general": {
-			"captured": "General has been captured. Game over",
+			"captured": "General has been captured. Room over",
 			"in-check": "Your general is under attack"
+		},
+		"info": {
+			"waiting-user": "Waiting player…"
 		}
 	},
 	"login": {
@@ -95,8 +110,7 @@
 		},
 		"username": {
 			"label": "User name",
-			"placeholder": "User name",
-			"error1": "User name is required"
+			"placeholder": "User name"
 		},
 		"password": {
 			"label": "Password",
@@ -111,6 +125,76 @@
 		"description": "The page you are looking for does not exist or has been moved.",
 		"home": "Go to Home",
 		"back": "Go Back"
+	},
+	"register": {
+		"confirm-password": {
+			"error1": "Confirm password does not match password",
+			"label": "Confirm Password",
+			"placeholder": "Confirm Password"
+		},
+		"display-name": {
+			"label": "Display name",
+			"placeholder": "Display name"
+		},
+		"email": {
+			"error1": "Invalid email format",
+			"label": "Email",
+			"placeholder": "Email"
+		},
+		"form": {
+			"login": "Back to login",
+			"submit": "Register",
+			"success": "Registration successful. Redirecting to login...",
+			"title": "Register"
+		},
+		"gender": {
+			"female": "Female",
+			"label": "Gender",
+			"male": "Male",
+			"select": "Select gender"
+		},
+		"page": {
+			"title": "Register"
+		},
+		"password": {
+			"error1": "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character",
+			"hide": "Hide password",
+			"label": "Password",
+			"placeholder": "Password",
+			"show": "Show password"
+		},
+		"username": {
+			"error1": "User name must contain only alphanumeric characters, underscore, and dot",
+			"label": "User name",
+			"placeholder": "User name"
+		}
+	},
+	"forgot-password": {
+		"page": {
+			"title": "Forgot Password"
+		},
+		"form": {
+			"title": "Forgot Password",
+			"login": "Back to login",
+			"submit": "Forgot password",
+			"success": "Check your email for reset password details.",
+			"error1": "Forgot password failed."
+		}
+	},
+	"reset-password": {
+		"page": {
+			"title": "Reset Password"
+		},
+		"form": {
+			"title": "Reset your password",
+			"submit": "Reset Password",
+			"error1": "An error occurred while resetting your password. Please try again.",
+			"invalid-token": "Invalid or expired reset password token",
+			"success": "Password reset successfully. Redirecting to login..."
+		},
+		"action": {
+			"back-to-login": "Back to login",
+			"submit": "Reset password"
+		}
 	}
 }
-

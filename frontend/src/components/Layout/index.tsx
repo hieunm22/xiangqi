@@ -56,7 +56,7 @@ export default function Layout() {
 	const [userImage, setUserImage] = useState("")
 	const navigate = useNavigate()
 	const location = useLocation()
-	const { logout, getUserById } = useAPI()
+	const { getUserById, leaveRoom, logout } = useAPI()
 	const { state, dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -165,9 +165,20 @@ export default function Layout() {
 		handleCloseUserMenu()
 	}
 
-	const showRestart = !isMobile && location.pathname.startsWith("/game")
+	const handleGoHome = async () => {
+		if (location.pathname.startsWith("/room/")) {
+			const token = getToken()
+			const id = Number(location.pathname.substring("/room/".length))
+			if (Number.isInteger(id) && id > 0) {
+				await leaveRoom(token, id)
+			}
+		}
+		navigate(HOME_PATH)
+	}
+
+	const showRestart = !isMobile && location.pathname.startsWith("/room/")
 	const menuItems = [
-		{ text: "menu.home", icon: "fa-home", click: () => navigate(HOME_PATH) },
+		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
 		...(showRestart ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
 	]
@@ -282,8 +293,8 @@ export default function Layout() {
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
-					{location.pathname === "/game" && (
-						<IconButton color="inherit" onClick={restartGame} aria-label="restart game">
+					{location.pathname.startsWith("/room") && (
+						<IconButton color="inherit" onClick={restartGame}>
 							<i className="fas fa-rotate" />
 						</IconButton>
 					)}

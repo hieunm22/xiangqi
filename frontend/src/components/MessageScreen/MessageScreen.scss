@@ -1,0 +1,63 @@
+.message__container {
+	border: solid 1px black;
+	max-width: 98%;
+	width: 800px;
+	margin: 30vh auto;
+}
+
+.message__header {
+	background-color: #0084ff;
+	color: white;
+	font-weight: bold;
+	font-size: 13pt;
+	padding: 5px 0 5px 15px;
+}
+
+.message__content {
+	background-color: #D1D1E1;
+	padding: 7px;
+	text-align: justify;
+}
+
+.message__content-panel {
+	display: table;
+	background-color: #E4E7F5;
+	color: #000;
+	border: 2px ridge;
+	padding: 10px 15px;
+	width: 100%;
+}
+
+.message__actions {
+	background-color: #D1D1E1;
+	padding: 0 10px 7px 10px;
+	display: flex;
+	justify-content: space-evenly;
+}
+
+.return-btn {
+	margin: 0 auto;
+}
+
+.logout-action {
+	margin: 0 auto;
+	cursor: pointer;
+	border: solid 1px gray;
+	padding: 3px 25px;
+	border-radius: 3px;
+	&:hover {
+		opacity: 0.8;
+		background-color: rgb(188, 188, 188);
+		color: white;
+	}
+}
+
+.message__content-panel i {
+  margin-right: 10px;
+  &.success {
+    color: #0084ff;
+  }
+  &.fail {
+    color: rgb(215 0 0);
+  }
+}

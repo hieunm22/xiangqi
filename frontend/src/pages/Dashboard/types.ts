@@ -2,8 +2,8 @@ import { Team } from "types/GameState"
 
 export type DashboardFilter = "all" | "available" | "playing"
 
-export type DashboardGame = {
-	id: string
+export type DashboardRoom = {
+	id: number
 	name: string
 	status: number
 	bet_amount: number
@@ -12,15 +12,15 @@ export type DashboardGame = {
 	users: User[]
 }
 
-export type FetchGamesResponse = {
+export type FetchRoomsResponse = {
 	success: boolean
 	message: string
 	status_code: number
-	games: DashboardGame[]
+	rooms: DashboardRoom[]
 }
 
 export type User = {
-	id: string
+	id: number
 	display_name: string
 	avatar_url: string | null
 }
@@ -35,7 +35,7 @@ export interface PieceSelectionContextValue {
 	setSelectedColor: (color: Team) => void
 }
 
-export interface CreateGameContextValue {
+export interface CreateRoomContextValue {
 	open: boolean
 	setOpen: (open: boolean) => void
 }
@@ -45,11 +45,11 @@ export interface PieceButtonProps {
 	label: string
 }
 
-export interface GameCardProps {
-	game: DashboardGame
+export interface RoomCardProps {
+	room: DashboardRoom
 }
 
-export interface CreateGameRequest {
+export interface CreateRoomRequest {
 	tableName: string
 	teamName: Team
 	redFirst: boolean

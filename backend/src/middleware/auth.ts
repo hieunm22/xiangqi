@@ -1,16 +1,10 @@
 import { Request, Response, NextFunction } from "express"
-import Redis from "ioredis"
 import jwt from "jsonwebtoken"
 import { LOGIN_SESSION_KEY } from "../common/constant"
+import redis from "../common/redis"
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
-
-const redis = new Redis({
-	host: process.env.REDIS_HOST?.trim() || "localhost",
-	port: Number(process.env.REDIS_PORT) || 6379,
-	db: 4
-})
 
 export interface AuthenticatedRequest extends Request {
 	auth?: {

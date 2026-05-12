@@ -8,7 +8,7 @@ import {
 import { FILTER_KEYS, FILTER_STATUS } from "../constants"
 import { TI, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
-import { GameCardProps } from "../types"
+import { RoomCardProps } from "../types"
 
 const getStatusKey = (status: number) => {
 	if (status === FILTER_STATUS.available) {
@@ -22,7 +22,7 @@ const getStatusKey = (status: number) => {
 	return "dashboard.status.unknown"
 }
 
-const gameStatusClass = (status: number) => classnames({
+const roomStatusClass = (status: number) => classnames({
 	"dashboard__status-icon fas": true,
 	"fa-dagger available": status === FILTER_STATUS.available,
 	"fa-swords playing": status === FILTER_STATUS.playing
@@ -36,20 +36,27 @@ const formatBetAmount = (amount?: number) => {
 	return amount >= 1000 ? `${amount / 1000}k` : `${amount}`
 }
 
-export const GameCard = ({ game }: GameCardProps) => {
-	const oldestJoinedUsers = game.users.slice(0, 2)
-	const remainingUsers = game.users.slice(2)
-	const classIconGameStatus = gameStatusClass(game.status)
+export const RoomCard = ({ room }: RoomCardProps) => {
+	const oldestJoinedUsers = room.users.slice(0, 2)
+	const remainingUsers = room.users.slice(2)
+	const classIconRoomStatus = roomStatusClass(room.status)
 	const navigate = useNavigate()
 
+	const roomCardClass = classnames({
+		"dashboard__room-card": true,
+		"low": room.bet_amount <= 100,
+		"medium": room.bet_amount > 100 && room.bet_amount <= 1000,
+		"high": room.bet_amount > 1000
+	})
+
 	const handleCardClick = () => {
-		navigate(`/game/${game.id}`)
+		navigate(`/room/${room.id}`)
 	}
 
 	return (
 		<Grid
-			key={game.id}
-			className="dashboard__game-card"
+			key={room.id}
+			className={roomCardClass}
 			size={{ xs: 6, sm: 4, md: 4 }}
 			onClick={handleCardClick}
 		>
@@ -59,18 +66,18 @@ export const GameCard = ({ game }: GameCardProps) => {
 						variant="h6"
 						fontWeight={700}
 						noWrap
-						className="dashboard__game-name"
-						content={game.name}
+						className="dashboard__room-name"
+						content={room.name}
 					/>
 					<i className="fas fa-coin bet-icon" />
-					<Typography component="span" className="dashboard__game-bet" noWrap>
-						{formatBetAmount(game.bet_amount)}
+					<Typography component="span" className="dashboard__room-bet" noWrap>
+						{formatBetAmount(room.bet_amount)}
 					</Typography>
 				</Stack>
 
 				<Stack direction="row" className="dashboard__card-meta">
 					<UserAvatarGroup users={oldestJoinedUsers} type="primary" />
-					<TI className={classIconGameStatus} title={getStatusKey(game.status)} />
+					<TI className={classIconRoomStatus} title={getStatusKey(room.status)} />
 				</Stack>
 
 				<UserAvatarGroup users={remainingUsers} type="secondary" />

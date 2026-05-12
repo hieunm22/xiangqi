@@ -1,4 +1,16 @@
 {
+	"common": {
+		"input": {
+			"is-required": "bắt buộc nhập"
+		},
+		"password": {
+			"policy-1": "Phải chứa một ký tự chữ in thường",
+			"policy-2": "Phải chứa một ký tự chữ in hoa",
+			"policy-3": "Phải chứa một ký tự số",
+			"policy-4": "Phải chứa một ký tự đặc biệt",
+			"policy-5": "Ít nhất 8 ký tự"
+		}
+	},
 	"page": {
 		"home": {
 			"title": "Trang chủ"
@@ -19,11 +31,11 @@
 		"profile": "Trang cá nhân",
 		"analytics": "Phân tích",
 		"logout": "Đăng xuất",
-		"games": "Trò chơi"
+		"rooms": "Trò chơi"
 	},
 	"dashboard": {
 		"page": {
-			"title": "Danh sách bàn game"
+			"title": "Danh sách phòng"
 		},
 		"filters": {
 			"all": "Tất cả",
@@ -32,22 +44,21 @@
 		},
 		"feedback": {
 			"empty": "Không có bàn chơi phù hợp với bộ lọc đã chọn.",
-			"error": "Không tải được danh sách bàn chơi.",
+			"error": "Không tải được danh sách phòng chơi.",
 			"result-count": "Tìm thấy {{count}} bàn chơi"
-		},
-		"game": {
-			"id": "Mã bàn"
 		},
 		"status": {
 			"unknown": "Không xác định"
 		},
+		"room": {
+			"create": "Tạo phòng chơi"
+		},
 		"popup": {
-			"title": "Tạo bàn mới",
 			"piece-selection": "Chọn quân",
 			"red-first": "Đỏ tiên",
 			"bet-amount": "Giá trị cược",
-			"game-name-label": "Tên bàn chơi",
-			"game-name-helptext": "không được để trống"
+			"room-name-label": "Tên phòng chơi",
+			"room-name-helptext": "không được để trống"
 		}
 	},
 	"settings": {
@@ -71,15 +82,19 @@
 			"title": "Lượt đánh"
 		}
 	},
-	"game": {
+	"room": {
 		"actions": {
-			"start-game": "Bắt đầu game",
+			"start-room": "Bắt đầu chơi",
 			"surrender": "Đầu hàng",
-			"back-home": "Thoát game"
+			"back-home": "Thoát phòng",
+			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?"
 		},
 		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc",
 			"in-check": "Tướng của bạn đang bị chiếu"
+		},
+		"info": {
+			"waiting-user": "Đang chờ người chơi…"
 		}
 	},
 	"login": {
@@ -95,8 +110,7 @@
 		},
 		"username": {
 			"label": "Tên người dùng",
-			"placeholder": "Tên người dùng",
-			"error1": "Tên người dùng bắt buộc nhập"
+			"placeholder": "Tên người dùng"
 		},
 		"password": {
 			"label": "Mật khẩu",
@@ -111,6 +125,76 @@
 		"description": "Trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.",
 		"home": "Về trang chủ",
 		"back": "Quay lại"
+	},
+	"register": {
+		"confirm-password": {
+			"error1": "Mật khẩu xác nhận không khớp với mật khẩu",
+			"label": "Xác nhận mật khẩu",
+			"placeholder": "Xác nhận mật khẩu"
+		},
+		"display-name": {
+			"label": "Tên hiển thị",
+			"placeholder": "Tên hiển thị"
+		},
+		"email": {
+			"error1": "Định dạng email không hợp lệ",
+			"label": "Email",
+			"placeholder": "Email"
+		},
+		"form": {
+			"login": "Về trang đăng nhập",
+			"submit": "Đăng ký",
+			"success": "Đăng ký thành công. Đang chuyển hướng...",
+			"title": "Đăng ký"
+		},
+		"gender": {
+			"female": "Nữ",
+			"label": "Giới tính",
+			"male": "Nam",
+			"select": "Chọn giới tính"
+		},
+		"page": {
+			"title": "Đăng ký"
+		},
+		"password": {
+			"error1": "Mật khẩu phải có ít nhất 8 ký tự và chứa chữ hoa, chữ thường, số và ký tự đặc biệt",
+			"hide": "Ẩn mật khẩu",
+			"label": "Mật khẩu",
+			"placeholder": "Mật khẩu",
+			"show": "Hiện mật khẩu"
+		},
+		"username": {
+			"error1": "Tên người dùng chỉ chứa ký tự chữ số, dấu gạch dưới và dấu chấm",
+			"label": "Tên người dùng",
+			"placeholder": "Tên người dùng"
+		}
+	},
+	"forgot-password": {
+		"page": {
+			"title": "Quên mật khẩu"
+		},
+		"form": {
+			"title": "Quên mật khẩu",
+			"login": "Về trang đăng nhập",
+			"submit": "Quên mật khẩu",
+			"success": "Hãy kiểm tra email để xem thông tin đặt lại mật khẩu.",
+			"error1": "Quên mật khẩu không thành công."
+		}
+	},
+	"reset-password": {
+		"page": {
+			"title": "Đặt lại mật khẩu"
+		},
+		"form": {
+			"title": "Đặt lại mật khẩu của bạn",
+			"submit": "Đặt lại mật khẩu",
+			"error1": "Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại.",
+			"invalid-token": "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn",
+			"success": "Đặt lại mật khẩu thành công. Đang chuyển hướng đến đăng nhập..."
+		},
+		"action": {
+			"back-to-login": "Quay lại trang chủ",
+			"submit": "Đặt lại mật khẩu"
+		}
 	}
 }
-

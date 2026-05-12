@@ -5,17 +5,20 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 
 import getUsersRoutes from "./routes/auth/get-user"
+import forgotPasswordRoutes from "./routes/auth/forgot-password"
+import resetPasswordRoutes from "./routes/auth/reset-password"
 import loginRoutes from "./routes/auth/login"
 import logoutRoutes from "./routes/auth/logout"
 import refreshTokenRoutes from "./routes/auth/refresh-token"
+import registerRoutes from "./routes/auth/register"
 import validateTokenRoutes from "./routes/auth/validate-token"
 
-import createGameRoutes from "./routes/game/create-game"
-import fetchGamesRoutes from "./routes/game/fetch-games"
-import joinGameRoutes from "./routes/game/join-game"
-import leaveGameRoutes from "./routes/game/leave-game"
-import loadGameRoutes from "./routes/game/load-game"
-import setGameStatusRoutes from "./routes/game/set-game-status"
+import createRoomRoutes from "./routes/room/create-room"
+import fetchRoomsRoutes from "./routes/room/fetch-rooms"
+import joinRoomRoutes from "./routes/room/join-room"
+import leaveRoomRoutes from "./routes/room/leave-room"
+import loadRoomRoutes from "./routes/room/load-room"
+import setRoomStatusRoutes from "./routes/room/set-room-status"
 
 const app = express()
 
@@ -50,17 +53,20 @@ app.get("/", (_req: Request, res: Response) => {
 })
 
 app.use("/api", getUsersRoutes)
+app.use("/api", forgotPasswordRoutes)
+app.use("/api", resetPasswordRoutes)
 app.use("/api", loginRoutes)
 app.use("/api", logoutRoutes)
+app.use("/api", registerRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
 
-app.use("/api", createGameRoutes)
-app.use("/api", fetchGamesRoutes)
-app.use("/api", joinGameRoutes)
-app.use("/api", leaveGameRoutes)
-app.use("/api", loadGameRoutes)
-app.use("/api", setGameStatusRoutes)
+app.use("/api", createRoomRoutes)
+app.use("/api", fetchRoomsRoutes)
+app.use("/api", joinRoomRoutes)
+app.use("/api", leaveRoomRoutes)
+app.use("/api", loadRoomRoutes)
+app.use("/api", setRoomStatusRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec))

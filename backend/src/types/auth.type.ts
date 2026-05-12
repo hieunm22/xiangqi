@@ -21,3 +21,36 @@ export interface LoginSession {
 	createdAt: string
 	isValid: boolean
 }
+
+export interface RegisterRequest {
+	username: string
+	user_name: string
+	password: string
+	gender: boolean | string | number
+	displayName: string
+	display_name: string
+	email: string
+}
+
+export interface ForgotPasswordRequest {
+	email: string
+}
+
+export type DuplicateCheckResult = {
+	username_exists: boolean
+	email_exists: boolean
+}
+
+export type CreatedUserRow = {
+	id: bigint
+	user_name: string
+	email: string
+	display_name: string
+	gender: boolean
+	avatar_seq: number
+}
+
+export type ResetPasswordRequest = {
+	userId: number
+	password: string
+}

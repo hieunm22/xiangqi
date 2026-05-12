@@ -4,7 +4,7 @@ import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 
 const router = Router()
 
-export interface CreateGameRequest {
+export interface CreateRoomRequest {
 	tableName: string
 	teamName: string
 	redFirst: boolean
@@ -15,11 +15,11 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
 
 /**
  * @swagger
- * /api/game/create-game:
+ * /api/room/create-room:
  *   post:
- *     summary: Create a new game
+ *     summary: Create a new room
  *     tags:
- *       - Game
+ *       - Room
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -36,7 +36,7 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *             properties:
  *               tableName:
  *                 type: string
- *                 description: Name of the game table
+ *                 description: Name of the room
  *               teamName:
  *                 type: string
  *                 description: Team name for the current user
@@ -46,12 +46,12 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *                 default: true
  *               betAmount:
  *                 type: number
- *                 description: Bet amount for the game (valid values - 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000)
+ *                 description: Bet amount for the room (valid values - 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000)
  *                 default: 10
  *                 enum: [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
  *     responses:
  *       201:
- *         description: Game created successfully
+ *         description: Room created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -63,7 +63,7 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *                   type: string
  *                 status_code:
  *                   type: integer
- *                 game:
+ *                 room:
  *                   type: object
  *       400:
  *         description: Invalid request body
@@ -73,17 +73,17 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *         description: Internal server error
  */
 router.post(
-	"/game/create-game",
+	"/room/create-room",
 	requireAuth(),
 	async (req: AuthenticatedRequest, res: Response) => {
-		const { tableName, teamName, redFirst = true, betAmount = 10 } = req.body as CreateGameRequest
+		const { tableName, teamName, redFirst = true, betAmount = 10 } = req.body as CreateRoomRequest
 		const userId = req.auth?.userId
 
-		// Validate game name
+		// Validate room name
 		if (!tableName || typeof tableName !== "string" || tableName.trim() === "") {
 			res.status(400).json({
 				success: false,
-				message: "Game name (tableName) is required and must not be empty",
+				message: "Room name (tableName) is required and must not be empty",
 				status_code: 400
 			})
 			return
@@ -131,21 +131,21 @@ router.post(
 		try {
 			const userIdBigInt = BigInt(userId!)
 
-			// Remove existing game_users records for this user
-			await prisma.gameUser.deleteMany({
+			// Remove existing room_users records for this user
+			await prisma.roomUser.deleteMany({
 				where: {
 					user_id: userIdBigInt
 				}
 			})
 
-			// Create game and game_user in a transaction
-			const game = await prisma.game.create({
+			// Create room and room_user in a transaction
+			const room = await prisma.room.create({
 				data: {
 					name: tableName,
 					status: 1, // 1 = waiting for opponent
 					red_first: redFirst,
 					bet_amount: betAmount,
-					game_users: {
+					room_users: {
 						create: {
 							user_id: userIdBigInt,
 							team: teamName,
@@ -161,7 +161,7 @@ router.post(
 					bet_amount: true,
 					created_at: true,
 					updated_at: true,
-					game_users: {
+					room_users: {
 						orderBy: {
 							joined_at: "asc"
 						},
@@ -180,9 +180,10 @@ router.post(
 			})
 
 			// Format response
-			const formattedGame = {
-				...game,
-				users: game.game_users.map((gu: any) => ({
+			const formattedRoom = {
+				...room,
+				id: Number(room.id),
+				users: room.room_users.map((gu: any) => ({
 					...gu.users,
 					id: gu.users.id.toString(),
 					team: gu.team,
@@ -191,21 +192,21 @@ router.post(
 							? `/images/${gu.users.id.toString()}.jpg`
 							: `/images/${gu.users.id.toString()}_${gu.users.avatar_seq}.jpg`
 				})),
-				game_users: undefined
+				room_users: undefined
 			}
-			delete (formattedGame as any).game_users
+			delete (formattedRoom as any).room_users
 
 			res.status(201).json({
 				success: true,
-				message: "Game created successfully",
+				message: "Room created successfully",
 				status_code: 201,
-				game: formattedGame
+				room: formattedRoom
 			})
 		} catch (err) {
-			console.error("Error creating game:", err)
+			console.error("Error creating room:", err)
 			res.status(500).json({
 				success: false,
-				message: "Internal server error while creating game",
+				message: "Internal server error while creating room",
 				status_code: 500
 			})
 		}

@@ -18,13 +18,14 @@ export interface PlayerInfoCardProps {
 	username: string
 	team: Team
 	capturedPieces: Piece[]
-	avatarUrl: string | null
+	avatarUrl?: string | null
 	mirrored?: boolean
+	isEmpty?: boolean
 }
 
 export interface JoinedUser {
 	id: number
 	display_name: string
 	avatar_url: string | null
-	team?: "red" | "black" | null
+	team: Team | null
 }

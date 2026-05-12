@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
-	Alert,
 	Box,
 	Button,
-	CircularProgress,
 	Grid,
+	Skeleton,
 	Stack
 } from "@mui/material"
 import { LOGIN_PATH } from "common/constant"
+import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { TTypography } from "components/TranslationTag"
-import { CreateGameCard } from "./components/CreateGameCard"
-import { GameCard } from "./components/GameCard"
-import { CreateGameDialog, CreateGameDialogContext } from "./components/CreateGameDialog"
+import { CreateRoomCard } from "./components/CreateRoomCard"
+import { RoomCard } from "./components/RoomCard"
+import { CreateRoomDialog, CreateRoomDialogContext } from "./components/CreateRoomDialog"
 import { getToken, initNewGame } from "common/helper"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -22,21 +22,22 @@ import useGameToolkit from "hooks/useGameToolkit"
 import { setGameState } from "toolkit/slice/game"
 import {
 	DashboardFilter,
-	DashboardGame,
-	FetchGamesResponse
+	DashboardRoom,
+	FetchRoomsResponse
 } from "./types"
 import "./Dashboard.scss"
 
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
 	const { dispatch } = useGameToolkit()
-	const { fetchGames } = useAPI()
+	const { fetchRooms } = useAPI()
 	const navigate = useNavigate()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
-	const [games, setGames] = useState<DashboardGame[]>([])
+	const [rooms, setRooms] = useState<DashboardRoom[]>([])
 	const [loading, setLoading] = useState(true)
 	const [errorMessage, setErrorMessage] = useState("")
 	const [open, setOpen] = useState(false)
+	const loadingCards = Array.from({ length: 9 }, (_, i) => i)
 
 	useEffect(() => {
 		const token = getToken()
@@ -53,33 +54,33 @@ const DashboardPage = () => {
 	useEffect(() => {
 		let ignore = false
 
-		const loadGames = async () => {
+		const loadRooms = async () => {
 			setLoading(true)
 			setErrorMessage("")
 
 			const token = getToken()
 
-			const response = await fetchGames(
+			const response = await fetchRooms(
 				token,
 				activeFilter === "all" ? undefined : FILTER_STATUS[activeFilter]
-			) as FetchGamesResponse
+			) as FetchRoomsResponse
 
 			if (ignore) {
 				return
 			}
 
 			if (!response?.success) {
-				setGames([])
+				setRooms([])
 				setErrorMessage(response?.message || translate("dashboard.feedback.error"))
 				setLoading(false)
 				return
 			}
 
-			setGames(response.games || [])
+			setRooms(response.rooms || [])
 			setLoading(false)
 		}
 
-		loadGames()
+		loadRooms()
 
 		return () => {
 			ignore = true
@@ -87,7 +88,7 @@ const DashboardPage = () => {
 	}, [activeFilter])
 
 	return (
-		<CreateGameDialogContext.Provider value={{ open, setOpen }}>
+		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
 			<Box className="dashboard">
 			<Stack spacing={3}>
 				<TTypography
@@ -116,28 +117,39 @@ const DashboardPage = () => {
 				{errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
 				{loading ? (
-					<Box className="dashboard__loading">
-						<CircularProgress />
-					</Box>
+					<Grid container spacing={2}>
+						{loadingCards.map(card => (
+							<Grid key={`loading-card-${card}`} size={{ xs: 6, sm: 4, md: 4 }} className="dashboard__room-card">
+								<Stack spacing={1.5}>
+									<Skeleton variant="text" height={32} width="100%" />
+									<Stack direction="row" justifyContent="space-between" alignItems="center">
+										<Skeleton variant="text" height={28} width={88} />
+										<Skeleton variant="circular" width={28} height={28} />
+									</Stack>
+									<Skeleton variant="rounded" height={28} width="100%" />
+								</Stack>
+							</Grid>
+						))}
+					</Grid>
 				) : null}
 
 				{!loading && !errorMessage ? (
 					<Stack spacing={2}>
 						<Grid container spacing={2}>
-							{<CreateGameCard click={() => setOpen(true)} />}
-							{games.map(game => <GameCard key={game.id} game={game} />)}
+					{<CreateRoomCard click={() => setOpen(true)} />}
+					{rooms.map(room => <RoomCard key={room.id} room={room} />)}
 						</Grid>
 
-						{games.length === 0 && (
+						{rooms.length === 0 && (
 							<Alert severity="info"> {translate("dashboard.feedback.empty")} </Alert>
 						)}
 					</Stack>
 				) : null}
 			</Stack>
 
-				<CreateGameDialog />
+				<CreateRoomDialog />
 			</Box>
-		</CreateGameDialogContext.Provider>
+		</CreateRoomDialogContext.Provider>
 	)
 }
 

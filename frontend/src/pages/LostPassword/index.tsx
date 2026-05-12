@@ -1,8 +1,88 @@
+import { FormEvent, useState } from "react"
 import { Link as RouterLink } from "react-router-dom"
-import { Box, Link, Stack, Typography } from "@mui/material"
+import {
+	Box,
+	Button,
+	CircularProgress,
+	Link,
+	Paper,
+	Stack
+} from "@mui/material"
 import { LOGIN_PATH } from "common/constant"
+import Alert from "components/AlertWithIcon"
+import { TTextField, TTypography } from "components/TranslationTag"
+import useAutoTitle from "hooks/useAutoTitle"
+import { useAPI } from "hooks/useAPI"
+import { translate } from "locales/translate"
+import "./LostPassword.scss"
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function LostPasswordPage() {
+	useAutoTitle(translate("forgot-password.page.title"))
+	const [email, setEmail] = useState("")
+	const [emailError, setEmailError] = useState<string | null>(null)
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const [message, setMessage] = useState<string | null>(null)
+	const { forgotPassword } = useAPI()
+
+	const validateEmail = (value: string) => {
+		if (!value.trim()) {
+			setEmailError(translate("common.input.is-required"))
+			return false
+		}
+
+		if (!EMAIL_PATTERN.test(value)) {
+			setEmailError(translate("register.email.error1"))
+			return false
+		}
+
+		setEmailError(null)
+		return true
+	}
+
+	const onChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setEmail(event.target.value)
+	}
+
+	const onBlurEmail = (event: React.FocusEvent<HTMLInputElement>) => {
+		validateEmail(event.target.value)
+	}
+
+	const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		setError(null)
+		setMessage(null)
+		setLoading(true)
+
+		if (!validateEmail(email)) {
+			setLoading(false)
+			return
+		}
+
+		try {
+			const response = await forgotPassword({ email })
+
+			if (!response?.success) {
+				const responseMessage = response?.message || "forgot-password.form.error1"
+				setError(translate(responseMessage) === responseMessage ? responseMessage : translate(responseMessage))
+				setLoading(false)
+				return
+			}
+
+			const responseMessage = response?.message || "forgot-password.form.success"
+			setMessage(translate(responseMessage) === responseMessage ? responseMessage : translate(responseMessage))
+		} catch (submitError) {
+			const submitMessage = submitError instanceof Error
+				? submitError.message
+				: translate("forgot-password.form.error1")
+			setError(submitMessage)
+		} finally {
+			setLoading(false)
+		}
+	}
+
 	return (
 		<Box
 			sx={{
@@ -13,15 +93,49 @@ export default function LostPasswordPage() {
 				justifyContent: "center",
 			}}
 		>
-			<Stack spacing={1.5} alignItems="center">
-				<Typography variant="h5" component="h1" fontWeight={700}>
-					Lost Password
-				</Typography>
-				<Typography color="text.secondary">Reset password flow is not implemented yet.</Typography>
-				<Link component={RouterLink} to={LOGIN_PATH} underline="hover">
-					Back to login
-				</Link>
-			</Stack>
+			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+				<Stack component="form" spacing={2} onSubmit={onSubmit}>
+					<TTypography
+						variant="h5"
+						component="h1"
+						fontWeight={700}
+						content="forgot-password.form.title"
+					/>
+
+					<TTextField
+						label="register.email.label"
+						placeholder="register.email.placeholder"
+						variant="standard"
+						name="email"
+						autoFocus
+						required
+						value={email}
+						onChange={onChangeEmail}
+						onBlur={onBlurEmail}
+						fullWidth
+						error={!!emailError}
+						helperText={emailError}
+						slotProps={{
+							input: {
+								startAdornment: (
+									<i className="fas fa-envelope start-icon" />
+								)
+							}
+						}}
+					/>
+
+					<Button type="submit" variant="contained" disabled={loading} fullWidth size="large">
+						{loading ? <CircularProgress size={22} color="inherit" /> : translate("forgot-password.form.submit")}
+					</Button>
+
+					{error && <Alert severity="error">{error}</Alert>}
+					{message && <Alert severity="success">{message}</Alert>}
+
+					<Link component={RouterLink} to={LOGIN_PATH} underline="hover" variant="body2">
+						{translate("forgot-password.form.login")}
+					</Link>
+				</Stack>
+			</Paper>
 		</Box>
 	)
 }

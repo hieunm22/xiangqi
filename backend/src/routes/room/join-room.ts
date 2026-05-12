@@ -4,20 +4,17 @@ import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 
 const router = Router()
 
-interface JoinGameRequest {
-	id: string
+interface JoinRoomRequest {
+	id: number
 }
-
-const UUID_REGEX =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 /**
  * @swagger
- * /api/game/join:
+ * /api/room/join:
  *   post:
- *     summary: Join a game table
+ *     summary: Join a room
  *     tags:
- *       - Game
+ *       - Room
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -31,11 +28,11 @@ const UUID_REGEX =
  *               - id
  *             properties:
  *               id:
- *                 type: string
- *                 format: uuid
+ *                 type: integer
+ *                 format: int64
  */
-router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
-	const { id } = req.body as JoinGameRequest
+router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+	const { id } = req.body as JoinRoomRequest
 	const userId = req.auth?.userId
 
 	if (!userId) {
@@ -47,25 +44,26 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		return
 	}
 
-	if (!id || typeof id !== "string" || !UUID_REGEX.test(id)) {
+	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a valid UUID",
+			message: "Field 'id' is required and must be a positive integer",
 			status_code: 400
 		})
 		return
 	}
 
 	try {
-		// Check if game exists
-		const game = await prisma.game.findUnique({
-			where: { id }
+		const roomId = BigInt(id)
+		// Check if room exists
+		const room = await prisma.room.findUnique({
+			where: { id: roomId }
 		})
 
-		if (!game) {
+		if (!room) {
 			res.status(404).json({
 				success: false,
-				message: "Game not found",
+				message: "Room not found",
 				status_code: 404
 			})
 			return
@@ -74,31 +72,31 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		const userIdBigInt = BigInt(userId)
 		const now = new Date()
 
-		// Remove user from all other games to ensure single-game participation
-		await prisma.gameUser.deleteMany({
+		// Remove user from all other rooms to ensure single-room participation
+		await prisma.roomUser.deleteMany({
 			where: {
 				user_id: userIdBigInt,
-				game_id: {
-					not: id
+				room_id: {
+					not: roomId
 				}
 			}
 		})
 
-		const existingGameUser = await prisma.gameUser.findUnique({
+		const existingRoomUser = await prisma.roomUser.findUnique({
 			where: {
-				game_id_user_id: {
-					game_id: id,
+				room_id_user_id: {
+					room_id: roomId,
 					user_id: userIdBigInt
 				}
 			}
 		})
 
-		if (existingGameUser) {
-			// User is already in this game: refresh join timestamp
-			await prisma.gameUser.update({
+		if (existingRoomUser) {
+			// User is already in this room: refresh join timestamp
+			await prisma.roomUser.update({
 				where: {
-					game_id_user_id: {
-						game_id: id,
+					room_id_user_id: {
+						room_id: roomId,
 						user_id: userIdBigInt
 					}
 				},
@@ -107,12 +105,12 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 				}
 			})
 		} else {
-			// User is joining a new game: assign team by join order.
+			// User is joining a new room: assign team by join order.
 			// - 2nd user: opposite of 1st user's team
 			// - 3rd+ user: null team (spectator)
-			const existingMembers = await prisma.gameUser.findMany({
+			const existingMembers = await prisma.roomUser.findMany({
 				where: {
-					game_id: id
+					room_id: roomId
 				},
 				select: {
 					team: true
@@ -128,9 +126,9 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 				assignedTeam = firstTeam === "red" ? "black" : "red"
 			}
 
-			await prisma.gameUser.create({
+			await prisma.roomUser.create({
 				data: {
-					game_id: id,
+					room_id: roomId,
 					user_id: userIdBigInt,
 					team: assignedTeam,
 					joined_at: now
@@ -138,10 +136,10 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			})
 		}
 
-		// Fetch all users joined in this game, ordered by joined_at
-		const gameUsers = await prisma.gameUser.findMany({
+		// Fetch all users joined in this room, ordered by joined_at
+		const roomUsers = await prisma.roomUser.findMany({
 			where: {
-				game_id: id
+				room_id: roomId
 			},
 			select: {
 				joined_at: true,
@@ -159,26 +157,26 @@ router.post("/game/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			}
 		})
 
-		const formattedUsers = gameUsers.map(gameUser => ({
-			id: Number(gameUser.users.id),
-			display_name: gameUser.users.display_name,
-			avatar_seq: Number(gameUser.users.avatar_seq),
+		const formattedUsers = roomUsers.map(roomUser => ({
+			id: Number(roomUser.users.id),
+			display_name: roomUser.users.display_name,
+			avatar_seq: Number(roomUser.users.avatar_seq),
 			avatar_url:
-				Number(gameUser.users.avatar_seq) === 0
-					? `/images/${Number(gameUser.users.id)}.jpg`
-					: `/images/${Number(gameUser.users.id)}_${Number(gameUser.users.avatar_seq)}.jpg`,
-			team: gameUser.team,
-			joined_at: gameUser.joined_at
+				Number(roomUser.users.avatar_seq) === 0
+					? `/images/${Number(roomUser.users.id)}.jpg`
+					: `/images/${Number(roomUser.users.id)}_${Number(roomUser.users.avatar_seq)}.jpg`,
+			team: roomUser.team,
+			joined_at: roomUser.joined_at
 		}))
 
 		res.status(201).json({
 			success: true,
-			message: "Successfully joined the game",
+			message: "Successfully joined the room",
 			status_code: 201,
 			data: formattedUsers
 		})
 	} catch (error) {
-		console.error("Error joining game:", error)
+		console.error("Error joining room:", error)
 		res.status(500).json({
 			success: false,
 			message: "Internal server error",

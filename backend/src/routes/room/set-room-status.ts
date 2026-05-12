@@ -4,22 +4,20 @@ import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
 
 const router = Router()
 
-interface SetGameStatusRequest {
-	id: string
+interface SetRoomStatusRequest {
+	id: number
 	status: number
 }
 
 const VALID_STATUSES = [1, 2]
-const UUID_REGEX =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 /**
  * @swagger
- * /api/game/status:
+ * /api/room/status:
  *   patch:
- *     summary: Update game status
+ *     summary: Update room status
  *     tags:
- *       - Game
+ *       - Room
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -34,19 +32,19 @@ const UUID_REGEX =
  *               - status
  *             properties:
  *               id:
- *                 type: string
- *                 format: uuid
+ *                 type: integer
+ *                 format: int64
  *               status:
  *                 type: integer
  *                 enum: [1, 2]
  */
-const handleSetGameStatus = async (req: AuthenticatedRequest, res: Response) => {
-	const { id, status } = req.body as SetGameStatusRequest
+const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => {
+	const { id, status } = req.body as SetRoomStatusRequest
 
-	if (!id || typeof id !== "string" || !UUID_REGEX.test(id)) {
+	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a valid UUID",
+			message: "Field 'id' is required and must be a positive integer",
 			status_code: 400
 		})
 		return
@@ -62,8 +60,8 @@ const handleSetGameStatus = async (req: AuthenticatedRequest, res: Response) => 
 	}
 
 	try {
-		const game = await prisma.game.update({
-			where: { id },
+		const room = await prisma.room.update({
+			where: { id: BigInt(id) },
 			data: {
 				status
 			},
@@ -80,21 +78,24 @@ const handleSetGameStatus = async (req: AuthenticatedRequest, res: Response) => 
 
 		res.status(200).json({
 			success: true,
-			message: "Set game status successfully",
+			message: "Set room status successfully",
 			status_code: 200,
-			game
+			room: {
+				...room,
+				id: Number(room.id)
+			}
 		})
 	} catch (err: any) {
 		if (err?.code === "P2025") {
 			res.status(404).json({
 				success: false,
-				message: "Game not found",
+				message: "Room not found",
 				status_code: 404
 			})
 			return
 		}
 
-		console.error("Set game status error:", err)
+		console.error("Set room status error:", err)
 		res.status(500).json({
 			success: false,
 			message: "Internal server error",
@@ -103,7 +104,7 @@ const handleSetGameStatus = async (req: AuthenticatedRequest, res: Response) => 
 	}
 }
 
-router.patch("/game/status", requireAuth(), handleSetGameStatus)
-router.put("/game/status", requireAuth(), handleSetGameStatus)
+router.patch("/room/status", requireAuth(), handleSetRoomStatus)
+router.put("/room/status", requireAuth(), handleSetRoomStatus)
 
 export default router
