@@ -2,11 +2,13 @@ import { forwardRef } from "react"
 import {
 	Button,
 	TextField,
+	Tooltip,
+	TooltipProps,
 	Typography,
 	type TextFieldProps,
 	type TypographyProps
 } from "@mui/material"
-import { translate as t } from "../../locales/translate"
+import { translate as t } from "locales/translate"
 import type {
 	TButtonProps,
 	TDivProps,
@@ -97,6 +99,15 @@ const TTextField = (props: TextFieldProps) => {
 	return <TextField {...translatedProps} />
 }
 
+const TTooltip = (props: TooltipProps) => {
+	const translatedProps = {
+		...props,
+		title: typeof props.title === "string" ? t(props.title) : props.title
+	}
+
+	return <Tooltip {...translatedProps}>{props.children}</Tooltip>
+}
+
 const TTypography = (props: TypographyProps) => {
 	const translatedProps = {
 		...props,
@@ -113,6 +124,17 @@ TInput.displayName = "TInput"
 TLabel.displayName = "TLabel"
 TSpan.displayName = "TSpan"
 TTextField.displayName = "TTextField"
+TTooltip.displayName = "TTooltip"
 TTypography.displayName = "TTypography"
 
-export { TButton, TDiv, TI, TInput, TLabel, TSpan, TTextField, TTypography }
+export {
+	TButton,
+	TDiv,
+	TI,
+	TInput,
+	TLabel,
+	TSpan,
+	TTextField,
+	TTooltip,
+	TTypography
+}

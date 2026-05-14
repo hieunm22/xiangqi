@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import classnames from "classnames"
 import {
@@ -7,40 +7,41 @@ import {
 	Box,
 	Button,
 	CssBaseline,
-	Dialog,
-	DialogContent,
-	DialogTitle,
 	Divider,
 	Drawer,
-	Grid,
 	IconButton,
 	List,
 	ListItem,
 	ListItemButton,
 	Menu,
 	MenuItem,
-	Switch,
 	Toolbar,
 	useMediaQuery,
 	useTheme
 } from "@mui/material"
-import i18n from "locales/i18n"
 import {
-	COUNTRIES_DROPDOWN,
 	HOME_PATH,
 	LOGIN_PATH,
 	LS_DARKMODE,
-	LS_LANGUAGE,
 	LS_TOKEN_KEY
 } from "common/constant"
-import { TI, TTypography } from "components/TranslationTag"
-import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
-import { decodePayload, getToken, initNewGame, requireImage } from "common/helper"
-import useToolkit from "hooks/useToolkit"
+import { TI, TSpan, TTypography } from "components/TranslationTag"
+import { ProfilePopup } from "./components/ProfilePopup"
+import { SettingsPopup } from "./components/SettingsPopup"
+import { PopupProvider } from "./context"
+import {
+	decodePayload,
+	getToken,
+	initNewGame,
+	requireImage
+} from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import useAutoTitle from "hooks/useAutoTitle"
+import useToolkit from "hooks/useToolkit"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
+import { Users } from "types/Entities"
 import "./Layout.scss"
 
 const fullWidth = 240
@@ -48,29 +49,25 @@ const miniWidth = 60
 
 export default function Layout() {
 	const [drawerOpen, setDrawerOpen] = useState(true)
-	const [language, setLanguage] = useState("en")
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [openSettings, setOpenSettings] = useState(false)
+	const [openProfilePopup, setOpenProfilePopup] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
+	const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+	const [profileUser, setProfileUser] = useState<Users | null>(null)
 	const [userDisplayName, setUserDisplayName] = useState("")
 	const [userImage, setUserImage] = useState("")
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { getUserById, leaveRoom, logout } = useAPI()
-	const { state, dispatch } = useToolkit()
+	const { dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+	useAutoTitle()
 
 	const setDarkModeAction = (darkMode: boolean) => dispatch(setDarkMode(darkMode))
 	const handleMobileToggle = () => setMobileOpen(!mobileOpen)
 	const handleDrawerToggle = () => setDrawerOpen(!drawerOpen)
-
-	useEffect(() => {
-		if (openSettings) {
-			const lang = localStorage.getItem(LS_LANGUAGE) || "en"
-			setLanguage(lang)
-		}
-	}, [openSettings])
 
 	useEffect(() => {
 		const isDarkMode = localStorage.getItem(LS_DARKMODE) === "dark"
@@ -81,9 +78,11 @@ export default function Layout() {
 		const getUserInfo = async () => {
 			const token = getToken()
 			const claims = decodePayload(token)
-			if (!claims?.sub) return
+			const userId = Number(claims?.sub)
+			if (!Number.isInteger(userId) || userId <= 0) return
+			setCurrentUserId(userId)
 
-			const user = await getUserById(claims.sub)
+			const user = await getUserById(userId)
 			if (!user?.data) return
 			const { id, display_name, avatar_seq } = user.data
 			const avatarPath = avatar_seq === 0
@@ -97,25 +96,6 @@ export default function Layout() {
 
 		getUserInfo()
 	}, [])
-
-	const onChangeLanguage = (e: any) => {
-		setLanguage(e.target.value)
-		i18n.changeLanguage(e.target.value)
-		localStorage.setItem(LS_LANGUAGE, e.target.value)
-	}
-
-	const toogleDarkMode = (e: ChangeEvent<HTMLElement>) => {
-		e.stopPropagation()
-		const isDarkMode = localStorage.getItem(LS_DARKMODE) === "dark"
-		setDarkModeAction(!isDarkMode)
-		localStorage.setItem(LS_DARKMODE, isDarkMode ? "light" : "dark")
-	}
-
-	const handleCloseSettings = (_: any, reason: "backdropClick" | "escapeKeyDown") => {
-		if (reason === "escapeKeyDown") {
-			setOpenSettings(false)
-		}
-	}
 
 	const logoutClick = async () => {
 		const token = getToken()
@@ -132,12 +112,6 @@ export default function Layout() {
 		}
 	}
 
-	const textCenterStyle = {
-		display: "flex",
-		justifyContent: "center",
-		alignItems: "center"
-	}
-
 	const handleShowSettings = () => {
 		(document.activeElement as HTMLElement)?.blur()
 		setOpenSettings(true)
@@ -152,6 +126,15 @@ export default function Layout() {
 	const displayName = userDisplayName
 	const userMenuOpen = Boolean(userMenuAnchor)
 
+	const loadProfileUser = async (userId: number) => {
+		setProfileUser(null)
+
+		const user = await getUserById(userId)
+		if (user?.data) {
+			setProfileUser(user.data)
+		}
+	}
+
 	const handleOpenUserMenu = (e: React.MouseEvent<HTMLElement>) => {
 		setUserMenuAnchor(e.currentTarget)
 	}
@@ -161,8 +144,17 @@ export default function Layout() {
 	}
 
 	const handleGoProfile = () => {
-		navigate("/profile?id=1")
+		if (!currentUserId) return
 		handleCloseUserMenu()
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
+		setOpenProfilePopup(true)
+		loadProfileUser(currentUserId)
+	}
+
+	const handleLogoutFromMenu = async () => {
+		handleCloseUserMenu()
+		await logoutClick()
 	}
 
 	const handleGoHome = async () => {
@@ -227,7 +219,7 @@ export default function Layout() {
 	)
 
 	return (
-		<Box sx={{ display: "flex" }}>
+		<Box className="layout-root">
 			<CssBaseline />
 
 			<Box
@@ -254,7 +246,7 @@ export default function Layout() {
 						pr: 1.5
 					}}
 				>
-					<Avatar src={userImage} alt={displayName} sx={{ width: 28, height: 28 }} />
+					<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
 					<span>{displayName}</span>
 				</Button>
 
@@ -280,16 +272,16 @@ export default function Layout() {
 						{translate("menu.profile")}
 					</MenuItem>
 					<Divider />
-					<MenuItem onClick={logoutClick} sx={{ gap: 1 }}>
+					<MenuItem onClick={handleLogoutFromMenu} sx={{ gap: 1 }}>
 						<i className="fas fa-right-from-bracket fsx-14" />
 						{translate("menu.logout")}
 					</MenuItem>
 				</Menu>
 			</Box>
 
-			{isMobile && <AppBar position="fixed" sx={{ width: "100%" }}>
+			{isMobile && <AppBar position="fixed" className="layout-mobile-appbar">
 				<Toolbar>
-					<IconButton color="inherit" edge="start" onClick={handleMobileToggle} sx={{ mr: 2 }}>
+					<IconButton color="inherit" edge="start" onClick={handleMobileToggle} className="layout-mobile-menu-btn">
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
@@ -302,26 +294,22 @@ export default function Layout() {
 						onClick={handleOpenUserMenu}
 						variant="outlined"
 						size="small"
-						sx={{
-							textTransform: "none",
-							display: "flex",
-							gap: 1,
-							borderRadius: 2,
-							color: "inherit",
-							borderColor: "rgba(255,255,255,0.5)",
-							pl: 1,
-							pr: 1.5,
-							ml: 1
-						}}
+						className="layout-mobile-user-btn"
 					>
-						<Avatar src={userImage} alt={displayName} sx={{ width: 24, height: 24 }} />
-						<span>{displayName}</span>
+						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+						<TSpan content={displayName} />
 					</Button>
 				</Toolbar>
 			</AppBar>}
 
 			{/* Navigation */}
-			<Box component="nav" sx={{ width: { sm: drawerOpen ? fullWidth : miniWidth }, flexShrink: { sm: 0 } }}>
+			<Box
+				component="nav"
+				sx={{
+					width: { sm: drawerOpen ? fullWidth : miniWidth },
+					flexShrink: { sm: 0 }
+				}}
+			>
 				<Drawer
 					variant="temporary"
 					open={mobileOpen}
@@ -355,64 +343,35 @@ export default function Layout() {
 				</Drawer>
 			</Box>
 
-			{/* Main content */}
-			<Box
-				component="main"
-				sx={{
-					flexGrow: 1,
-					width: {
-						xs: `100%`,
-						sm: `calc(100% - ${fullWidth}px)`,
-						md: `calc(100% - ${fullWidth}px)`,
-						lg: `calc(100% - ${fullWidth}px)`,
-					},
-					p: 1,
-				}}
-			>
-				{isMobile && <Toolbar />}
-				<Outlet />
-
-				<Dialog
-					open={openSettings}
-					onClose={handleCloseSettings}
-					maxWidth="xs"
-					disableRestoreFocus
+			{/* popups */}
+			<PopupProvider value={{
+				openProfilePopup,
+				openSettings,
+				profileUser,
+				setOpenProfilePopup,
+				setOpenSettings,
+				setProfileUser
+			}}>
+				<Box
+					component="main"
+					sx={{
+						flexGrow: 1,
+						width: {
+							xs: `100%`,
+							sm: `calc(100% - ${fullWidth}px)`,
+							md: `calc(100% - ${fullWidth}px)`,
+							lg: `calc(100% - ${fullWidth}px)`,
+						},
+						p: 1,
+					}}
 				>
-					<DialogTitle padding="5px 20px !important">
-						<TTypography content="settings.header" sx={textCenterStyle} />
-					</DialogTitle>
-					<Divider sx={{ my: "5px" }} />
-					<DialogContent className="dialog-content">
-						<Grid container className="setting-row">
-							<TTypography sx={{ minWidth: "100px" }} content="settings.language" />
-							<ComboBoxWithLabel
-								id="language"
-								options={COUNTRIES_DROPDOWN}
-								value={language}
-								change={onChangeLanguage}
-							/>
-						</Grid>
-						<Grid container className="setting-row">
-							<TTypography content="settings.dark-mode" />
-							<Switch
-								className="ios-switch"
-								checked={state.darkMode}
-								onChange={toogleDarkMode}
-							/>
-						</Grid>
-						<Grid container justifyContent="center">
-							<Button
-								className="btn btn-primary mt-20 center"
-								variant="outlined"
-								size="small"
-								onClick={() => setOpenSettings(false)}
-							>
-								{translate("settings.close")}
-							</Button>
-						</Grid>
-					</DialogContent>
-				</Dialog>
-			</Box>
+					{isMobile && <Toolbar />}
+					<Outlet />
+
+					<ProfilePopup />
+					<SettingsPopup />
+				</Box>
+			</PopupProvider>
 		</Box>
 	)
 }

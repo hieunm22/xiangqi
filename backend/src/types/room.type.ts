@@ -1,0 +1,25 @@
+export interface CreateRoomRequest {
+	tableName: string
+	teamName: string | null
+	redFirst: boolean
+	betAmount: number
+}
+
+export enum RoomStatus {
+	Waiting = 1,
+	Playing = 2
+}
+
+interface RoomRequestBase {
+	id: number
+}
+
+export interface JoinRoomRequest extends RoomRequestBase { }
+
+export interface LeaveRoomRequest extends RoomRequestBase { }
+
+export interface SetRoomStatusRequest extends RoomRequestBase {
+	status: RoomStatus
+}
+
+export interface StartGameRequest extends RoomRequestBase { }

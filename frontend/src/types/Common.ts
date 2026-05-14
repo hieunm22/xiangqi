@@ -8,6 +8,12 @@ export interface ReduxStore {
 
 export type EmptyVoid = () => void
 
+export interface APIResponse<T> {
+	success: boolean
+	data: T | null
+	error: string
+}
+
 export interface DropdownProps {
 	key: string
 	icon?: string

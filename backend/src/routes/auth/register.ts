@@ -87,7 +87,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 	if (!username || !password || !email || !displayName || gender === null) {
 		res.status(400).json({
 			success: false,
-			message: "username, password, gender, displayName and email are required",
+			message: "register.messages.missing-fields",
 			status_code: 400
 		})
 		return
@@ -102,7 +102,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 		if (existingUsername) {
 			res.status(409).json({
 				success: false,
-				message: "Username already exists",
+				message: "register.messages.username-exists",
 				status_code: 409
 			})
 			return
@@ -111,7 +111,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 		if (existingEmail) {
 			res.status(409).json({
 				success: false,
-				message: "Email already exists",
+				message: "register.messages.email-exists",
 				status_code: 409
 			})
 			return
@@ -143,7 +143,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
 		res.status(201).json({
 			success: true,
-			message: "User created successfully",
+			message: "register.messages.success",
 			status_code: 201,
 			data: {
 				id: Number(createdUser.id),
@@ -159,11 +159,19 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 		if (error?.code === "P2002") {
 			const target = Array.isArray(error?.meta?.target) ? error.meta.target.join(",") : String(error?.meta?.target ?? "")
 			if (target.includes("user_name")) {
-				res.status(409).json({ success: false, message: "Username already exists", status_code: 409 })
+				res.status(409).json({
+					success: false,
+					message: "register.messages.username-exists",
+					status_code: 409
+				})
 				return
 			}
 			if (target.includes("email")) {
-				res.status(409).json({ success: false, message: "Email already exists", status_code: 409 })
+				res.status(409).json({
+					success: false,
+					message: "register.messages.email-exists",
+					status_code: 409
+				})
 				return
 			}
 		}
@@ -171,7 +179,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 		console.error("Register error:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "register.messages.internal-server-error",
 			status_code: 500
 		})
 	}

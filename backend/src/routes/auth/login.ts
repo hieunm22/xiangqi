@@ -92,7 +92,7 @@ router.post("/auth/login", (req, res, next) => {
 	if (!username?.trim() || !password?.trim()) {
 		res.status(400).json({
 			success: false,
-			message: "Username and password are required",
+			message: "login.messages.missing-credentials",
 			status_code: 400,
 			access_token: "",
 			refresh_token: "",
@@ -123,7 +123,7 @@ router.post("/auth/login", (req, res, next) => {
 		if (!user) {
 			res.status(401).json({
 				success: false,
-				message: "Invalid username or password",
+				message: "login.messages.incorrect-login",
 				status_code: 401,
 				access_token: "",
 				refresh_token: "",
@@ -168,7 +168,7 @@ router.post("/auth/login", (req, res, next) => {
 
 		res.status(200).json({
 			success: true,
-			message: "Login successful",
+			message: "login.messages.success",
 			status_code: 200,
 			access_token,
 			refresh_token,
@@ -178,7 +178,7 @@ router.post("/auth/login", (req, res, next) => {
 		console.error("Login error:", err)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "login.messages.internal-server-error",
 			status_code: 500,
 			access_token: "",
 			refresh_token: "",

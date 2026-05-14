@@ -122,7 +122,7 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 	if (!normalizedEmail) {
 		res.status(400).json({
 			success: false,
-			message: "email is required",
+			message: "forgot-password.messages.missing-email",
 			status_code: 400
 		})
 		return
@@ -131,7 +131,7 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 	if (!isValidEmail(normalizedEmail)) {
 		res.status(400).json({
 			success: false,
-			message: "Invalid email format",
+			message: "forgot-password.messages.invalid-email-format",
 			status_code: 400
 		})
 		return
@@ -141,7 +141,7 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 		console.error("Forgot password mailer is not configured. Set this environment variable: APP_PASSWORD")
 		res.status(500).json({
 			success: false,
-			message: "Email service is not configured",
+			message: "forgot-password.messages.email-service-not-configured",
 			status_code: 500
 		})
 		return
@@ -161,7 +161,7 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 		if (!user) {
 			res.status(409).json({
 				success: false,
-				message: "Email does not exist",
+				message: "forgot-password.messages.email-not-found",
 				status_code: 409
 			})
 			return
@@ -189,14 +189,14 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 
 		res.status(200).json({
 			success: true,
-			message: "Forgot password email sent",
+			message: "forgot-password.messages.success",
 			status_code: 200
 		})
 	} catch (error) {
 		console.error("Forgot password error:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "forgot-password.messages.internal-server-error",
 			status_code: 500
 		})
 	}

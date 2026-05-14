@@ -38,7 +38,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 	) {
 		res.status(400).json({
 			success: false,
-			message: "Query parameter 'status' must be an integer",
+			message: "fetch-rooms.messages.invalid-status",
 			status_code: 400,
 			rooms: []
 		})
@@ -95,7 +95,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 
 		res.status(200).json({
 			success: true,
-			message: "Fetch rooms successfully",
+			message: "fetch-rooms.messages.success",
 			status_code: 200,
 			rooms: formattedRooms
 		})
@@ -103,7 +103,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 		console.error("Fetch rooms error:", err)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "fetch-rooms.messages.internal-server-error",
 			status_code: 500,
 			rooms: []
 		})

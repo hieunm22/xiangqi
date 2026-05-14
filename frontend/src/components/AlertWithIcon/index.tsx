@@ -22,11 +22,7 @@ export default function Alert(props: AlertProps) {
 		: props.children
 
 	return (
-		<MuiAlert
-			{...props}
-			icon={icon}
-			title={props.title}
-		>
+		<MuiAlert {...props} icon={icon}>
 			{translatedChildren}
 		</MuiAlert>
 	)

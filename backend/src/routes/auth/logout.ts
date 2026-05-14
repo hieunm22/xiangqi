@@ -55,14 +55,14 @@ router.delete("/auth/logout", requireAuth(), async (req: AuthenticatedRequest, r
 
 		res.status(200).json({
 			success: true,
-			message: sessionExists ? "Logout successful" : "Session already inactive",
+			message: sessionExists ? "logout.messages.success" : "logout.messages.already-inactive",
 			status_code: 200
 		})
 	} catch (error) {
 		console.error("Logout error:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "logout.messages.internal-server-error",
 			status_code: 500
 		})
 	}

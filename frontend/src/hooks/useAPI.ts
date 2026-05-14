@@ -7,6 +7,8 @@ import { CreateRoomRequest } from "pages/Dashboard/types"
 import { LoginBodyType, LoginSuccessResponse } from "pages/Login/types"
 import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
+import { APIResponse } from "types/Common"
+import { Users } from "types/Entities"
 
 const EP = { // end points
 	// auth endpoints
@@ -80,8 +82,8 @@ export const useAPI = () => {
 						.headers({ "skip-auth": "true" })
 						.fetch()
 						.json(r => r)
-				} catch (err) {
-					console.error("Token refresh failed", err)
+				} catch (err: any) {
+					console.error("Token refresh failed", err.message)
 					await logout(accessToken)
 					localStorage.removeItem(LS_TOKEN_KEY)
 					navigate(LOGIN_PATH)
@@ -90,18 +92,18 @@ export const useAPI = () => {
 			})
 	}
 
-const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(EP.createRoom)
-						.auth(`Bearer ${token}`)
-						.post(body)
-						.json(createRoomCallback)
+	const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(EP.createRoom)
+							.auth(`Bearer ${token}`)
+							.post(body)
+							.json(createRoomCallback)
 							.catch(handleError)
 
-	const getUserById = async (userId: number) => request.url(`${EP.getUser}/${userId}`)
+	const getUserById = async (userId: number) => request.url(`${EP.getUser}?id=${userId}`)
 							.get()
 							.json(getUserCallback)
 							.catch(handleError)
 
-	const getRoomById = async (token: string, roomId: number) => authFetch(`${EP.getRoomInfo}/${roomId}`)
+	const getRoomById = async (token: string, roomId: number) => authFetch(`${EP.getRoomInfo}?id=${roomId}`)
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getRoomCallback)
@@ -190,7 +192,7 @@ const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(E
 		return response
 	}
 
-	const getUserCallback = (response: any) => {
+	const getUserCallback = (response: APIResponse<Users>) => {
 		return response
 	}
 

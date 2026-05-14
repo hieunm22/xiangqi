@@ -71,10 +71,10 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent>
-					<Typography sx={{ textAlign: "center", mb: 2 }}>
+					<Typography sx={{ textAlign: "left", mb: 2 }}>
 						{translate(current?.options.message && current.options.message)}
 					</Typography>
-					<Grid container justifyContent="center" gap={2}>
+					<Grid container justifyContent="flex-end" gap={2}>
 						<TButton
 							variant="contained"
 							size="small"

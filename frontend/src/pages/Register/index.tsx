@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { ChangeEvent, FocusEvent, SubmitEvent, useState } from "react"
 import classnames from "classnames"
 import {
 	Box,
@@ -10,39 +10,15 @@ import {
 } from "@mui/material"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 import { LOGIN_PATH } from "common/constant"
+import { GENDER_OPTIONS, VALIDATION_RULES } from "./constants"
 import Alert from "components/AlertWithIcon"
-import { TI, TTextField, TTypography } from "components/TranslationTag"
+import { TI, TSpan, TTextField, TTypography } from "components/TranslationTag"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { RegisterBodyType } from "./types"
 import "./Register.scss"
-
-const GENDER_OPTIONS = [
-	{ key: "", value: "register.gender.select" },
-	{ key: "male", value: "register.gender.male" },
-	{ key: "female", value: "register.gender.female" }
-]
-
-const VALIDATION_RULES = {
-	username: {
-		pattern: /^[a-zA-Z0-9_.]+$/,
-		message: "register.username.error1"
-	},
-	password: {
-		minLength: 8,
-		lowercase: /[a-z]/,
-		uppercase: /[A-Z]/,
-		numeric: /[0-9]/,
-		special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
-		message: "register.password.error1"
-	},
-	email: {
-		pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-		message: "register.email.error1"
-	}
-}
 
 const getPasswordPolicyStatus = (value: string) => ({
 	hasLowercase: VALIDATION_RULES.password.lowercase.test(value),
@@ -54,7 +30,7 @@ const getPasswordPolicyStatus = (value: string) => ({
 
 export default function RegisterPage() {
 	useAutoTitle(translate("register.page.title"))
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<RegisterBodyType>({
 		username: "",
 		password: "",
 		confirmPassword: "",
@@ -63,7 +39,7 @@ export default function RegisterPage() {
 		email: ""
 	})
 
-	const [errors, setErrors] = useState({
+	const [errors, setErrors] = useState<Partial<RegisterBodyType>>({
 		username: undefined as string | undefined,
 		password: undefined as string | undefined,
 		confirmPassword: undefined as string | undefined,
@@ -87,16 +63,16 @@ export default function RegisterPage() {
 		{ key: "common.password.policy-5", matched: passwordPolicyStatus.hasMinLength },
 	]
 
-	const validateUsername = (value: string): boolean => {
+	const validateFieldWithPattern = (fieldName: keyof typeof formData, value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, username: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, [fieldName]: translate("common.input.is-required") }))
 			return false
 		}
-		if (!VALIDATION_RULES.username.pattern.test(value)) {
-			setErrors(prev => ({ ...prev, username: translate(VALIDATION_RULES.username.message) }))
+		if (fieldName === "username" && !VALIDATION_RULES[fieldName].pattern.test(value)) {
+			setErrors(prev => ({ ...prev, [fieldName]: translate(VALIDATION_RULES[fieldName].message) }))
 			return false
 		}
-		setErrors(prev => ({ ...prev, username: undefined }))
+		setErrors(prev => ({ ...prev, [fieldName]: undefined }))
 		return true
 	}
 
@@ -127,87 +103,50 @@ export default function RegisterPage() {
 		return true
 	}
 
-	const validateEmail = (value: string): boolean => {
+	const validateRequiredField = (fieldName: keyof typeof formData, value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, email: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, [fieldName]: translate("common.input.is-required") }))
 			return false
 		}
-		if (!VALIDATION_RULES.email.pattern.test(value)) {
-			setErrors(prev => ({ ...prev, email: translate(VALIDATION_RULES.email.message) }))
-			return false
-		}
-		setErrors(prev => ({ ...prev, email: undefined }))
+		setErrors(prev => ({ ...prev, [fieldName]: undefined }))
 		return true
 	}
 
-	const validateGender = (value: string): boolean => {
-		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, gender: translate("common.input.is-required") }))
-			return false
-		}
-		setErrors(prev => ({ ...prev, gender: undefined }))
-		return true
-	}
-
-	const validateDisplayName = (value: string): boolean => {
-		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, displayName: translate("common.input.is-required") }))
-			return false
-		}
-		setErrors(prev => ({ ...prev, displayName: undefined }))
-		return true
-	}
-
-	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const onChangeField = (fieldName: keyof typeof formData) => (event: ChangeEvent<HTMLInputElement>) => {
 		const value = event.target.value
-		setFormData(prev => ({ ...prev, username: value }))
+		setFormData(prev => ({ ...prev, [fieldName]: value }))
 	}
 
-	const onChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const onChangePassword = (event: ChangeEvent<HTMLInputElement>) => {
 		const value = event.target.value
 		setFormData(prev => ({ ...prev, password: value }))
 		validatePassword(value)
 	}
 
-	const onChangeConfirmPassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const value = event.target.value
-		setFormData(prev => ({ ...prev, confirmPassword: value }))
-	}
-
-	const onChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const value = event.target.value
-		setFormData(prev => ({ ...prev, email: value }))
-	}
-
 	const onChangeGender = (event: any) => {
 		const value = event.target.value
 		setFormData(prev => ({ ...prev, gender: value }))
-		validateGender(value)
+		validateRequiredField("gender", value)
 	}
 
-	const onChangeDisplayName = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const value = event.target.value
-		setFormData(prev => ({ ...prev, displayName: value }))
+	const onBlurUsername = (event: FocusEvent<HTMLInputElement>) => {
+		validateFieldWithPattern("username", event.target.value)
 	}
 
-	const onBlurUsername = (event: React.FocusEvent<HTMLInputElement>) => {
-		validateUsername(event.target.value)
-	}
-
-	const onBlurConfirmPassword = (event: React.FocusEvent<HTMLInputElement>) => {
+	const onBlurConfirmPassword = (event: FocusEvent<HTMLInputElement>) => {
 		validateConfirmPassword(event.target.value)
 	}
 
-	const onBlurEmail = (event: React.FocusEvent<HTMLInputElement>) => {
-		validateEmail(event.target.value)
+	const onBlurEmail = (event: FocusEvent<HTMLInputElement>) => {
+		validateFieldWithPattern("email", event.target.value)
 	}
 
-	const onBlurGender = (event: React.FocusEvent<HTMLInputElement>) => {
-		validateGender(event.target.value)
+	const onBlurGender = (event: FocusEvent<HTMLInputElement>) => {
+		validateRequiredField("gender", event.target.value)
 	}
 
-	const onBlurDisplayName = (event: React.FocusEvent<HTMLInputElement>) => {
-		validateDisplayName(event.target.value)
+	const onBlurDisplayName = (event: FocusEvent<HTMLInputElement>) => {
+		validateRequiredField("displayName", event.target.value)
 	}
 
 	const isFormValid = !errors.username
@@ -225,19 +164,19 @@ export default function RegisterPage() {
 
 	const { register } = useAPI()
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError(null)
 		setMessage(null)
 		setLoading(true)
 
 		// Validate all fields
-		const isUsernameValid = validateUsername(formData.username)
+		const isUsernameValid = validateFieldWithPattern("username", formData.username)
 		const isPasswordValid = validatePassword(formData.password)
 		const isConfirmPasswordValid = validateConfirmPassword(formData.confirmPassword)
-		const isGenderValid = validateGender(formData.gender)
-		const isDisplayNameValid = validateDisplayName(formData.displayName)
-		const isEmailValid = validateEmail(formData.email)
+		const isGenderValid = validateRequiredField("gender", formData.gender)
+		const isDisplayNameValid = validateRequiredField("displayName", formData.displayName)
+		const isEmailValid = validateFieldWithPattern("email", formData.email)
 
 		if (!isUsernameValid
 			|| !isPasswordValid
@@ -254,11 +193,13 @@ export default function RegisterPage() {
 			const registerData: RegisterBodyType = {
 				username: formData.username,
 				password: formData.password,
-				email: formData.email,
-				gender: formData.gender
+				confirmPassword: formData.confirmPassword,
+				gender: formData.gender,
+				displayName: formData.displayName,
+				email: formData.email
 			}
 			const response = await register(registerData)
-			
+
 			if (response?.success) {
 				setMessage(translate("register.form.success"))
 				setTimeout(() => {
@@ -288,23 +229,20 @@ export default function RegisterPage() {
 		"fa-eye-slash": showConfirmPassword
 	})
 
+	const passwordMatchPolicyClass = (matched: boolean) => classnames("fas password-policy-icon", {
+		"fa-times": !matched,
+		"fa-check": matched
+	})
+
+	const passwordPolicyLineClass = (matched: boolean) => classnames("password-policy-line", { matched })
+
 	const passwordPolicyHelperText = (
-		<Stack spacing={0.5} className="password-policy-helper">
+		<Stack component="span" spacing={0.5} className="password-policy-helper">
 			{passwordPolicyItems.map(item => (
-				<div
-					key={item.key}
-					className={classnames("password-policy-line", {
-						matched: item.matched
-					})}
-				>
-					<i
-						className={classnames("fas password-policy-icon", {
-							"fa-times": !item.matched,
-							"fa-check": item.matched
-						})}
-					/>
-					<span>{translate(item.key)}</span>
-				</div>
+				<span key={item.key} className={passwordPolicyLineClass(item.matched)}>
+					<i className={passwordMatchPolicyClass(item.matched)} />
+					<TSpan content={item.key} />
+				</span>
 			))}
 		</Stack>
 	)
@@ -335,7 +273,7 @@ export default function RegisterPage() {
 						name="username"
 						autoFocus
 						value={formData.username}
-						onChange={onChangeUsername}
+						onChange={onChangeField("username")}
 						onBlur={onBlurUsername}
 						fullWidth
 						error={!!errors.username}
@@ -383,7 +321,7 @@ export default function RegisterPage() {
 						name="confirmPassword"
 						type={showConfirmPassword ? "text" : "password"}
 						value={formData.confirmPassword}
-						onChange={onChangeConfirmPassword}
+						onChange={onChangeField("confirmPassword")}
 						onBlur={onBlurConfirmPassword}
 						fullWidth
 						error={!!errors.confirmPassword}
@@ -414,32 +352,34 @@ export default function RegisterPage() {
 						blur={onBlurGender}
 					/>
 
-					<TTextField					label="register.display-name.label"
-					placeholder="register.display-name.placeholder"
-					variant="standard"
-					name="displayName"
-					value={formData.displayName}
-					onChange={onChangeDisplayName}
-					onBlur={onBlurDisplayName}
-					fullWidth
-					error={!!errors.displayName}
-					helperText={errors.displayName}
-					slotProps={{
+					<TTextField
+						label="register.display-name.label"
+						placeholder="register.display-name.placeholder"
+						variant="standard"
+						name="displayName"
+						value={formData.displayName}
+						onChange={onChangeField("displayName")}
+						onBlur={onBlurDisplayName}
+						fullWidth
+						error={!!errors.displayName}
+						helperText={errors.displayName}
+						slotProps={{
 						input: {
-							startAdornment: (
-								<i className="fas fa-tag start-icon" />
-							)
-						}
-					}}
-				/>
+								startAdornment: (
+									<i className="fas fa-tag start-icon" />
+								)
+							}
+						}}
+					/>
 
-				<TTextField						label="register.email.label"
+					<TTextField
+						label="register.email.label"
 						placeholder="register.email.placeholder"
 						variant="standard"
 						name="email"
 						type="email"
 						value={formData.email}
-						onChange={onChangeEmail}
+						onChange={onChangeField("email")}
 						onBlur={onBlurEmail}
 						fullWidth
 						error={!!errors.email}

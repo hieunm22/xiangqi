@@ -1,8 +1,10 @@
 export interface RegisterBodyType {
 	username: string
 	password: string
-	email: string
+	confirmPassword: string
 	gender: string
+	displayName: string
+	email: string
 }
 
 export interface RegisterSuccessResponse {

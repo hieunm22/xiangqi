@@ -17,6 +17,7 @@ export default function RoomPage() {
 		isFirstJoinedPlayer,
 		isInCurrentRoom,
 		isPlayer,
+		joinedUsers,
 		roomStatus,
 		secondJoinedUser,
 		state,
@@ -110,6 +111,7 @@ export default function RoomPage() {
 					team={firstJoinedUser?.team === "red" ? "red" : "black"}
 					avatarUrl={firstJoinedUser?.avatar_url || null}
 					capturedPieces={state.capturedPieces.black}
+					userId={firstJoinedUser?.id}
 				/>
 				<PlayerInfoCard
 					username={secondJoinedUser?.display_name || translate("room.info.waiting-user")}
@@ -118,6 +120,7 @@ export default function RoomPage() {
 					capturedPieces={state.capturedPieces.red}
 					mirrored
 					isEmpty={!secondJoinedUser}
+					userId={secondJoinedUser?.id}
 				/>
 			</div>
 			<div className="room-action-row">
@@ -126,6 +129,7 @@ export default function RoomPage() {
 					size="medium"
 					color="success"
 					onClick={handleStartGame}
+					disabled={joinedUsers.length < 2}
 					sx={{ visibility: isFirstJoinedPlayer ? "visible" : "hidden" }}
 					value="room.actions.start-room"
 				/>

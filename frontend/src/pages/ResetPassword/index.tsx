@@ -61,6 +61,7 @@ export default function ResetPasswordPage() {
 	const [validating, setValidating] = useState(true)
 	const [isValidToken, setIsValidToken] = useState(false)
 	const [userId, setUserId] = useState<number | null>(null)
+	const [userName, setUserName] = useState("")
 
 	const passwordPolicyStatus = getPasswordPolicyStatus(formData.password)
 	const passwordPolicyItems = [
@@ -167,6 +168,7 @@ export default function ResetPasswordPage() {
 				if (response?.success && response?.data) {
 					setIsValidToken(true)
 					setUserId(Number(response.data.id))
+					setUserName(response.data.user_name)
 				} else {
 					setIsValidToken(false)
 				}
@@ -267,6 +269,23 @@ export default function ResetPasswordPage() {
 						component="h1"
 						fontWeight={700}
 						content="reset-password.form.title"
+					/>
+
+					<TTextField
+						label="login.username.label"
+						variant="standard"
+						name="username"
+						disabled
+						value={userName}
+						fullWidth
+						slotProps={{
+							input: {
+								readOnly: true,
+								startAdornment: (
+									<i className="fas fa-user start-icon" />
+								)
+							}
+						}}
 					/>
 
 					<TTextField

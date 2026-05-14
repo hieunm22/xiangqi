@@ -1,12 +1,9 @@
 import { Response, Router } from "express"
 import prisma from "../../prisma"
 import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import { LeaveRoomRequest } from "../../types/room.type"
 
 const router = Router()
-
-interface LeaveRoomRequest {
-	id: number
-}
 
 /**
  * @swagger
@@ -47,7 +44,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a positive integer",
+			message: "leave-room.messages.invalid-room-id",
 			status_code: 400
 		})
 		return
@@ -65,7 +62,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 		if (deletedRoomUser.count === 0) {
 			res.status(404).json({
 				success: false,
-				message: "Player is not in this room",
+				message: "leave-room.messages.player-not-in-room",
 				status_code: 404
 			})
 			return
@@ -87,14 +84,14 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 
 		res.status(200).json({
 			success: true,
-			message: "Leave room successfully",
+			message: "leave-room.messages.success",
 			status_code: 200
 		})
 	} catch (err) {
 		console.error("Leave room error:", err)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "leave-room.messages.internal-server-error",
 			status_code: 500
 		})
 	}

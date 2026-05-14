@@ -49,7 +49,7 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 	if (!refreshTokenCookie) {
 		res.status(401).json({
 			success: false,
-			message: "Missing refresh token cookie",
+			message: "refresh-token.messages.missing-refresh-token",
 			status_code: 401,
 			access_token: "",
 			token_type: "Bearer"
@@ -62,7 +62,7 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 	// if (!cachedRefreshToken || cachedRefreshToken !== refreshTokenCookie) {
 	// 	res.status(401).json({
 	// 		success: false,
-	// 		message: "Refresh token mismatch or expired",
+	// 		message: "refresh-token.messages.mismatch-or-expired",
 	// 		status_code: 401,
 	// 		access_token: "",
 	// 		token_type: "Bearer"
@@ -80,7 +80,7 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 
 	res.status(200).json({
 		success: true,
-		message: "Token refreshed",
+		message: "refresh-token.messages.success",
 		status_code: 200,
 		access_token,
 		token_type: "Bearer"

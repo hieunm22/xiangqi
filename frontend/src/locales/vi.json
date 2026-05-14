@@ -65,7 +65,8 @@
 		"header": "Cài đặt",
 		"language": "Ngôn ngữ",
 		"dark-mode": "Chế độ tối",
-		"close": "Đóng"
+		"close": "Đóng",
+		"change-password": "Đổi mật khẩu"
 	},
 	"popup": {
 		"alert": {
@@ -89,12 +90,14 @@
 			"back-home": "Thoát phòng",
 			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?"
 		},
+		"info": {
+			"waiting-user": "Đang chờ người chơi…"
+		}
+	},
+	"game": {
 		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc",
 			"in-check": "Tướng của bạn đang bị chiếu"
-		},
-		"info": {
-			"waiting-user": "Đang chờ người chơi…"
 		}
 	},
 	"login": {
@@ -118,6 +121,12 @@
 			"error1": "Mật khẩu bắt buộc nhập",
 			"show": "Hiện mật khẩu",
 			"hide": "Ẩn mật khẩu"
+		},
+		"messages": {
+			"incorrect-login": "Tên người dùng hoặc mật khẩu không hợp lệ",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"missing-credentials": "Tên người dùng và mật khẩu là bắt buộc",
+			"success": "Đăng nhập thành công"
 		}
 	},
 	"notfound": {
@@ -167,6 +176,13 @@
 			"error1": "Tên người dùng chỉ chứa ký tự chữ số, dấu gạch dưới và dấu chấm",
 			"label": "Tên người dùng",
 			"placeholder": "Tên người dùng"
+		},
+		"messages": {
+			"email-exists": "Email đã tồn tại",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"missing-fields": "Tên người dùng, mật khẩu, giới tính, tên hiển thị và email là bắt buộc",
+			"success": "Người dùng được tạo thành công",
+			"username-exists": "Tên người dùng đã tồn tại"
 		}
 	},
 	"forgot-password": {
@@ -179,6 +195,14 @@
 			"submit": "Quên mật khẩu",
 			"success": "Hãy kiểm tra email để xem thông tin đặt lại mật khẩu.",
 			"error1": "Quên mật khẩu không thành công."
+		},
+		"messages": {
+			"email-not-found": "Email không tồn tại",
+			"email-service-not-configured": "Dịch vụ email chưa được cấu hình",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-email-format": "Định dạng email không hợp lệ",
+			"missing-email": "Email là bắt buộc",
+			"success": "Email đặt lại mật khẩu đã được gửi"
 		}
 	},
 	"reset-password": {
@@ -195,6 +219,95 @@
 		"action": {
 			"back-to-login": "Quay lại trang chủ",
 			"submit": "Đặt lại mật khẩu"
+		},
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-or-expired-token": "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn",
+			"invalid-user-id": "ID người dùng không hợp lệ",
+			"missing-id-or-token": "ID và token là bắt buộc",
+			"missing-userId-or-password": "UserId và mật khẩu là bắt buộc",
+			"token-valid": "Token đặt lại mật khẩu hợp lệ",
+			"user-not-found": "Không tìm thấy người dùng"
+		}
+	},
+	"auth-middleware": {
+		"messages": {
+			"invalid-token-payload": "Payload của token không hợp lệ",
+			"session-not-found": "Không tìm thấy phiên",
+			"token-expired": "Token đã hết hạn",
+			"token-invalid": "Token không hợp lệ",
+			"token-required": "Token không được cung cấp",
+			"token-subject-mismatch": "Token chủ đề không khớp",
+			"token-validation-failed": "Xác thực token không thành công"
+		}
+	},
+	"create-room": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ khi tạo phòng",
+			"invalid-bet-amount": "Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận",
+			"invalid-redFirst": "'redFirst' phải là giá trị boolean",
+			"invalid-team-name": "Tên đội phải là 'red', 'black' hoặc null",
+			"name-required": "Tên phòng (tableName) là bắt buộc và không được để trống",
+			"room-created": "Phòng được tạo thành công"
+		}
+	},
+	"fetch-rooms": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-status": "Tham số truy vấn 'status' phải là số nguyên",
+			"success": "Lấy phòng thành công"
+		}
+	},
+	"join-room": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
+			"room-not-found": "Không tìm thấy phòng",
+			"success": "Tham gia phòng thành công"
+		}
+	},
+	"leave-room": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
+			"player-not-in-room": "Người chơi không trong phòng này",
+			"success": "Rời phòng thành công"
+		}
+	},
+	"load-room": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "ID phòng phải là số nguyên dương",
+			"room-not-found": "Không tìm thấy phòng",
+			"success": "Tải phòng thành công"
+		}
+	},
+	"logout": {
+		"messages": {
+			"already-inactive": "Phiên đã ngưng hoạt động",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"success": "Đăng xuất thành công"
+		}
+	},
+	"refresh-token": {
+		"messages": {
+			"missing-refresh-token": "Thiếu cookie token làm mới",
+			"mismatch-or-expired": "Thiếu refresh token hoặc đã hết hạn",
+			"success": "Token đã làm mới"
+		}
+	},
+	"set-room-status": {
+		"messages": {
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
+			"invalid-status": "Trường 'status' phải là 1 hoặc 2",
+			"room-not-found": "Không tìm thấy phòng",
+			"success": "Đặt trạng thái phòng thành công"
+		}
+	},
+	"validate-token": {
+		"messages": {
+			"success": "Token hợp lệ"
 		}
 	}
 }

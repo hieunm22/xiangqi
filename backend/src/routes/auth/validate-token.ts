@@ -22,7 +22,11 @@ const router = Router()
  *         description: Internal server error
  */
 router.post("/auth/validate-token", requireAuth(), async (_: AuthenticatedRequest, res: Response) => {
-	res.status(200).json({ success: true, message: "Token is valid", status_code: 200 })
+	res.status(200).json({
+		success: true,
+		message: "validate-token.messages.success",
+		status_code: 200
+	})
 })
 
 export default router

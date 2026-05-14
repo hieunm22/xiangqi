@@ -1,12 +1,9 @@
 import { Response, Router } from "express"
 import prisma from "../../prisma"
 import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import { JoinRoomRequest } from "../../types/room.type"
 
 const router = Router()
-
-interface JoinRoomRequest {
-	id: number
-}
 
 /**
  * @swagger
@@ -47,7 +44,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a positive integer",
+			message: "join-room.messages.invalid-room-id",
 			status_code: 400
 		})
 		return
@@ -63,7 +60,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		if (!room) {
 			res.status(404).json({
 				success: false,
-				message: "Room not found",
+				message: "join-room.messages.room-not-found",
 				status_code: 404
 			})
 			return
@@ -171,7 +168,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 
 		res.status(201).json({
 			success: true,
-			message: "Successfully joined the room",
+			message: "join-room.messages.success",
 			status_code: 201,
 			data: formattedUsers
 		})
@@ -179,7 +176,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		console.error("Error joining room:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "join-room.messages.internal-server-error",
 			status_code: 500
 		})
 	}

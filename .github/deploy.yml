@@ -1,0 +1,84 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          port: 23
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/projects/xiangqi
+            
+            # save commit before pull
+            OLD_COMMIT=$(git rev-parse HEAD)
+            
+            # Reset all changes
+            git reset --hard
+            git clean -fd
+            
+            # Fetch and pull the latest code
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+            
+            # Get the list of changed files
+            CHANGED_FILES=$(git diff --name-only $OLD_COMMIT HEAD)
+            
+            echo "=== Changed files ==="
+            echo "$CHANGED_FILES"
+            echo "===================="
+            
+            # Deploy frontend
+            if echo "$CHANGED_FILES" | grep -q "^frontend/"; then
+              echo "--- Deploying frontend ---"
+              
+              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^frontend/package.json")
+              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^frontend/package.json" | grep -c "^frontend/")
+              
+              cd frontend
+              
+              if [ "$PACKAGE_CHANGED" -gt 0 ] && [ "$OTHER_FILES" -gt 0 ]; then
+                echo "package.json and other files changed"
+                yarn install
+                make publish
+              else
+                echo "Running make publish only"
+                make publish
+              fi
+              
+              cd ..
+            fi
+            
+            # Deploy backend
+            if echo "$CHANGED_FILES" | grep -q "^backend/"; then
+              echo "--- Deploying backend ---"
+              
+              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^backend/package.json")
+              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^backend/package.json" | grep -c "^backend/")
+              
+              cd backend
+              
+              if [ "$PACKAGE_CHANGED" -gt 0 ] && [ "$OTHER_FILES" -gt 0 ]; then
+                echo "package.json and other files changed"
+                yarn install
+                make publish
+              else
+                echo "Running make publish only"
+                make publish
+              fi
+              
+              cd ..
+            fi
+            
+            echo "=== Deployment completed ==="

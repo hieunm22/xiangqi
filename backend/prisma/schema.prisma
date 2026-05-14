@@ -17,6 +17,7 @@ model User {
   gender       Boolean
   avatar_seq   Int        @default(0)
   room_users   RoomUser[]
+  won_games    Game[]     @relation("Game_winner")
 
   @@map("users")
   @@schema("auth")
@@ -31,6 +32,7 @@ model Room {
   created_at DateTime   @default(now()) @db.Timestamptz(6)
   updated_at DateTime   @default(now()) @db.Timestamptz(6)
   room_users RoomUser[]
+  games      Game[]
 
   @@map("rooms")
   @@schema("game")
@@ -46,5 +48,17 @@ model RoomUser {
 
   @@id([room_id, user_id])
   @@map("room_users")
+  @@schema("game")
+}
+
+model Game {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  room_id    BigInt   @db.BigInt
+  winner_id  BigInt?  @db.BigInt
+  status     Int      @db.SmallInt @default(0)
+  room       Room     @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  winner     User?    @relation("Game_winner", fields: [winner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("games")
   @@schema("game")
 }

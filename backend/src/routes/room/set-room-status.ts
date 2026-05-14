@@ -1,15 +1,11 @@
 import { Response, Router } from "express"
 import prisma from "../../prisma"
 import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import { RoomStatus, SetRoomStatusRequest } from "../../types/room.type"
 
 const router = Router()
 
-interface SetRoomStatusRequest {
-	id: number
-	status: number
-}
-
-const VALID_STATUSES = [1, 2]
+const VALID_STATUSES = [RoomStatus.Waiting, RoomStatus.Playing]
 
 /**
  * @swagger
@@ -44,7 +40,7 @@ const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => 
 	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'id' is required and must be a positive integer",
+			message: "set-room-status.messages.invalid-room-id",
 			status_code: 400
 		})
 		return
@@ -53,7 +49,7 @@ const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => 
 	if (!Number.isInteger(status) || !VALID_STATUSES.includes(status)) {
 		res.status(400).json({
 			success: false,
-			message: "Field 'status' must be either 1 or 2",
+			message: "set-room-status.messages.invalid-status",
 			status_code: 400
 		})
 		return
@@ -78,7 +74,7 @@ const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => 
 
 		res.status(200).json({
 			success: true,
-			message: "Set room status successfully",
+			message: "set-room-status.messages.success",
 			status_code: 200,
 			room: {
 				...room,
@@ -89,7 +85,7 @@ const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => 
 		if (err?.code === "P2025") {
 			res.status(404).json({
 				success: false,
-				message: "Room not found",
+				message: "set-room-status.messages.room-not-found",
 				status_code: 404
 			})
 			return
@@ -98,7 +94,7 @@ const handleSetRoomStatus = async (req: AuthenticatedRequest, res: Response) => 
 		console.error("Set room status error:", err)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "set-room-status.messages.internal-server-error",
 			status_code: 500
 		})
 	}

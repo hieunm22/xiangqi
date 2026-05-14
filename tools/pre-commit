@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -u
+
+# Run commands from repo root regardless of where git invokes the hook.
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root" || {
+  echo "[pre-commit] Failed to change directory to repo root: $repo_root"
+  exit 1
+}
+
+staged_files="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if [[ -z "$staged_files" ]]; then
+  echo "[pre-commit] No staged files. Skipping checks."
+  exit 0
+fi
+
+run_frontend=false
+run_backend=false
+
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
+
+  if [[ "$file" == frontend/* ]]; then
+    run_frontend=true
+  fi
+
+  if [[ "$file" == backend/* ]]; then
+    run_backend=true
+  fi
+done <<< "$staged_files"
+
+if ! $run_frontend && ! $run_backend; then
+  echo "[pre-commit] No staged files in frontend/ or backend/. Skipping checks."
+  exit 0
+fi
+
+if $run_frontend; then
+  echo "[pre-commit] Detected changes in frontend/. Running yarn build..."
+  (
+    cd frontend && yarn build
+  )
+  fe_status=$?
+
+  if [[ $fe_status -ne 0 ]]; then
+    echo "[pre-commit] Frontend build failed. Commit blocked."
+    echo "[pre-commit] Check errors above (source likely in frontend/)."
+    exit 1
+  fi
+
+  echo "[pre-commit] Frontend build passed."
+fi
+
+if $run_backend; then
+  echo "[pre-commit] Detected changes in backend/. Running yarn test..."
+  (
+    cd backend && yarn test
+  )
+  be_status=$?
+
+  if [[ $be_status -ne 0 ]]; then
+    echo "[pre-commit] Backend tests failed. Commit blocked."
+    echo "[pre-commit] Check failed test output above (source likely in backend/)."
+    exit 1
+  fi
+
+  echo "[pre-commit] Backend tests passed."
+fi
+
+echo "[pre-commit] All required checks passed. Proceeding with commit."
+exit 0

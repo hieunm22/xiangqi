@@ -19,6 +19,7 @@ import joinRoomRoutes from "./routes/room/join-room"
 import leaveRoomRoutes from "./routes/room/leave-room"
 import loadRoomRoutes from "./routes/room/load-room"
 import setRoomStatusRoutes from "./routes/room/set-room-status"
+import startGameRoutes from "./routes/room/start-game"
 
 const app = express()
 
@@ -67,6 +68,7 @@ app.use("/api", joinRoomRoutes)
 app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
 app.use("/api", setRoomStatusRoutes)
+app.use("/api", startGameRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec))

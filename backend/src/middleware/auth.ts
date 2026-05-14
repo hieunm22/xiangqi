@@ -22,7 +22,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 		if (!token?.trim()) {
 			res.status(401).json({
 				success: false,
-				message: "Token not provided",
+				message: "auth-middleware.messages.token-required",	// Token is required
 				status_code: 401
 			})
 			return
@@ -40,7 +40,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 			if (!userId || !sessionId) {
 				res.status(401).json({
 					success: false,
-					message: "Invalid token payload",
+					message: "auth-middleware.messages.invalid-token-payload",	// Invalid token payload
 					status_code: 401
 				})
 				return
@@ -51,7 +51,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 			if (!sessionRaw) {
 				res.status(401).json({
 					success: false,
-					message: "Session not found",
+					message: "auth-middleware.messages.session-not-found",	// Session not found
 					status_code: 401
 				})
 				return
@@ -67,7 +67,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 			if (Number(sessionUserId) !== Number(userId)) {
 				res.status(401).json({
 					success: false,
-					message: "Token subject mismatch",
+					message: "auth-middleware.messages.token-subject-mismatch",	// Token subject mismatch
 					status_code: 401
 				})
 				return
@@ -84,7 +84,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 			if (error instanceof jwt.TokenExpiredError) {
 				res.status(401).json({
 					success: false,
-					message: "Token is expired",
+					message: "auth-middleware.messages.token-expired",	// Token is expired
 					status_code: 401
 				})
 				return
@@ -93,7 +93,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 			if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.NotBeforeError) {
 				res.status(401).json({
 					success: false,
-					message: "Token is invalid",
+					message: "auth-middleware.messages.token-invalid",	// Token is invalid
 					status_code: 401
 				})
 				return
@@ -101,7 +101,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 
 			res.status(401).json({
 				success: false,
-				message: "Token validation failed",
+				message: "auth-middleware.messages.token-validation-failed",	// Token validation failed
 				status_code: 401
 			})
 		}

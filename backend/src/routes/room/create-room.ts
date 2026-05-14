@@ -1,15 +1,9 @@
-import { Request, Response, Router } from "express"
+import { Response, Router } from "express"
 import prisma from "../../prisma"
 import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import { CreateRoomRequest } from "../../types/room.type"
 
 const router = Router()
-
-export interface CreateRoomRequest {
-	tableName: string
-	teamName: string
-	redFirst: boolean
-	betAmount: number
-}
 
 const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
 
@@ -83,17 +77,20 @@ router.post(
 		if (!tableName || typeof tableName !== "string" || tableName.trim() === "") {
 			res.status(400).json({
 				success: false,
-				message: "Room name (tableName) is required and must not be empty",
+				message: "create-room.messages.name-required",
 				status_code: 400
 			})
 			return
 		}
 
 		// Validate team name
-		if (!teamName || typeof teamName !== "string" || (teamName !== "red" && teamName !== "black")) {
+		if (
+			teamName !== null &&
+			(typeof teamName !== "string" || (teamName !== "red" && teamName !== "black"))
+		) {
 			res.status(400).json({
 				success: false,
-				message: "Team name must be either 'red' or 'black'",
+				message: "create-room.messages.invalid-team-name",
 				status_code: 400
 			})
 			return
@@ -103,7 +100,7 @@ router.post(
 		if (typeof redFirst !== "boolean") {
 			res.status(400).json({
 				success: false,
-				message: "Invalid request body: 'redFirst' must be a boolean",
+				message: "create-room.messages.invalid-redFirst",
 				status_code: 400
 			})
 			return
@@ -113,7 +110,7 @@ router.post(
 		if (betAmount === undefined || betAmount === null || !ACCEPTABLE_BET_AMOUNTS.includes(betAmount)) {
 			res.status(400).json({
 				success: false,
-				message: `Bet amount is required. Acceptable values: ${ACCEPTABLE_BET_AMOUNTS.join(", ")}`,
+				message: "create-room.messages.invalid-bet-amount",
 				status_code: 400
 			})
 			return
@@ -122,7 +119,7 @@ router.post(
 		if (typeof betAmount !== "number" || !ACCEPTABLE_BET_AMOUNTS.includes(betAmount)) {
 			res.status(400).json({
 				success: false,
-				message: `Bet amount must be one of: ${ACCEPTABLE_BET_AMOUNTS.join(", ")}`,
+				message: "create-room.messages.invalid-bet-amount-values",
 				status_code: 400
 			})
 			return
@@ -198,7 +195,7 @@ router.post(
 
 			res.status(201).json({
 				success: true,
-				message: "Room created successfully",
+				message: "create-room.messages.room-created",
 				status_code: 201,
 				room: formattedRoom
 			})
@@ -206,7 +203,7 @@ router.post(
 			console.error("Error creating room:", err)
 			res.status(500).json({
 				success: false,
-				message: "Internal server error while creating room",
+				message: "create-room.messages.internal-server-error",
 				status_code: 500
 			})
 		}

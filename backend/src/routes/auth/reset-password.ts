@@ -44,7 +44,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 	if (!id || !token) {
 		res.status(400).json({
 			success: false,
-			message: "id and token are required",
+			message: "reset-password.messages.missing-id-or-token",
 			status_code: 400,
 			data: null
 		})
@@ -57,7 +57,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 		if (isNaN(userId)) {
 			res.status(400).json({
 				success: false,
-				message: "Invalid user id",
+				message: "reset-password.messages.invalid-user-id",
 				status_code: 400,
 				data: null
 			})
@@ -70,7 +70,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 		if (!cachedToken || cachedToken !== token) {
 			res.status(401).json({
 				success: false,
-				message: "Invalid or expired reset password token",
+				message: "reset-password.messages.invalid-or-expired-token",
 				status_code: 401,
 				data: null
 			})
@@ -92,7 +92,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 		if (!user) {
 			res.status(404).json({
 				success: false,
-				message: "User not found",
+				message: "reset-password.messages.user-not-found",
 				status_code: 404,
 				data: null
 			})
@@ -101,7 +101,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 
 		res.status(200).json({
 			success: true,
-			message: "Reset password token is valid",
+			message: "reset-password.messages.token-valid",
 			status_code: 200,
 			data: {
 				id: Number(user.id),
@@ -115,7 +115,7 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
 		console.error("Reset password validation error:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "reset-password.messages.internal-server-error",
 			status_code: 500,
 			data: null
 		})
@@ -162,7 +162,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
 	if (!normalizedUserId || !normalizedPassword) {
 		res.status(400).json({
 			success: false,
-			message: "userId and password are required",
+			message: "reset-password.messages.missing-userId-or-password",
 			status_code: 400
 		})
 		return
@@ -174,7 +174,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
 		if (Number.isNaN(parsedUserId) || parsedUserId <= 0) {
 			res.status(400).json({
 				success: false,
-				message: "Invalid user id",
+				message: "reset-password.messages.invalid-user-id",
 				status_code: 400
 			})
 			return
@@ -189,7 +189,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
 		if (!user) {
 			res.status(404).json({
 				success: false,
-				message: "User not found",
+				message: "reset-password.messages.user-not-found",
 				status_code: 404
 			})
 			return
@@ -213,14 +213,14 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
 
 		res.status(200).json({
 			success: true,
-			message: "Password reset successfully",
+			message: "reset-password.messages.success",
 			status_code: 200
 		})
 	} catch (error) {
 		console.error("Reset password error:", error)
 		res.status(500).json({
 			success: false,
-			message: "Internal server error",
+			message: "reset-password.messages.internal-server-error",
 			status_code: 500
 		})
 	}

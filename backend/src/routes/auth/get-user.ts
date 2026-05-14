@@ -5,13 +5,13 @@ const router = Router()
 
 /**
  * @swagger
- * /api/auth/user/{id}:
+ * /api/auth/user:
  *   get:
  *     summary: Get a user's information by ID (excluding password)
  *     tags:
  *       - Auth
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: id
  *         required: true
  *         schema:
@@ -51,8 +51,8 @@ const router = Router()
  *       500:
  *         description: Internal server error
  */
-router.get("/auth/user/:id", async (req: Request, res: Response) => {
-	const id = Number(req.params.id)
+router.get("/auth/user", async (req: Request, res: Response) => {
+	const id = Number(req.query.id)
 
 	if (!Number.isInteger(id) || id <= 0) {
 		res.status(400).json({

@@ -374,3 +374,8 @@ export function decodePayload(token: string | null) {
 		return null
 	}
 }
+
+export function getClaimsFromLocalStorage() {
+	const token = getToken()
+	return decodePayload(token)
+}

@@ -371,6 +371,7 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	transition: opacity 0.2s ease;
 
 	.player-info-card.team-red & {
 		color: red;
@@ -378,6 +379,16 @@
 
 	.player-info-card.team-black & {
 		color: black;
+	}
+
+	.player-info-card:not(.empty-slot) & {
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+			text-decoration: underline;
+			text-decoration-color: currentColor;
+		}
 	}
 }
 

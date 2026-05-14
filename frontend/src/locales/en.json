@@ -65,7 +65,8 @@
 		"header": "Settings",
 		"language": "Language",
 		"dark-mode": "Dark mode",
-		"close": "Close"
+		"close": "Close",
+		"change-password": "Change password"
 	},
 	"popup": {
 		"alert": {
@@ -89,12 +90,14 @@
 			"back-home": "Back to home",
 			"confirm-leave": "Are you sure you want to leave room?"
 		},
+		"info": {
+			"waiting-user": "Waiting player…"
+		}
+	},
+	"game": {
 		"general": {
 			"captured": "General has been captured. Room over",
 			"in-check": "Your general is under attack"
-		},
-		"info": {
-			"waiting-user": "Waiting player…"
 		}
 	},
 	"login": {
@@ -118,6 +121,12 @@
 			"error1": "Password is required",
 			"show": "Show password",
 			"hide": "Hide password"
+		},
+		"messages": {
+			"incorrect-login": "Invalid username or password",
+			"internal-server-error": "Internal server error",
+			"missing-credentials": "Username and password are required",
+			"success": "Login successful"
 		}
 	},
 	"notfound": {
@@ -167,6 +176,13 @@
 			"error1": "User name must contain only alphanumeric characters, underscore, and dot",
 			"label": "User name",
 			"placeholder": "User name"
+		},
+		"messages": {
+			"email-exists": "Email already exists",
+			"internal-server-error": "Internal server error",
+			"missing-fields": "Username, password, gender, displayName and email are required",
+			"success": "User created successfully",
+			"username-exists": "Username already exists"
 		}
 	},
 	"forgot-password": {
@@ -179,6 +195,14 @@
 			"submit": "Forgot password",
 			"success": "Check your email for reset password details.",
 			"error1": "Forgot password failed."
+		},
+		"messages": {
+			"email-not-found": "Email does not exist",
+			"email-service-not-configured": "Email service is not configured",
+			"internal-server-error": "Internal server error",
+			"invalid-email-format": "Invalid email format",
+			"missing-email": "Email is required",
+			"success": "Forgot password email sent"
 		}
 	},
 	"reset-password": {
@@ -195,6 +219,95 @@
 		"action": {
 			"back-to-login": "Back to login",
 			"submit": "Reset password"
+		},
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-or-expired-token": "Invalid or expired reset password token",
+			"invalid-user-id": "Invalid user id",
+			"missing-id-or-token": "ID and token are required",
+			"missing-userId-or-password": "UserId and password are required",
+			"token-valid": "Reset password token is valid",
+			"user-not-found": "User not found"
+		}
+	},
+	"auth-middleware": {
+		"messages": {
+			"invalid-token-payload": "Invalid token payload",
+			"session-not-found": "Session not found",
+			"token-expired": "Token is expired",
+			"token-invalid": "Token is invalid",
+			"token-required": "Token not provided",
+			"token-subject-mismatch": "Token subject mismatch",
+			"token-validation-failed": "Token validation failed"
+		}
+	},
+	"create-room": {
+		"messages": {
+			"internal-server-error": "Internal server error while creating room",
+			"invalid-bet-amount": "Bet amount is required and must be one of the acceptable values",
+			"invalid-redFirst": "'redFirst' must be a boolean",
+			"invalid-team-name": "Team name must be either 'red', 'black', or null",
+			"name-required": "Room name (tableName) is required and must not be empty",
+			"room-created": "Room created successfully"
+		}
+	},
+	"fetch-rooms": {
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-status": "Query parameter 'status' must be an integer",
+			"success": "Fetch rooms successfully"
+		}
+	},
+	"join-room": {
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Field 'id' is required and must be a positive integer",
+			"room-not-found": "Room not found",
+			"success": "Successfully joined the room"
+		}
+	},
+	"leave-room": {
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Field 'id' is required and must be a positive integer",
+			"player-not-in-room": "Player is not in this room",
+			"success": "Leave room successfully"
+		}
+	},
+	"load-room": {
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Room ID must be a positive integer",
+			"room-not-found": "Room not found",
+			"success": "Load room successfully"
+		}
+	},
+	"logout": {
+		"messages": {
+			"already-inactive": "Session already inactive",
+			"internal-server-error": "Internal server error",
+			"success": "Logout successful"
+		}
+	},
+	"refresh-token": {
+		"messages": {
+			"missing-refresh-token": "Missing refresh token cookie",
+			"mismatch-or-expired": "Refresh token mismatch or expired",
+			"success": "Token refreshed"
+		}
+	},
+	"set-room-status": {
+		"messages": {
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Field 'id' is required and must be a positive integer",
+			"invalid-status": "Field 'status' must be either 1 or 2",
+			"room-not-found": "Room not found",
+			"success": "Set room status successfully"
+		}
+	},
+	"validate-token": {
+		"messages": {
+			"success": "Token is valid"
 		}
 	}
 }

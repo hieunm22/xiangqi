@@ -21,11 +21,33 @@ export interface PlayerInfoCardProps {
 	avatarUrl?: string | null
 	mirrored?: boolean
 	isEmpty?: boolean
+	userId?: number
 }
 
-export interface JoinedUser {
+export interface RoomUser {
 	id: number
 	display_name: string
 	avatar_url: string | null
 	team: Team | null
+	joined_at: string
+}
+
+export interface RoomInfo {
+	id: number
+	name: string
+	status: number
+	bet_amount: number
+	team: Team | null
+	red_first: boolean
+}
+
+interface RoomInfoData {
+	room: RoomInfo
+	users: RoomUser[]
+}
+
+export interface RoomInfoResponse {
+	success: boolean
+	status_code: number
+	data: RoomInfoData | null
 }

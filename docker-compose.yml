@@ -13,7 +13,65 @@ services:
     restart: unless-stopped
     networks:
       - xiangqi-network
-  # docker run -ditp 5432:5432 --name xiangqi-postgres --restart unless-stopped --network xiangqi-network -e POSTGRES_DB=xiangqi -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<database_password> -v ./database/.postgres:/var/lib/postgresql/data postgres:17
+  # docker run -dit \
+  #   -p 5432:5432 \
+  #   --name xiangqi-postgres \
+  #   --restart unless-stopped \
+  #   --network xiangqi-network \
+  #   -e POSTGRES_DB=xiangqi \
+  #   -e POSTGRES_USER=postgres \
+  #   -e POSTGRES_PASSWORD=<database_password> \
+  #   -v ./database/.postgres:/var/lib/postgresql/data \
+  #   postgres:17
+
+  mongodb:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: "<mongodb_password>"
+    ports:
+      - "27017:27017"
+    volumes:
+      - /Users/macbook/projects/hieunm/.mongodb:/data/db
+    restart: unless-stopped
+    networks:
+      - xiangqi-network
+  # docker run -dit \
+  #   -p 27017:27017 \
+  #   --name xiangqi-mongodb \
+  #   --restart unless-stopped \
+  #   --network xiangqi-network \
+  #   -e MONGO_INITDB_ROOT_USERNAME=root \
+  #   -e MONGO_INITDB_ROOT_PASSWORD=<mongodb_password> \
+  #   -v /Users/macbook/projects/hieunm/.mongodb:/data/db \
+  #   mongo
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: "<mongodb_password>"
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: "<mongo_express_password>"
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - xiangqi-network
+  # docker run -dit \
+  #   -p 8081:8081 \
+  #   --name xiangqi-mongo-express \
+  #   --restart unless-stopped \
+  #   --network xiangqi-network \
+  #   -e ME_CONFIG_MONGODB_SERVER=mongodb \
+  #   -e ME_CONFIG_MONGODB_ADMINUSERNAME=root \
+  #   -e ME_CONFIG_MONGODB_ADMINPASSWORD=<mongodb_password> \
+  #   -e ME_CONFIG_BASICAUTH_USERNAME=admin \
+  #   -e ME_CONFIG_BASICAUTH_PASSWORD=<mongo_express_password> \
+  #   mongo-express
 
   # cache:
   #   container_name: xiangqi-cache
@@ -23,7 +81,12 @@ services:
   #   restart: "unless-stopped"
   #   networks:
   #     - xiangqi-network
-  # # docker run --name xiangqi-cache -ditp 6379:6379 --network xiangqi-network --restart unless-stopped redis:8.2
+  # # docker run -dit \
+  # #   -p 6379:6379 \
+  # #   --name xiangqi-cache \
+  # #   --network xiangqi-network \
+  # #   --restart unless-stopped \
+  # #   redis:8.2
 
   backend:
     container_name: xiangqi-api
@@ -40,7 +103,12 @@ services:
     networks:
       - xiangqi-network
   # run this command in the backend directory to build and run the container
-  # docker run -ditp 5001:8000 --env-file ./.env.local --network xiangqi-network --name xiangqi-api xiangqi-api
+  # docker run -dit \
+  #   -p 5001:8000 \
+  #   --env-file ./.env.local \
+  #   --network xiangqi-network \
+  #   --name xiangqi-api \
+  #   xiangqi-api
 
 networks:
   xiangqi-network:

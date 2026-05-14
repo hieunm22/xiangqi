@@ -107,6 +107,7 @@ export default function LostPasswordPage() {
 						placeholder="register.email.placeholder"
 						variant="standard"
 						name="email"
+						type="email"
 						autoFocus
 						required
 						value={email}

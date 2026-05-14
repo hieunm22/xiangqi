@@ -23,15 +23,16 @@ import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
 import { Team } from "types/GameState"
-import { JoinedUser } from "./types"
+import { RoomUser, RoomInfo } from "./types"
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
 	const { state, dispatch } = useGameToolkit()
 	const { getRoomById, joinRoom } = useAPI()
 	const getStoredTurn = () => (localStorage.getItem(LS_TURN) as Team) || "red"
+	const [room, setRoom] = useState<RoomInfo | null>(null)
 	const [roomStatus, setRoomStatus] = useState(1)
-	const [joinedUsers, setJoinedUsers] = useState<JoinedUser[]>([])
+	const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([])
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
@@ -98,7 +99,7 @@ const useRoomHook = () => {
 	}
 
 	useEffect(() => {
-		const loadCurrentRoom = async () => {
+		async function loadCurrentRoom() {
 			const token = getToken()
 			if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 				return
@@ -106,19 +107,21 @@ const useRoomHook = () => {
 
 			// First, get room info to fetch all joined users
 			const roomInfoResponse = await getRoomById(token, roomId)
-			if (!roomInfoResponse?.success || !roomInfoResponse?.room) {
+			if (!roomInfoResponse?.success || !roomInfoResponse?.data) {
 				return
 			}
 
-			const roomUsers = (roomInfoResponse.room.users || []).map((user: any) => ({
+			const roomUsers = (roomInfoResponse.data.users || []).map((user: any) => ({
 				id: Number(user.id),
 				display_name: String(user.display_name || ""),
 				avatar_url: requireImage(user.avatar_url),
-				team: user.team === "red" || user.team === "black" ? user.team : null
+				team: user.team,
+				joined_at: user.joined_at
 			}))
 
-			setRoomStatus(Number(roomInfoResponse.room.status) || 1)
+			setRoomStatus(Number(roomInfoResponse.data.room.status) || 1)
 			setJoinedUsers(roomUsers)
+			setRoom(roomInfoResponse.data.room)
 
 			// Check if current user is already in the room
 			const isUserAlreadyInRoom = roomUsers.some((u: any) => u.id === currentUserId)
@@ -132,7 +135,8 @@ const useRoomHook = () => {
 						id: Number(user.id),
 						display_name: String(user.display_name || ""),
 						avatar_url: requireImage(user.avatar_url),
-						team: user.team
+						team: user.team,
+						joined_at: typeof user.joined_at === "string" ? user.joined_at : null
 					}))
 					setJoinedUsers(updatedUsers)
 				}
@@ -141,10 +145,13 @@ const useRoomHook = () => {
 
 		loadCurrentRoom()
 		// should merge 2 useEffects into 1
-	}, [roomId])
+	}, [])
 	
 	useEffect(() => {
-		const currentTurn = getStoredTurn()
+		if (!room) {
+			return
+		}
+		const currentTurn = room?.red_first ? "red" : "black"
 		const savedBoard = localStorage.getItem(LS_BOARD) || "[]"
 		const capturedPieces = localStorage.getItem(LS_CAPTURED_PIECES) || "{\"red\":[],\"black\":[]}"
 		dispatch(setGameState({
@@ -154,7 +161,7 @@ const useRoomHook = () => {
 			teamTurn: currentTurn,
 			capturedPieces: JSON.parse(capturedPieces)
 		}))
-	}, [])
+	}, [room])
 
 	useEffect(() => {
 		if (getStoredTurn() !== state.teamTurn) {
