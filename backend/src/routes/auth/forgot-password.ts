@@ -3,10 +3,10 @@ import crypto from "crypto"
 import fs from "fs"
 import path from "path"
 import nodemailer from "nodemailer"
-import prisma from "../../prisma"
-import redis from "../../common/redis"
-import { FORGOT_PASSWORD_KEY } from "../../common/constant"
-import { ForgotPasswordRequest } from "../../types/auth.type"
+import prisma from "prisma"
+import redis from "common/redis"
+import { FORGOT_PASSWORD_KEY } from "common/constant"
+import { ForgotPasswordRequest } from "types/auth.type"
 
 const router = Router()
 

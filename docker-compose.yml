@@ -44,20 +44,20 @@ services:
   #   -e MONGO_INITDB_ROOT_USERNAME=root \
   #   -e MONGO_INITDB_ROOT_PASSWORD=<mongodb_password> \
   #   -v /Users/macbook/projects/hieunm/.mongodb:/data/db \
-  #   mongo
+  #   mongo:8
 
   mongo-express:
-    image: mongo-express
+    image: mongo-express:1.0.2-20-alpine3.19
     ports:
       - "8081:8081"
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_SERVER: xiangqi-mongodb
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: "<mongodb_password>"
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: "<mongo_express_password>"
     depends_on:
-      - mongodb
+      - xiangqi-mongodb
     restart: unless-stopped
     networks:
       - xiangqi-network
@@ -66,12 +66,12 @@ services:
   #   --name xiangqi-mongo-express \
   #   --restart unless-stopped \
   #   --network xiangqi-network \
-  #   -e ME_CONFIG_MONGODB_SERVER=mongodb \
+  #   -e ME_CONFIG_MONGODB_SERVER=xiangqi-mongodb \
   #   -e ME_CONFIG_MONGODB_ADMINUSERNAME=root \
   #   -e ME_CONFIG_MONGODB_ADMINPASSWORD=<mongodb_password> \
   #   -e ME_CONFIG_BASICAUTH_USERNAME=admin \
   #   -e ME_CONFIG_BASICAUTH_PASSWORD=<mongo_express_password> \
-  #   mongo-express
+  #   mongo-express:1.0.2-20-alpine3.19
 
   # cache:
   #   container_name: xiangqi-cache

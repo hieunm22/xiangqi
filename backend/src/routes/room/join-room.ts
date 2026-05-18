@@ -1,7 +1,7 @@
 import { Response, Router } from "express"
-import prisma from "../../prisma"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
-import { JoinRoomRequest } from "../../types/room.type"
+import prisma from "prisma"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { JoinRoomRequest } from "types/room.type"
 
 const router = Router()
 

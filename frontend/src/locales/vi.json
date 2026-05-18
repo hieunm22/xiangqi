@@ -88,7 +88,8 @@
 			"start-room": "Bắt đầu chơi",
 			"surrender": "Đầu hàng",
 			"back-home": "Thoát phòng",
-			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?"
+			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
+			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?"
 		},
 		"info": {
 			"waiting-user": "Đang chờ người chơi…"
@@ -308,6 +309,18 @@
 	"validate-token": {
 		"messages": {
 			"success": "Token hợp lệ"
+		}
+	},
+	"surrender": {
+		"messages": {
+			"game-already-finished": "Trò chơi đã kết thúc",
+			"game-history-not-found": "Không tìm thấy lịch sử trò chơi",
+			"game-not-found": "Không tìm thấy trò chơi",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-game-id": "ID trò chơi không hợp lệ",
+			"invalid-surrender-player": "Bạn không phải là người chơi trong trò chơi này",
+			"opponent-not-found": "Không tìm thấy đối thủ",
+			"success": "Đã đầu hàng"
 		}
 	}
 }

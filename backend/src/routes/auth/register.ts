@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express"
 import crypto from "crypto"
-import prisma from "../../prisma"
-import { RegisterRequest } from "../../types/auth.type"
+import prisma from "prisma"
+import { RegisterRequest } from "types/auth.type"
 
 const router = Router()
 

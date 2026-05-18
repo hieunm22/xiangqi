@@ -14,7 +14,7 @@ vi.mock("../../common/redis", () => ({
 	}
 }))
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		room: {
 			findMany: roomFindManyMock

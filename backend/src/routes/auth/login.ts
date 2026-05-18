@@ -2,14 +2,14 @@ import { Request, Response, Router, urlencoded } from "express"
 import crypto from "crypto"
 import multer from "multer"
 import jwt from "jsonwebtoken"
-import prisma from "../../prisma"
-import redis from "../../common/redis"
+import prisma from "prisma"
+import redis from "common/redis"
 import {
   LoginRequest,
   LoginSuccessResponse,
   LoginSession
-} from "../../types/auth.type"
-import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "../../common/constant"
+} from "types/auth.type"
+import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "common/constant"
 
 const router = Router()
 const upload = multer()

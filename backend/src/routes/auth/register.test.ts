@@ -7,7 +7,7 @@ const prismaFindUniqueMock = vi.fn()
 const prismaCreateMock = vi.fn()
 const PATH = "/api/auth/register"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findUnique: prismaFindUniqueMock,

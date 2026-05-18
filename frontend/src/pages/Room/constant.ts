@@ -1,4 +1,4 @@
-import { Piece, Team } from "types/GameState"
+import { Piece, PieceCharacter, Team } from "types/GameState"
 
 export const pieceSymbolByType: Record<Team, Record<Piece, string>> = {
 	black: {
@@ -37,3 +37,33 @@ export const markerPositions: Array<[number, number]> = [
 	[1, 7],
 	[7, 7],
 ]
+
+export const fenPieceMap: Record<PieceCharacter, Piece> = {
+	g: "general",
+	a: "advisor",
+	e: "elephant",
+	h: "horse",
+	r: "chariot",
+	c: "cannon",
+	s: "soldier",
+
+	G: "general",
+	A: "advisor",
+	E: "elephant",
+	H: "horse",
+	R: "chariot",
+	C: "cannon",
+	S: "soldier",
+}
+
+export const pieceFenMap: Record<Piece, PieceCharacter> = {
+	general: "g",
+	advisor: "a",
+	elephant: "e",
+	horse: "h",
+	chariot: "r",
+	cannon: "c",
+	soldier: "s"
+}
+
+export const INITIAL_BOARD_FEN = "RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr"

@@ -1,5 +1,10 @@
 import { EmptyVoid } from "types/Common"
-import { CellProps, Piece, Team } from "types/GameState"
+import {
+	CapturedPieces,
+	CellProps,
+	PieceCharacter,
+	Team
+} from "types/GameState"
 
 export interface PieceItemProps {
 	$cell: CellProps
@@ -17,7 +22,7 @@ export interface PieceItemProps {
 export interface PlayerInfoCardProps {
 	username: string
 	team: Team
-	capturedPieces: Piece[]
+	capturedPieces: PieceCharacter[]
 	avatarUrl?: string | null
 	mirrored?: boolean
 	isEmpty?: boolean
@@ -44,10 +49,26 @@ export interface RoomInfo {
 interface RoomInfoData {
 	room: RoomInfo
 	users: RoomUser[]
+	game_id?: string | null
 }
 
 export interface RoomInfoResponse {
 	success: boolean
 	status_code: number
 	data: RoomInfoData | null
+}
+
+export interface MovePieceRequest {
+	gameId: string
+	newFen: string
+	team: Team
+	capturePiece: PieceCharacter | null
+}
+
+export interface HistoryData {
+	fen: string
+	team: Team | null
+	time_stamp: number
+	capture: string | null
+	captured: CapturedPieces | null
 }

@@ -1,4 +1,5 @@
 import classnames from "classnames"
+import { fenPieceMap } from "pages/Room/constant"
 import useGameToolkit from "hooks/useGameToolkit"
 import { Team } from "types/GameState"
 import "./Opponent.scss"
@@ -25,9 +26,11 @@ const Opponent = ({ team, name }: OpponentProps) => {
 			<div className="opponent-info">
 				<div>{name}</div>
 				<div className={capturePiecesCls}>
-					{state.capturedPieces[oponentTeam].map((piece, index) => (
+					{state.capturedPieces[oponentTeam].map((p, index) => {
+						const piece = fenPieceMap[p]
+						return (
 						<i key={index} className={`fas fa-chess-${piece} captured-piece`} />
-					))}
+					)})}
 				</div>
 			</div>
 		</div>

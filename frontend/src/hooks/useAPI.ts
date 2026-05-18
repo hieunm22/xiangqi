@@ -9,6 +9,7 @@ import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
+import { MovePieceRequest } from "pages/Room/types"
 
 const EP = { // end points
 	// auth endpoints
@@ -27,6 +28,12 @@ const EP = { // end points
 	getRoomInfo: "/room/info",
 	joinRoom: "/room/join",
 	leaveRoom: "/room/leave",
+	startRoom: "/room/start",
+
+	// game endpoints
+	getGameHistory: "/game/history",
+	movePiece: "/game/move-piece",
+	surrenderGame: "/game/surrender"
 }
 
 export const useAPI = () => {
@@ -98,6 +105,18 @@ export const useAPI = () => {
 							.json(createRoomCallback)
 							.catch(handleError)
 
+	const forgotPassword = (form: ForgotPasswordBodyType) => requestWithCookie.url(EP.forgotPassword)
+							.json(form)
+							.post()
+							.json(forgotPasswordCallback)
+							.catch(handleError)
+
+	const getGameHistory = async (token: string, gameId: string) => authFetch(`${EP.getGameHistory}?gameId=${gameId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getGameHistoryCallback)
+							.catch(handleError)
+
 	const getUserById = async (userId: number) => request.url(`${EP.getUser}?id=${userId}`)
 							.get()
 							.json(getUserCallback)
@@ -128,29 +147,6 @@ export const useAPI = () => {
 							.post()
 							.json(loginCallback)
 							.catch(handleError)
-
-	const register = (form: any) => requestWithCookie.url(EP.register)
-							.json(form)
-							.post()
-							.json(registerCallback)
-							.catch(handleError)
-	const forgotPassword = (form: ForgotPasswordBodyType) => requestWithCookie.url(EP.forgotPassword)
-						.json(form)
-						.post()
-						.json(forgotPasswordCallback)
-						.catch(handleError)
-
-	const resetPasswordValidate = async (userId: number, token: string) => request
-						.url(`${EP.resetPassword}?id=${userId}&token=${token}`)
-						.get()
-						.json(resetPasswordValidateCallback)
-						.catch(handleError)
-
-	const resetPassword = (form: ResetPasswordBodyType) => requestWithCookie.url(EP.resetPassword)
-						.json(form)
-						.post()
-						.json(resetPasswordCallback)
-						.catch(handleError)
 	
 	const logout = (token: string) => requestWithCookie.url(EP.logout)
 							.auth(`Bearer ${token}`)
@@ -158,11 +154,47 @@ export const useAPI = () => {
 							.json(logoutCallback)
 							.catch(handleError)
 
+	const movePiece = async (token: string, body: MovePieceRequest) => authFetch(EP.movePiece)
+							.auth(`Bearer ${token}`)
+							.post(body)
+							.json(movePieceCallback)
+							.catch(handleError)
+
+	const resetPasswordValidate = async (userId: number, token: string) => request
+							.url(`${EP.resetPassword}?id=${userId}&token=${token}`)
+							.get()
+							.json(resetPasswordValidateCallback)
+							.catch(handleError)
+
+	const resetPassword = (form: ResetPasswordBodyType) => requestWithCookie.url(EP.resetPassword)
+							.json(form)
+							.post()
+							.json(resetPasswordCallback)
+							.catch(handleError)
+
 	const refreshToken = (token: string) => requestWithCookie.url(EP.refreshToken)
 							.auth(`Bearer ${token}`)
 							.post()
 							.json(refreshTokenCallback)
 							.catch(handleError)
+
+	const register = (form: any) => requestWithCookie.url(EP.register)
+							.json(form)
+							.post()
+							.json(registerCallback)
+							.catch(handleError)
+
+	const startRoom = async (token: string, roomId: number) => authFetch(EP.startRoom)
+							.auth(`Bearer ${token}`)
+							.post({ id: roomId })
+							.json(startRoomCallback)
+							.catch(handleError)
+
+	const surrenderGame = async (token: string, gameId: string) => authFetch(EP.surrenderGame)
+						.auth(`Bearer ${token}`)
+						.post({ gameId })
+						.json(surrenderGameCallback)
+						.catch(handleError)
 
 	const validateToken = (token: string) => requestWithCookie.url(EP.validateToken)
 							.auth(`Bearer ${token}`)
@@ -185,6 +217,14 @@ export const useAPI = () => {
 	}
 
 	const fetchRoomsCallback = (response: any) => {
+		return response
+	}
+
+	const forgotPasswordCallback = (response: any) => {
+		return response
+	}
+
+	const getGameHistoryCallback = (response: any) => {
 		return response
 	}
 
@@ -212,10 +252,6 @@ export const useAPI = () => {
 		return response
 	}
 
-	const forgotPasswordCallback = (response: any) => {
-		return response
-	}
-
 	const resetPasswordValidateCallback = (response: any) => {
 		return response
 	}
@@ -228,7 +264,19 @@ export const useAPI = () => {
 		return response
 	}
 
+	const movePieceCallback = (response: any) => {
+		return response
+	}
+
 	const refreshTokenCallback = (response: any) => {
+		return response
+	}
+
+	const startRoomCallback = (response: any) => {
+		return response
+	}
+
+	const surrenderGameCallback = (response: any) => {
 		return response
 	}
 
@@ -256,18 +304,22 @@ export const useAPI = () => {
 		authFetch,
 
 		createRoom,
+		fetchRooms,
+		forgotPassword,
+		getGameHistory,
 		getRoomById,
 		getUserById,
 		joinRoom,
 		leaveRoom,
 		login,
 		logout,
+		movePiece,
 		register,
-		forgotPassword,
 		resetPasswordValidate,
 		resetPassword,
-		fetchRooms,
 		refreshToken,
+		startRoom,
+		surrenderGame,
 		validateToken
 	}
 }

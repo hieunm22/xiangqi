@@ -6,7 +6,7 @@ const userFindUniqueMock = vi.fn()
 
 const PATH = "/api/auth/user"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findUnique: userFindUniqueMock

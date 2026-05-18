@@ -10,7 +10,7 @@ const redisExistsMock = vi.fn()
 const redisDelMock = vi.fn()
 const PATH = "/api/auth/logout"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		roomUser: {
 			deleteMany: prismaDeleteManyMock

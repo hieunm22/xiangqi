@@ -10,7 +10,7 @@ const createTransportMock = vi.fn(() => ({ sendMail: sendMailMock }))
 
 const PATH = "/api/auth/forgot-password"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findUnique: prismaFindUniqueMock

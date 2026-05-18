@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Outlet, useNavigate, useLocation } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	AppBar,
@@ -32,7 +32,6 @@ import { PopupProvider } from "./context"
 import {
 	decodePayload,
 	getToken,
-	initNewGame,
 	requireImage
 } from "common/helper"
 import { useAPI } from "hooks/useAPI"
@@ -40,7 +39,6 @@ import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
-import { setGameState } from "toolkit/slice/game"
 import { Users } from "types/Entities"
 import "./Layout.scss"
 
@@ -58,8 +56,7 @@ export default function Layout() {
 	const [userDisplayName, setUserDisplayName] = useState("")
 	const [userImage, setUserImage] = useState("")
 	const navigate = useNavigate()
-	const location = useLocation()
-	const { getUserById, leaveRoom, logout } = useAPI()
+	const { getUserById, logout } = useAPI()
 	const { dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -118,11 +115,6 @@ export default function Layout() {
 		setMobileOpen(false)
 	}
 
-	const restartGame = () => {
-		const init = initNewGame()
-		dispatch(setGameState(init))
-	}
-
 	const displayName = userDisplayName
 	const userMenuOpen = Boolean(userMenuAnchor)
 
@@ -158,21 +150,19 @@ export default function Layout() {
 	}
 
 	const handleGoHome = async () => {
-		if (location.pathname.startsWith("/room/")) {
-			const token = getToken()
-			const id = Number(location.pathname.substring("/room/".length))
-			if (Number.isInteger(id) && id > 0) {
-				await leaveRoom(token, id)
-			}
-		}
+		// if (location.pathname.startsWith("/room/")) {
+		// 	const token = getToken()
+		// 	const id = Number(location.pathname.substring("/room/".length))
+		// 	if (Number.isInteger(id) && id > 0) {
+		// 		await leaveRoom(token, id)
+		// 	}
+		// }
 		navigate(HOME_PATH)
 	}
 
-	const showRestart = !isMobile && location.pathname.startsWith("/room/")
 	const menuItems = [
 		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		...(showRestart ? [{ text: "Restart", icon: "fa-rotate", click: restartGame }] : [])
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -285,11 +275,6 @@ export default function Layout() {
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
-					{location.pathname.startsWith("/room") && (
-						<IconButton color="inherit" onClick={restartGame}>
-							<i className="fas fa-rotate" />
-						</IconButton>
-					)}
 					<Button
 						onClick={handleOpenUserMenu}
 						variant="outlined"

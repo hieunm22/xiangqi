@@ -1,9 +1,9 @@
 import { Response, Router } from "express"
 import jwt from "jsonwebtoken"
-import { REFRESH_TOKEN_KEY } from "../../common/constant"
-// import redis from "../../common/redis"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
-import { LoginSuccessResponse } from "../../types/auth.type"
+import { REFRESH_TOKEN_KEY } from "common/constant"
+// import redis from "common/redis"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { LoginSuccessResponse } from "types/auth.type"
 
 const router = Router()
 

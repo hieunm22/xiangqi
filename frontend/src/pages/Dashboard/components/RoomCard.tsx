@@ -45,8 +45,8 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
 		"low": room.bet_amount <= 100,
-		"medium": room.bet_amount > 100 && room.bet_amount <= 1000,
-		"high": room.bet_amount > 1000
+		"medium": room.bet_amount > 100 && room.bet_amount <= 2000,
+		"high": room.bet_amount > 2000
 	})
 
 	const handleCardClick = () => {

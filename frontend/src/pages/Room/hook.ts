@@ -1,38 +1,50 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import classnames from "classnames"
-import {
-	BOARD_COLUMNS,
-	LS_BOARD,
-	LS_CAPTURED_PIECES,
-	LS_TURN
-} from "common/constant"
+import { BOARD_COLUMNS, LOGIN_PATH } from "common/constant"
+import { pieceFenMap } from "./constant"
 import { openAlert } from "components/AlertProvider"
 import { openConfirm } from "components/ConfirmProvider"
 import {
 	decodePayload,
-  getAvailableMoves,
-  getToken,
-  initNewGame,
-  isGeneralInCheck,
+	getAvailableMoves,
+	getToken,
 	requireImage
 } from "common/helper"
+import {
+	boardToFen,
+	fenToBoard,
+	getCapturedPiecesFromHistory,
+	initNewGame,
+	isGeneralInCheck
+} from "./common"
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
 import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
-import { Team } from "types/GameState"
-import { RoomUser, RoomInfo } from "./types"
+import { PieceCharacter, Team } from "types/GameState"
+import {
+	HistoryData,
+	MovePieceRequest,
+	RoomInfo,
+	RoomUser
+} from "./types"
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
 	const { state, dispatch } = useGameToolkit()
-	const { getRoomById, joinRoom } = useAPI()
-	const getStoredTurn = () => (localStorage.getItem(LS_TURN) as Team) || "red"
+	const {
+		getGameHistory,
+		getRoomById,
+		joinRoom,
+		movePiece,
+		startRoom,
+		surrenderGame,
+	} = useAPI()
 	const [room, setRoom] = useState<RoomInfo | null>(null)
-	const [roomStatus, setRoomStatus] = useState(1)
 	const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([])
+	const [gameId, setGameId] = useState<string | null>(null)
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
@@ -49,35 +61,81 @@ const useRoomHook = () => {
 	const playerIds = joinedUsers.slice(0, 2).map(user => Number(user.id))
 	const firstJoinedUser = joinedUsers[0]
 	const secondJoinedUser = joinedUsers[1]
-	const isInCurrentRoom = currentUserId !== null && joinedUsers.some(user => Number(user.id) === currentUserId)
+	const isInCurrentRoom = currentUserId !== null
+		&& joinedUsers.some(user => Number(user.id) === currentUserId)
 	const isFirstJoinedPlayer = currentUserId !== null && playerIds[0] === currentUserId
 	const isPlayer = currentUserId !== null && playerIds.includes(currentUserId)
+	const user = joinedUsers.find(user => Number(user.id) === currentUserId)
+	const isMyTurn = user && user.team && state.teamTurn === user.team
 
 	const handleStartGame = async () => {
-		if (!isFirstJoinedPlayer) {
+		if (!isFirstJoinedPlayer || joinedUsers.length < 2 || room?.status === 2) {
 			return
 		}
 
-		// TODO: Call API to update room status from 1 -> 2
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const response = await startRoom(token, roomId)
+		if (!response) {
+			return
+		}
+		if (!response.success) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: response.message
+			})
+			return
+		}
+
+		const nextStatus = Number(response.data?.room?.status) || 2
+		if (response.data?.game?.id) {
+			setGameId(response.data.game.id)
+		}
+		setRoom(currentRoom => currentRoom
+			? {
+				...currentRoom,
+				status: nextStatus
+			}
+			: currentRoom
+		)
 	}
 
 	const handleSurrender = async () => {
-		if (!isPlayer || roomStatus !== 2) {
+		if (!isPlayer || !gameId || (room && room.status !== 2)) {
 			return
 		}
 
-		// TODO: Implement surrender API logic
+		const confirmed = await openConfirm({
+			title: "popup.confirm.title",
+			message: "room.actions.confirm-surrender"
+		})
+		if (!confirmed) {
+			return
+		}
+
+		const token = getToken()
+		const response = await surrenderGame(token, gameId)
+		if (!response || !response.success) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: response?.message
+			})
+			return
+		}
 	}
 
 	const leaveCurrentRoom = async () => {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
-			navigate("/")
+			navigate(LOGIN_PATH)
 			return
 		}
 
 		await leaveRoom(token, roomId)
-		navigate("/")
+		navigate(LOGIN_PATH)
 	}
 
 	const handleBackToHome = async () => {
@@ -98,85 +156,77 @@ const useRoomHook = () => {
 		await leaveCurrentRoom()
 	}
 
-	useEffect(() => {
-		async function loadCurrentRoom() {
-			const token = getToken()
-			if (!token || !Number.isInteger(roomId) || roomId <= 0) {
-				return
-			}
-
-			// First, get room info to fetch all joined users
-			const roomInfoResponse = await getRoomById(token, roomId)
-			if (!roomInfoResponse?.success || !roomInfoResponse?.data) {
-				return
-			}
-
-			const roomUsers = (roomInfoResponse.data.users || []).map((user: any) => ({
-				id: Number(user.id),
-				display_name: String(user.display_name || ""),
-				avatar_url: requireImage(user.avatar_url),
-				team: user.team,
-				joined_at: user.joined_at
-			}))
-
-			setRoomStatus(Number(roomInfoResponse.data.room.status) || 1)
-			setJoinedUsers(roomUsers)
-			setRoom(roomInfoResponse.data.room)
-
-			// Check if current user is already in the room
-			const isUserAlreadyInRoom = roomUsers.some((u: any) => u.id === currentUserId)
-			
-			// Only call joinRoom if user is not already in the room
-			if (!isUserAlreadyInRoom && currentUserId) {
-				const joinRoomResponse = await joinRoom(token, roomId)
-				// update joined users list with the response from joinRoom API, which contains the assigned team for the current user
-				if (joinRoomResponse && joinRoomResponse.success && joinRoomResponse.data) {
-					const updatedUsers = joinRoomResponse.data.map((user: any) => ({
-						id: Number(user.id),
-						display_name: String(user.display_name || ""),
-						avatar_url: requireImage(user.avatar_url),
-						team: user.team,
-						joined_at: typeof user.joined_at === "string" ? user.joined_at : null
-					}))
-					setJoinedUsers(updatedUsers)
-				}
-			}
-		}
-
-		loadCurrentRoom()
-		// should merge 2 useEffects into 1
-	}, [])
-	
-	useEffect(() => {
-		if (!room) {
+	async function loadCurrentRoom() {
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
 		}
-		const currentTurn = room?.red_first ? "red" : "black"
-		const savedBoard = localStorage.getItem(LS_BOARD) || "[]"
-		const capturedPieces = localStorage.getItem(LS_CAPTURED_PIECES) || "{\"red\":[],\"black\":[]}"
-		dispatch(setGameState({
-			availableMoves: [],
-			board: JSON.parse(savedBoard!),
-			selected: null,
-			teamTurn: currentTurn,
-			capturedPieces: JSON.parse(capturedPieces)
-		}))
-	}, [room])
 
-	useEffect(() => {
-		if (getStoredTurn() !== state.teamTurn) {
-			localStorage.setItem(LS_TURN, state.teamTurn)
+		// First, get room info to fetch all joined users
+		const roomInfoResponse = await getRoomById(token, roomId)
+		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
+			return
 		}
-	}, [state.teamTurn])
+
+		const roomUsers = (roomInfoResponse.data.users || []).map((user: any) => ({
+			id: Number(user.id),
+			display_name: String(user.display_name || ""),
+			avatar_url: requireImage(user.avatar_url),
+			team: user.team,
+			joined_at: user.joined_at
+		}))
+		setRoom(roomInfoResponse.data.room)
+
+		// Check if current user is already in the room
+		const isUserAlreadyInRoom = roomUsers.some((u: any) => u.id === currentUserId)
+		
+		// Only call joinRoom if user is not already in the room
+		if (!isUserAlreadyInRoom) {
+			const joinRoomResponse = await joinRoom(token, roomId)
+			// update joined users list with the response from joinRoom API
+			// which contains the assigned team for the current user
+			if (joinRoomResponse && joinRoomResponse.success && joinRoomResponse.data) {
+				const updatedUsers = joinRoomResponse.data.map((user: any) => ({
+					id: Number(user.id),
+					display_name: String(user.display_name || ""),
+					avatar_url: requireImage(user.avatar_url),
+					team: user.team,
+					joined_at: typeof user.joined_at === "string" ? user.joined_at : null
+				}))
+				setJoinedUsers(updatedUsers)
+			}
+		}
+		else {
+			setJoinedUsers(roomUsers)
+		}
+
+		// Load game history if room is in playing status
+		if (roomInfoResponse.data.room.status === 2
+			&& roomInfoResponse.data.game_id
+		) {
+			setGameId(roomInfoResponse.data.game_id)
+			const history = await getGameHistory(token, roomInfoResponse.data.game_id ?? "")
+			const records: HistoryData[] = history.data ?? []
+			if (records.length > 0) {
+				const capturedPieces = getCapturedPiecesFromHistory(records)
+				const latest = records[records.length - 1]
+				const fen = latest.fen as string
+				const board = fenToBoard(fen)
+				dispatch(setGameState({
+					availableMoves: [],
+					board,
+					selected: null,
+					teamTurn: latest.team as Team,
+					capturedPieces
+				}))
+			}
+		}
+	}
 
 	useEffect(() => {
-		localStorage.setItem(LS_BOARD, JSON.stringify(state.board))
-	}, [state.board])
+		loadCurrentRoom()
+	}, [])
 
-	useEffect(() => {
-		localStorage.setItem(LS_CAPTURED_PIECES, JSON.stringify(state.capturedPieces))
-	}, [state.capturedPieces])
-	
 	const markerClass = (col: number, row: number) => classnames("marker", {
 		"left-edge": col === 0,
 		"right-edge": col === BOARD_COLUMNS - 1,
@@ -185,9 +235,6 @@ const useRoomHook = () => {
 
 	const onPieceClick = (id: number) => () => {
 		const currentTurn = state.teamTurn
-		if (getStoredTurn() !== currentTurn) {
-			localStorage.setItem(LS_TURN, currentTurn)
-		}
 		if (currentTurn !== state.board[id]?.team && !state.availableMoves.includes(id)) {
 			return
 		}
@@ -210,7 +257,14 @@ const useRoomHook = () => {
 			return
 		}
 		const selected = state.selected === id ? null : id
-		const availableMoves = getAvailableMoves(state.board, selected, currentTurn === "red" ? -1 : 1)
+		let direction: -1 | 1 = -1
+		if (room!.red_first) {
+			direction = state.teamTurn === "red" ? -1 : 1
+		}
+		else {
+			direction = state.teamTurn === "black" ? -1 : 1
+		}
+		const availableMoves = getAvailableMoves(state.board, selected, direction)
 		dispatch(setGameState({
 			...state,
 			availableMoves,
@@ -260,8 +314,14 @@ const useRoomHook = () => {
 
 		// Move is valid, commit it
 		const capturedPiecesClone = structuredClone(state.capturedPieces)
+		let capturedPieceCharacter: PieceCharacter | null = null
+		let capturedPieceLower: PieceCharacter | null = null
 		if (oldTarget && oldTarget.team !== movedTeam) {
-			capturedPiecesClone[movedTeam].push(oldTarget.piece)
+			capturedPieceLower = pieceFenMap[oldTarget.piece]
+			capturedPieceCharacter = movedTeam === "red"
+				? capturedPieceLower.toUpperCase() as PieceCharacter
+				: capturedPieceLower.toLocaleLowerCase() as PieceCharacter
+			capturedPiecesClone[movedTeam].push(capturedPieceCharacter as PieceCharacter)
 		}
 
 		const enemyTeam = movedTeam === "red" ? "black" : "red"
@@ -273,6 +333,18 @@ const useRoomHook = () => {
 			selected: null,
 			teamTurn: enemyTeam
 		}))
+
+		if (room?.status === 2 && gameId) {
+			const newFen = boardToFen(gameStateClone)
+			const body: MovePieceRequest = {
+				gameId,
+				newFen,
+				capturePiece: capturedPieceCharacter,
+				team: movedTeam // active team (the one who just moved)
+			}
+			const token = getToken()
+			await movePiece(token, body)
+		}
 
 		if (oldTarget?.piece === "general") {
 			openConfirm({
@@ -293,8 +365,9 @@ const useRoomHook = () => {
 		isPlayer,
 		isFirstJoinedPlayer,
 		isInCurrentRoom,
+		isMyTurn,
 		joinedUsers,
-		roomStatus,
+		room,
 		secondJoinedUser,
 		state,
 
@@ -302,8 +375,8 @@ const useRoomHook = () => {
 		handleStartGame,
 		handleSurrender,
 		markerClass,
-		onPieceClick,
-		onAnimateEnd
+		onAnimateEnd,
+		onPieceClick
 	}
 }
 

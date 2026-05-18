@@ -2,11 +2,14 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { INITIAL_FEN_BLACK_TOP, INITIAL_FEN_BLACK_BOTTOM } from "common/constant"
 
 const redisGetMock = vi.fn()
 const transactionMock = vi.fn()
 const roomUpdateMock = vi.fn()
 const gameCreateMock = vi.fn()
+const gameHistoryInsertOneMock = vi.fn()
+const getGameHistoryCollectionMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -16,10 +19,14 @@ vi.mock("../../common/redis", () => ({
 	}
 }))
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		$transaction: transactionMock
 	}
+}))
+
+vi.mock("../../common/mongodb", () => ({
+	getGameHistoryCollection: getGameHistoryCollectionMock
 }))
 
 describe("POST /api/room/start", () => {
@@ -79,10 +86,15 @@ describe("POST /api/room/start", () => {
 	it("returns 201 when game is started successfully", async () => {
 		const accessToken = buildAccessToken(61, "session-start-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-1" })
+		getGameHistoryCollectionMock.mockResolvedValue({
+			insertOne: gameHistoryInsertOneMock
+		})
 
 		roomUpdateMock.mockResolvedValue({
 			id: BigInt(101),
-			status: 2
+			status: 2,
+			red_first: true
 		})
 		gameCreateMock.mockResolvedValue({
 			id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
@@ -128,7 +140,8 @@ describe("POST /api/room/start", () => {
 			data: { status: 2 },
 			select: {
 				id: true,
-				status: true
+				status: true,
+				red_first: true
 			}
 		})
 		expect(gameCreateMock).toHaveBeenCalledWith({
@@ -141,6 +154,55 @@ describe("POST /api/room/start", () => {
 				status: true,
 				room_id: true
 			}
+		})
+		expect(gameHistoryInsertOneMock).toHaveBeenCalledWith({
+			game_id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
+			team: "red",
+			fen: INITIAL_FEN_BLACK_TOP,
+			time_stamp: expect.any(Number)
+		})
+	})
+
+	it("stores lowercase fen when red_first is false", async () => {
+		const accessToken = buildAccessToken(61, "session-start-2b")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-2" })
+		getGameHistoryCollectionMock.mockResolvedValue({
+			insertOne: gameHistoryInsertOneMock
+		})
+
+		roomUpdateMock.mockResolvedValue({
+			id: BigInt(102),
+			status: 2,
+			red_first: false
+		})
+		gameCreateMock.mockResolvedValue({
+			id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
+			status: 0,
+			room_id: BigInt(102)
+		})
+		transactionMock.mockImplementation(async callback =>
+			callback({
+				room: {
+					update: roomUpdateMock
+				},
+				game: {
+					create: gameCreateMock
+				}
+			})
+		)
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 102 })
+
+		expect(res.status).toBe(201)
+		expect(gameHistoryInsertOneMock).toHaveBeenCalledWith({
+			game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
+			team: "black",
+			fen: INITIAL_FEN_BLACK_BOTTOM,
+			time_stamp: expect.any(Number)
 		})
 	})
 

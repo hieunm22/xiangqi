@@ -1,7 +1,9 @@
 import { Response, Router } from "express"
-import prisma from "../../prisma"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
-import { RoomStatus, StartGameRequest } from "../../types/room.type"
+import prisma from "prisma"
+import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
+import { getGameHistoryCollection } from "common/mongodb"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { RoomStatus, StartGameRequest } from "types/room.type"
 
 const router = Router()
 
@@ -55,6 +57,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		const roomIdBigInt = BigInt(id)
 
 		const { game, room } = await prisma.$transaction(async tx => {
+			const gameDelegate = (tx as any).game
 			const updatedRoom = await tx.room.update({
 				where: {
 					id: roomIdBigInt
@@ -64,11 +67,12 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				},
 				select: {
 					id: true,
-					status: true
+					status: true,
+					red_first: true
 				}
 			})
 
-			const createdGame = await tx.game.create({
+			const createdGame = await gameDelegate.create({
 				data: {
 					status: 0,
 					room_id: roomIdBigInt
@@ -84,6 +88,15 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				game: createdGame,
 				room: updatedRoom
 			}
+		})
+
+		const collection = await getGameHistoryCollection()
+		const initialFen = room.red_first ? INITIAL_FEN_BLACK_TOP : INITIAL_FEN_BLACK_BOTTOM
+		await collection.insertOne({
+			game_id: game.id,
+			team: room.red_first ? "red" : "black",
+			fen: initialFen,
+			time_stamp: ~~(new Date().getTime() / 1000)
 		})
 
 		res.status(201).json({
@@ -122,3 +135,4 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 })
 
 export default router
+

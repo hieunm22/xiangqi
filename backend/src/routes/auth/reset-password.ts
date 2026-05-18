@@ -1,9 +1,9 @@
 import { Request, Response, Router } from "express"
 import crypto from "crypto"
-import prisma from "../../prisma"
-import redis from "../../common/redis"
-import { FORGOT_PASSWORD_KEY } from "../../common/constant"
-import { ResetPasswordRequest } from "../../types/auth.type"
+import prisma from "prisma"
+import { FORGOT_PASSWORD_KEY } from "common/constant"
+import redis from "common/redis"
+import { ResetPasswordRequest } from "types/auth.type"
 
 const router = Router()
 

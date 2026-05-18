@@ -88,7 +88,8 @@
 			"start-room": "Start room",
 			"surrender": "Surrender",
 			"back-home": "Back to home",
-			"confirm-leave": "Are you sure you want to leave room?"
+			"confirm-leave": "Are you sure you want to leave room?",
+			"confirm-surrender": "Are you sure you want to surrender?"
 		},
 		"info": {
 			"waiting-user": "Waiting player…"
@@ -308,6 +309,18 @@
 	"validate-token": {
 		"messages": {
 			"success": "Token is valid"
+		}
+	},
+	"surrender": {
+		"messages": {
+			"game-already-finished": "Game is already finished",
+			"game-history-not-found": "Game history not found",
+			"game-not-found": "Game not found",
+			"internal-server-error": "Internal server error",
+			"invalid-game-id": "Invalid game ID",
+			"invalid-surrender-player": "You are not a player in this game",
+			"opponent-not-found": "Opponent not found",
+			"success": "Surrendered"
 		}
 	}
 }

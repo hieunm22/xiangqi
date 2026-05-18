@@ -1,6 +1,6 @@
 import { Response, Router } from "express"
-import prisma from "../../prisma"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
+import prisma from "prisma"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
 
@@ -44,8 +44,9 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 	}
 
 	try {
+		const roomIdBigInt = BigInt(roomId)
 		const room = await prisma.room.findUnique({
-			where: { id: BigInt(roomId) },
+			where: { id: roomIdBigInt },
 			select: {
 				id: true,
 				name: true,
@@ -54,6 +55,15 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				bet_amount: true,
 				created_at: true,
 				updated_at: true,
+				games: {
+					select: {
+						id: true
+					},
+					orderBy: {
+						id: "desc"
+					},
+					take: 1
+				},
 				room_users: {
 					orderBy: {
 						joined_at: "asc"
@@ -83,7 +93,13 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			return
 		}
 
-		const { room_users, ...rest } = room
+		let gameId: string | null = null
+		const games = (room as { games?: Array<{ id: string }> }).games ?? []
+		if (Number(room.status) === 2 && games.length > 0) {
+			gameId = games[0].id
+		}
+
+		const { room_users } = room
 		const formattedUsers = room_users.map(ru => ({
 			id: Number(ru.users.id),
 			display_name: ru.users.display_name,
@@ -100,8 +116,17 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			message: "load-room.messages.success",
 			status_code: 200,
 			data: {
-				room: { ...rest, id: Number(room.id) },
-				users: formattedUsers
+				room: {
+					id: Number(room.id),
+					name: room.name,
+					status: room.status,
+					red_first: room.red_first,
+					bet_amount: room.bet_amount,
+					created_at: room.created_at,
+					updated_at: room.updated_at
+				},
+				users: formattedUsers,
+				game_id: gameId
 			}
 		})
 	} catch (err) {
@@ -116,3 +141,4 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 })
 
 export default router
+

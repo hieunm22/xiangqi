@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import jwt from "jsonwebtoken"
-import { LOGIN_SESSION_KEY } from "../common/constant"
-import redis from "../common/redis"
+import { LOGIN_SESSION_KEY } from "common/constant"
+import redis from "common/redis"
 
 const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"

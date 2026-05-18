@@ -9,7 +9,7 @@ const redisDelMock = vi.fn()
 
 const PATH = "/api/auth/reset-password"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findUnique: prismaFindUniqueMock,

@@ -16,7 +16,7 @@ vi.mock("../../common/redis", () => ({
 	}
 }))
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		roomUser: {
 			deleteMany: roomUserDeleteManyMock,

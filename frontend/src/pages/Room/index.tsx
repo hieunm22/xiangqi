@@ -11,14 +11,14 @@ import { Piece } from "types/GameState"
 import "./Room.scss"
 
 export default function RoomPage() {
-
 	const {
 		firstJoinedUser,
 		isFirstJoinedPlayer,
 		isInCurrentRoom,
 		isPlayer,
+		isMyTurn,
 		joinedUsers,
-		roomStatus,
+		room,
 		secondJoinedUser,
 		state,
 
@@ -26,8 +26,8 @@ export default function RoomPage() {
 		handleStartGame,
 		handleSurrender,
 		markerClass,
-		onPieceClick,
-		onAnimateEnd
+		onAnimateEnd,
+		onPieceClick
 	} = useRoomHook()
 
 	return (
@@ -129,7 +129,7 @@ export default function RoomPage() {
 					size="medium"
 					color="success"
 					onClick={handleStartGame}
-					disabled={joinedUsers.length < 2}
+					disabled={joinedUsers.length < 2 || room?.status === 2}
 					sx={{ visibility: isFirstJoinedPlayer ? "visible" : "hidden" }}
 					value="room.actions.start-room"
 				/>
@@ -138,7 +138,8 @@ export default function RoomPage() {
 					size="medium"
 					color="warning"
 					onClick={handleSurrender}
-					sx={{ visibility: isPlayer && roomStatus === 2 ? "visible" : "hidden" }}
+					disabled={!isMyTurn}
+					sx={{ visibility: isPlayer && room?.status === 2 ? "visible" : "hidden" }}
 					value="room.actions.surrender"
 				/>
 				<TButton

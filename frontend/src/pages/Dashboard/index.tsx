@@ -14,12 +14,10 @@ import { TTypography } from "components/TranslationTag"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { RoomCard } from "./components/RoomCard"
 import { CreateRoomDialog, CreateRoomDialogContext } from "./components/CreateRoomDialog"
-import { getToken, initNewGame } from "common/helper"
+import { getToken } from "common/helper"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
-import useGameToolkit from "hooks/useGameToolkit"
-import { setGameState } from "toolkit/slice/game"
 import {
 	DashboardFilter,
 	DashboardRoom,
@@ -29,7 +27,6 @@ import "./Dashboard.scss"
 
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
-	const { dispatch } = useGameToolkit()
 	const { fetchRooms } = useAPI()
 	const navigate = useNavigate()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
@@ -45,11 +42,9 @@ const DashboardPage = () => {
 			navigate(LOGIN_PATH)
 			return
 		}
-
-		// Initialize game state when entering dashboard
-		const init = initNewGame()
-		dispatch(setGameState(init))
-	}, [dispatch, navigate])
+		
+		// TODO
+	}, [])
 
 	useEffect(() => {
 		let ignore = false
@@ -90,16 +85,16 @@ const DashboardPage = () => {
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
 			<Box className="dashboard">
-			<Stack spacing={3}>
-				<TTypography
-					variant="h5"
-					fontWeight={700}
-					gutterBottom
-					content="dashboard.page.title"
-				/>
+				<Stack spacing={3}>
+					<TTypography
+						variant="h5"
+						fontWeight={700}
+						gutterBottom
+						content="dashboard.page.title"
+					/>
 
-				<Stack direction="row" spacing={1.5} flexWrap="wrap">
-					{(["all", "available", "playing"] as DashboardFilter[]).map(filter => (
+					<Stack direction="row" spacing={1.5} flexWrap="wrap">
+						{(["all", "available", "playing"] as DashboardFilter[]).map(filter => (
 							<Button
 								key={filter}
 								onClick={() => setActiveFilter(filter)}
@@ -111,41 +106,41 @@ const DashboardPage = () => {
 								{translate(FILTER_KEYS[filter])}
 							</Button>
 						)
-					)}
-				</Stack>
-
-				{errorMessage && <Alert severity="error">{errorMessage}</Alert>}
-
-				{loading ? (
-					<Grid container spacing={2}>
-						{loadingCards.map(card => (
-							<Grid key={`loading-card-${card}`} size={{ xs: 6, sm: 4, md: 4 }} className="dashboard__room-card">
-								<Stack spacing={1.5}>
-									<Skeleton variant="text" height={32} width="100%" />
-									<Stack direction="row" justifyContent="space-between" alignItems="center">
-										<Skeleton variant="text" height={28} width={88} />
-										<Skeleton variant="circular" width={28} height={28} />
-									</Stack>
-									<Skeleton variant="rounded" height={28} width="100%" />
-								</Stack>
-							</Grid>
-						))}
-					</Grid>
-				) : null}
-
-				{!loading && !errorMessage ? (
-					<Stack spacing={2}>
-						<Grid container spacing={2}>
-					{<CreateRoomCard click={() => setOpen(true)} />}
-					{rooms.map(room => <RoomCard key={room.id} room={room} />)}
-						</Grid>
-
-						{rooms.length === 0 && (
-							<Alert severity="info"> {translate("dashboard.feedback.empty")} </Alert>
 						)}
 					</Stack>
-				) : null}
-			</Stack>
+
+					{errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+
+					{loading ? (
+						<Grid container spacing={2}>
+							{loadingCards.map(card => (
+								<Grid key={`loading-card-${card}`} size={{ xs: 6, sm: 4, md: 4 }} className="dashboard__room-card">
+									<Stack spacing={1.5}>
+										<Skeleton variant="text" height={32} width="100%" />
+										<Stack direction="row" justifyContent="space-between" alignItems="center">
+											<Skeleton variant="text" height={28} width={88} />
+											<Skeleton variant="circular" width={28} height={28} />
+										</Stack>
+										<Skeleton variant="rounded" height={28} width="100%" />
+									</Stack>
+								</Grid>
+							))}
+						</Grid>
+					) : null}
+
+					{!loading && !errorMessage ? (
+						<Stack spacing={2}>
+							<Grid container spacing={2}>
+								{<CreateRoomCard click={() => setOpen(true)} />}
+								{rooms.map(room => <RoomCard key={room.id} room={room} />)}
+							</Grid>
+
+							{rooms.length === 0 && (
+								<Alert severity="info"> {translate("dashboard.feedback.empty")} </Alert>
+							)}
+						</Stack>
+					) : null}
+				</Stack>
 
 				<CreateRoomDialog />
 			</Box>

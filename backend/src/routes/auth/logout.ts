@@ -1,8 +1,8 @@
 import { Response, Router } from "express"
-import { requireAuth, AuthenticatedRequest } from "../../middleware/auth"
-import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "../../common/constant"
-import redis from "../../common/redis"
-import prisma from "../../prisma"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "common/constant"
+import redis from "common/redis"
+import prisma from "prisma"
 
 const router = Router()
 

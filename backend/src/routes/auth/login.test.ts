@@ -7,7 +7,7 @@ const prismaFindFirstMock = vi.fn()
 const redisSetMock = vi.fn()
 const PATH = "/api/auth/login"
 
-vi.mock("../../prisma", () => ({
+vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findFirst: prismaFindFirstMock
