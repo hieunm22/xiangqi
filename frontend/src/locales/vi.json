@@ -89,7 +89,9 @@
 			"surrender": "Đầu hàng",
 			"back-home": "Thoát phòng",
 			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
-			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?"
+			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
+			"draw": "Hòa",
+			"confirm-draw": "Bạn có chắc chắn muốn hòa không?"
 		},
 		"info": {
 			"waiting-user": "Đang chờ người chơi…"

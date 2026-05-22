@@ -197,10 +197,10 @@ export const useAPI = () => {
 						.catch(handleError)
 
 	const validateToken = (token: string) => requestWithCookie.url(EP.validateToken)
-							.auth(`Bearer ${token}`)
-							.post()
-							.json(validateTokenCallback)
-							.catch(handleError)
+						.auth(`Bearer ${token}`)
+						.post()
+						.json(validateTokenCallback)
+						.catch(handleError)
 
 	const fetchRooms = async (token: string, status?: number) => {
 		const query = status === undefined ? "" : `?status=${status}`

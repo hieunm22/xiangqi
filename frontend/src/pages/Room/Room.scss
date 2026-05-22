@@ -5,6 +5,7 @@
 	--piece-size: 40px;
 	--river-gap: 30px;
 	--board-padding: 30px;
+	--piece-font-size: 28px;
 	--line-color: #5b2f12;
 	--wood: #deb46f;
 }
@@ -38,15 +39,16 @@
 .room-container {
 	width: 100%;
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: center;
 	justify-content: center;
 	gap: 12px;
 	padding: 12px;
+	margin: 0 auto;
 }
 
 .xiangqi-board {
-	padding: 30px;
+	padding: var(--board-padding);
 	border-radius: 14px;
 	background:
 		radial-gradient(circle at 12% 8%, #eed39b 0, transparent 42%),
@@ -222,7 +224,7 @@
 	align-items: center;
 	justify-content: center;
 	font-family: "Noto Serif SC", "Songti SC", serif;
-	font-size: 28px;
+	font-size: var(--piece-font-size);
 	font-weight: 700;
 	line-height: 1;
 	box-shadow: 0 2px 0 rgba(82, 42, 18, 0.45), 0 6px 10px rgba(70, 32, 13, 0.2);
@@ -269,13 +271,38 @@
 }
 
 .player-info-row, .room-action-row {
-	width: calc(var(--board-width) + 2 * var(--board-padding));
-	display: flex;
-	gap: 12px;
+	height: calc(var(--board-height) + var(--board-padding) * 2);
+
+	&.view {
+		display: flex;
+		justify-content: space-between;
+		flex-direction: column;
+		gap: 12px;
+	}
 }
 
 .room-action-row {
 	justify-content: space-between;
+}
+
+.room-more-action {
+	width: 48px;
+	height: 48px;
+	border: none;
+	border-radius: 10px;
+	background: linear-gradient(145deg, #7a4f27, #9d6836);
+	color: #fff;
+	font-size: 18px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	box-shadow: 0 6px 12px rgba(52, 24, 8, 0.2);
+	transition: transform 160ms ease, filter 160ms ease;
+
+	&:hover {
+		filter: brightness(1.06);
+	}
 }
 
 .player-info-card {
@@ -293,18 +320,17 @@
 	transition: box-shadow 180ms ease, transform 180ms ease;
 	opacity: 0.3;
 
+	&.team-red {
+		color: red;
+	}
+
+	&.team-black {
+		color: black;
+	}
+
 	&.active-turn {
 		box-shadow: 0 0 0 2px transparent, 0 8px 14px rgba(52, 24, 8, 0.24);
 		opacity: 1;
-	}
-
-	&.is-mirrored {
-		flex-direction: row-reverse;
-
-		.player-meta {
-			text-align: right;
-			align-items: flex-end;
-		}
 	}
 
 	&.empty-slot {
@@ -319,98 +345,64 @@
 			opacity: 0.5;
 		}
 	}
-}
 
-.player-avatar {
-	width: 56px;
-	height: 56px;
-	border-radius: 10px;
-	display: grid;
-	place-items: center;
-	font-size: 24px;
-	font-weight: 700;
-	color: #fff;
-	background: linear-gradient(145deg, #8a5a2b, #c38644);
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-	flex: 0 0 auto;
-	overflow: hidden;
+	& .player-avatar {
+		width: 56px;
+		height: 56px;
+		border-radius: 10px;
+		display: grid;
+		place-items: center;
+		font-size: 24px;
+		font-weight: 700;
+		color: #fff;
+		background: linear-gradient(145deg, #8a5a2b, #c38644);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+		flex: 0 0 auto;
+		overflow: hidden;
 
-	&.empty {
+		&.empty {
+			width: 100%;
+			height: 100%;
+			border-radius: 10px;
+			background: transparent;
+			box-shadow: none;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 48px;
+			color: #808080;
+			cursor: pointer;
+		}
+	}
+
+	& .player-avatar-image {
 		width: 100%;
 		height: 100%;
-		border-radius: 10px;
-		background: transparent;
-		box-shadow: none;
+		object-fit: cover;
+		display: block;
+	}
+
+	& .player-meta {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 48px;
-		color: #808080;
-		cursor: pointer;
-	}
-}
-
-.player-avatar-image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
-}
-
-.player-meta {
-	display: flex;
-	flex-direction: column;
-	gap: 5px;
-	min-width: 0;
-}
-
-.player-name {
-	font-size: 16px;
-	line-height: 1.2;
-	font-weight: 600;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	transition: opacity 0.2s ease;
-
-	.player-info-card.team-red & {
-		color: red;
+		flex-direction: column;
+		gap: 5px;
+		min-width: 0;
 	}
 
-	.player-info-card.team-black & {
-		color: black;
-	}
-
-	.player-info-card:not(.empty-slot) & {
-		cursor: pointer;
+	& .player-name {
+		font-size: 16px;
+		line-height: 1.2;
+		font-weight: 600;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		transition: opacity 0.2s ease;
 
 		&:hover {
 			opacity: 0.7;
 			text-decoration: underline;
 			text-decoration-color: currentColor;
 		}
-	}
-}
-
-.player-general {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	font-family: "Noto Serif SC", "Songti SC", serif;
-
-	.general-label {
-		font-size: 12px;
-		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-		font-weight: 600;
-		letter-spacing: 0.4px;
-	}
-
-	&.team-red {
-		color: red;
-	}
-
-	&.team-black {
-		color: black;
 	}
 }
 
@@ -442,4 +434,20 @@
 	font-size: 13px;
 	line-height: 1;
 	background: rgba(255, 255, 255, 0.45);
+}
+
+.game-action {
+	font-size: 18px;
+}
+
+.action-menu-icon {
+	margin-right: 10px;
+	width: 16px;
+	text-align: center;
+}
+
+.action-menu-icon {
+	margin-right: 10px;
+	width: 16px;
+	text-align: center;
 }

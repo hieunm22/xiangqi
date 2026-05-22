@@ -56,6 +56,9 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				created_at: true,
 				updated_at: true,
 				games: {
+					where: {
+						status: 1
+					},
 					select: {
 						id: true
 					},

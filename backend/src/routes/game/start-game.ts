@@ -74,7 +74,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 
 			const createdGame = await gameDelegate.create({
 				data: {
-					status: 0,
+					status: 1,
 					room_id: roomIdBigInt
 				},
 				select: {
@@ -92,12 +92,13 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 
 		const collection = await getGameHistoryCollection()
 		const initialFen = room.red_first ? INITIAL_FEN_BLACK_TOP : INITIAL_FEN_BLACK_BOTTOM
-		await collection.insertOne({
+		const startRecord = {
 			game_id: game.id,
 			team: room.red_first ? "red" : "black",
 			fen: initialFen,
 			time_stamp: ~~(new Date().getTime() / 1000)
-		})
+		}
+		await collection.insertOne(startRecord)
 
 		res.status(201).json({
 			success: true,

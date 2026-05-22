@@ -89,7 +89,9 @@
 			"surrender": "Surrender",
 			"back-home": "Back to home",
 			"confirm-leave": "Are you sure you want to leave room?",
-			"confirm-surrender": "Are you sure you want to surrender?"
+			"confirm-surrender": "Are you sure you want to surrender?",
+			"draw": "Draw",
+			"confirm-draw": "Are you sure you want to draw?"
 		},
 		"info": {
 			"waiting-user": "Waiting player…"

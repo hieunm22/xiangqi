@@ -14,12 +14,12 @@ import { AlertHandler, AlertQueueItem } from "./types"
 
 let handler: AlertHandler | null = null
 
-export function openAlert(options: AlertOptions): Promise<void> {
+export function openAlert(options: AlertOptions) {
 	if (!handler) return Promise.resolve()
 	return handler(options)
 }
 
-export const AlertProvider = ({ children }: ComponentWithChild) => {
+export const AlertProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<AlertQueueItem[]>([])
 
 	useEffect(() => {
@@ -50,7 +50,7 @@ export const AlertProvider = ({ children }: ComponentWithChild) => {
 
 	return (
 		<>
-			{children}
+			{props.children}
 			<Dialog
 				open={!!current}
 				maxWidth="xs"

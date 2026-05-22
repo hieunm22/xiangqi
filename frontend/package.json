@@ -28,6 +28,7 @@
 		"react-redux": "^9.2.0",
 		"react-router-dom": "^7.13.1",
 		"sass": "^1.98.0",
+		"socket.io-client": "^4.8.3",
 		"styled-components": "^6.3.11",
 		"wavesurfer.js": "^7.12.2",
 		"wretch": "^3.0.7"

@@ -1,4 +1,4 @@
-import { EmptyVoid } from "types/Common"
+import { EmptyPromise, EmptyVoid } from "types/Common"
 import {
 	CapturedPieces,
 	CellProps,
@@ -22,9 +22,9 @@ export interface PieceItemProps {
 export interface PlayerInfoCardProps {
 	username: string
 	team: Team
+	active: boolean
 	capturedPieces: PieceCharacter[]
 	avatarUrl?: string | null
-	mirrored?: boolean
 	isEmpty?: boolean
 	userId?: number
 }
@@ -46,10 +46,10 @@ export interface RoomInfo {
 	red_first: boolean
 }
 
-interface RoomInfoData {
+export interface RoomInfoData {
 	room: RoomInfo
 	users: RoomUser[]
-	game_id?: string | null
+	game_id: string | null
 }
 
 export interface RoomInfoResponse {
@@ -66,9 +66,20 @@ export interface MovePieceRequest {
 }
 
 export interface HistoryData {
+	_id: string
+	game_id: string
 	fen: string
 	team: Team | null
 	time_stamp: number
-	capture: string | null
-	captured: CapturedPieces | null
+	capture?: string | null
+	captured?: CapturedPieces | null
+}
+
+export interface RoomActionButton {
+	key: string
+	icon: string
+	label: string
+	visible: boolean
+	enabled: boolean
+	onClick?: EmptyPromise
 }

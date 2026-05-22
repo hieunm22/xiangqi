@@ -8,6 +8,10 @@ export interface ReduxStore {
 
 export type EmptyVoid = () => void
 
+export type EmptyPromise = () => Promise<void>
+
+export type Nullable<T> = T | null
+
 export interface APIResponse<T> {
 	success: boolean
 	data: T | null
@@ -41,4 +45,11 @@ export interface ComponentWithChild {
 export interface ConfirmProps {
 	title?: string
 	message: string
+}
+
+export interface FenMoveDiffResult {
+	oldIndex: number
+	newIndex: number
+	movedCell: CellProps
+	capturedCell: CellProps | null
 }

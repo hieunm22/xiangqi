@@ -10,7 +10,7 @@ import {
 import { COUNTRIES_DROPDOWN, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
 import { TButton, TTypography } from "components/TranslationTag"
-import { usePopups } from "../context"
+import { usePopups } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import { setDarkMode } from "toolkit/slice/home"
 import i18n from "locales/i18n"

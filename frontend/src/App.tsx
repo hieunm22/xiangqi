@@ -8,9 +8,11 @@ import {
 } from "@mui/material"
 import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
+import { AuthProvider } from "components/AuthProvider"
 import ConfirmProvider from "components/ConfirmProvider"
 import Layout from "components/Layout"
 import LayoutUnAuth from "components/LayoutUnAuth"
+import { ProtectedRoute } from "components/ProtectedRoute"
 import Dashboard from "pages/Dashboard"
 import RoomPage from "pages/Room"
 import LoginPage from "pages/Login"
@@ -23,7 +25,7 @@ import "App.scss"
 import "styles/responsive.scss"
 import "styles/common.scss"
 
-function App() {
+function AppWithTheme() {
 	const darkMode = localStorage.getItem(LS_DARKMODE) || "light"
 	const { state } = useToolkit()
 
@@ -83,26 +85,76 @@ function App() {
 			<CssBaseline />
 			<Routes>
 				<Route element={<LayoutUnAuth />}>
-					<Route path={LOGIN_PATH} element={<LoginPage />} />
+					<Route
+						path={LOGIN_PATH}
+						element={
+							<ProtectedRoute isPublicPage>
+								<LoginPage />
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route element={<LayoutUnAuth />}>
-					<Route path="/lost-password" element={<LostPasswordPage />} />
+					<Route
+						path="/lost-password"
+						element={
+							<ProtectedRoute isPublicPage>
+								<LostPasswordPage />
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route element={<LayoutUnAuth />}>
-					<Route path="/reset-password" element={<ResetPasswordPage />} />
+					<Route
+						path="/reset-password"
+						element={
+							<ProtectedRoute isPublicPage>
+								<ResetPasswordPage />
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route element={<LayoutUnAuth />}>
-					<Route path="/register" element={<RegisterPage />} />
+					<Route
+						path="/register"
+						element={
+							<ProtectedRoute isPublicPage>
+								<RegisterPage />
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route element={<Layout />}>
-					<Route path={HOME_PATH} element={DashboardPageElement} />
+					<Route
+						path={HOME_PATH}
+						element={
+							<ProtectedRoute>
+								{DashboardPageElement}
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route element={<Layout />}>
-					<Route path="/room/:id" element={RoomPageElement} />
+					<Route
+						path="/room/:id"
+						element={
+							<ProtectedRoute>
+								{RoomPageElement}
+							</ProtectedRoute>
+						}
+					/>
 				</Route>
 				<Route path="*" element={<NotFoundPage />} />
 			</Routes>
 		</ThemeProvider>
+	)
+}
+
+const App = () => {
+	return (
+		<AuthProvider>
+			<AppWithTheme />
+		</AuthProvider>
 	)
 }
 

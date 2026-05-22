@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
 	Stack,
 	Dialog,
@@ -14,25 +15,13 @@ import {
 } from "@mui/material"
 import Alert from "components/AlertWithIcon"
 import { TButton, TTextField } from "components/TranslationTag"
-import { PieceSelection, PieceSelectionContext } from "./PieceSelection"
+import { PieceSelection } from "./PieceSelection"
 import { translate } from "locales/translate"
 import { getToken } from "common/helper"
+import { PieceSelectionContext, useCreateRoomDialogContext } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
 import { Team } from "types/GameState"
-import { CreateRoomContextValue, CreateRoomRequest } from "../types"
-import { useNavigate } from "react-router-dom"
-
-export const CreateRoomDialogContext = createContext<CreateRoomContextValue | null>(null)
-
-const useCreateRoomDialogContext = () => {
-	const context = useContext(CreateRoomDialogContext)
-
-	if (!context) {
-		throw new Error("CreateRoomDialog must be used within CreateRoomDialogContext.Provider")
-	}
-
-	return context
-}
+import { CreateRoomRequest } from "../types"
 
 export const CreateRoomDialog = () => {
 	const { open, setOpen } = useCreateRoomDialogContext()

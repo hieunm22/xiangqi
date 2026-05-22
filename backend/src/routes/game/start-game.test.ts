@@ -98,7 +98,7 @@ describe("POST /api/room/start", () => {
 		})
 		gameCreateMock.mockResolvedValue({
 			id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
-			status: 0,
+			status: 1,
 			room_id: BigInt(101)
 		})
 		transactionMock.mockImplementation(async callback =>
@@ -125,7 +125,7 @@ describe("POST /api/room/start", () => {
 			data: {
 				game: {
 					id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
-					status: 0,
+					status: 1,
 					room_id: 101
 				},
 				room: {
@@ -146,7 +146,7 @@ describe("POST /api/room/start", () => {
 		})
 		expect(gameCreateMock).toHaveBeenCalledWith({
 			data: {
-				status: 0,
+				status: 1,
 				room_id: BigInt(101)
 			},
 			select: {
@@ -178,7 +178,7 @@ describe("POST /api/room/start", () => {
 		})
 		gameCreateMock.mockResolvedValue({
 			id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
-			status: 0,
+			status: 1,
 			room_id: BigInt(102)
 		})
 		transactionMock.mockImplementation(async callback =>

@@ -7,9 +7,9 @@ import { openAlert } from "components/AlertProvider"
 import { openConfirm } from "components/ConfirmProvider"
 import {
 	decodePayload,
+	// diffFenMove,
 	getAvailableMoves,
-	getToken,
-	requireImage
+	getToken
 } from "common/helper"
 import {
 	boardToFen,
@@ -21,13 +21,17 @@ import {
 import { translate } from "locales/translate"
 import { setGameState } from "toolkit/slice/game"
 import { useAPI } from "hooks/useAPI"
+import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
 import useGameToolkit from "hooks/useGameToolkit"
+import { EmptyVoid } from "types/Common"
 import { PieceCharacter, Team } from "types/GameState"
 import {
 	HistoryData,
 	MovePieceRequest,
+	RoomActionButton,
 	RoomInfo,
+	RoomInfoResponse,
 	RoomUser
 } from "./types"
 
@@ -42,13 +46,31 @@ const useRoomHook = () => {
 		startRoom,
 		surrenderGame,
 	} = useAPI()
+
+	const {
+		isConnected,
+		joinRoom: socketJoinRoom,
+		leaveRoom: socketLeaveRoom,
+		onMovePiece,
+		offMovePiece,
+		emitPlayerMove
+	} = useSocket()
+
 	const [room, setRoom] = useState<RoomInfo | null>(null)
 	const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([])
 	const [gameId, setGameId] = useState<string | null>(null)
+	const [history, setHistory] = useState<HistoryData[]>([])
+
+	const [actionMenuItems, setActionMenuItems] = useState<RoomActionButton[]>([])
+	const [currentTurn, setCurrentTurn] = useState<Team | null>(null)
+	const [isMovePending, setIsMovePending] = useState(false)
+	const [isPlayer, setIsPlayer] = useState(false)
+	const [firstJoinedUser, setFirstJoinedUser] = useState<RoomUser | null>(null)
+	const [secondJoinedUser, setSecondJoinedUser] = useState<RoomUser | null>(null)
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
-	
+
 	const { leaveRoom } = useAPI()
 
 	const currentUserId = useMemo(() => {
@@ -58,18 +80,201 @@ const useRoomHook = () => {
 		return Number.isNaN(id) ? null : id
 	}, [])
 
-	const playerIds = joinedUsers.slice(0, 2).map(user => Number(user.id))
-	const firstJoinedUser = joinedUsers[0]
-	const secondJoinedUser = joinedUsers[1]
-	const isInCurrentRoom = currentUserId !== null
-		&& joinedUsers.some(user => Number(user.id) === currentUserId)
-	const isFirstJoinedPlayer = currentUserId !== null && playerIds[0] === currentUserId
-	const isPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-	const user = joinedUsers.find(user => Number(user.id) === currentUserId)
-	const isMyTurn = user && user.team && state.teamTurn === user.team
+	async function loadCurrentRoom() {
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const roomInfoResponse: RoomInfoResponse = await getRoomById(token, roomId)
+		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
+			return
+		}
+		const roomData = roomInfoResponse.data
+		const roomUsers = (roomData.users || []) as RoomUser[]
+
+		const isUserAlreadyInRoom = roomUsers.some(user => user.id === currentUserId)
+
+		if (!isUserAlreadyInRoom) {
+			const joinRoomResponse = await joinRoom(token, roomId)
+			setJoinedUsers(joinRoomResponse.data as RoomUser[])
+		}
+		else {
+			setJoinedUsers(roomUsers)
+		}
+
+		setRoom(roomData.room)
+		setGameId(roomData.game_id)
+	}
+
+	async function loadGameHistory() {
+		if (!room || !gameId) {
+			return
+		}
+
+		if (room.status === 2) {
+			const token = getToken()
+			const history = await getGameHistory(token, gameId)
+			setHistory(history.data ?? [])
+		}
+	}
+
+	function updateToState() {
+		if (joinedUsers.length === 0) {
+			return
+		}
+
+		if (history.length === 0) {
+			setCurrentTurn(room && room.red_first ? "red" : "black")
+			setFirstJoinedUser(room && room.red_first ? joinedUsers[0] : joinedUsers[1])
+			if (joinedUsers.length > 1) {
+				setSecondJoinedUser(room && room.red_first ? joinedUsers[1] : joinedUsers[0])
+			}
+
+			const menus: RoomActionButton[] = [
+				{
+					key: "start-room",
+					icon: "fas fa-swords",
+					label: translate("room.actions.start-room"),
+					onClick: handleStartGame,
+					visible: joinedUsers[0].id === currentUserId,
+					enabled: joinedUsers.length >= 2 && room !== null && room.status !== 2
+				},
+				{
+					key: "draw",
+					icon: "far fa-handshake",
+					label: translate("room.actions.draw"),
+					visible: false,
+					enabled: false
+				},
+				{
+					key: "surrender",
+					icon: "far fa-flag",
+					label: translate("room.actions.surrender"),
+					visible: false,
+					enabled: false
+				},
+				{
+					key: "back-home",
+					icon: "fas fa-left-from-bracket",
+					label: translate("room.actions.back-home"),
+					onClick: handleBackToHome,
+					visible: true,
+					enabled: true
+				}
+			]
+			setActionMenuItems(menus)
+			return
+		}
+
+		if (history.length > 0) {
+			const capturedPieces = getCapturedPiecesFromHistory(history)
+			const latest = history[history.length - 1]
+			const fen = latest.fen as string
+			const board = fenToBoard(fen)
+
+			const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
+			const currentUser = joinedUsers.find(user => user.id === currentUserId)
+			const isInCurrentRoom = currentUser !== undefined
+			const newIsPlayer = currentUserId !== null && playerIds.includes(currentUserId)
+			setIsPlayer(newIsPlayer)
+			setCurrentTurn(latest.team)
+			const isMyTurn = Boolean(currentUser && currentUser.team && currentUser.team === latest.team)
+
+			const canSurrender = isInCurrentRoom
+				&& newIsPlayer
+				&& room !== null
+				&& room.status === 2
+				&& Boolean(gameId)
+				&& isMyTurn
+
+			const menus: RoomActionButton[] = [
+				{
+					key: "start-room",
+					icon: "fas fa-swords",
+					label: translate("room.actions.start-room"),
+					onClick: handleStartGame,
+					visible: false,
+					enabled: false
+				},
+				{
+					key: "draw",
+					icon: "far fa-handshake",
+					label: translate("room.actions.draw"),
+					onClick: handleDraw,
+					visible: isInCurrentRoom && newIsPlayer && room !== null && room.status === 2,
+					enabled: canSurrender
+				},
+				{
+					key: "surrender",
+					icon: "far fa-flag",
+					label: translate("room.actions.surrender"),
+					onClick: handleSurrender,
+					visible: isInCurrentRoom && newIsPlayer && room !== null && room.status === 2,
+					enabled: canSurrender
+				},
+				{
+					key: "back-home",
+					icon: "fas fa-left-from-bracket",
+					label: translate("room.actions.back-home"),
+					onClick: handleBackToHome,
+					visible: isInCurrentRoom,
+					enabled: isInCurrentRoom
+				}
+			]
+			setActionMenuItems(menus)
+
+			dispatch(setGameState({
+				availableMoves: [],
+				board,
+				selected: null,
+				teamTurn: latest.team as Team,
+				capturedPieces
+			}))
+		}
+	}
+
+	useEffect(() => {
+		loadCurrentRoom()
+	}, [])
+
+	useEffect(() => {
+		loadGameHistory()
+	}, [room, gameId])
+
+	useEffect(updateToState, [history, joinedUsers])
+
+	// Socket.io: Join room and listen for piece-moved events
+	useEffect(() => {
+		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const handleMovePiece = (moveRecord: HistoryData) => {
+			if (!moveRecord?.fen) {
+				return
+			}
+
+			setHistory(prev => {
+				if (prev.some(h => h._id === moveRecord._id)) {
+					return prev
+				}
+				return [...prev, moveRecord]
+			})
+		}
+
+		socketJoinRoom(roomId, currentUserId || undefined)
+		onMovePiece(handleMovePiece)
+
+		return () => {
+			offMovePiece(handleMovePiece)
+			socketLeaveRoom(roomId)
+		}
+	}, [isConnected, roomId, onMovePiece, offMovePiece, socketJoinRoom, socketLeaveRoom])
 
 	const handleStartGame = async () => {
-		if (!isFirstJoinedPlayer || joinedUsers.length < 2 || room?.status === 2) {
+		const canStart = joinedUsers.length >= 2 && room !== null && room.status !== 2
+		if (!canStart) {
 			return
 		}
 
@@ -103,8 +308,60 @@ const useRoomHook = () => {
 		)
 	}
 
+	const handleDraw = async () => {
+		if (!gameId) {
+			return
+		}
+
+		const currentUser = joinedUsers.find(user => user.id === currentUserId)
+		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
+		const isInCurrentRoom = currentUser !== undefined
+		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
+		const latest = history.length > 0 ? history[history.length - 1] : null
+		const isMyTurn = Boolean(currentUser?.team && latest && currentUser.team === latest.team)
+		const canDraw = isInCurrentRoom
+			&& isCurrentlyPlayer
+			&& room?.status === 2
+			&& isMyTurn
+		if (!canDraw) {
+			return
+		}
+
+		const confirmed = await openConfirm({
+			title: "popup.confirm.title",
+			message: "room.actions.confirm-draw"
+		})
+		if (!confirmed) {
+			return
+		}
+
+		// const token = getToken()
+		// const response = await drawGame(token, gameId)
+		// if (!response || !response.success) {
+		// 	await openAlert({
+		// 		title: "popup.alert.title",
+		// 		message: response?.message
+		// 	})
+		// 	return
+		// }
+	}
+
 	const handleSurrender = async () => {
-		if (!isPlayer || !gameId || (room && room.status !== 2)) {
+		if (!gameId) {
+			return
+		}
+
+		const currentUser = joinedUsers.find(user => user.id === currentUserId)
+		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
+		const isInCurrentRoom = currentUser !== undefined
+		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
+		const latest = history.length > 0 ? history[history.length - 1] : null
+		const isMyTurn = Boolean(currentUser?.team && latest && currentUser.team === latest.team)
+		const canSurrender = isInCurrentRoom
+			&& isCurrentlyPlayer
+			&& room?.status === 2
+			&& isMyTurn
+		if (!canSurrender) {
 			return
 		}
 
@@ -127,19 +384,9 @@ const useRoomHook = () => {
 		}
 	}
 
-	const leaveCurrentRoom = async () => {
-		const token = getToken()
-		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
-			navigate(LOGIN_PATH)
-			return
-		}
-
-		await leaveRoom(token, roomId)
-		navigate(LOGIN_PATH)
-	}
-
 	const handleBackToHome = async () => {
-		if (!isInCurrentRoom) {
+		const isInCurrentRoom = joinedUsers.some(user => user.id === currentUserId)
+		if (history.length > 0 && !isInCurrentRoom) {
 			return
 		}
 
@@ -153,79 +400,15 @@ const useRoomHook = () => {
 			}
 		}
 
-		await leaveCurrentRoom()
-	}
-
-	async function loadCurrentRoom() {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			navigate(LOGIN_PATH)
 			return
 		}
 
-		// First, get room info to fetch all joined users
-		const roomInfoResponse = await getRoomById(token, roomId)
-		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
-			return
-		}
-
-		const roomUsers = (roomInfoResponse.data.users || []).map((user: any) => ({
-			id: Number(user.id),
-			display_name: String(user.display_name || ""),
-			avatar_url: requireImage(user.avatar_url),
-			team: user.team,
-			joined_at: user.joined_at
-		}))
-		setRoom(roomInfoResponse.data.room)
-
-		// Check if current user is already in the room
-		const isUserAlreadyInRoom = roomUsers.some((u: any) => u.id === currentUserId)
-		
-		// Only call joinRoom if user is not already in the room
-		if (!isUserAlreadyInRoom) {
-			const joinRoomResponse = await joinRoom(token, roomId)
-			// update joined users list with the response from joinRoom API
-			// which contains the assigned team for the current user
-			if (joinRoomResponse && joinRoomResponse.success && joinRoomResponse.data) {
-				const updatedUsers = joinRoomResponse.data.map((user: any) => ({
-					id: Number(user.id),
-					display_name: String(user.display_name || ""),
-					avatar_url: requireImage(user.avatar_url),
-					team: user.team,
-					joined_at: typeof user.joined_at === "string" ? user.joined_at : null
-				}))
-				setJoinedUsers(updatedUsers)
-			}
-		}
-		else {
-			setJoinedUsers(roomUsers)
-		}
-
-		// Load game history if room is in playing status
-		if (roomInfoResponse.data.room.status === 2
-			&& roomInfoResponse.data.game_id
-		) {
-			setGameId(roomInfoResponse.data.game_id)
-			const history = await getGameHistory(token, roomInfoResponse.data.game_id ?? "")
-			const records: HistoryData[] = history.data ?? []
-			if (records.length > 0) {
-				const capturedPieces = getCapturedPiecesFromHistory(records)
-				const latest = records[records.length - 1]
-				const fen = latest.fen as string
-				const board = fenToBoard(fen)
-				dispatch(setGameState({
-					availableMoves: [],
-					board,
-					selected: null,
-					teamTurn: latest.team as Team,
-					capturedPieces
-				}))
-			}
-		}
+		await leaveRoom(token, roomId)
+		navigate(LOGIN_PATH)
 	}
-
-	useEffect(() => {
-		loadCurrentRoom()
-	}, [])
 
 	const markerClass = (col: number, row: number) => classnames("marker", {
 		"left-edge": col === 0,
@@ -234,6 +417,9 @@ const useRoomHook = () => {
 	})
 
 	const onPieceClick = (id: number) => () => {
+		// Prevent piece selection while a move is pending
+		if (isMovePending) return
+
 		const currentTurn = state.teamTurn
 		if (currentTurn !== state.board[id]?.team && !state.availableMoves.includes(id)) {
 			return
@@ -252,6 +438,7 @@ const useRoomHook = () => {
 
 			dispatch(setGameState({
 				...state,
+				availableMoves: [],
 				board: gameStateClone
 			}))
 			return
@@ -273,8 +460,13 @@ const useRoomHook = () => {
 	}
 
 	const onAnimateEnd = async () => {
+		// Prevent race condition: don't allow multiple simultaneous moves
+		if (isMovePending) return
+
+		if (!state.selected) return
+
 		const gameStateClone = [...state.board]
-		const selectedId = state.selected!
+		const selectedId = state.selected
 		const targetId = gameStateClone[selectedId]!.animateTo
 		if (targetId === undefined) return
 		const oldTarget = gameStateClone[targetId]
@@ -299,14 +491,15 @@ const useRoomHook = () => {
 				piece: revertedBoard[selectedId]!.piece,
 				team: revertedBoard[selectedId]!.team,
 			}
-			
+
 			await openAlert({
 				title: "popup.alert.title",
 				message: "game.general.in-check"
 			})
-			
+
 			dispatch(setGameState({
 				...state,
+				selected: null,
 				board: revertedBoard
 			}))
 			return
@@ -333,6 +526,7 @@ const useRoomHook = () => {
 			selected: null,
 			teamTurn: enemyTeam
 		}))
+		setCurrentTurn(enemyTeam)
 
 		if (room?.status === 2 && gameId) {
 			const newFen = boardToFen(gameStateClone)
@@ -343,7 +537,17 @@ const useRoomHook = () => {
 				team: movedTeam // active team (the one who just moved)
 			}
 			const token = getToken()
-			await movePiece(token, body)
+			
+			// Emit move piece event to realtime listeners
+			emitPlayerMove(body)
+			
+			try {
+				setIsMovePending(true)
+				const latest = await movePiece(token, body)
+				setHistory(prev => [...prev, latest.data])
+			} finally {
+				setIsMovePending(false)
+			}
 		}
 
 		if (oldTarget?.piece === "general") {
@@ -360,23 +564,38 @@ const useRoomHook = () => {
 		dispatch(setGameState(init))
 	}
 
+	const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
+	const isActionMenuOpen = Boolean(menuAnchorEl)
+
+	const openActionMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+		setMenuAnchorEl(event.currentTarget)
+	}
+
+	const closeActionMenu = () => {
+		setMenuAnchorEl(null)
+	}
+
+	const handleMenuItemClick = (callback: EmptyVoid) => () => {
+		setMenuAnchorEl(null)
+		callback()
+	}
+
 	return {
+		actionMenuItems,
+		currentTurn,
 		firstJoinedUser,
-		isPlayer,
-		isFirstJoinedPlayer,
-		isInCurrentRoom,
-		isMyTurn,
-		joinedUsers,
-		room,
+		isActionMenuOpen,
+		isMovePending,
+		menuAnchorEl,
 		secondJoinedUser,
 		state,
 
-		handleBackToHome,
-		handleStartGame,
-		handleSurrender,
+		closeActionMenu,
+		handleMenuItemClick,
 		markerClass,
 		onAnimateEnd,
-		onPieceClick
+		onPieceClick,
+		openActionMenu
 	}
 }
 

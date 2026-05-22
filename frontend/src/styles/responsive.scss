@@ -3,17 +3,10 @@
 		--cell-size: 40px;
 		--piece-size: 32px;
 		--river-gap: 20px;
-    --board-padding: 15px;
+		--board-padding: 15px;
+		--piece-font-size: 18px;
 		--line-color: #5b2f12;
 		--wood: #deb46f;
-	}
-
-	.piece {
-		font-size: 18px;
-	}
-
-	.xiangqi-board {
-		padding: var(--board-padding);
 	}
 }
 
@@ -22,17 +15,10 @@
 		--cell-size: 40px;
 		--piece-size: 32px;
 		--river-gap: 20px;
-    --board-padding: 15px;
+		--board-padding: 15px;
+		--piece-font-size: 18px;
 		--line-color: #5b2f12;
 		--wood: #deb46f;
-	}
-
-	.piece {
-		font-size: 18px;
-	}
-
-	.xiangqi-board {
-		padding: var(--board-padding);
 	}
 }
 
@@ -41,16 +27,27 @@
 		--cell-size: 45px;
 		--piece-size: 33px;
 		--river-gap: 20px;
-    --board-padding: 18px;
+		--board-padding: 18px;
+		--piece-font-size: 20px;
 		--line-color: #5b2f12;
 		--wood: #deb46f;
 	}
+}
 
-	.piece {
-		font-size: 20px;
+@media screen and (max-width: 440px) {
+	.room-container {
+		flex-direction: column;
 	}
 
-	.xiangqi-board {
-		padding: var(--board-padding);
+	.player-info-row, .room-action-row {
+		width: calc(var(--board-width) + var(--board-padding) * 2);
+		max-height: 80px;
+
+		&.view {
+			display: flex;
+			justify-content: space-between;
+			flex-direction: row;
+			gap: 12px;
+		}
 	}
 }

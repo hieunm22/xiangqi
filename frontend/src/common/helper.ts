@@ -11,7 +11,14 @@ import {
 	scanLine,
 	toIndex
 } from "pages/Room/common"
-import type { NullableCellProps } from "types/GameState"
+import { fenPieceMap } from "pages/Room/constant"
+import { FenMoveDiffResult } from "types/Common"
+import {
+	CellProps,
+	NullableCellProps,
+	PieceCharacter,
+	Team
+} from "types/GameState"
 
 const processSoldierMove = (
 	state: any,
@@ -332,4 +339,96 @@ export function decodePayload(token: string | null) {
 export function getClaimsFromLocalStorage() {
 	const token = getToken()
 	return decodePayload(token)
+}
+
+function parseFenBoard(fen: string): Array<PieceCharacter | null> {
+	const rows = fen.trim().split("/")
+	if (rows.length !== BOARD_ROWS) {
+		throw new Error(`Invalid FEN row count: expected ${BOARD_ROWS}, got ${rows.length}`)
+	}
+
+	const board: Array<PieceCharacter | null> = []
+	for (const rowText of rows) {
+		for (const token of rowText) {
+			if (token >= "1" && token <= "9") {
+				const emptyCount = Number(token)
+				for (let i = 0; i < emptyCount; i += 1) {
+					board.push(null)
+				}
+				continue
+			}
+
+			if (!(token in fenPieceMap)) {
+				throw new Error(`Invalid FEN piece token: '${token}'`)
+			}
+			board.push(token as PieceCharacter)
+		}
+	}
+
+	const expectedSize = BOARD_COLUMNS * BOARD_ROWS
+	if (board.length !== expectedSize) {
+		throw new Error(`Invalid FEN board size: expected ${expectedSize}, got ${board.length}`)
+	}
+
+	return board
+}
+
+function toCellPropsFromToken(id: number, token: PieceCharacter): CellProps {
+	const piece = fenPieceMap[token]
+	const team: Team = token === token.toLowerCase() ? "red" : "black"
+	return { id, piece, team }
+}
+
+/**
+ * Compare two FEN strings and infer the moved piece.
+ * Returns null when the diff cannot be identified as one legal "from -> to" move.
+ */
+export function diffFenMove(oldFen: string, newFen: string): FenMoveDiffResult | null {
+	const before = parseFenBoard(oldFen)
+	const after = parseFenBoard(newFen)
+
+	const diffIndexes: number[] = []
+	for (let i = 0; i < before.length; i += 1) {
+		if (before[i] !== after[i]) {
+			diffIndexes.push(i)
+		}
+	}
+
+	if (diffIndexes.length !== 2) {
+		return null
+	}
+
+	const [indexA, indexB] = diffIndexes
+	const beforeA = before[indexA]
+	const afterA = after[indexA]
+	const beforeB = before[indexB]
+	const afterB = after[indexB]
+
+	let oldIndex = -1
+	let newIndex = -1
+	let movedToken: PieceCharacter | null = null
+	let capturedToken: PieceCharacter | null = null
+
+	if (beforeA && !afterA && afterB === beforeA) {
+		oldIndex = indexA
+		newIndex = indexB
+		movedToken = beforeA
+		capturedToken = beforeB
+	} else if (beforeB && !afterB && afterA === beforeB) {
+		oldIndex = indexB
+		newIndex = indexA
+		movedToken = beforeB
+		capturedToken = beforeA
+	}
+
+	if (oldIndex < 0 || newIndex < 0 || !movedToken) {
+		return null
+	}
+
+	return {
+		oldIndex,
+		newIndex,
+		movedCell: toCellPropsFromToken(newIndex, movedToken),
+		capturedCell: capturedToken ? toCellPropsFromToken(newIndex, capturedToken) : null,
+	}
 }

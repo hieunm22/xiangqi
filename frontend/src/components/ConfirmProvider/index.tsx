@@ -7,10 +7,11 @@ import {
 	Grid,
 	Typography
 } from "@mui/material"
-import { TButton } from "components/TranslationTag"
+import { TButton, TSpan } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import { ComponentWithChild } from "types/Common"
 import { ConfirmOptions, InternalHandler, QueueProps } from "./types"
+import "./ConfirmProvider.scss"
 
 let handler: InternalHandler | null = null
 
@@ -19,7 +20,7 @@ export function openConfirm(options: ConfirmOptions = {}): Promise<boolean> {
 	return handler(options)
 }
 
-export const ConfirmProvider = ({ children }: ComponentWithChild) => {
+export const ConfirmProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<QueueProps[]>([])
 
 	useEffect(() => {
@@ -49,15 +50,9 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 		current.options.onOk?.()
 	}
 
-	const textCenterStyle = {
-		display: "flex",
-		justifyContent: "center",
-		alignItems: "center"
-	}
-
 	return (
 		<>
-			{children}
+			{props.children}
 			<Dialog
 				open={!!current}
 				maxWidth="xs"
@@ -65,14 +60,15 @@ export const ConfirmProvider = ({ children }: ComponentWithChild) => {
 				disableRestoreFocus
 			>
 				<DialogTitle padding="5px 20px !important">
-					<Typography component="div" sx={textCenterStyle}>
+					<Typography component="div" className="flex">
 						{translate(current?.options.title ?? "popup.confirm.title")}
 					</Typography>
 				</DialogTitle>
-				<Divider sx={{ my: "5px" }} />
+				<Divider className="mt-5 mb-5" />
 				<DialogContent>
-					<Typography sx={{ textAlign: "left", mb: 2 }}>
-						{translate(current?.options.message && current.options.message)}
+					<Typography className="confirm-message-row">
+						<i className="fas fa-circle-question mt-4" />
+						<TSpan content={current?.options.message ?? "popup.confirm.message"} />
 					</Typography>
 					<Grid container justifyContent="flex-end" gap={2}>
 						<TButton

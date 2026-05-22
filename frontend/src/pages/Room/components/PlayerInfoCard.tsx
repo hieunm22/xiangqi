@@ -1,7 +1,8 @@
 import classnames from "classnames"
 import { fenPieceMap, pieceSymbolByType } from "../constant"
 import { TI } from "components/TranslationTag"
-import { usePopups } from "components/Layout/context"
+import { requireImage } from "common/helper"
+import { usePopups } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
 import useGameToolkit from "hooks/useGameToolkit"
 import { APIResponse } from "types/Common"
@@ -10,21 +11,20 @@ import { PlayerInfoCardProps } from "../types"
 
 export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
-		username,
-		team,
+		active = false,
 		avatarUrl,
-		mirrored = false,
 		isEmpty = false,
-		userId = null
+		team,
+		userId = null,
+		username,
 	} = props
 	const { state } = useGameToolkit()
 	const { setOpenProfilePopup, setProfileUser } = usePopups()
 	const { getUserById } = useAPI()
+	const fullAvatarUrl = requireImage(avatarUrl || "")
 	
 	if (isEmpty) {
-		const containerClass = classnames("player-info-card empty-slot", `team-${team}`, {
-			"is-mirrored": mirrored
-		})
+		const containerClass = classnames("player-info-card empty-slot", `team-${team}`)
 		return (
 			<div className={containerClass}>
 				<div className="player-avatar empty">
@@ -34,10 +34,8 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		)
 	}
 
-	const avatarInitial = username.trim().charAt(0).toUpperCase() || "U"
 	const containerClass = classnames("player-info-card", `team-${team}`, {
-		"active-turn": state.teamTurn === team,
-		"is-mirrored": mirrored
+		"active-turn": active,
 	})
 
 	const capturedPieces = state.capturedPieces[team]
@@ -56,11 +54,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	return (
 		<div className={containerClass}>
 			<div className="player-avatar">
-				{avatarUrl ? (
-					<img className="player-avatar-image" src={avatarUrl} alt={username} />
-				) : (
-					avatarInitial
-				)}
+				<img className="player-avatar-image" src={fullAvatarUrl} alt={username} />
 			</div>
 			<div className="player-meta">
 				<div

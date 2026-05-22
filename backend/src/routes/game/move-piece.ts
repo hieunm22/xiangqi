@@ -1,7 +1,9 @@
 import { Response, Router } from "express"
-import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { getGameHistoryCollection } from "common/mongodb"
+import prisma from "prisma"
 import { fenToBoard } from "common/board-helper"
+import { getGameHistoryCollection } from "common/mongodb"
+import { emitMovePiece } from "common/socket"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { MovePieceRequest } from "types/game.type"
 
 const router = Router()
@@ -126,6 +128,17 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			return
 		}
 
+		// Validate team: ensure request team matches latest record's turn (next team to move)
+		const latestTeam = latestRecord[0]?.team
+		if (latestTeam !== team) {
+			res.status(400).json({
+				success: false,
+				message: "move-piece.messages.invalid-team",
+				status_code: 400
+			})
+			return
+		}
+
 		// Calculate next team (toggle)
 		const nextTeam = team === "red" ? "black" : "red"
 
@@ -148,6 +161,24 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		const responseData: any = {
 			...newRecord,
 			_id: insertResult.insertedId.toString()
+		}
+
+		// Emit move piece event to all clients in the room EXCEPT the requester
+		try {
+			const game = await prisma.game.findUnique({
+				where: { id: gameId },
+				select: { room_id: true }
+			})
+
+			const userId = req.auth?.userId ? parseInt(req.auth.userId, 10) : undefined
+			if (game?.room_id) {
+				emitMovePiece(game.room_id.toString(), responseData, userId)
+			} else {
+				console.warn(`[Move-Piece] No game found or game has no room_id for gameId: ${gameId}`)
+			}
+		} catch (socketErr) {
+			console.error("[Move-Piece] Socket emission error:", socketErr)
+			// Don't fail the request if socket emission fails
 		}
 
 		res.status(201).json({

@@ -1,0 +1,8 @@
+import { EmptyPromise, EmptyVoid } from "types/Common"
+
+export interface AuthContextProps {
+	isLoading: boolean
+	isValidToken: boolean
+	refreshAuth: EmptyPromise
+	setLogout: EmptyVoid
+}

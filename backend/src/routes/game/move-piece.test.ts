@@ -205,7 +205,7 @@ describe("POST /api/game/move-piece", () => {
 		const accessToken = buildAccessToken(91, "session-move-piece-6")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
 		toArrayMock.mockResolvedValue([
-			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP }
+			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP, team: "red" }
 		])
 		insertOneMock.mockResolvedValue({
 			insertedId: { toString: () => "mongo-id-new" }
@@ -249,7 +249,7 @@ describe("POST /api/game/move-piece", () => {
 		const accessToken = buildAccessToken(91, "session-move-piece-6-capture")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
 		toArrayMock.mockResolvedValue([
-			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP }
+			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP, team: "red" }
 		])
 		insertOneMock.mockResolvedValue({
 			insertedId: { toString: () => "mongo-id-new" }
@@ -293,7 +293,7 @@ describe("POST /api/game/move-piece", () => {
 		const accessToken = buildAccessToken(91, "session-move-piece-6-capture-black")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
 		toArrayMock.mockResolvedValue([
-			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP }
+			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP, team: "black" }
 		])
 		insertOneMock.mockResolvedValue({
 			insertedId: { toString: () => "mongo-id-new" }
@@ -331,6 +331,32 @@ describe("POST /api/game/move-piece", () => {
 				capture: "r"
 			}
 		})
+	})
+
+	it("returns 400 when team does not match latest history record", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-invalid-team")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		toArrayMock.mockResolvedValue([
+			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP, team: "red" }
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-1",
+				newFen: INITIAL_FEN_BLACK_TOP,
+				capturePiece: null,
+				team: "black"
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "move-piece.messages.invalid-team",
+			status_code: 400
+		})
+		expect(insertOneMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 500 when database throws unexpected error", async () => {

@@ -23,7 +23,7 @@ When adding or updating translations:
 2. Run:
 
 ```sh
-./tools/convert.sh
+./tools/generate-locales.sh
 ```
 3. Verify generated JSON changes
 

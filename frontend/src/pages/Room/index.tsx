@@ -1,37 +1,56 @@
 import React from "react"
 import classnames from "classnames"
+import { Menu, MenuItem } from "@mui/material"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
-import { TButton } from "components/TranslationTag"
+import { TI } from "components/TranslationTag"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import { translate } from "locales/translate"
 import useRoomHook from "./hook"
+import { Empty } from "components/Common"
 import { Piece } from "types/GameState"
 import "./Room.scss"
 
 export default function RoomPage() {
 	const {
+		actionMenuItems,
+		currentTurn,
 		firstJoinedUser,
-		isFirstJoinedPlayer,
-		isInCurrentRoom,
-		isPlayer,
-		isMyTurn,
-		joinedUsers,
-		room,
+		isActionMenuOpen,
+		menuAnchorEl,
 		secondJoinedUser,
 		state,
 
-		handleBackToHome,
-		handleStartGame,
-		handleSurrender,
+		closeActionMenu,
+		handleMenuItemClick,
 		markerClass,
 		onAnimateEnd,
-		onPieceClick
+		onPieceClick,
+		openActionMenu
 	} = useRoomHook()
 
 	return (
 		<div className="room-container">
+			<div className="player-info-row view">
+				<PlayerInfoCard
+					username={firstJoinedUser?.display_name || translate("room.info.waiting-user")}
+					team={firstJoinedUser?.team === "red" ? "red" : "black"}
+					active={currentTurn === firstJoinedUser?.team}
+					avatarUrl={firstJoinedUser?.avatar_url || null}
+					capturedPieces={state.capturedPieces.black}
+					userId={firstJoinedUser?.id}
+				/>
+				<PlayerInfoCard
+					username={secondJoinedUser?.display_name || translate("room.info.waiting-user")}
+					team={secondJoinedUser?.team === "black" ? "black" : "red"}
+					active={currentTurn === secondJoinedUser?.team}
+					avatarUrl={secondJoinedUser?.avatar_url || null}
+					capturedPieces={state.capturedPieces.red}
+					isEmpty={!secondJoinedUser}
+					userId={secondJoinedUser?.id}
+				/>
+			</div>
 			<div className="xiangqi-board">
 				<div className="board-frame">
 					{Array.from({ length: BOARD_ROWS - 2 }, (_, i) => i + 1).map(row => (
@@ -105,51 +124,34 @@ export default function RoomPage() {
 						})}
 				</div>
 			</div>
-			<div className="player-info-row">
-				<PlayerInfoCard
-					username={firstJoinedUser?.display_name || translate("room.info.waiting-user")}
-					team={firstJoinedUser?.team === "red" ? "red" : "black"}
-					avatarUrl={firstJoinedUser?.avatar_url || null}
-					capturedPieces={state.capturedPieces.black}
-					userId={firstJoinedUser?.id}
-				/>
-				<PlayerInfoCard
-					username={secondJoinedUser?.display_name || translate("room.info.waiting-user")}
-					team={secondJoinedUser?.team === "black" ? "black" : "red"}
-					avatarUrl={secondJoinedUser?.avatar_url || null}
-					capturedPieces={state.capturedPieces.red}
-					mirrored
-					isEmpty={!secondJoinedUser}
-					userId={secondJoinedUser?.id}
-				/>
-			</div>
-			<div className="room-action-row">
-				<TButton
-					variant="contained"
-					size="medium"
-					color="success"
-					onClick={handleStartGame}
-					disabled={joinedUsers.length < 2 || room?.status === 2}
-					sx={{ visibility: isFirstJoinedPlayer ? "visible" : "hidden" }}
-					value="room.actions.start-room"
-				/>
-				<TButton
-					variant="contained"
-					size="medium"
-					color="warning"
-					onClick={handleSurrender}
-					disabled={!isMyTurn}
-					sx={{ visibility: isPlayer && room?.status === 2 ? "visible" : "hidden" }}
-					value="room.actions.surrender"
-				/>
-				<TButton
-					variant="contained"
-					size="medium"
-					color="error"
-					onClick={handleBackToHome}
-					sx={{ visibility: isInCurrentRoom ? "visible" : "hidden" }}
-					value="room.actions.back-home"
-				/>
+			<div className="room-action-row view">
+				<TI className="room-more-action fas fa-ellipsis-h" onClick={openActionMenu} />
+				<Menu
+					anchorEl={menuAnchorEl}
+					open={isActionMenuOpen}
+					onClose={closeActionMenu}
+					anchorOrigin={{ vertical: "top", horizontal: "left" }}
+					transformOrigin={{ vertical: "center", horizontal: "right" }}
+					slotProps={{
+						root: {
+							"aria-hidden": false
+						}
+					}}
+				>
+					{actionMenuItems.map(item => {
+						if (!item.visible) return <Empty key={item.key} />
+						return (
+							<MenuItem
+								key={item.key}
+								onClick={item.onClick && handleMenuItemClick(item.onClick)}
+								disabled={!item.enabled}
+							>
+								<i className={`${item.icon} action-menu-icon`} />
+								{item.label}
+							</MenuItem>
+						)
+					})}
+				</Menu>
 			</div>
 		</div>
 	)

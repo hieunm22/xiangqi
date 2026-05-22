@@ -15,6 +15,7 @@ import { TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
+import { useAuth } from "hooks/useAppContext"
 import { LoginSuccessResponse } from "./types"
 import "./Login.scss"
 
@@ -28,8 +29,9 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
-	const { login, validateToken } = useAPI()
+	const { login } = useAPI()
 	const navigate = useNavigate()
+	const { refreshAuth } = useAuth()
 
 	useEffect(() => {
 		// is this check development environment correct?
@@ -37,30 +39,6 @@ export default function LoginPage() {
 			setUsername("1")
 			setPassword("1")
 		}
-	}, [])
-
-	useEffect(() => {
-		async function validateTokenAsync(token: string) {
-			try {
-				const response = await validateToken(token)
-
-				if (response?.success) {
-					navigate(HOME_PATH, { replace: true })
-					return
-				}
-
-				localStorage.removeItem(LS_TOKEN_KEY)
-			} finally {
-				localStorage.removeItem(LS_TOKEN_KEY)
-			}
-		}
-
-		const token = localStorage.getItem(LS_TOKEN_KEY)
-
-		if (!token) {
-			return
-		}
-		validateTokenAsync(token)
 	}, [])
 
 	const onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,6 +84,7 @@ export default function LoginPage() {
 
 			setMessage(translate(response.message || "login.form.success"))
 			localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+			await refreshAuth()
 			navigate(HOME_PATH)
 		} catch (submitError) {
 			setLoading(false)

@@ -26,9 +26,9 @@ import {
 	LS_TOKEN_KEY
 } from "common/constant"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
+import { PopupProvider, useAuth } from "hooks/useAppContext"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SettingsPopup } from "./components/SettingsPopup"
-import { PopupProvider } from "./context"
 import {
 	decodePayload,
 	getToken,
@@ -94,6 +94,8 @@ export default function Layout() {
 		getUserInfo()
 	}, [])
 
+	const { setLogout } = useAuth()
+
 	const logoutClick = async () => {
 		const token = getToken()
 
@@ -105,6 +107,7 @@ export default function Layout() {
 			console.error("Logout failed:", error)
 		} finally {
 			localStorage.removeItem(LS_TOKEN_KEY)
+			setLogout()
 			navigate(LOGIN_PATH)
 		}
 	}

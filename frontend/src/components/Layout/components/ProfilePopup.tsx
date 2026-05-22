@@ -7,7 +7,7 @@ import {
 	Grid
 } from "@mui/material"
 import { TButton, TSpan, TTooltip } from "components/TranslationTag"
-import { usePopups } from "../context"
+import { usePopups } from "hooks/useAppContext"
 import { translate } from "locales/translate"
 import { getClaimsFromLocalStorage } from "common/helper"
 

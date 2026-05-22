@@ -1,26 +1,11 @@
-import { createContext, useContext } from "react"
 import classnames from "classnames"
 import { Button, Stack } from "@mui/material"
 import { pieceSymbolByType } from "pages/Room/constant"
-import { PieceButtonProps, PieceSelectionContextValue } from "../types"
-
-export const PieceSelectionContext = createContext<PieceSelectionContextValue | null>(null)
-
-const usePieceSelectionContext = () => {
-	const context = useContext(PieceSelectionContext)
-
-	if (!context) {
-		throw new Error("PieceSelection must be used within PieceSelectionContext.Provider")
-	}
-
-	return context
-}
+import { usePieceSelectionContext } from "hooks/useAppContext"
+import { PieceButtonProps } from "../types"
 
 const PieceButton = (props: PieceButtonProps) => {
-	const {
-		piece,
-		label
-	} = props
+	const { piece, label } = props
 	const { selectedColor, setSelectedColor } = usePieceSelectionContext()
 	const active = selectedColor === piece
 
@@ -31,23 +16,15 @@ const PieceButton = (props: PieceButtonProps) => {
 			className={classnames("dashboard__piece-btn", piece, { active })}
 			sx={{
 				color: active
-					? piece === "red"
-						? "common.white"
-						: "background.paper"
-					: piece === "red"
-						? "error.main"
-						: "text.primary",
+					? (piece === "red" ? "common.white" : "background.paper")
+					: (piece === "red" ? "error.main" : "text.primary"),
 				bgcolor: active
-					? piece === "red"
-						? "error.main"
-						: "text.primary"
+					? (piece === "red" ? "error.main" : "text.primary")
 					: "transparent",
 				borderColor: piece === "red" ? "error.main" : "divider",
 				"&:hover": {
 					bgcolor: active
-						? piece === "red"
-							? "error.dark"
-							: "text.secondary"
+						? (piece === "red" ? "error.dark" : "text.secondary")
 						: "action.hover",
 					borderColor: piece === "red" ? "error.main" : "text.primary"
 				}

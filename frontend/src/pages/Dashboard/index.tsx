@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import {
 	Box,
 	Button,
 	Grid,
-	Skeleton,
 	Stack
 } from "@mui/material"
-import { LOGIN_PATH } from "common/constant"
 import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { TTypography } from "components/TranslationTag"
 import { CreateRoomCard } from "./components/CreateRoomCard"
+import { CreateRoomDialog } from "./components/CreateRoomDialog"
 import { RoomCard } from "./components/RoomCard"
-import { CreateRoomDialog, CreateRoomDialogContext } from "./components/CreateRoomDialog"
+import { SkeletonRoom } from "./components/SkeletonRoom"
 import { getToken } from "common/helper"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
+import { CreateRoomDialogContext } from "hooks/useAppContext"
 import {
 	DashboardFilter,
 	DashboardRoom,
@@ -28,7 +27,6 @@ import "./Dashboard.scss"
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
 	const { fetchRooms } = useAPI()
-	const navigate = useNavigate()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
 	const [rooms, setRooms] = useState<DashboardRoom[]>([])
 	const [loading, setLoading] = useState(true)
@@ -36,20 +34,11 @@ const DashboardPage = () => {
 	const [open, setOpen] = useState(false)
 	const loadingCards = Array.from({ length: 9 }, (_, i) => i)
 
-	useEffect(() => {
-		const token = getToken()
-		if (!token) {
-			navigate(LOGIN_PATH)
-			return
-		}
-		
-		// TODO
-	}, [])
 
 	useEffect(() => {
 		let ignore = false
 
-		const loadRooms = async () => {
+		async function loadRooms() {
 			setLoading(true)
 			setErrorMessage("")
 
@@ -113,25 +102,14 @@ const DashboardPage = () => {
 
 					{loading ? (
 						<Grid container spacing={2}>
-							{loadingCards.map(card => (
-								<Grid key={`loading-card-${card}`} size={{ xs: 6, sm: 4, md: 4 }} className="dashboard__room-card">
-									<Stack spacing={1.5}>
-										<Skeleton variant="text" height={32} width="100%" />
-										<Stack direction="row" justifyContent="space-between" alignItems="center">
-											<Skeleton variant="text" height={28} width={88} />
-											<Skeleton variant="circular" width={28} height={28} />
-										</Stack>
-										<Skeleton variant="rounded" height={28} width="100%" />
-									</Stack>
-								</Grid>
-							))}
+							{loadingCards.map(card => <SkeletonRoom key={`loading-card-${card}`} />)}
 						</Grid>
 					) : null}
 
 					{!loading && !errorMessage ? (
 						<Stack spacing={2}>
 							<Grid container spacing={2}>
-								{<CreateRoomCard click={() => setOpen(true)} />}
+								<CreateRoomCard click={() => setOpen(true)} />
 								{rooms.map(room => <RoomCard key={room.id} room={room} />)}
 							</Grid>
 
