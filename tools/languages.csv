@@ -1,0 +1,187 @@
+﻿Key;English;Vietnamese
+common.input.is-required;is required;bắt buộc nhập
+common.password.policy-1;Must contain lower case character;Phải chứa một ký tự chữ in thường
+common.password.policy-2;Must contain upper case character;Phải chứa một ký tự chữ in hoa
+common.password.policy-3;Must contain digit;Phải chứa một ký tự số
+common.password.policy-4;Must contain a special character;Phải chứa một ký tự đặc biệt
+common.password.policy-5;Text length at least 8;Ít nhất 8 ký tự
+page.home.title;Home;Trang chủ
+page.history.title;History;Lịch sử
+page.about.title;About;Thông tin
+menu.setting.button;Settings;Cài đặt
+menu.app-name;Xiangqi;Cờ tướng
+menu.home;Home;Trang chủ
+menu.logout;Logout;Đăng xuất
+menu.rooms;Rooms;Trò chơi
+dashboard.page.title;Room list;Danh sách phòng
+dashboard.filters.all;All;Tất cả
+dashboard.filters.available;Available;Chờ
+dashboard.filters.playing;Playing;Đang chơi
+dashboard.feedback.empty;No room tables match the selected filter.;Không có bàn chơi phù hợp với bộ lọc đã chọn.
+dashboard.feedback.error;Unable to load room tables.;Không tải được danh sách phòng chơi.
+dashboard.status.unknown;Unknown;Không xác định
+dashboard.feedback.result-count;Found {{count}} tables;Tìm thấy {{count}} bàn chơi
+dashboard.room.create;Create room;Tạo phòng chơi
+dashboard.popup.piece-selection;Select team;Chọn quân
+dashboard.popup.red-first;Red first;Đỏ tiên
+dashboard.popup.bet-amount;Bet amount;Giá trị cược
+dashboard.popup.room-name-label;Room table name;Tên phòng chơi
+dashboard.popup.room-name-helptext;is required;không được để trống
+settings.header;Settings;Cài đặt
+settings.language;Language;Ngôn ngữ
+settings.dark-mode;Dark mode;Chế độ tối
+settings.close;Close;Đóng
+settings.change-password;Change password;Đổi mật khẩu
+popup.alert.title;Warning;Cảnh báo
+popup.confirm.title;Confirm;Xác nhận
+popup.confirm.ok;Ok;Ok
+popup.confirm.cancel;Cancel;Huỷ
+home.turn.title;Turn;Lượt đánh
+room.actions.start-room;Start room;Bắt đầu chơi
+room.actions.surrender;Surrender;Đầu hàng
+room.actions.back-home;Back to home;Thoát phòng
+room.actions.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
+game.general.captured;General has been captured. Room over;Tướng đã bị bắt. Game kết thúc
+game.general.in-check;Your general is under attack;Tướng của bạn đang bị chiếu
+login.page.title;Login;Đăng nhập
+login.form.title;Login;Đăng nhập
+login.username.label;User name;Tên người dùng
+login.username.placeholder;User name;Tên người dùng
+login.password.label;Password;Mật khẩu
+login.password.placeholder;Password;Mật khẩu
+login.password.error1;Password is required;Mật khẩu bắt buộc nhập
+login.password.show;Show password;Hiện mật khẩu
+login.password.hide;Hide password;Ẩn mật khẩu
+login.form.error1;Login failed. Please check your credentials ;Đăng nhập không thành công. Hãy kiểm tra lại
+login.form.forgot-password;Forgot password;Quên mật khẩu
+login.form.register;Register;Đăng ký
+login.form.submit;Login;Đăng nhập
+notfound.title;Page Not Found;Trang không tìm thấy
+notfound.description;The page you are looking for does not exist or has been moved.;Trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.
+notfound.home;Go to Home;Về trang chủ
+notfound.back;Go Back;Quay lại
+register.confirm-password.error1;Confirm password does not match password;Mật khẩu xác nhận không khớp với mật khẩu
+register.confirm-password.label;Confirm Password;Xác nhận mật khẩu
+register.confirm-password.placeholder;Confirm Password;Xác nhận mật khẩu
+register.display-name.label;Display name;Tên hiển thị
+register.display-name.placeholder;Display name;Tên hiển thị
+register.email.error1;Invalid email format;Định dạng email không hợp lệ
+register.email.label;Email;Email
+register.email.placeholder;Email;Email
+register.form.login;Back to login;Về trang đăng nhập
+register.form.submit;Register;Đăng ký
+register.form.success;Registration successful. Redirecting to login...;Đăng ký thành công. Đang chuyển hướng...
+register.form.title;Register;Đăng ký
+register.gender.female;Female;Nữ
+register.gender.label;Gender;Giới tính
+register.gender.male;Male;Nam
+register.gender.select;Select gender;Chọn giới tính
+register.page.title;Register;Đăng ký
+register.password.error1;Password must be at least 8 characters and contain uppercase, lowercase, number, and special character;Mật khẩu phải có ít nhất 8 ký tự và chứa chữ hoa, chữ thường, số và ký tự đặc biệt
+register.password.hide;Hide password;Ẩn mật khẩu
+register.password.label;Password;Mật khẩu
+register.password.placeholder;Password;Mật khẩu
+register.password.show;Show password;Hiện mật khẩu
+register.username.error1;User name must contain only alphanumeric characters, underscore, and dot;Tên người dùng chỉ chứa ký tự chữ số, dấu gạch dưới và dấu chấm
+register.username.label;User name;Tên người dùng
+register.username.placeholder;User name;Tên người dùng
+forgot-password.page.title;Forgot Password;Quên mật khẩu
+forgot-password.form.title;Forgot Password;Quên mật khẩu
+forgot-password.form.login;Back to login;Về trang đăng nhập
+forgot-password.form.submit;Forgot password;Quên mật khẩu
+forgot-password.form.success;Check your email for reset password details.;Hãy kiểm tra email để xem thông tin đặt lại mật khẩu.
+forgot-password.form.error1;Forgot password failed.;Quên mật khẩu không thành công.
+reset-password.page.title;Reset Password;Đặt lại mật khẩu
+reset-password.form.title;Reset your password;Đặt lại mật khẩu của bạn
+reset-password.form.submit;Reset Password;Đặt lại mật khẩu
+reset-password.form.error1;An error occurred while resetting your password. Please try again.;Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại.
+reset-password.form.invalid-token;Invalid or expired reset password token;Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn
+reset-password.form.success;Password reset successfully. Redirecting to login...;Đặt lại mật khẩu thành công. Đang chuyển hướng đến đăng nhập...
+reset-password.action.back-to-login;Back to login;Quay lại trang chủ
+reset-password.action.submit;Reset password;Đặt lại mật khẩu
+auth-middleware.messages.invalid-token-payload;Invalid token payload;Payload của token không hợp lệ
+auth-middleware.messages.session-not-found;Session not found;Không tìm thấy phiên
+auth-middleware.messages.token-expired;Token is expired;Token đã hết hạn
+auth-middleware.messages.token-invalid;Token is invalid;Token không hợp lệ
+auth-middleware.messages.token-required;Token not provided;Token không được cung cấp
+auth-middleware.messages.token-subject-mismatch;Token subject mismatch;Token chủ đề không khớp
+auth-middleware.messages.token-validation-failed;Token validation failed;Xác thực token không thành công
+create-room.messages.internal-server-error;Internal server error while creating room;Lỗi máy chủ nội bộ khi tạo phòng
+create-room.messages.invalid-bet-amount;Bet amount is required and must be one of the acceptable values;Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận
+create-room.messages.invalid-redFirst;'redFirst' must be a boolean;'redFirst' phải là giá trị boolean
+create-room.messages.invalid-team-name;Team name must be either 'red', 'black', or null;Tên đội phải là 'red', 'black' hoặc null
+create-room.messages.name-required;Room name (tableName) is required and must not be empty;Tên phòng (tableName) là bắt buộc và không được để trống
+create-room.messages.room-created;Room created successfully;Phòng được tạo thành công
+fetch-rooms.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+fetch-rooms.messages.invalid-status;Query parameter 'status' must be an integer;Tham số truy vấn 'status' phải là số nguyên
+fetch-rooms.messages.success;Fetch rooms successfully;Lấy phòng thành công
+forgot-password.messages.email-not-found;Email does not exist;Email không tồn tại
+forgot-password.messages.email-service-not-configured;Email service is not configured;Dịch vụ email chưa được cấu hình
+forgot-password.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+forgot-password.messages.invalid-email-format;Invalid email format;Định dạng email không hợp lệ
+forgot-password.messages.missing-email;Email is required;Email là bắt buộc
+forgot-password.messages.success;Forgot password email sent;Email đặt lại mật khẩu đã được gửi
+join-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+join-room.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
+join-room.messages.room-not-found;Room not found;Không tìm thấy phòng
+join-room.messages.success;Successfully joined the room;Tham gia phòng thành công
+leave-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+leave-room.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
+leave-room.messages.player-not-in-room;Player is not in this room;Người chơi không trong phòng này
+leave-room.messages.success;Leave room successfully;Rời phòng thành công
+load-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+load-room.messages.invalid-room-id;Room ID must be a positive integer;ID phòng phải là số nguyên dương
+load-room.messages.room-not-found;Room not found;Không tìm thấy phòng
+load-room.messages.success;Load room successfully;Tải phòng thành công
+login.messages.incorrect-login;Invalid username or password;Tên người dùng hoặc mật khẩu không hợp lệ
+login.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+login.messages.missing-credentials;Username and password are required;Tên người dùng và mật khẩu là bắt buộc
+login.messages.success;Login successful;Đăng nhập thành công
+logout.messages.already-inactive;Session already inactive;Phiên đã ngưng hoạt động
+logout.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+logout.messages.success;Logout successful;Đăng xuất thành công
+refresh-token.messages.missing-refresh-token;Missing refresh token cookie;Thiếu cookie token làm mới
+refresh-token.messages.mismatch-or-expired;Refresh token mismatch or expired;Thiếu refresh token hoặc đã hết hạn
+refresh-token.messages.success;Token refreshed;Token đã làm mới
+register.messages.email-exists;Email already exists;Email đã tồn tại
+register.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+register.messages.missing-fields;Username, password, gender, displayName and email are required;Tên người dùng, mật khẩu, giới tính, tên hiển thị và email là bắt buộc
+register.messages.success;User created successfully;Người dùng được tạo thành công
+register.messages.username-exists;Username already exists;Tên người dùng đã tồn tại
+reset-password.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+reset-password.messages.invalid-or-expired-token;Invalid or expired reset password token;Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn
+reset-password.messages.invalid-user-id;Invalid user id;ID người dùng không hợp lệ
+reset-password.messages.missing-id-or-token;ID and token are required;ID và token là bắt buộc
+reset-password.messages.missing-userId-or-password;UserId and password are required;UserId và mật khẩu là bắt buộc
+reset-password.messages.token-valid;Reset password token is valid;Token đặt lại mật khẩu hợp lệ
+reset-password.messages.user-not-found;User not found;Không tìm thấy người dùng
+set-room-status.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+set-room-status.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
+set-room-status.messages.invalid-status;Field 'status' must be either 1 or 2;Trường 'status' phải là 1 hoặc 2
+set-room-status.messages.room-not-found;Room not found;Không tìm thấy phòng
+set-room-status.messages.success;Set room status successfully;Đặt trạng thái phòng thành công
+room.actions.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
+room.actions.draw;Draw;Hòa
+room.actions.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắn muốn hòa không?
+room.actions.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
+room.actions.accept-draw;Accept;Chấp nhận
+room.actions.reject-draw;Reject;Từ chối
+room.actions.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
+room.actions.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
+room.actions.draw-completed;Draw completed;Hòa cờ thành công
+draw-game.messages.invalid-game-id;Invalid game ID;ID trò chơi không hợp lệ
+draw-game.messages.game-not-found;Game not found;Không tìm thấy trò chơi
+draw-game.messages.forbidden;You are not in this room;Bạn không có trong phòng này
+draw-game.messages.game-history-not-found;Game history not found;Không tìm thấy lịch sử trò chơi
+draw-game.messages.game-already-finished;Game is already finished;Trò chơi đã kết thúc
+draw-game.messages.success;Draw game successfully;Hòa cờ thành công
+draw-game.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+surrender.messages.game-already-finished;Game is already finished;Trò chơi đã kết thúc
+surrender.messages.game-history-not-found;Game history not found;Không tìm thấy lịch sử trò chơi
+surrender.messages.game-not-found;Game not found;Không tìm thấy trò chơi
+surrender.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+surrender.messages.invalid-game-id;Invalid game ID;ID trò chơi không hợp lệ
+surrender.messages.invalid-surrender-player;You are not a player in this game;Bạn không phải là người chơi trong trò chơi này
+surrender.messages.opponent-not-found;Opponent not found;Không tìm thấy đối thủ
+surrender.messages.success;Surrendered;Đã đầu hàng
+validate-token.messages.success;Token is valid;Token hợp lệ

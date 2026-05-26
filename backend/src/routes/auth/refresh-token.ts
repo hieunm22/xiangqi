@@ -1,8 +1,10 @@
-import { Response, Router } from "express"
+import { Request, Response, Router } from "express"
 import jwt from "jsonwebtoken"
-import { REFRESH_TOKEN_KEY } from "common/constant"
-// import redis from "common/redis"
-import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import {
+	ACCESS_TOKEN_EXPIRES_IN,
+	REFRESH_TOKEN_KEY
+} from "common/constant"
+import redis from "common/redis"
 import { LoginSuccessResponse } from "types/auth.type"
 
 const router = Router()
@@ -41,10 +43,8 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
  *       401:
  *         description: Unauthorized
  */
-router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedRequest, res: Response) => {
+router.post("/auth/refresh-token", async (req: Request, res: Response) => {
 	const refreshTokenCookie = req.cookies?.[REFRESH_TOKEN_KEY]
-	const userId = req.auth?.userId
-	const sessionId = req.auth?.sessionId
 
 	if (!refreshTokenCookie) {
 		res.status(401).json({
@@ -57,24 +57,39 @@ router.post("/auth/refresh-token", requireAuth(true), async (req: AuthenticatedR
 		return
 	}
 
-	// const cachedRefreshToken = await redis.get(`${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`)
+	const authHeader = req.headers.authorization
+	const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined
+	const decoded = accessToken ? jwt.decode(accessToken) as jwt.JwtPayload | null : null
 
-	// if (!cachedRefreshToken || cachedRefreshToken !== refreshTokenCookie) {
-	// 	res.status(401).json({
-	// 		success: false,
-	// 		message: "refresh-token.messages.mismatch-or-expired",
-	// 		status_code: 401,
-	// 		access_token: "",
-	// 		token_type: "Bearer"
-	// 	} as LoginSuccessResponse)
-	// 	return
-	// }
+	const userId = Number(decoded?.sub)
+	const sessionId = String(decoded?.jti || "")
 
-	// Issue new access token — keep all original payload fields, update only exp
-	const payload = req.auth?.payload
-	const { iat, exp, iss, ...restPayload } = payload || {}
+	if (!userId || !sessionId) {
+		res.status(401).json({
+			success: false,
+			message: "refresh-token.messages.mismatch-or-expired",
+			status_code: 401,
+			access_token: "",
+			token_type: "Bearer"
+		} as LoginSuccessResponse)
+		return
+	}
+
+	const cachedRefreshToken = await redis.get(`${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`)
+	if (!cachedRefreshToken || cachedRefreshToken !== refreshTokenCookie) {
+		res.status(401).json({
+			success: false,
+			message: "refresh-token.messages.mismatch-or-expired",
+			status_code: 401,
+			access_token: "",
+			token_type: "Bearer"
+		} as LoginSuccessResponse)
+		return
+	}
+
+	const { iat, exp, iss, ...restPayload } = decoded!
 	const access_token = jwt.sign(restPayload, JWT_SECRET, {
-		expiresIn: "1h",
+		expiresIn: ACCESS_TOKEN_EXPIRES_IN,
 		issuer: JWT_ISSUER
 	})
 

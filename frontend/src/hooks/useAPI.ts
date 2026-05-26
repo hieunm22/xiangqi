@@ -33,6 +33,7 @@ const EP = { // end points
 	// game endpoints
 	getGameHistory: "/game/history",
 	movePiece: "/game/move-piece",
+	drawGame: "/game/draw-game",
 	surrenderGame: "/game/surrender"
 }
 
@@ -104,6 +105,12 @@ export const useAPI = () => {
 							.post(body)
 							.json(createRoomCallback)
 							.catch(handleError)
+
+	const drawGame = async (token: string, gameId: string) => authFetch(EP.drawGame)
+						.auth(`Bearer ${token}`)
+						.post({ gameId })
+						.json(drawGameCallback)
+						.catch(handleError)
 
 	const forgotPassword = (form: ForgotPasswordBodyType) => requestWithCookie.url(EP.forgotPassword)
 							.json(form)
@@ -196,7 +203,7 @@ export const useAPI = () => {
 						.json(surrenderGameCallback)
 						.catch(handleError)
 
-	const validateToken = (token: string) => requestWithCookie.url(EP.validateToken)
+	const validateToken = (token: string) => authFetch(EP.validateToken)
 						.auth(`Bearer ${token}`)
 						.post()
 						.json(validateTokenCallback)
@@ -213,6 +220,10 @@ export const useAPI = () => {
 	}
 
 	const createRoomCallback = (response: any) => {
+		return response
+	}
+
+	const drawGameCallback = (response: any) => {
 		return response
 	}
 
@@ -304,6 +315,7 @@ export const useAPI = () => {
 		authFetch,
 
 		createRoom,
+		drawGame,
 		fetchRooms,
 		forgotPassword,
 		getGameHistory,

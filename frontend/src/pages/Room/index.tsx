@@ -3,24 +3,23 @@ import classnames from "classnames"
 import { Menu, MenuItem } from "@mui/material"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
+import { Empty } from "components/Common"
 import { TI } from "components/TranslationTag"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
-import { translate } from "locales/translate"
 import useRoomHook from "./hook"
-import { Empty } from "components/Common"
 import { Piece } from "types/GameState"
 import "./Room.scss"
 
 export default function RoomPage() {
 	const {
 		actionMenuItems,
+		bottomSideUser,
 		currentTurn,
-		firstJoinedUser,
 		isActionMenuOpen,
 		menuAnchorEl,
-		secondJoinedUser,
 		state,
+		topSideUser,
 
 		closeActionMenu,
 		handleMenuItemClick,
@@ -34,21 +33,21 @@ export default function RoomPage() {
 		<div className="room-container">
 			<div className="player-info-row view">
 				<PlayerInfoCard
-					username={firstJoinedUser?.display_name || translate("room.info.waiting-user")}
-					team={firstJoinedUser?.team === "red" ? "red" : "black"}
-					active={currentTurn === firstJoinedUser?.team}
-					avatarUrl={firstJoinedUser?.avatar_url || null}
+					username={topSideUser?.display_name}
+					team={topSideUser?.team === "red" ? "red" : "black"}
+					active={currentTurn === topSideUser?.team}
+					avatarUrl={topSideUser?.avatar_url || null}
 					capturedPieces={state.capturedPieces.black}
-					userId={firstJoinedUser?.id}
+					userId={topSideUser?.id}
 				/>
 				<PlayerInfoCard
-					username={secondJoinedUser?.display_name || translate("room.info.waiting-user")}
-					team={secondJoinedUser?.team === "black" ? "black" : "red"}
-					active={currentTurn === secondJoinedUser?.team}
-					avatarUrl={secondJoinedUser?.avatar_url || null}
+					username={bottomSideUser?.display_name}
+					team={bottomSideUser?.team === "black" ? "black" : "red"}
+					active={currentTurn === bottomSideUser?.team}
+					avatarUrl={bottomSideUser?.avatar_url || null}
 					capturedPieces={state.capturedPieces.red}
-					isEmpty={!secondJoinedUser}
-					userId={secondJoinedUser?.id}
+					isEmpty={!bottomSideUser}
+					userId={bottomSideUser?.id}
 				/>
 			</div>
 			<div className="xiangqi-board">
@@ -143,7 +142,7 @@ export default function RoomPage() {
 						return (
 							<MenuItem
 								key={item.key}
-								onClick={item.onClick && handleMenuItemClick(item.onClick)}
+								onClick={handleMenuItemClick(item.onClick)}
 								disabled={!item.enabled}
 							>
 								<i className={`${item.icon} action-menu-icon`} />

@@ -24,7 +24,7 @@ const router = Router()
  *       500:
  *         description: Internal server error
  */
-router.delete("/auth/logout", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+router.delete("/auth/logout", requireAuth(true), async (req: AuthenticatedRequest, res: Response) => {
 	const userId = req.auth?.userId
 	const sessionId = req.auth?.sessionId
 

@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 const redisGetMock = vi.fn()
 const roomUserDeleteManyMock = vi.fn()
 const roomCreateMock = vi.fn()
+const emitRoomCreatedMock = vi.fn()
 
 const PATH = "/api/room/create-room"
 
@@ -24,6 +25,10 @@ vi.mock("prisma", () => ({
 			create: roomCreateMock
 		}
 	}
+}))
+
+vi.mock("common/socket", () => ({
+	emitRoomCreated: emitRoomCreatedMock
 }))
 
 describe("POST /api/room/create-room", () => {
@@ -179,6 +184,13 @@ describe("POST /api/room/create-room", () => {
 						})
 					}
 				})
+			})
+		)
+		expect(emitRoomCreatedMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				id: 102,
+				name: "Table Null Team",
+				status: 1
 			})
 		)
 	})

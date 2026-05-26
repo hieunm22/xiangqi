@@ -53,9 +53,22 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		return
 	}
 
-	try {
-		const roomIdBigInt = BigInt(id)
+	const roomIdBigInt = BigInt(id)
 
+	const existingRoom = await prisma.room.findUnique({
+		where: { id: roomIdBigInt },
+		select: { id: true }
+	})
+	if (!existingRoom) {
+		res.status(404).json({
+			success: false,
+			message: "start-game.messages.room-not-found",
+			status_code: 404
+		})
+		return
+	}
+
+	try {
 		const { game, room } = await prisma.$transaction(async tx => {
 			const gameDelegate = (tx as any).game
 			const updatedRoom = await tx.room.update({

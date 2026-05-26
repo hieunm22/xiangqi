@@ -29,7 +29,6 @@
 		"app-name": "Cờ tướng",
 		"home": "Trang chủ",
 		"profile": "Trang cá nhân",
-		"analytics": "Phân tích",
 		"logout": "Đăng xuất",
 		"rooms": "Trò chơi"
 	},
@@ -91,10 +90,13 @@
 			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
 			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
 			"draw": "Hòa",
-			"confirm-draw": "Bạn có chắc chắn muốn hòa không?"
-		},
-		"info": {
-			"waiting-user": "Đang chờ người chơi…"
+			"confirm-draw": "Bạn có chắc chắn muốn hòa không?",
+			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
+			"accept-draw": "Chấp nhận",
+			"reject-draw": "Từ chối",
+			"draw-accepted": "Đối phương đã đồng ý hòa",
+			"draw-rejected": "Đối phương từ chối hòa",
+			"draw-completed": "Hòa cờ thành công"
 		}
 	},
 	"game": {
@@ -308,9 +310,15 @@
 			"success": "Đặt trạng thái phòng thành công"
 		}
 	},
-	"validate-token": {
+	"draw-game": {
 		"messages": {
-			"success": "Token hợp lệ"
+			"invalid-game-id": "ID trò chơi không hợp lệ",
+			"game-not-found": "Không tìm thấy trò chơi",
+			"forbidden": "Bạn không có trong phòng này",
+			"game-history-not-found": "Không tìm thấy lịch sử trò chơi",
+			"game-already-finished": "Trò chơi đã kết thúc",
+			"success": "Hòa cờ thành công",
+			"internal-server-error": "Lỗi máy chủ nội bộ"
 		}
 	},
 	"surrender": {
@@ -323,6 +331,11 @@
 			"invalid-surrender-player": "Bạn không phải là người chơi trong trò chơi này",
 			"opponent-not-found": "Không tìm thấy đối thủ",
 			"success": "Đã đầu hàng"
+		}
+	},
+	"validate-token": {
+		"messages": {
+			"success": "Token hợp lệ"
 		}
 	}
 }

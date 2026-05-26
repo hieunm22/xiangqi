@@ -29,7 +29,6 @@
 		"app-name": "Xiangqi",
 		"home": "Home",
 		"profile": "Profile",
-		"analytics": "Analytic",
 		"logout": "Logout",
 		"rooms": "Rooms"
 	},
@@ -91,10 +90,13 @@
 			"confirm-leave": "Are you sure you want to leave room?",
 			"confirm-surrender": "Are you sure you want to surrender?",
 			"draw": "Draw",
-			"confirm-draw": "Are you sure you want to draw?"
-		},
-		"info": {
-			"waiting-user": "Waiting player…"
+			"confirm-draw": "Are you sure you want to draw?",
+			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
+			"accept-draw": "Accept",
+			"reject-draw": "Reject",
+			"draw-accepted": "Opponent accepted the draw",
+			"draw-rejected": "Opponent rejected the draw",
+			"draw-completed": "Draw completed"
 		}
 	},
 	"game": {
@@ -308,9 +310,15 @@
 			"success": "Set room status successfully"
 		}
 	},
-	"validate-token": {
+	"draw-game": {
 		"messages": {
-			"success": "Token is valid"
+			"invalid-game-id": "Invalid game ID",
+			"game-not-found": "Game not found",
+			"forbidden": "You are not in this room",
+			"game-history-not-found": "Game history not found",
+			"game-already-finished": "Game is already finished",
+			"success": "Draw game successfully",
+			"internal-server-error": "Internal server error"
 		}
 	},
 	"surrender": {
@@ -323,6 +331,11 @@
 			"invalid-surrender-player": "You are not a player in this game",
 			"opponent-not-found": "Opponent not found",
 			"success": "Surrendered"
+		}
+	},
+	"validate-token": {
+		"messages": {
+			"success": "Token is valid"
 		}
 	}
 }

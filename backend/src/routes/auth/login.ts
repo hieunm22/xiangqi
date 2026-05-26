@@ -3,13 +3,18 @@ import crypto from "crypto"
 import multer from "multer"
 import jwt from "jsonwebtoken"
 import prisma from "prisma"
+import {
+	ACCESS_TOKEN_EXPIRES_IN,
+	LOGIN_SESSION_KEY,
+	REFRESH_TOKEN_KEY,
+	REFRESH_TOKEN_TTL_SECONDS
+} from "common/constant"
 import redis from "common/redis"
 import {
   LoginRequest,
   LoginSuccessResponse,
   LoginSession
 } from "types/auth.type"
-import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "common/constant"
 
 const router = Router()
 const upload = multer()
@@ -140,11 +145,11 @@ router.post("/auth/login", (req, res, next) => {
 		}
 
 		const access_token = jwt.sign(payload, JWT_SECRET, {
-			expiresIn: "1h",
+			expiresIn: ACCESS_TOKEN_EXPIRES_IN,
 			issuer: JWT_ISSUER
 		})
 
-		// Store session in Redis with key login-session:<user-id>:<session-id>, expiration in 1h
+		// Keep login session valid for the full refresh window.
 		const sessionValue = JSON.stringify({
 			userId: Number(user.id),
 			deviceName: deviceName?.trim() || "",
@@ -152,18 +157,19 @@ router.post("/auth/login", (req, res, next) => {
 			createdAt: new Date().toISOString(),
 			isValid: true
 		} as LoginSession)
-		await redis.set(`${LOGIN_SESSION_KEY}:${user.id}:${sessionId}`, sessionValue, "EX", 60 * 60)
+		await redis.set(`${LOGIN_SESSION_KEY}:${user.id}:${sessionId}`, sessionValue, "EX", REFRESH_TOKEN_TTL_SECONDS)
 
 		// refresh_token should be a guid id
 		const refresh_token = crypto.randomUUID()
+
 		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
-		// await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", 30 * 24 * 60 * 60)
+		await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", REFRESH_TOKEN_TTL_SECONDS)
 
 		res.cookie(REFRESH_TOKEN_KEY, refresh_token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-			maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in ms
+			maxAge: REFRESH_TOKEN_TTL_SECONDS * 1000
 		})
 
 		res.status(200).json({

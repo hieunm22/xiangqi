@@ -1,5 +1,5 @@
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
-import { fenPieceMap, INITIAL_BOARD_FEN, pieceFenMap } from "./constant"
+import { fenPieceMap, INITIAL_FEN_BLACK_TOP, pieceFenMap } from "./constant"
 import { getAvailableMoves } from "common/helper"
 import { NullableCellProps, PieceCharacter, Team } from "types/GameState"
 import { HistoryData } from "./types"
@@ -7,7 +7,7 @@ import { HistoryData } from "./types"
 const totalCells = BOARD_COLUMNS * BOARD_ROWS
 
 export function initNewGame() {
-	const board = fenToBoard(INITIAL_BOARD_FEN)
+	const board = fenToBoard(INITIAL_FEN_BLACK_TOP)
 
 	return {
 		board,

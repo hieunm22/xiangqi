@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react"
+import { LS_TOKEN_KEY } from "common/constant"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { AuthContext } from "hooks/useAppContext"
+import { ComponentWithChild } from "types/Common"
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = (props: ComponentWithChild) => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [isValidToken, setIsValidToken] = useState(false)
 	const { validateToken } = useAPI()
@@ -19,8 +21,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 		try {
 			const result = await validateToken(token)
 			setIsValidToken(result.success)
+			if (!result.success) {
+				localStorage.removeItem(LS_TOKEN_KEY)
+			}
 		} catch {
 			setIsValidToken(false)
+			localStorage.removeItem(LS_TOKEN_KEY)
 		} finally {
 			setIsLoading(false)
 		}
@@ -42,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 			refreshAuth: checkToken,
 			setLogout: handleLogout
 		}}>
-			{children}
+			{props.children}
 		</AuthContext.Provider>
 	)
 }

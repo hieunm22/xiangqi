@@ -115,13 +115,141 @@ export function useSocket() {
 		}
 	}, [])
 
+	// ------------------------------------------------------------------------
+
+	const emitDrawRequest = useCallback((roomId: string | number, gameId: string, requestUserId: number) => {
+		if (socketRef.current) {
+			socketRef.current.emit("draw-request", { roomId, gameId, requestUserId })
+		} else {
+			console.warn("[Socket.io] Socket not initialized for draw-request emit")
+		}
+	}, [])
+
+	const emitDrawResponse = useCallback((
+		roomId: string | number,
+		gameId: string,
+		accepted: boolean,
+		requestUserId: number,
+		responseUserId?: number
+	) => {
+		if (socketRef.current) {
+			socketRef.current.emit("draw-response", {
+				roomId,
+				gameId,
+				accepted,
+				requestUserId,
+				responseUserId
+			})
+		} else {
+			console.warn("[Socket.io] Socket not initialized for draw-response emit")
+		}
+	}, [])
+
+	const onDrawRequest = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("draw-request", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for draw-request listener")
+		}
+	}, [])
+
+	const offDrawRequest = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("draw-request", callback)
+		}
+	}, [])
+
+	const onDrawResponse = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("draw-response", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for draw-response listener")
+		}
+	}, [])
+
+	const offDrawResponse = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("draw-response", callback)
+		}
+	}, [])
+
+	const onRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("room-users-updated", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-users-updated listener")
+		}
+	}, [])
+
+	const offRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("room-users-updated", callback)
+		}
+	}, [])
+
+	const onRoomCreated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("room-created", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-created listener")
+		}
+	}, [])
+
+	const offRoomCreated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("room-created", callback)
+		}
+	}, [])
+
+	const onRoomDeleted = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("room-deleted", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-deleted listener")
+		}
+	}, [])
+
+	const offRoomDeleted = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("room-deleted", callback)
+		}
+	}, [])
+
+	const onDashboardRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("dashboard-room-users-updated", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for dashboard-room-users-updated listener")
+		}
+	}, [])
+
+	const offDashboardRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("dashboard-room-users-updated", callback)
+		}
+	}, [])
+
 	return {
 		isConnected,
 
+		emitDrawRequest,
+		emitDrawResponse,
 		emitPlayerMove,
 		joinRoom,
 		leaveRoom,
+		offDashboardRoomUsersUpdated,
+		offDrawRequest,
+		offDrawResponse,
 		offMovePiece,
+		offRoomCreated,
+		offRoomDeleted,
+		offRoomUsersUpdated,
+		onDrawRequest,
+		onDrawResponse,
+		onDashboardRoomUsersUpdated,
 		onMovePiece,
+		onRoomCreated,
+		onRoomDeleted,
+		onRoomUsersUpdated,
 	}
 }

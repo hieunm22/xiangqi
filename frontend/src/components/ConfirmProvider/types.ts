@@ -3,6 +3,8 @@ import { EmptyVoid } from "types/Common"
 export interface ConfirmOptions {
 	title?: string
 	message?: string
+	okLabel?: string
+	cancelLabel?: string
 	disableBackdropClick?: boolean
 	onOk?: EmptyVoid
 }

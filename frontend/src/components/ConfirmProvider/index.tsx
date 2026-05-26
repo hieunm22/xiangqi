@@ -74,13 +74,13 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 						<TButton
 							variant="contained"
 							size="small"
-							value="popup.confirm.ok"
+							value={current?.options.okLabel ?? "popup.confirm.ok"}
 							onClick={onOk}
 						/>
 						<TButton
 							variant="outlined"
 							size="small"
-							value="popup.confirm.cancel"
+							value={current?.options.cancelLabel ?? "popup.confirm.cancel"}
 							onClick={onCancel}
 						/>
 					</Grid>

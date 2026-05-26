@@ -99,11 +99,18 @@ describe("POST /api/auth/login", () => {
 		expect(typeof payload.jti).toBe("string")
 		expect(payload.timezoneOffset).toBe(-420)
 
-		expect(redisSetMock).toHaveBeenCalledTimes(1)
+		expect(redisSetMock).toHaveBeenCalledTimes(2)
 		const [sessionKey, sessionRaw, expiryMode, ttl] = redisSetMock.mock.calls[0]
 		expect(sessionKey).toMatch(/^login-session:1:/)
 		expect(expiryMode).toBe("EX")
-		expect(ttl).toBe(3600)
+		expect(ttl).toBe(24 * 60 * 60)
+
+		const [refreshKey, refreshValue, refreshExpiryMode, refreshTtl] = redisSetMock.mock.calls[1]
+		expect(refreshKey).toMatch(/^refresh-token:1:/)
+		expect(refreshExpiryMode).toBe("EX")
+		expect(refreshTtl).toBe(24 * 60 * 60)
+		expect(refreshValue).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+		expect(res.body.refresh_token).toBe(refreshValue)
 
 		const sessionValue = JSON.parse(sessionRaw as string)
 		expect(sessionValue).toMatchObject({

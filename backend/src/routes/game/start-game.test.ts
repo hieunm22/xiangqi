@@ -10,6 +10,7 @@ const roomUpdateMock = vi.fn()
 const gameCreateMock = vi.fn()
 const gameHistoryInsertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
+const roomFindUniqueMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -21,6 +22,9 @@ vi.mock("../../common/redis", () => ({
 
 vi.mock("prisma", () => ({
 	default: {
+		room: {
+			findUnique: roomFindUniqueMock
+		},
 		$transaction: transactionMock
 	}
 }))
@@ -81,12 +85,14 @@ describe("POST /api/room/start", () => {
 			status_code: 400
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
+		expect(roomFindUniqueMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 201 when game is started successfully", async () => {
 		const accessToken = buildAccessToken(61, "session-start-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-1" })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
@@ -99,6 +105,7 @@ describe("POST /api/room/start", () => {
 		gameCreateMock.mockResolvedValue({
 			id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
 			status: 1,
+			bot_difficulty: null,
 			room_id: BigInt(101)
 		})
 		transactionMock.mockImplementation(async callback =>
@@ -147,11 +154,13 @@ describe("POST /api/room/start", () => {
 		expect(gameCreateMock).toHaveBeenCalledWith({
 			data: {
 				status: 1,
+				bot_difficulty: null,
 				room_id: BigInt(101)
 			},
 			select: {
 				id: true,
 				status: true,
+				bot_difficulty: true,
 				room_id: true
 			}
 		})
@@ -167,6 +176,7 @@ describe("POST /api/room/start", () => {
 		const accessToken = buildAccessToken(61, "session-start-2b")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-2" })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102) })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
@@ -179,6 +189,7 @@ describe("POST /api/room/start", () => {
 		gameCreateMock.mockResolvedValue({
 			id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
 			status: 1,
+			bot_difficulty: null,
 			room_id: BigInt(102)
 		})
 		transactionMock.mockImplementation(async callback =>
@@ -209,7 +220,7 @@ describe("POST /api/room/start", () => {
 	it("returns 404 when room is not found", async () => {
 		const accessToken = buildAccessToken(61, "session-start-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
-		transactionMock.mockRejectedValue({ code: "P2025" })
+		roomFindUniqueMock.mockResolvedValue(null)
 
 		const res = await request(app)
 			.post(PATH)
@@ -222,12 +233,18 @@ describe("POST /api/room/start", () => {
 			message: "start-game.messages.room-not-found",
 			status_code: 404
 		})
+		expect(roomFindUniqueMock).toHaveBeenCalledWith({
+			where: { id: BigInt(999) },
+			select: { id: true }
+		})
+		expect(transactionMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 500 when unexpected error happens", async () => {
 		const accessToken = buildAccessToken(61, "session-start-4")
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
 		transactionMock.mockRejectedValue(new Error("db down"))
 
 		const res = await request(app)

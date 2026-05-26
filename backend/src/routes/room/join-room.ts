@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { JoinRoomRequest } from "types/room.type"
 
@@ -165,6 +166,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			team: roomUser.team,
 			joined_at: roomUser.joined_at
 		}))
+
+		emitRoomUsersUpdated(id, formattedUsers)
 
 		res.status(201).json({
 			success: true,

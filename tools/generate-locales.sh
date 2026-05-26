@@ -17,4 +17,7 @@ fi
 echo "running convert-to-json.py..."
 python3 convert-to-json.py
 
+echo "running convert-to-csv.py..."
+python3 convert-to-csv.py
+
 echo "complete"

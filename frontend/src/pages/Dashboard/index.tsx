@@ -16,6 +16,7 @@ import { getToken } from "common/helper"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
+import { useSocket } from "hooks/useSocket"
 import { CreateRoomDialogContext } from "hooks/useAppContext"
 import {
 	DashboardFilter,
@@ -27,6 +28,15 @@ import "./Dashboard.scss"
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
 	const { fetchRooms } = useAPI()
+	const {
+		isConnected,
+		onDashboardRoomUsersUpdated,
+		onRoomCreated,
+		onRoomDeleted,
+		offRoomCreated,
+		offRoomDeleted,
+		offDashboardRoomUsersUpdated,
+	} = useSocket()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
 	const [rooms, setRooms] = useState<DashboardRoom[]>([])
 	const [loading, setLoading] = useState(true)
@@ -70,6 +80,91 @@ const DashboardPage = () => {
 			ignore = true
 		}
 	}, [activeFilter])
+
+	useEffect(() => {
+		if (!isConnected) {
+			return
+		}
+
+		const shouldIncludeByFilter = (status: number) => {
+			if (activeFilter === "all") {
+				return true
+			}
+
+			return FILTER_STATUS[activeFilter] === status
+		}
+
+		const handleRoomCreated = (data: { room?: DashboardRoom }) => {
+			const newRoom = data?.room
+			if (!newRoom || typeof newRoom.id !== "number") {
+				return
+			}
+
+			if (!shouldIncludeByFilter(newRoom.status)) {
+				return
+			}
+
+			setRooms(prev => {
+				const withoutExisting = prev.filter(room => room.id !== newRoom.id)
+				return [newRoom, ...withoutExisting]
+			})
+		}
+
+		const handleRoomDeleted = (data: { roomId?: string | number }) => {
+			const deletedRoomId = Number(data?.roomId)
+			if (!Number.isInteger(deletedRoomId) || deletedRoomId <= 0) {
+				return
+			}
+
+			setRooms(prev => prev.filter(room => room.id !== deletedRoomId))
+		}
+
+		const handleDashboardRoomUsersUpdated = (data: {
+			roomId?: string | number
+			users?: DashboardRoom["users"]
+		}) => {
+			const targetRoomId = Number(data?.roomId)
+			if (!Number.isInteger(targetRoomId) || targetRoomId <= 0) {
+				return
+			}
+
+			if (!Array.isArray(data?.users)) {
+				return
+			}
+
+			const updatedUsers = data.users
+
+			setRooms(prev => prev.map(room => {
+				if (room.id !== targetRoomId) {
+					return room
+				}
+
+				return {
+					...room,
+					users: updatedUsers
+				}
+			}))
+		}
+
+		onRoomCreated(handleRoomCreated)
+		onRoomDeleted(handleRoomDeleted)
+		onDashboardRoomUsersUpdated(handleDashboardRoomUsersUpdated)
+
+		return () => {
+			offRoomCreated(handleRoomCreated)
+			offRoomDeleted(handleRoomDeleted)
+			offDashboardRoomUsersUpdated(handleDashboardRoomUsersUpdated)
+		}
+	}, [
+		activeFilter,
+		isConnected,
+		onDashboardRoomUsersUpdated,
+		onRoomCreated,
+		onRoomDeleted,
+		offDashboardRoomUsersUpdated,
+		offRoomCreated,
+		offRoomDeleted
+	])
 
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>

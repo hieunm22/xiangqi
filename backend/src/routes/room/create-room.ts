@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { CreateRoomRequest } from "types/room.type"
 
@@ -192,6 +193,26 @@ router.post(
 				room_users: undefined
 			}
 			delete (formattedRoom as any).room_users
+
+			const dashboardRoom = {
+				id: Number(room.id),
+				name: room.name,
+				status: room.status,
+				red_first: room.red_first,
+				bet_amount: room.bet_amount,
+				created_at: room.created_at,
+				updated_at: room.updated_at,
+				users: room.room_users.map(gu => ({
+					id: Number(gu.users.id),
+					display_name: gu.users.display_name,
+					avatar_seq: Number(gu.users.avatar_seq),
+					avatar_url:
+						Number(gu.users.avatar_seq) === 0
+							? `/images/${Number(gu.users.id)}.jpg`
+							: `/images/${Number(gu.users.id)}_${Number(gu.users.avatar_seq)}.jpg`
+				}))
+			}
+			emitRoomCreated(dashboardRoom)
 
 			res.status(201).json({
 				success: true,

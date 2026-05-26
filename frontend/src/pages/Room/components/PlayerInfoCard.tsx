@@ -22,7 +22,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const { setOpenProfilePopup, setProfileUser } = usePopups()
 	const { getUserById } = useAPI()
 	const fullAvatarUrl = requireImage(avatarUrl || "")
-	
+
 	if (isEmpty) {
 		const containerClass = classnames("player-info-card empty-slot", `team-${team}`)
 		return (
@@ -57,11 +57,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				<img className="player-avatar-image" src={fullAvatarUrl} alt={username} />
 			</div>
 			<div className="player-meta">
-				<div
-					className="player-name" 
-					onClick={handlePlayerNameClick}
-					style={{ cursor: userId ? "pointer" : "default" }}
-				>
+				<div className="player-name" onClick={handlePlayerNameClick}>
 					{username}
 				</div>
 				<div className={classnames("player-general", `team-${team}`)}>
@@ -69,11 +65,15 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				<div className={classnames("captured-pieces", `team-${capturedTeam}`)}>
 					{capturedPieces.map((symbol, index) => {
 						const piece = fenPieceMap[symbol]
+						const symbolText = pieceSymbolByType[capturedTeam][piece]
 						return (
-						<span className="captured-piece" key={`${symbol}-${index}`}>
-							{pieceSymbolByType[capturedTeam][piece]}
-						</span>
-					)})}
+							<span
+								className="captured-piece"
+								key={`${symbol}-${index}`}
+								data-content={symbolText}
+							/>
+						)
+					})}
 				</div>
 			</div>
 		</div>

@@ -93,8 +93,6 @@ function AppWithTheme() {
 							</ProtectedRoute>
 						}
 					/>
-				</Route>
-				<Route element={<LayoutUnAuth />}>
 					<Route
 						path="/lost-password"
 						element={
@@ -103,8 +101,6 @@ function AppWithTheme() {
 							</ProtectedRoute>
 						}
 					/>
-				</Route>
-				<Route element={<LayoutUnAuth />}>
 					<Route
 						path="/reset-password"
 						element={
@@ -113,8 +109,6 @@ function AppWithTheme() {
 							</ProtectedRoute>
 						}
 					/>
-				</Route>
-				<Route element={<LayoutUnAuth />}>
 					<Route
 						path="/register"
 						element={
@@ -133,8 +127,6 @@ function AppWithTheme() {
 							</ProtectedRoute>
 						}
 					/>
-				</Route>
-				<Route element={<Layout />}>
 					<Route
 						path="/room/:id"
 						element={

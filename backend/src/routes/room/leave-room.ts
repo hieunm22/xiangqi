@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { LeaveRoomRequest } from "types/room.type"
+import { emitRoomDeleted, emitRoomUsersUpdated } from "common/socket"
 
 const router = Router()
 
@@ -52,6 +53,27 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 
 	try {
 		const roomId = BigInt(id)
+		const currentRoomUser = await prisma.roomUser.findUnique({
+			where: {
+				room_id_user_id: {
+					room_id: roomId,
+					user_id: BigInt(userId)
+				}
+			},
+			select: {
+				team: true
+			}
+		})
+
+		if (!currentRoomUser) {
+			res.status(404).json({
+				success: false,
+				message: "leave-room.messages.player-not-in-room",
+				status_code: 404
+			})
+			return
+		}
+
 		const deletedRoomUser = await prisma.roomUser.deleteMany({
 			where: {
 				room_id: roomId,
@@ -68,6 +90,36 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
+		if (currentRoomUser.team) {
+			const audienceToPromote = await prisma.roomUser.findFirst({
+				where: {
+					room_id: roomId,
+					team: null
+				},
+				orderBy: {
+					joined_at: "asc"
+				},
+				select: {
+					room_id: true,
+					user_id: true
+				}
+			})
+
+			if (audienceToPromote) {
+				await prisma.roomUser.update({
+					where: {
+						room_id_user_id: {
+							room_id: audienceToPromote.room_id,
+							user_id: audienceToPromote.user_id
+						}
+					},
+					data: {
+						team: currentRoomUser.team
+					}
+				})
+			}
+		}
+
 		const countRemainingPlayers = await prisma.roomUser.count({
 			where: {
 				room_id: roomId
@@ -80,6 +132,41 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 					id: roomId
 				}
 			})
+			emitRoomDeleted(id)
+		} else {
+			const roomUsers = await prisma.roomUser.findMany({
+				where: {
+					room_id: roomId
+				},
+				select: {
+					joined_at: true,
+					team: true,
+					users: {
+						select: {
+							id: true,
+							display_name: true,
+							avatar_seq: true
+						}
+					}
+				},
+				orderBy: {
+					joined_at: "asc"
+				}
+			})
+
+			const formattedUsers = roomUsers.map(roomUser => ({
+				id: Number(roomUser.users.id),
+				display_name: roomUser.users.display_name,
+				avatar_seq: Number(roomUser.users.avatar_seq),
+				avatar_url:
+					Number(roomUser.users.avatar_seq) === 0
+						? `/images/${Number(roomUser.users.id)}.jpg`
+						: `/images/${Number(roomUser.users.id)}_${Number(roomUser.users.avatar_seq)}.jpg`,
+				team: roomUser.team,
+				joined_at: roomUser.joined_at
+			}))
+
+			emitRoomUsersUpdated(id, formattedUsers)
 		}
 
 		res.status(200).json({

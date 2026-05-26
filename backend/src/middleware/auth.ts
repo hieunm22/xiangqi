@@ -81,7 +81,7 @@ export const requireAuth = (ignoreExpiration?: boolean) => {
 
 			next()
 		} catch (error) {
-			if (error instanceof jwt.TokenExpiredError) {
+			if (error instanceof jwt.TokenExpiredError && !ignoreExpiration) {
 				res.status(401).json({
 					success: false,
 					message: "auth-middleware.messages.token-expired",	// Token is expired

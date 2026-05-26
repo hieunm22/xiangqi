@@ -8,3 +8,7 @@ export interface MovePieceRequest {
 export interface SurrenderGameRequest {
 	gameId: string
 }
+
+export interface DrawGameRequest {
+	gameId: string
+}

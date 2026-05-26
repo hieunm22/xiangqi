@@ -249,6 +249,23 @@ The application uses **Socket.IO** for real-time multiplayer gameplay:
 - Player connection status
 - Live room notifications
 
+## Game Rules
+
+### Piece Placement & Board Orientation
+
+When creating a game room, you have the option to select **"Red First"**:
+
+- **If "Red First" is selected:** Red pieces are positioned at the **bottom** of the board, Black pieces at the top
+- **If "Red First" is NOT selected:** Black pieces are positioned at the **bottom** of the board, Red pieces at the top
+
+The player information cards (showing player names and captured pieces) are always positioned on the **same side as their pieces**:
+- If your pieces are at the bottom, your player card appears at the bottom
+- If your pieces are at the top, your player card appears at the top
+
+### Move Order
+
+The side with pieces positioned at the **bottom of the board always moves first**, regardless of which color they are. The opponent with pieces at the top moves second.
+
 ### Socket.IO Configuration
 
 - **Default path:** `/socket.io`

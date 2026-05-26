@@ -20,7 +20,7 @@ export interface PieceItemProps {
 }
 
 export interface PlayerInfoCardProps {
-	username: string
+	username?: string
 	team: Team
 	active: boolean
 	capturedPieces: PieceCharacter[]
@@ -81,5 +81,11 @@ export interface RoomActionButton {
 	label: string
 	visible: boolean
 	enabled: boolean
-	onClick?: EmptyPromise
+	onClick: EmptyPromise
+}
+
+export interface DrawRequest {
+	roomId: string | number
+	gameId: string
+	requestUserId: number
 }
