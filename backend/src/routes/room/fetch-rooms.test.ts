@@ -141,6 +141,7 @@ describe("GET /api/room/fetch-rooms", () => {
 		expect(roomFindManyMock).toHaveBeenCalledTimes(1)
 		expect(roomFindManyMock).toHaveBeenCalledWith(
 			expect.objectContaining({
+				where: { is_active: true },
 				orderBy: { created_at: "desc" },
 				select: expect.objectContaining({
 					id: true,
@@ -171,7 +172,7 @@ describe("GET /api/room/fetch-rooms", () => {
 		})
 		expect(roomFindManyMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { status: 2 },
+				where: { is_active: true, status: 2 },
 				orderBy: { created_at: "desc" }
 			})
 		)

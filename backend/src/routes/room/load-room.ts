@@ -52,6 +52,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				name: true,
 				status: true,
 				red_first: true,
+				pve_mode: true,
 				bet_amount: true,
 				created_at: true,
 				updated_at: true,
@@ -124,6 +125,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					name: room.name,
 					status: room.status,
 					red_first: room.red_first,
+					pve_mode: room.pve_mode,
 					bet_amount: room.bet_amount,
 					created_at: room.created_at,
 					updated_at: room.updated_at

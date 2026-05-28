@@ -14,11 +14,16 @@ import "./Room.scss"
 export default function RoomPage() {
 	const {
 		actionMenuItems,
+		availableMoves,
+		board,
 		bottomSideUser,
+		capturedPieces,
 		currentTurn,
 		isActionMenuOpen,
 		menuAnchorEl,
-		state,
+		myTeam,
+		previousMove,
+		selected,
 		topSideUser,
 
 		closeActionMenu,
@@ -34,10 +39,15 @@ export default function RoomPage() {
 			<div className="player-info-row view">
 				<PlayerInfoCard
 					username={topSideUser?.display_name}
-					team={topSideUser?.team === "red" ? "red" : "black"}
+					team={
+						topSideUser?.team === "red" ? "red" :
+						topSideUser?.team === "black" ? "black" :
+						bottomSideUser?.team === "red" ? "black" : "red"
+					}
 					active={currentTurn === topSideUser?.team}
 					avatarUrl={topSideUser?.avatar_url || null}
-					capturedPieces={state.capturedPieces.black}
+					capturedPieces={capturedPieces}
+					isEmpty={!topSideUser}
 					userId={topSideUser?.id}
 				/>
 				<PlayerInfoCard
@@ -45,7 +55,7 @@ export default function RoomPage() {
 					team={bottomSideUser?.team === "black" ? "black" : "red"}
 					active={currentTurn === bottomSideUser?.team}
 					avatarUrl={bottomSideUser?.avatar_url || null}
-					capturedPieces={state.capturedPieces.red}
+					capturedPieces={capturedPieces}
 					isEmpty={!bottomSideUser}
 					userId={bottomSideUser?.id}
 				/>
@@ -79,12 +89,14 @@ export default function RoomPage() {
 						</div>
 					))}
 
-					{state.board
+					{board
 						.map((cell, id) => {
 							const col = id % BOARD_COLUMNS
 							const row = ~~(id / BOARD_COLUMNS)
+							const isPreviousMove = previousMove !== null
+								&& (id === previousMove.from || id === previousMove.to)
 							if (!cell) {
-								const isAvailable = state.availableMoves.includes(id)
+								const isAvailable = availableMoves.includes(id)
 								const emptyClass = classnames({
 									"piece-wrapper-empty": true,
 									[`row-${row}-piece`]: true,
@@ -92,8 +104,9 @@ export default function RoomPage() {
 									// [`row-${row}-empty`]: true,
 									// [`col-${col}-empty`]: true,
 									"available": isAvailable,
+									"previous-move": isPreviousMove,
 									// "available-empty": isAvailable,
-									"cursor-pointer": isAvailable && state.selected !== null
+									"cursor-pointer": isAvailable && selected !== null
 								})
 								return (
 									<div
@@ -111,9 +124,11 @@ export default function RoomPage() {
 									$cell={cell}
 									$left={col}
 									$top={row}
-									$available={state.availableMoves.includes(cell.id)}
-									$selectedId={state.selected}
-									$turn={state.teamTurn}
+									$available={availableMoves.includes(cell.id)}
+									$selectedId={selected}
+									$turn={currentTurn}
+									$myTeam={myTeam}
+									$previousMove={isPreviousMove}
 									$click={onPieceClick(cell.id)}
 									$animateEnd={onAnimateEnd}
 								>

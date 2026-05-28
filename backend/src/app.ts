@@ -9,6 +9,7 @@ import forgotPasswordRoutes from "./routes/auth/forgot-password"
 import resetPasswordRoutes from "./routes/auth/reset-password"
 import loginRoutes from "./routes/auth/login"
 import logoutRoutes from "./routes/auth/logout"
+import makeExpiredRoutes from "./routes/auth/make-expired"
 import refreshTokenRoutes from "./routes/auth/refresh-token"
 import registerRoutes from "./routes/auth/register"
 import validateTokenRoutes from "./routes/auth/validate-token"
@@ -22,6 +23,7 @@ import loadRoomRoutes from "./routes/room/load-room"
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
 import movePieceRoutes from "./routes/game/move-piece"
+import resetGameRoutes from "./routes/game/reset-game"
 import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
 
@@ -62,6 +64,7 @@ app.use("/api", forgotPasswordRoutes)
 app.use("/api", resetPasswordRoutes)
 app.use("/api", loginRoutes)
 app.use("/api", logoutRoutes)
+app.use("/api", makeExpiredRoutes)
 app.use("/api", registerRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
@@ -73,6 +76,7 @@ app.use("/api", joinRoomRoutes)
 app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
 app.use("/api", movePieceRoutes)
+app.use("/api", resetGameRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
 app.use("/api", drawGameRoutes)

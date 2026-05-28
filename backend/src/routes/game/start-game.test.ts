@@ -96,6 +96,7 @@ describe("POST /api/room/start", () => {
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
 
 		roomUpdateMock.mockResolvedValue({
 			id: BigInt(101),
@@ -105,8 +106,8 @@ describe("POST /api/room/start", () => {
 		gameCreateMock.mockResolvedValue({
 			id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
 			status: 1,
-			bot_difficulty: null,
-			room_id: BigInt(101)
+			room_id: BigInt(101),
+			bot_difficulty: null
 		})
 		transactionMock.mockImplementation(async callback =>
 			callback({
@@ -154,14 +155,14 @@ describe("POST /api/room/start", () => {
 		expect(gameCreateMock).toHaveBeenCalledWith({
 			data: {
 				status: 1,
-				bot_difficulty: null,
-				room_id: BigInt(101)
+				room_id: BigInt(101),
+				bot_difficulty: null
 			},
 			select: {
 				id: true,
 				status: true,
-				bot_difficulty: true,
-				room_id: true
+				room_id: true,
+				bot_difficulty: true
 			}
 		})
 		expect(gameHistoryInsertOneMock).toHaveBeenCalledWith({
@@ -180,6 +181,7 @@ describe("POST /api/room/start", () => {
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102) })
 
 		roomUpdateMock.mockResolvedValue({
 			id: BigInt(102),
@@ -189,8 +191,8 @@ describe("POST /api/room/start", () => {
 		gameCreateMock.mockResolvedValue({
 			id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
 			status: 1,
-			bot_difficulty: null,
-			room_id: BigInt(102)
+			room_id: BigInt(102),
+			bot_difficulty: null
 		})
 		transactionMock.mockImplementation(async callback =>
 			callback({

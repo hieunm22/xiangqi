@@ -4,7 +4,6 @@ import { TI } from "components/TranslationTag"
 import { requireImage } from "common/helper"
 import { usePopups } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
-import useGameToolkit from "hooks/useGameToolkit"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
 import { PlayerInfoCardProps } from "../types"
@@ -13,14 +12,23 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
 		avatarUrl,
+		capturedPieces,
 		isEmpty = false,
 		team,
 		userId = null,
 		username,
 	} = props
-	const { state } = useGameToolkit()
 	const { setOpenProfilePopup, setProfileUser } = usePopups()
 	const { getUserById } = useAPI()
+
+	if (username === undefined) {
+		return (
+			<div className="player-info-card loading-slot">
+				<TI className="fas fa-circle-north fa-spin" />
+			</div>
+		)
+	}
+
 	const fullAvatarUrl = requireImage(avatarUrl || "")
 
 	if (isEmpty) {
@@ -38,7 +46,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"active-turn": active,
 	})
 
-	const capturedPieces = state.capturedPieces[team]
+	const capturedList = capturedPieces[team]
 	const capturedTeam = team === "red" ? "black" : "red"
 
 	const handlePlayerNameClick = async () => {
@@ -63,7 +71,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				<div className={classnames("player-general", `team-${team}`)}>
 				</div>
 				<div className={classnames("captured-pieces", `team-${capturedTeam}`)}>
-					{capturedPieces.map((symbol, index) => {
+					{capturedList.map((symbol, index) => {
 						const piece = fenPieceMap[symbol]
 						const symbolText = pieceSymbolByType[capturedTeam][piece]
 						return (

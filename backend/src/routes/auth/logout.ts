@@ -1,8 +1,13 @@
 import { Response, Router } from "express"
-import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { LOGIN_SESSION_KEY, REFRESH_TOKEN_KEY } from "common/constant"
-import redis from "common/redis"
 import prisma from "prisma"
+import {
+	LOGIN_SESSION_KEY,
+	REFRESH_TOKEN_KEY,
+	REFRESH_TOKEN_TTL_SECONDS
+} from "common/constant"
+import { getRefreshCookieOptions } from "common/cookie"
+import redis from "common/redis"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
 
@@ -47,11 +52,8 @@ router.delete("/auth/logout", requireAuth(true), async (req: AuthenticatedReques
 			await redis.del(refreshTokenKey)
 		}
 
-		res.clearCookie(REFRESH_TOKEN_KEY, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
-		})
+		const options = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
+		res.clearCookie(REFRESH_TOKEN_KEY, options)
 
 		res.status(200).json({
 			success: true,

@@ -1,16 +1,5 @@
 export type NullableCellProps = CellProps | null
 
-export interface GameState {
-	board: NullableCellProps[]
-	selected: number | null
-	availableMoves: number[]
-	teamTurn: Team
-	capturedPieces: {
-		red: PieceCharacter[]
-		black: PieceCharacter[]
-	}
-}
-
 export interface CapturedPieces {
 	red: PieceCharacter[]
 	black: PieceCharacter[]

@@ -1,3 +1,6 @@
+INSERT INTO auth.users (id, user_name, password, email, display_name, gender, avatar_seq, is_bot) OVERRIDING SYSTEM VALUE VALUES
+(0, 'bot', 'DA7E2532550C01A49F955FDD8F22B7FF', 'bot@xiangqi.local', 'Bot', true, 0, true);
+
 INSERT INTO auth.users (id, user_name, password, email, display_name, gender, avatar_seq) OVERRIDING SYSTEM VALUE VALUES
 (1, 'ming.hieu.1312', 'DA7E2532550C01A49F955FDD8F22B7FF', 'hieuami@gmail.com', 'Ming Hieu', true, 5),
 (2, 'thuyhoa.pham.313', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thuyhoapham91@gmail.com', 'Thuy Hoa Pham', false, 0),

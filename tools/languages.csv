@@ -11,6 +11,8 @@ page.about.title;About;Thông tin
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
+menu.profile;Profile;Trang cá nhân
+menu.expired;Set expired;Hết hạn token
 menu.logout;Logout;Đăng xuất
 menu.rooms;Rooms;Trò chơi
 dashboard.page.title;Room list;Danh sách phòng
@@ -24,6 +26,7 @@ dashboard.feedback.result-count;Found {{count}} tables;Tìm thấy {{count}} bà
 dashboard.room.create;Create room;Tạo phòng chơi
 dashboard.popup.piece-selection;Select team;Chọn quân
 dashboard.popup.red-first;Red first;Đỏ tiên
+dashboard.popup.pve-mode;PVE mode;Chơi với máy
 dashboard.popup.bet-amount;Bet amount;Giá trị cược
 dashboard.popup.room-name-label;Room table name;Tên phòng chơi
 dashboard.popup.room-name-helptext;is required;không được để trống

@@ -29,6 +29,7 @@
 		"app-name": "Cờ tướng",
 		"home": "Trang chủ",
 		"profile": "Trang cá nhân",
+		"expired": "Hết hạn token",
 		"logout": "Đăng xuất",
 		"rooms": "Trò chơi"
 	},
@@ -55,6 +56,7 @@
 		"popup": {
 			"piece-selection": "Chọn quân",
 			"red-first": "Đỏ tiên",
+			"pve-mode": "Chơi với máy",
 			"bet-amount": "Giá trị cược",
 			"room-name-label": "Tên phòng chơi",
 			"room-name-helptext": "không được để trống"

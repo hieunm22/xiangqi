@@ -40,19 +40,19 @@ export const ProfilePopup = () => {
 				{user && (
 					<Box className="profile-user-info">
 						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="fas fa-user mr-20" />
+							<i className="far fa-user mr-20" />
 						</TTooltip>
 						<span>{user.user_name || "-"}</span>
 						<TTooltip title="register.display-name.label" arrow placement="left">
-							<i className="fas fa-tag" />
+							<i className="far fa-tag" />
 						</TTooltip>
 						<span>{user.display_name || "-"}</span>
 						<TTooltip title="register.gender.label" arrow placement="left">
-							<i className="fas fa-venus-mars" />
+							<i className="far fa-venus-mars" />
 						</TTooltip>
 						<TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
 						<TTooltip title="register.email.label" arrow placement="left">
-							<i className="fas fa-envelope" />
+							<i className="far fa-envelope" />
 						</TTooltip>
 						<a href={`mailto:${user.email}`}>{user.email}</a>
 					</Box>

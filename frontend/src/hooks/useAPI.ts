@@ -16,6 +16,7 @@ const EP = { // end points
 	getUser: "/auth/user",
 	login: "/auth/login",
 	logout: "/auth/logout",
+	makeExpired: "/auth/make-expired",
 	refreshToken: "/auth/refresh-token",
 	register: "/auth/register",
 	validateToken: "/auth/validate-token",
@@ -34,7 +35,10 @@ const EP = { // end points
 	getGameHistory: "/game/history",
 	movePiece: "/game/move-piece",
 	drawGame: "/game/draw-game",
-	surrenderGame: "/game/surrender"
+	surrenderGame: "/game/surrender",
+
+	// tool endpoints
+	resetGame: "/tool/reset-game",
 }
 
 export const useAPI = () => {
@@ -185,15 +189,28 @@ export const useAPI = () => {
 							.json(refreshTokenCallback)
 							.catch(handleError)
 
+	const makeExpired = (token: string) => requestWithCookie.url(EP.makeExpired)
+							.auth(`Bearer ${token}`)
+							.options(wretchOptions)
+							.post()
+							.text(makeExpiredCallback)
+							.catch(handleError)
+
 	const register = (form: any) => requestWithCookie.url(EP.register)
 							.json(form)
 							.post()
 							.json(registerCallback)
 							.catch(handleError)
 
-	const startRoom = async (token: string, roomId: number) => authFetch(EP.startRoom)
+	const resetGame = async (token: string, roomId: number) => authFetch(EP.resetGame)
 							.auth(`Bearer ${token}`)
-							.post({ id: roomId })
+							.post({ roomId })
+							.json(resetGameCallback)
+							.catch(handleError)
+
+	const startRoom = async (token: string, roomId: number, botDifficulty?: number) => authFetch(EP.startRoom)
+							.auth(`Bearer ${token}`)
+							.post(botDifficulty !== undefined ? { id: roomId, botDifficulty } : { id: roomId })
 							.json(startRoomCallback)
 							.catch(handleError)
 
@@ -259,6 +276,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const makeExpiredCallback = (accessToken: string) => {
+		return accessToken
+	}
+
 	const registerCallback = (response: any) => {
 		return response
 	}
@@ -280,6 +301,10 @@ export const useAPI = () => {
 	}
 
 	const refreshTokenCallback = (response: any) => {
+		return response
+	}
+
+	const resetGameCallback = (response: any) => {
 		return response
 	}
 
@@ -325,11 +350,13 @@ export const useAPI = () => {
 		leaveRoom,
 		login,
 		logout,
+		makeExpired,
 		movePiece,
 		register,
+		refreshToken,
+		resetGame,
 		resetPasswordValidate,
 		resetPassword,
-		refreshToken,
 		startRoom,
 		surrenderGame,
 		validateToken

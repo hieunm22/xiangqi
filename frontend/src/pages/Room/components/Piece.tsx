@@ -8,7 +8,9 @@ const isSelected = (props: PieceItemProps) => {
 }
 
 const isClickable = (props: PieceItemProps) => {
-	return (props.$turn === props.$cell.team || props.$available)
+	// A player can only point at their own pieces; available move targets
+	const isOwnPiece = !props.$myTeam || props.$myTeam === props.$cell.team
+	return ((props.$turn === props.$cell.team && isOwnPiece) || props.$available)
 		&& props.$cell.animateTo === undefined
 }
 
@@ -51,21 +53,31 @@ const PieceItem = (props: PieceItemProps) => {
 		$top,
 		$turn,
 		$selectedId,
+		$myTeam,
+		$previousMove,
 
 		$animateEnd,
 		$click,
 	} = props
 
-	const cls = classnames("piece", $cell.piece, $cell.team)
+	const cls = classnames("piece", $cell.team)
+	const wrapperClass = classnames(
+		"piece-wrapper",
+		`row-${$top}-piece`,
+		`col-${$left}-piece`,
+		// Skip the highlight while selected/available so those outlines keep priority
+		{ "previous-move": $previousMove && !isSelected(props) && !$available }
+	)
 	return (
 		<PieceWrapper
-			className={`piece-wrapper row-${$top}-piece col-${$left}-piece`}
+			className={wrapperClass}
 			$cell={$cell}
 			$left={$left}
 			$top={$top}
 			$available={$available}
 			$selectedId={$selectedId}
 			$turn={$turn}
+			$myTeam={$myTeam}
 			onClick={$click}
 			onTransitionEnd={$animateEnd}
 		>

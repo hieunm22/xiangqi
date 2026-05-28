@@ -2,6 +2,7 @@ export interface CreateRoomRequest {
 	tableName: string
 	teamName: string | null
 	redFirst: boolean
+	pveMode: boolean
 	betAmount: number
 }
 
@@ -22,4 +23,6 @@ export interface SetRoomStatusRequest extends RoomRequestBase {
 	status: RoomStatus
 }
 
-export interface StartGameRequest extends RoomRequestBase { }
+export interface StartGameRequest extends RoomRequestBase {
+	botDifficulty?: number
+}

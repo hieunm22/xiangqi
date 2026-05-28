@@ -29,6 +29,7 @@ export const CreateRoomDialog = () => {
 	const [roomName, setRoomName] = useState("")
 	const [roomNameError, setRoomNameError] = useState(false)
 	const [isRedFirst, setIsRedFirst] = useState(true)
+	const [pveMode, setPveMode] = useState(false)
 	const [betAmount, setBetAmount] = useState(10)
 	const [selectedColor, setSelectedColor] = useState<Team>("red")
 	const [submitting, setSubmitting] = useState(false)
@@ -66,6 +67,7 @@ export const CreateRoomDialog = () => {
 			tableName: roomName.trim(),
 			teamName: selectedColor,
 			redFirst: isRedFirst,
+			pveMode,
 			betAmount
 		}
 		const response = await createRoom(token, body)
@@ -136,6 +138,18 @@ export const CreateRoomDialog = () => {
 							/>
 						}
 						label={translate("dashboard.popup.red-first")}
+					/>
+
+					<FormControlLabel
+						sx={{ ml: 0, mr: 0, alignSelf: "flex-start" }}
+						control={
+							<Switch
+								className="ios-switch pve-mode"
+								checked={pveMode}
+								onChange={event => setPveMode(event.target.checked)}
+							/>
+						}
+						label={translate("dashboard.popup.pve-mode")}
 					/>
 
 					<FormControl fullWidth size="small">

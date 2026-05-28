@@ -29,6 +29,7 @@
 		"app-name": "Xiangqi",
 		"home": "Home",
 		"profile": "Profile",
+		"expired": "Set expired",
 		"logout": "Logout",
 		"rooms": "Rooms"
 	},
@@ -55,6 +56,7 @@
 		"popup": {
 			"piece-selection": "Select team",
 			"red-first": "Red first",
+			"pve-mode": "PVE mode",
 			"bet-amount": "Bet amount",
 			"room-name-label": "Room table name",
 			"room-name-helptext": "is required"

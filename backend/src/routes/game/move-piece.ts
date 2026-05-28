@@ -1,10 +1,11 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { fenToBoard } from "common/board-helper"
+import { playBotMove } from "common/bot-engine/play-bot-move"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitMovePiece } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { MovePieceRequest } from "types/game.type"
+import { MovePieceRequest, PVEContext } from "types/game.type"
 
 const router = Router()
 
@@ -164,15 +165,28 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		}
 
 		// Emit move piece event to all clients in the room EXCEPT the requester
+		// Also detect PvE games and queue the bot's reply (after responding to the client).
+		let pveContext: PVEContext | null = null
 		try {
 			const game = await prisma.game.findUnique({
 				where: { id: gameId },
-				select: { room_id: true }
+				select: {
+					room_id: true,
+					bot_difficulty: true,
+					room: { select: { red_first: true } }
+				}
 			})
 
 			const userId = req.auth?.userId ? parseInt(req.auth.userId, 10) : undefined
 			if (game?.room_id) {
 				emitMovePiece(game.room_id.toString(), responseData, userId)
+				if (game.bot_difficulty != null && game.room) {
+					pveContext = {
+						roomId: game.room_id,
+						redFirst: game.room.red_first,
+						botDifficulty: game.bot_difficulty
+					}
+				}
 			} else {
 				console.warn(`[Move-Piece] No game found or game has no room_id for gameId: ${gameId}`)
 			}
@@ -187,6 +201,21 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			status_code: 201,
 			data: responseData
 		})
+
+		// Fire bot reply after responding so the API stays snappy.
+		// `nextTeam` is whoever is to move next; in PvE that's always the bot.
+		if (pveContext) {
+			playBotMove({
+				gameId,
+				roomId: pveContext.roomId,
+				projectFen: newFen,
+				redFirst: pveContext.redFirst,
+				botTeam: nextTeam,
+				difficulty: pveContext.botDifficulty
+			}).catch(err => {
+				console.error(`[Move-Piece] bot reply failed for game ${gameId}:`, err)
+			})
+		}
 	} catch (err) {
 		console.error("Move piece error:", err)
 		res.status(500).json({
@@ -198,4 +227,3 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 })
 
 export default router
-

@@ -1,24 +1,29 @@
+import classnames from "classnames"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
-import { fenPieceMap, INITIAL_FEN_BLACK_TOP, pieceFenMap } from "./constant"
+import {
+	fenPieceMap,
+	pieceFenMap
+} from "./constant"
 import { getAvailableMoves } from "common/helper"
-import { NullableCellProps, PieceCharacter, Team } from "types/GameState"
-import { HistoryData } from "./types"
+import { NullableCellProps, Piece, PieceCharacter, Team } from "types/GameState"
+import { HistoryData, RoomUser } from "./types"
 
 const totalCells = BOARD_COLUMNS * BOARD_ROWS
 
-export function initNewGame() {
-	const board = fenToBoard(INITIAL_FEN_BLACK_TOP)
+// Reuse one Audio element per effect so rapid moves don't spawn an element per call.
+const soundCache: Record<string, HTMLAudioElement> = {}
 
-	return {
-		board,
-		selected: null,
-		availableMoves: [],
-		teamTurn: "red" as Team,
-		capturedPieces: {
-			red: [],
-			black: []
-		}
-	}	
+export function playSound(url: string) {
+	if (typeof Audio === "undefined") {
+		return
+	}
+	if (!soundCache[url]) {
+		soundCache[url] = new Audio(url)
+	}
+	const sound = soundCache[url]
+	sound.currentTime = 0
+	// Autoplay can reject (e.g. before any user interaction); ignore it.
+	sound.play().catch(() => {})
 }
 
 /**
@@ -220,4 +225,53 @@ export function boardToFen(board: NullableCellProps[]): string {
 	}
 
 	return rows.join("/")
+}
+
+/** CSS classes for an intersection marker at the given column/row. */
+export function markerClass(col: number, row: number): string {
+	return classnames("marker", {
+		"left-edge": col === 0,
+		"right-edge": col === BOARD_COLUMNS - 1,
+		[`row-${row} col-${col}`]: true,
+	})
+}
+
+/**
+ * Forward direction (-1 up, 1 down) for the team whose turn it is, given which
+ * side moves first. The first-moving team always sits at the bottom (moves up).
+ */
+export function getMoveDirection(redFirst: boolean, turn: Team): -1 | 1 {
+	const bottomTeam: Team = redFirst ? "red" : "black"
+	return turn === bottomTeam ? -1 : 1
+}
+
+/** FEN character for a captured piece, cased for the team that captured it. */
+export function toCapturedFenChar(piece: Piece, movedTeam: Team): PieceCharacter {
+	const lower = pieceFenMap[piece]
+	return movedTeam === "red"
+		? lower.toUpperCase() as PieceCharacter
+		: lower.toLocaleLowerCase() as PieceCharacter
+}
+
+/** Split the two players into top/bottom seats based on which side moves first. */
+export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): { top: RoomUser; bottom: RoomUser } {
+	const bottomTeam: Team = redFirst ? "red" : "black"
+	const isFirstUserOnBottom = joinedUsers[0].team === bottomTeam
+	return {
+		top: isFirstUserOnBottom ? joinedUsers[1] : joinedUsers[0],
+		bottom: isFirstUserOnBottom ? joinedUsers[0] : joinedUsers[1],
+	}
+}
+
+/** Return a new board with the piece at `fromId` moved to `toId`. */
+export function applyMove(board: NullableCellProps[], fromId: number, toId: number): NullableCellProps[] {
+	const next = [...board]
+	const moving = next[fromId]!
+	next[toId] = {
+		id: toId,
+		piece: moving.piece,
+		team: moving.team,
+	}
+	next[fromId] = null
+	return next
 }

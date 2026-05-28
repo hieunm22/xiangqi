@@ -10,6 +10,7 @@ import {
 	REFRESH_TOKEN_TTL_SECONDS
 } from "common/constant"
 import redis from "common/redis"
+import { getRefreshCookieOptions } from "common/cookie"
 import {
   LoginRequest,
   LoginSuccessResponse,
@@ -165,12 +166,8 @@ router.post("/auth/login", (req, res, next) => {
 		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
 		await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", REFRESH_TOKEN_TTL_SECONDS)
 
-		res.cookie(REFRESH_TOKEN_KEY, refresh_token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-			maxAge: REFRESH_TOKEN_TTL_SECONDS * 1000
-		})
+		const cookieOptions = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
+		res.cookie(REFRESH_TOKEN_KEY, refresh_token, cookieOptions)
 
 		res.status(200).json({
 			success: true,

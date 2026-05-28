@@ -14,6 +14,8 @@ export interface PieceItemProps {
 	$selectedId: number | null
 	$top: number
 	$turn: Team
+	$myTeam?: Team | null
+	$previousMove?: boolean
 
 	$animateEnd?: EmptyVoid
 	$click?: EmptyVoid
@@ -23,7 +25,7 @@ export interface PlayerInfoCardProps {
 	username?: string
 	team: Team
 	active: boolean
-	capturedPieces: PieceCharacter[]
+	capturedPieces: CapturedPieces
 	avatarUrl?: string | null
 	isEmpty?: boolean
 	userId?: number
@@ -44,6 +46,7 @@ export interface RoomInfo {
 	bet_amount: number
 	team: Team | null
 	red_first: boolean
+	pve_mode: boolean
 }
 
 export interface RoomInfoData {
@@ -73,6 +76,7 @@ export interface HistoryData {
 	time_stamp: number
 	capture?: string | null
 	captured?: CapturedPieces | null
+	userId?: number
 }
 
 export interface RoomActionButton {
@@ -88,4 +92,16 @@ export interface DrawRequest {
 	roomId: string | number
 	gameId: string
 	requestUserId: number
+}
+
+export interface RemoteMoveProps { 
+	fen: string
+	from: number
+	to: number
+	isCapture: boolean
+}
+
+export interface PreviousMoveProps {
+	from: number
+	to: number
 }

@@ -215,6 +215,20 @@ export function useSocket() {
 		}
 	}, [])
 
+	const onGameStarted = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("game-started", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for game-started listener")
+		}
+	}, [])
+
+	const offGameStarted = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("game-started", callback)
+		}
+	}, [])
+
 	const onDashboardRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.on("dashboard-room-users-updated", callback)
@@ -240,6 +254,7 @@ export function useSocket() {
 		offDashboardRoomUsersUpdated,
 		offDrawRequest,
 		offDrawResponse,
+		offGameStarted,
 		offMovePiece,
 		offRoomCreated,
 		offRoomDeleted,
@@ -247,6 +262,7 @@ export function useSocket() {
 		onDrawRequest,
 		onDrawResponse,
 		onDashboardRoomUsersUpdated,
+		onGameStarted,
 		onMovePiece,
 		onRoomCreated,
 		onRoomDeleted,

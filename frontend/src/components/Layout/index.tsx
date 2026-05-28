@@ -51,12 +51,19 @@ export default function Layout() {
 	const [openSettings, setOpenSettings] = useState(false)
 	const [openProfilePopup, setOpenProfilePopup] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
+	const [showDebugMenu, setShowDebugMenu] = useState(false)
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null)
 	const [profileUser, setProfileUser] = useState<Users | null>(null)
 	const [userDisplayName, setUserDisplayName] = useState("")
 	const [userImage, setUserImage] = useState("")
 	const navigate = useNavigate()
-	const { getUserById, logout } = useAPI()
+	const {
+		getUserById,
+		leaveRoom,
+		logout,
+		makeExpired,
+		resetGame
+	} = useAPI()
 	const { dispatch } = useToolkit()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -118,6 +125,15 @@ export default function Layout() {
 		setMobileOpen(false)
 	}
 
+	const handleRestart = async () => {
+		const token = getToken()
+		if (!token) return
+		const path = location.pathname
+		const roomId = Number(path.substring("/room/".length))
+		if (!Number.isInteger(roomId) || roomId <= 0) return
+		await resetGame(token, roomId)
+	}
+
 	const displayName = userDisplayName
 	const userMenuOpen = Boolean(userMenuAnchor)
 
@@ -131,6 +147,7 @@ export default function Layout() {
 	}
 
 	const handleOpenUserMenu = (e: React.MouseEvent<HTMLElement>) => {
+		setShowDebugMenu(e.shiftKey)
 		setUserMenuAnchor(e.currentTarget)
 	}
 
@@ -138,13 +155,23 @@ export default function Layout() {
 		setUserMenuAnchor(null)
 	}
 
-	const handleGoProfile = () => {
+	const handleGoProfile = async () => {
 		if (!currentUserId) return
 		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
 		setOpenProfilePopup(true)
-		loadProfileUser(currentUserId)
+		await loadProfileUser(currentUserId)
+	}
+
+	const handleMakeExpired = async () => {
+		const token = getToken()
+		if (!token) return
+		handleCloseUserMenu()
+		const expiredToken = await makeExpired(token)
+		if (typeof expiredToken === "string" && expiredToken) {
+			localStorage.setItem(LS_TOKEN_KEY, expiredToken)
+		}
 	}
 
 	const handleLogoutFromMenu = async () => {
@@ -153,19 +180,20 @@ export default function Layout() {
 	}
 
 	const handleGoHome = async () => {
-		// if (location.pathname.startsWith("/room/")) {
-		// 	const token = getToken()
-		// 	const id = Number(location.pathname.substring("/room/".length))
-		// 	if (Number.isInteger(id) && id > 0) {
-		// 		await leaveRoom(token, id)
-		// 	}
-		// }
+		if (location.pathname.startsWith("/room/")) {
+			const token = getToken()
+			const id = Number(location.pathname.substring("/room/".length))
+			if (Number.isInteger(id) && id > 0) {
+				await leaveRoom(token, id)
+			}
+		}
 		navigate(HOME_PATH)
 	}
 
 	const menuItems = [
 		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
+		{ text: "Restart", icon: "fa-rotate", click: handleRestart },
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -264,6 +292,13 @@ export default function Layout() {
 						<i className="fas fa-user fsx-14" />
 						{translate("menu.profile")}
 					</MenuItem>
+					{showDebugMenu && <Divider />}
+					{showDebugMenu && (
+						<MenuItem onClick={handleMakeExpired} sx={{ gap: 1 }}>
+							<i className="fas fa-clock fsx-14" />
+							{translate("menu.expired")}
+						</MenuItem>
+					)}
 					<Divider />
 					<MenuItem onClick={handleLogoutFromMenu} sx={{ gap: 1 }}>
 						<i className="fas fa-right-from-bracket fsx-14" />

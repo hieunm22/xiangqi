@@ -53,5 +53,6 @@ export interface CreateRoomRequest {
 	tableName: string
 	teamName: Team
 	redFirst: boolean
+	pveMode: boolean
 	betAmount: number
 }

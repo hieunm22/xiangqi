@@ -88,25 +88,10 @@ export function initializeSocket(httpServer: HTTPServer) {
 					if (socketIds.size === 0) {
 						userIdToSocketIds.delete(disconnectedUserId)
 
-						// Socket disconnected abruptly without calling leave-room API:
-						// remove user from room, promote audience if needed, and broadcast updated users.
-						try {
-							const userRooms = await prisma.roomUser.findMany({
-								where: {
-									user_id: BigInt(disconnectedUserId)
-								},
-								select: {
-									room_id: true
-								}
-							})
-
-							for (const userRoom of userRooms) {
-								const roomId = Number(userRoom.room_id)
-								await leaveAndRebalanceRoom(roomId, disconnectedUserId)
-							}
-						} catch (error) {
-							console.error(`[Socket.io] [${new Date().toISOString()}] Disconnect auto-leave failed for user ${disconnectedUserId}:`, error)
-						}
+						// Auto-leave on socket disconnect disabled for now — was kicking users
+						// out of rooms on transient drops (refresh, brief network loss). Users
+						// must explicitly call /api/room/leave to exit a room.
+						// TODO
 					}
 				}
 			}
@@ -183,162 +168,24 @@ export function getIO(): SocketIOServer {
 }
 
 /**
- * Emit move piece event to all clients in a room EXCEPT the sender
+ * Emit move piece event to all clients in room
  */
-export function emitMovePiece(roomId: string, moveRecord: any, excludeUserId?: number) {
+export function emitMovePiece(roomId: string, moveRecord: any, userId?: number) {
 	const io = getIO()
 	const roomChannel = `room-${roomId}`
 	
-	let excludeSocketIds: string[] = []
-	if (excludeUserId !== undefined) {
-		excludeSocketIds = Array.from(userIdToSocketIds.get(excludeUserId) ?? [])
-	}
+	// Add userId to payload so client can identify sender
+	const payload = { ...moveRecord, userId }
 	
 	console.log(`[Socket.io] [${new Date().toISOString()}] Emitting move piece to ${roomChannel}:`, {
 		game_id: moveRecord.game_id,
 		team: moveRecord.team,
 		fen: moveRecord.fen,
-		excludeUserId,
-		excludeSocketIds
+		userId
 	})
 	
-	if (excludeSocketIds.length > 0) {
-		io.to(roomChannel).except(excludeSocketIds).emit("piece-moved", moveRecord)
-		console.log(`[Socket.io] [${new Date().toISOString()}] Move piece emitted to ${roomChannel} (excluding user ${excludeUserId})`)
-	} else {
-		io.to(roomChannel).emit("piece-moved", moveRecord)
-		console.log(`[Socket.io] [${new Date().toISOString()}] Move piece emitted to ${roomChannel}`)
-	}
-}
-
-async function leaveAndRebalanceRoom(roomId: number, userId: number) {
-	const roomIdBigInt = BigInt(roomId)
-	const userIdBigInt = BigInt(userId)
-
-	const txResult = await prisma.$transaction(async tx => {
-		const currentRoomUser = await tx.roomUser.findUnique({
-			where: {
-				room_id_user_id: {
-					room_id: roomIdBigInt,
-					user_id: userIdBigInt
-				}
-			},
-			select: {
-				team: true
-			}
-		})
-
-		if (!currentRoomUser) {
-			return {
-				leftRoom: false,
-				roomDeleted: false,
-				users: [] as any[]
-			}
-		}
-
-		await tx.roomUser.deleteMany({
-			where: {
-				room_id: roomIdBigInt,
-				user_id: userIdBigInt
-			}
-		})
-
-		if (currentRoomUser.team) {
-			const audienceToPromote = await tx.roomUser.findFirst({
-				where: {
-					room_id: roomIdBigInt,
-					team: null
-				},
-				orderBy: {
-					joined_at: "asc"
-				},
-				select: {
-					room_id: true,
-					user_id: true
-				}
-			})
-
-			if (audienceToPromote) {
-				await tx.roomUser.update({
-					where: {
-						room_id_user_id: {
-							room_id: audienceToPromote.room_id,
-							user_id: audienceToPromote.user_id
-						}
-					},
-					data: {
-						team: currentRoomUser.team
-					}
-				})
-			}
-		}
-
-		const remainingUsers = await tx.roomUser.count({
-			where: {
-				room_id: roomIdBigInt
-			}
-		})
-
-		if (remainingUsers === 0) {
-			await tx.room.delete({
-				where: {
-					id: roomIdBigInt
-				}
-			})
-
-			return {
-				leftRoom: true,
-				roomDeleted: true,
-				users: [] as any[]
-			}
-		}
-
-		const roomUsers = await tx.roomUser.findMany({
-			where: {
-				room_id: roomIdBigInt
-			},
-			select: {
-				joined_at: true,
-				team: true,
-				users: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_seq: true
-					}
-				}
-			},
-			orderBy: {
-				joined_at: "asc"
-			}
-		})
-
-		const formattedUsers = roomUsers.map(roomUser => ({
-			id: Number(roomUser.users.id),
-			display_name: roomUser.users.display_name,
-			avatar_seq: Number(roomUser.users.avatar_seq),
-			avatar_url:
-				Number(roomUser.users.avatar_seq) === 0
-					? `/images/${Number(roomUser.users.id)}.jpg`
-					: `/images/${Number(roomUser.users.id)}_${Number(roomUser.users.avatar_seq)}.jpg`,
-			team: roomUser.team,
-			joined_at: roomUser.joined_at
-		}))
-
-		return {
-			leftRoom: true,
-			roomDeleted: false,
-			users: formattedUsers
-		}
-	})
-
-	if (txResult.leftRoom && !txResult.roomDeleted) {
-		emitRoomUsersUpdated(roomId, txResult.users)
-	}
-
-	if (txResult.leftRoom && txResult.roomDeleted) {
-		emitRoomDeleted(roomId)
-	}
+	io.to(roomChannel).emit("piece-moved", payload)
+	console.log(`[Socket.io] [${new Date().toISOString()}] Move piece emitted to all clients in ${roomChannel}`)
 }
 
 /**
@@ -347,6 +194,20 @@ async function leaveAndRebalanceRoom(roomId: number, userId: number) {
 export function emitGameSurrender(roomId: string, data: any) {
 	const io = getIO()
 	io.to(`room-${roomId}`).emit("game-surrendered", data)
+}
+
+/**
+ * Emit game started event to all clients in a room (host, opponent, spectators)
+ */
+export function emitGameStarted(roomId: string | number, data: any) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit game-started: Socket.io server not initialized`)
+		return
+	}
+
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("game-started", { roomId, ...data })
+	console.log(`[Socket.io] [${new Date().toISOString()}] Game started emitted to ${roomChannel}`)
 }
 
 /**

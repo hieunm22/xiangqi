@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { BOT_USER_ID } from "common/bot-engine"
 import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { CreateRoomRequest } from "types/room.type"
@@ -39,6 +40,10 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *                 type: boolean
  *                 description: Whether red moves first
  *                 default: true
+ *               pveMode:
+ *                 type: boolean
+ *                 description: Whether the game is in PvE mode
+ *                 default: false
  *               betAmount:
  *                 type: number
  *                 description: Bet amount for the room (valid values - 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000)
@@ -71,7 +76,7 @@ router.post(
 	"/room/create-room",
 	requireAuth(),
 	async (req: AuthenticatedRequest, res: Response) => {
-		const { tableName, teamName, redFirst = true, betAmount = 10 } = req.body as CreateRoomRequest
+		const { tableName, teamName, redFirst = true, pveMode = false, betAmount = 10 } = req.body as CreateRoomRequest
 		const userId = req.auth?.userId
 
 		// Validate room name
@@ -117,15 +122,6 @@ router.post(
 			return
 		}
 
-		if (typeof betAmount !== "number" || !ACCEPTABLE_BET_AMOUNTS.includes(betAmount)) {
-			res.status(400).json({
-				success: false,
-				message: "create-room.messages.invalid-bet-amount-values",
-				status_code: 400
-			})
-			return
-		}
-
 		try {
 			const userIdBigInt = BigInt(userId!)
 
@@ -136,19 +132,29 @@ router.post(
 				}
 			})
 
-			// Create room and room_user in a transaction
+			// Seed only the requester for PvP rooms. Add a bot seat too in PvE mode,
+			// on the team opposite to the requester.
+			const roomUserSeed: { user_id: bigint; team: string | null; joined_at: Date }[] = [
+				{ user_id: userIdBigInt, team: teamName, joined_at: new Date() }
+			]
+			if (pveMode) {
+				// Determine bot team (opposite of user's team)
+				let botTeam: "red" | "black" = "red"
+				if (teamName === "red") {
+					botTeam = "black"
+				}
+				roomUserSeed.push({ user_id: BOT_USER_ID, team: botTeam, joined_at: new Date() })
+			}
+
 			const room = await prisma.room.create({
 				data: {
 					name: tableName,
 					status: 1, // 1 = waiting for opponent
 					red_first: redFirst,
+					pve_mode: pveMode,
 					bet_amount: betAmount,
 					room_users: {
-						create: {
-							user_id: userIdBigInt,
-							team: teamName,
-							joined_at: new Date()
-						}
+						create: roomUserSeed
 					}
 				},
 				select: {
@@ -156,6 +162,7 @@ router.post(
 					name: true,
 					status: true,
 					red_first: true,
+					pve_mode: true,
 					bet_amount: true,
 					created_at: true,
 					updated_at: true,
