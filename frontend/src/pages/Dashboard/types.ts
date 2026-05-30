@@ -40,6 +40,17 @@ export interface CreateRoomContextValue {
 	setOpen: (open: boolean) => void
 }
 
+export interface JoinRoomDialogContextValue {
+	room: DashboardRoom | null
+	openJoinRoom: (room: DashboardRoom) => void
+	closeJoinRoom: () => void
+}
+
+export interface SeatAvatarProps {
+	user: User
+	isHost: boolean
+}
+
 export interface PieceButtonProps {
 	piece: Team
 	label: string

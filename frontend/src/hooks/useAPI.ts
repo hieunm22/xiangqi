@@ -30,6 +30,7 @@ const EP = { // end points
 	joinRoom: "/room/join",
 	leaveRoom: "/room/leave",
 	startRoom: "/room/start",
+	updateRoom: "/room/update",
 
 	// game endpoints
 	getGameHistory: "/game/history",
@@ -96,7 +97,6 @@ export const useAPI = () => {
 						.json(r => r)
 				} catch (err: any) {
 					console.error("Token refresh failed", err.message)
-					await logout(accessToken)
 					localStorage.removeItem(LS_TOKEN_KEY)
 					navigate(LOGIN_PATH)
 					throw err
@@ -215,10 +215,16 @@ export const useAPI = () => {
 							.catch(handleError)
 
 	const surrenderGame = async (token: string, gameId: string) => authFetch(EP.surrenderGame)
-						.auth(`Bearer ${token}`)
-						.post({ gameId })
-						.json(surrenderGameCallback)
-						.catch(handleError)
+							.auth(`Bearer ${token}`)
+							.post({ gameId })
+							.json(surrenderGameCallback)
+							.catch(handleError)
+
+	const updateRoom = async (token: string, roomId: number, name: string) => authFetch(EP.updateRoom)
+							.auth(`Bearer ${token}`)
+							.patch({ id: roomId, name })
+							.json(updateRoomCallback)
+							.catch(handleError)
 
 	const validateToken = (token: string) => authFetch(EP.validateToken)
 						.auth(`Bearer ${token}`)
@@ -316,6 +322,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const updateRoomCallback = (response: any) => {
+		return response
+	}
+
 	const validateTokenCallback = (response: any) => {
 		return response
 	}
@@ -359,6 +369,7 @@ export const useAPI = () => {
 		resetPassword,
 		startRoom,
 		surrenderGame,
+		updateRoom,
 		validateToken
 	}
 }

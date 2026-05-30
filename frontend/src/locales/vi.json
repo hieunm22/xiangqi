@@ -59,7 +59,8 @@
 			"pve-mode": "Chơi với máy",
 			"bet-amount": "Giá trị cược",
 			"room-name-label": "Tên phòng chơi",
-			"room-name-helptext": "không được để trống"
+			"room-name-helptext": "không được để trống",
+			"join-room": "Vào phòng"
 		}
 	},
 	"settings": {
@@ -98,7 +99,13 @@
 			"reject-draw": "Từ chối",
 			"draw-accepted": "Đối phương đã đồng ý hòa",
 			"draw-rejected": "Đối phương từ chối hòa",
-			"draw-completed": "Hòa cờ thành công"
+			"draw-completed": "Hòa cờ thành công",
+			"settings": "Cài đặt phòng"
+		},
+		"settings": {
+			"title": "Cài đặt phòng",
+			"room-name": "Tên phòng",
+			"save": "Lưu"
 		}
 	},
 	"game": {
@@ -310,6 +317,16 @@
 			"invalid-status": "Trường 'status' phải là 1 hoặc 2",
 			"room-not-found": "Không tìm thấy phòng",
 			"success": "Đặt trạng thái phòng thành công"
+		}
+	},
+	"update-room": {
+		"messages": {
+			"success": "Cập nhật phòng thành công",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "ID phòng không hợp lệ",
+			"name-required": "Tên phòng không được để trống",
+			"room-not-found": "Không tìm thấy phòng",
+			"forbidden": "Bạn không phải chủ phòng"
 		}
 	},
 	"draw-game": {

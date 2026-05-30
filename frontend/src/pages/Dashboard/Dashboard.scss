@@ -139,6 +139,38 @@
 		border: solid 2px;
 	}
 
+	&__seat {
+    display: inline-flex;
+    flex-direction: column;
+	}
+
+	&__seat-avatar {
+		width: 56px !important;
+		height: 56px !important;
+		object-fit: cover;
+		border: solid 2px #9b613d;
+		font-size: 20px !important;
+	}
+
+	&__seat-crown {
+		color: #fbc02d;
+		font-size: 30px;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+		pointer-events: none;
+		width: 56px;
+		height: 30px;
+	}
+
+	&__seat-crown-placeholder {
+		width: 56px;
+		height: 30px;
+	}
+
+	&__join-room-board {
+    color: #9b613d;
+    width: 160px;
+	}
+
 	&__piece-btn.MuiButton-root {
 		min-width: 56px;
 		min-height: 56px;

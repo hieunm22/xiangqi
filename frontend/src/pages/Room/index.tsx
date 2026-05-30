@@ -7,8 +7,8 @@ import { Empty } from "components/Common"
 import { TI } from "components/TranslationTag"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
+import SettingsButton from "./components/SettingsButton"
 import useRoomHook from "./hook"
-import { Piece } from "types/GameState"
 import "./Room.scss"
 
 export default function RoomPage() {
@@ -18,12 +18,15 @@ export default function RoomPage() {
 		board,
 		bottomSideUser,
 		capturedPieces,
+		checkingPieces,
 		currentTurn,
 		isActionMenuOpen,
 		menuAnchorEl,
 		myTeam,
 		previousMove,
+		roomSettingsDialogValue,
 		selected,
+		settingsVisible,
 		topSideUser,
 
 		closeActionMenu,
@@ -41,8 +44,8 @@ export default function RoomPage() {
 					username={topSideUser?.display_name}
 					team={
 						topSideUser?.team === "red" ? "red" :
-						topSideUser?.team === "black" ? "black" :
-						bottomSideUser?.team === "red" ? "black" : "red"
+							topSideUser?.team === "black" ? "black" :
+								bottomSideUser?.team === "red" ? "black" : "red"
 					}
 					active={currentTurn === topSideUser?.team}
 					avatarUrl={topSideUser?.avatar_url || null}
@@ -93,8 +96,9 @@ export default function RoomPage() {
 						.map((cell, id) => {
 							const col = id % BOARD_COLUMNS
 							const row = ~~(id / BOARD_COLUMNS)
-							const isPreviousMove = previousMove !== null
-								&& (id === previousMove.from || id === previousMove.to)
+							const isPreviousMove = (previousMove !== null
+								&& (id === previousMove.from || id === previousMove.to))
+								|| checkingPieces.includes(id)
 							if (!cell) {
 								const isAvailable = availableMoves.includes(id)
 								const emptyClass = classnames({
@@ -104,7 +108,7 @@ export default function RoomPage() {
 									// [`row-${row}-empty`]: true,
 									// [`col-${col}-empty`]: true,
 									"available": isAvailable,
-									"previous-move": isPreviousMove,
+									"highlight": isPreviousMove,
 									// "available-empty": isAvailable,
 									"cursor-pointer": isAvailable && selected !== null
 								})
@@ -115,8 +119,6 @@ export default function RoomPage() {
 										onClick={onPieceClick(id)}
 									/>)
 							}
-
-							const piece = cell.piece as Piece
 
 							return (
 								<PieceItem
@@ -132,7 +134,7 @@ export default function RoomPage() {
 									$click={onPieceClick(cell.id)}
 									$animateEnd={onAnimateEnd}
 								>
-									{pieceSymbolByType[cell.team][piece]}
+									{cell.piece ? pieceSymbolByType[cell.piece] : ""}
 								</PieceItem>
 							)
 						})}
@@ -166,6 +168,7 @@ export default function RoomPage() {
 						)
 					})}
 				</Menu>
+				{settingsVisible && <SettingsButton {...roomSettingsDialogValue} />}
 			</div>
 		</div>
 	)

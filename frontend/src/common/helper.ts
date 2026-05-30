@@ -5,6 +5,8 @@ import {
 	LS_TOKEN_KEY
 } from "./constant"
 import {
+	getPieceFromCharacter,
+	getTeamFromPieceChar,
 	isInPalace,
 	pushElephantIfValid,
 	pushHorseTarget,
@@ -16,8 +18,7 @@ import { FenMoveDiffResult } from "types/Common"
 import {
 	CellProps,
 	NullableCellProps,
-	PieceCharacter,
-	Team
+	PieceCharacter
 } from "types/GameState"
 
 const processSoldierMove = (
@@ -27,13 +28,19 @@ const processSoldierMove = (
 	hasCrossedRiver: boolean
 ) => {
 	const { gameState, selectedId, selectedPiece } = state
+	const selectedTeam = getTeamFromPieceChar(selectedPiece?.piece)
+	if (!selectedTeam) {
+		return []
+	}
+
 	const soldierRow = ~~(selectedId / BOARD_COLUMNS)
 	const moves: number[] = []
 	// Move forward
 	const forwardId = selectedId + forwardStep
 	if (isForwardValid(forwardId)) {
 		const cell = gameState[forwardId]
-		if (!cell || cell.team !== selectedPiece.team) moves.push(forwardId)
+		const targetTeam = getTeamFromPieceChar(cell?.piece)
+		if (!cell || !cell.piece || targetTeam !== selectedTeam) moves.push(forwardId)
 	}
 	// After crossing the river
 	if (hasCrossedRiver) {
@@ -41,13 +48,15 @@ const processSoldierMove = (
 		const rightId = selectedId + 1
 		if (rightId < BOARD_COLUMNS * BOARD_ROWS && ~~(rightId / BOARD_COLUMNS) === soldierRow) {
 			const cell = gameState[rightId]
-			if (!cell || cell.team !== selectedPiece.team) moves.push(rightId)
+			const targetTeam = getTeamFromPieceChar(cell?.piece)
+			if (!cell || !cell.piece || targetTeam !== selectedTeam) moves.push(rightId)
 		}
 		// Move left
 		const leftId = selectedId - 1
 		if (leftId >= 0 && ~~(leftId / BOARD_COLUMNS) === soldierRow) {
 			const cell = gameState[leftId]
-			if (!cell || cell.team !== selectedPiece.team) moves.push(leftId)
+			const targetTeam = getTeamFromPieceChar(cell?.piece)
+			if (!cell || !cell.piece || targetTeam !== selectedTeam) moves.push(leftId)
 		}
 	}
 
@@ -64,6 +73,12 @@ export function getAvailableMoves(
 	}
 	const moves: number[] = []
 	const selectedPiece = gameState[selectedId]!
+	const selectedPieceType = getPieceFromCharacter(selectedPiece.piece)
+	const selectedTeam = getTeamFromPieceChar(selectedPiece.piece)
+	if (!selectedPiece.piece || !selectedPieceType || !selectedTeam) {
+		return []
+	}
+
 	const totalCells = BOARD_COLUMNS * BOARD_ROWS
 
 	/**
@@ -75,12 +90,13 @@ export function getAvailableMoves(
 			return
 		}
 		const targetCell = gameState[targetIndex]
-		if (!targetCell || targetCell.team !== selectedPiece.team) {
+		const targetTeam = getTeamFromPieceChar(targetCell?.piece)
+		if (!targetCell || !targetCell.piece || targetTeam !== selectedTeam) {
 			moves.push(targetIndex)
 		}
 	}
 
-	switch (selectedPiece.piece) {
+	switch (selectedPieceType) {
 		case "soldier": {
 			const state = { gameState, selectedId, selectedPiece }
 			let push: number[] = []
@@ -106,26 +122,26 @@ export function getAvailableMoves(
 
 		case "cannon": {
 			const cannonRow = ~~(selectedId / BOARD_COLUMNS)
-			let push = scanLine(gameState, selectedId, -BOARD_COLUMNS, cur => cur >= 0, selectedPiece.team, true)
+			let push = scanLine(gameState, selectedId, -BOARD_COLUMNS, cur => cur >= 0, selectedTeam, true)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, BOARD_COLUMNS, cur => cur < totalCells, selectedPiece.team, true)
+			push = scanLine(gameState, selectedId, BOARD_COLUMNS, cur => cur < totalCells, selectedTeam, true)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, -1, cur => cur >= 0 && ~~(cur / BOARD_COLUMNS) === cannonRow, selectedPiece.team, true)
+			push = scanLine(gameState, selectedId, -1, cur => cur >= 0 && ~~(cur / BOARD_COLUMNS) === cannonRow, selectedTeam, true)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, +1, cur => cur < totalCells && ~~(cur / BOARD_COLUMNS) === cannonRow, selectedPiece.team, true)
+			push = scanLine(gameState, selectedId, +1, cur => cur < totalCells && ~~(cur / BOARD_COLUMNS) === cannonRow, selectedTeam, true)
 			moves.push(...push)
 			break
 		}
 
 		case "chariot": {
 			const chariotRow = ~~(selectedId / BOARD_COLUMNS)
-			let push = scanLine(gameState, selectedId, -BOARD_COLUMNS, cur => cur >= 0, selectedPiece.team)
+			let push = scanLine(gameState, selectedId, -BOARD_COLUMNS, cur => cur >= 0, selectedTeam)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, BOARD_COLUMNS, cur => cur < totalCells, selectedPiece.team)
+			push = scanLine(gameState, selectedId, BOARD_COLUMNS, cur => cur < totalCells, selectedTeam)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, -1, cur => cur >= 0 && ~~(cur / BOARD_COLUMNS) === chariotRow, selectedPiece.team)
+			push = scanLine(gameState, selectedId, -1, cur => cur >= 0 && ~~(cur / BOARD_COLUMNS) === chariotRow, selectedTeam)
 			moves.push(...push)
-			push = scanLine(gameState, selectedId, +1, cur => cur < totalCells && ~~(cur / BOARD_COLUMNS) === chariotRow, selectedPiece.team)
+			push = scanLine(gameState, selectedId, +1, cur => cur < totalCells && ~~(cur / BOARD_COLUMNS) === chariotRow, selectedTeam)
 			moves.push(...push)
 			break
 		}
@@ -269,7 +285,8 @@ export function getAvailableMoves(
 						continue
 					}
 
-					if (targetCell.piece === "general" && targetCell.team !== selectedPiece.team) {
+					const targetTeam = getTeamFromPieceChar(targetCell.piece)
+					if ((targetCell.piece === "g" || targetCell.piece === "G") && targetTeam !== selectedTeam) {
 						moves.push(next)
 					}
 					break
@@ -374,9 +391,7 @@ function parseFenBoard(fen: string): Array<PieceCharacter | null> {
 }
 
 function toCellPropsFromToken(id: number, token: PieceCharacter): CellProps {
-	const piece = fenPieceMap[token]
-	const team: Team = token === token.toLowerCase() ? "red" : "black"
-	return { id, piece, team }
+	return { id, piece: token }
 }
 
 /**

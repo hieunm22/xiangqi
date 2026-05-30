@@ -263,7 +263,7 @@
 	box-sizing: border-box;
 	transition: transform .5s ease;
 
-	&.previous-move {
+	&.highlight {
 		.piece {
 			animation: previous-move-glow 1.2s ease-in-out infinite;
 		}
@@ -288,7 +288,7 @@
 		box-shadow: 0 0 0 2px #9f00ff;
 	}
 
-	&.previous-move {
+	&.highlight {
 		box-shadow: 0 0 0 2px #76c892;
 	}
 }

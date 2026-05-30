@@ -30,6 +30,7 @@ dashboard.popup.pve-mode;PVE mode;Chơi với máy
 dashboard.popup.bet-amount;Bet amount;Giá trị cược
 dashboard.popup.room-name-label;Room table name;Tên phòng chơi
 dashboard.popup.room-name-helptext;is required;không được để trống
+dashboard.popup.join-room;Join room;Vào phòng
 settings.header;Settings;Cài đặt
 settings.language;Language;Ngôn ngữ
 settings.dark-mode;Dark mode;Chế độ tối
@@ -172,6 +173,16 @@ room.actions.reject-draw;Reject;Từ chối
 room.actions.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
 room.actions.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
 room.actions.draw-completed;Draw completed;Hòa cờ thành công
+room.actions.settings;Room settings;Cài đặt phòng
+room.settings.title;Room Settings;Cài đặt phòng
+room.settings.room-name;Room name;Tên phòng
+room.settings.save;Save;Lưu
+update-room.messages.success;Room updated successfully;Cập nhật phòng thành công
+update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+update-room.messages.invalid-room-id;Invalid room ID;ID phòng không hợp lệ
+update-room.messages.name-required;Room name is required;Tên phòng không được để trống
+update-room.messages.room-not-found;Room not found;Không tìm thấy phòng
+update-room.messages.forbidden;You are not the host of this room;Bạn không phải chủ phòng
 draw-game.messages.invalid-game-id;Invalid game ID;ID trò chơi không hợp lệ
 draw-game.messages.game-not-found;Game not found;Không tìm thấy trò chơi
 draw-game.messages.forbidden;You are not in this room;Bạn không có trong phòng này

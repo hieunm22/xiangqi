@@ -21,7 +21,7 @@ services:
   #   -e POSTGRES_DB=xiangqi \
   #   -e POSTGRES_USER=postgres \
   #   -e POSTGRES_PASSWORD=<database_password> \
-  #   -v ./database/.postgres:/var/lib/postgresql/data \
+  #   -v ..persist/postgres:/var/lib/postgresql/data \
   #   postgres:17
 
   mongodb:
@@ -86,7 +86,8 @@ services:
   # #   --name xiangqi-cache \
   # #   --network xiangqi-network \
   # #   --restart unless-stopped \
-  # #   redis:8.2
+  # #   redis:8.2 \
+  # #   redis-server --requirepass '<redis_password>' --protected-mode yes --enable-debug-command no --enable-module-command no --enable-protected-configs no --rename-command FLUSHALL "" --rename-command FLUSHDB "" --rename-command KEYS ""
 
   backend:
     container_name: xiangqi-api

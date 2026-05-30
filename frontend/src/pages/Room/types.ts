@@ -1,4 +1,5 @@
 import { EmptyPromise, EmptyVoid } from "types/Common"
+import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
 	CellProps,
@@ -52,7 +53,7 @@ export interface RoomInfo {
 export interface RoomInfoData {
 	room: RoomInfo
 	users: RoomUser[]
-	game_id: string | null
+	game: GameInfo | null
 }
 
 export interface RoomInfoResponse {
@@ -85,7 +86,7 @@ export interface RoomActionButton {
 	label: string
 	visible: boolean
 	enabled: boolean
-	onClick: EmptyPromise
+	onClick: EmptyPromise | EmptyVoid
 }
 
 export interface DrawRequest {
@@ -104,4 +105,17 @@ export interface RemoteMoveProps {
 export interface PreviousMoveProps {
 	from: number
 	to: number
+}
+
+export interface PieceSideUser {
+	top: RoomUser
+	bottom: RoomUser
+}
+
+export interface RoomSettingsDialogContextValue {
+	isOpen: boolean
+	room: RoomInfo | null
+	openSettings: EmptyVoid
+	closeSettings: EmptyVoid
+	handleSettingsSaved: (newName: string) => void
 }

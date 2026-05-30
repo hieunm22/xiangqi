@@ -17,14 +17,20 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
           script: |
+            set -euo pipefail
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
             cd ~/projects/xiangqi
 
             # save commit before pull
             OLD_COMMIT=$(git rev-parse HEAD)
 
             # Reset all changes
-            git reset --hard
+            git restore . :!backend/yarn.lock
             git clean -fd
 
             # Fetch and pull the latest code
@@ -43,8 +49,8 @@ jobs:
             if echo "$CHANGED_FILES" | grep -q "^frontend/"; then
               echo "--- Deploying frontend ---"
 
-              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^frontend/package.json")
-              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^frontend/package.json" | grep -c "^frontend/")
+              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^frontend/package.json" || true)
+              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^frontend/package.json" | grep -c "^frontend/" || true)
 
               cd frontend
 
@@ -64,8 +70,8 @@ jobs:
             if echo "$CHANGED_FILES" | grep -q "^backend/"; then
               echo "--- Deploying backend ---"
 
-              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^backend/package.json")
-              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^backend/package.json" | grep -c "^backend/")
+              PACKAGE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^backend/package.json" || true)
+              OTHER_FILES=$(echo "$CHANGED_FILES" | grep -v "^backend/package.json" | grep -c "^backend/" || true)
 
               cd backend
 

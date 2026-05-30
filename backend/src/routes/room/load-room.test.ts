@@ -104,7 +104,15 @@ describe("GET /api/room/info?id=:id", () => {
 			bet_amount: 100,
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
-			games: [{ id: "game-101" }],
+			games: [
+				{
+					id: "game-101",
+					room_id: BigInt(101),
+					winner_id: BigInt(11),
+					status: 1,
+					bot_difficulty: null
+				}
+			],
 			room_users: [
 				{
 					users: {
@@ -135,7 +143,13 @@ describe("GET /api/room/info?id=:id", () => {
 			message: "load-room.messages.success",
 			status_code: 200,
 			data: {
-				game_id: "game-101",
+				game: {
+					id: "game-101",
+					room_id: 101,
+					winner_id: 11,
+					status: 1,
+					bot_difficulty: null
+				},
 				room: {
 					id: 101,
 					name: "Final Table",

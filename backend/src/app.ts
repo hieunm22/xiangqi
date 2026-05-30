@@ -19,6 +19,7 @@ import fetchRoomsRoutes from "./routes/room/fetch-rooms"
 import joinRoomRoutes from "./routes/room/join-room"
 import leaveRoomRoutes from "./routes/room/leave-room"
 import loadRoomRoutes from "./routes/room/load-room"
+import updateRoomRoutes from "./routes/room/update-room"
 
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
@@ -75,11 +76,13 @@ app.use("/api", getGameHistoryRoutes)
 app.use("/api", joinRoomRoutes)
 app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
+app.use("/api", updateRoomRoutes)
+
+app.use("/api", drawGameRoutes)
 app.use("/api", movePieceRoutes)
 app.use("/api", resetGameRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
-app.use("/api", drawGameRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec))

@@ -59,7 +59,8 @@
 			"pve-mode": "PVE mode",
 			"bet-amount": "Bet amount",
 			"room-name-label": "Room table name",
-			"room-name-helptext": "is required"
+			"room-name-helptext": "is required",
+			"join-room": "Join room"
 		}
 	},
 	"settings": {
@@ -98,7 +99,13 @@
 			"reject-draw": "Reject",
 			"draw-accepted": "Opponent accepted the draw",
 			"draw-rejected": "Opponent rejected the draw",
-			"draw-completed": "Draw completed"
+			"draw-completed": "Draw completed",
+			"settings": "Room settings"
+		},
+		"settings": {
+			"title": "Room Settings",
+			"room-name": "Room name",
+			"save": "Save"
 		}
 	},
 	"game": {
@@ -310,6 +317,16 @@
 			"invalid-status": "Field 'status' must be either 1 or 2",
 			"room-not-found": "Room not found",
 			"success": "Set room status successfully"
+		}
+	},
+	"update-room": {
+		"messages": {
+			"success": "Room updated successfully",
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Invalid room ID",
+			"name-required": "Room name is required",
+			"room-not-found": "Room not found",
+			"forbidden": "You are not the host of this room"
 		}
 	},
 	"draw-game": {

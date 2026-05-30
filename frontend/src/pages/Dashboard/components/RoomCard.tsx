@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	Grid,
@@ -8,6 +7,7 @@ import {
 import { FILTER_KEYS, FILTER_STATUS } from "../constants"
 import { TI, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
+import { useJoinRoomDialogContext } from "hooks/useAppContext"
 import { RoomCardProps } from "../types"
 
 const getStatusKey = (status: number) => {
@@ -40,7 +40,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 	const oldestJoinedUsers = room.users.slice(0, 2)
 	const remainingUsers = room.users.slice(2)
 	const classIconRoomStatus = roomStatusClass(room.status)
-	const navigate = useNavigate()
+	const { openJoinRoom } = useJoinRoomDialogContext()
 
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
@@ -49,16 +49,12 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 		"high": room.bet_amount > 2000
 	})
 
-	const handleCardClick = () => {
-		navigate(`/room/${room.id}`)
-	}
-
 	return (
 		<Grid
 			key={room.id}
 			className={roomCardClass}
 			size={{ xs: 6, sm: 4, md: 4 }}
-			onClick={handleCardClick}
+			onClick={() => openJoinRoom(room)}
 		>
 			<Stack spacing={1.5}>
 				<Stack direction="row" className="dashboard__card-header">

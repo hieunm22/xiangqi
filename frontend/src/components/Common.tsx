@@ -1,5 +1,6 @@
 import type { ElementType } from "react"
 import styled from "styled-components"
+import { getTeamFromPieceChar } from "pages/Room/common"
 import type { ElementWithColorType } from "types/Common"
 
 export const Empty = () => <></>
@@ -17,7 +18,7 @@ function getTileBackgroundColor(index: number, available?: boolean) {
 
 function createStyledElementWithColor<T extends ElementType>(BaseComponent: T) {
 	return styled(BaseComponent)<ElementWithColorType>`
-		${props => props.element ? `color: ${props.element.team};` : ""};
+		${props => props.element?.piece ? `color: ${getTeamFromPieceChar(props.element.piece)};` : ""};
 		background-color: ${props => getTileBackgroundColor(props.$index, props.$available)};
 		opacity: ${props => props.$available ? 0.7 : 1};
 	`
@@ -25,7 +26,7 @@ function createStyledElementWithColor<T extends ElementType>(BaseComponent: T) {
 
 function createStyledElementWithBGColor<T extends ElementType>(BaseComponent: T) {
 	return styled(BaseComponent)<ElementWithColorType>`
-		${props => props.element ? `background-color: ${props.element.team};` : ""};
+		${props => props.element?.piece ? `background-color: ${getTeamFromPieceChar(props.element.piece)};` : ""};
 	`
 }
 

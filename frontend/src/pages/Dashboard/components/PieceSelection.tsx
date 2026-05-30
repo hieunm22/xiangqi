@@ -37,7 +37,7 @@ const PieceButton = (props: PieceButtonProps) => {
 
 export const PieceSelection = () => (
 	<Stack direction="row" spacing={1.5} sx={{ mt: 1 }}>
-		<PieceButton piece="red" label={pieceSymbolByType.red.general} />
-		<PieceButton piece="black" label={pieceSymbolByType.black.general} />
+		<PieceButton piece="red" label={pieceSymbolByType.g} />
+		<PieceButton piece="black" label={pieceSymbolByType.G} />
 	</Stack>
 )

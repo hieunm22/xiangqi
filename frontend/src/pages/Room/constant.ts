@@ -1,24 +1,21 @@
-import { Piece, PieceCharacter, Team } from "types/GameState"
+import { Piece, PieceCharacter } from "types/GameState"
 
-export const pieceSymbolByType: Record<Team, Record<Piece, string>> = {
-	black: {
-		general: "將",
-		advisor: "士",
-		elephant: "象",
-		horse: "馬",
-		chariot: "車",
-		cannon: "砲",
-		soldier: "卒",
-	},
-	red: {
-		general: "帥",
-		advisor: "仕",
-		elephant: "相",
-		horse: "傌",
-		chariot: "俥",
-		cannon: "炮",
-		soldier: "兵",
-	},
+export const pieceSymbolByType: Record<PieceCharacter, string> = {
+	"G": "將",
+	"A": "士",
+	"E": "象",
+	"H": "馬",
+	"R": "車",
+	"C": "砲",
+	"S": "卒",
+
+	"g": "帥",
+	"a": "仕",
+	"e": "相",
+	"h": "傌",
+	"r": "俥",
+	"c": "炮",
+	"s": "兵",
 }
 
 export const markerPositions: Array<[number, number]> = [
@@ -68,11 +65,8 @@ export const pieceFenMap: Record<Piece, PieceCharacter> = {
 
 export const INITIAL_FEN_BLACK_TOP = "RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr"
 export const INITIAL_FEN_BLACK_BOTTOM = "rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S1S/1C5C1/9/RHEAGAEHR"
-
 export const EMPTY_BOARD_FEN = "9/9/9/9/9/9/9/9/9/9"
 
-export const MOVE_SOUND_URL = "https://static1.squarespace.com/static/5fae7ee3a079b0732627205c/t/60884916e7fb801d2673eb74/1644222482798/move.mp3"
-
-export const CAPTURE_SOUND_URL = "https://static1.squarespace.com/static/5fae7ee3a079b0732627205c/t/6088493f3e39f37c0fe2f758/1644222482803/capture.mp3"
-
-export const GAME_START_SOUND_URL = "https://static1.squarespace.com/static/5fae7ee3a079b0732627205c/t/60884966942f8d12c0d2c2fe/1644222482787/gong-game-start-end.mp3"
+export const MOVE_SOUND_URL = "/xiangqi/sound/move.mp3"
+export const CAPTURE_SOUND_URL = "/xiangqi/sound/capture.mp3"
+export const GAME_START_SOUND_URL = "/xiangqi/sound/gong-game-start-end.mp3"

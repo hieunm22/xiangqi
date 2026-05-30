@@ -22,5 +22,5 @@ First column: `page.home.title`
 2. Run:
 
 ```sh
-./tools/convert.sh
+./tools/generate-locales.sh
 ```

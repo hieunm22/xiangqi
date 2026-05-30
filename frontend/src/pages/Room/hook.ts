@@ -19,13 +19,14 @@ import {
 	applyMove,
 	boardToFen,
 	fenToBoard,
+	findCheckingPieces,
 	getCapturedPiecesFromHistory,
+	getPieceFromCharacter,
 	getMoveDirection,
-	isGeneralInCheck,
+	getTeamFromPieceChar,
 	markerClass,
 	playSound,
 	resolveSideUsers,
-	toCapturedFenChar
 } from "./common"
 import { translate } from "locales/translate"
 import { useAPI } from "hooks/useAPI"
@@ -44,6 +45,7 @@ import {
 	RoomInfoResponse,
 	RoomUser
 } from "./types"
+import { GameInfo } from "types/Entities"
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
@@ -78,8 +80,9 @@ const useRoomHook = () => {
 
 	const [room, setRoom] = useState<RoomInfo | null>(null)
 	const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([])
-	const [gameId, setGameId] = useState<string | null>(null)
+	const [game, setGame] = useState<GameInfo | null>(null)
 	const [history, setHistory] = useState<HistoryData[]>([])
+	const [settingsOpen, setSettingsOpen] = useState(false)
 
 	const [actionMenuItems, setActionMenuItems] = useState<RoomActionButton[]>([])
 	// Game board state (formerly the redux `game` slice). `currentTurn` doubles as
@@ -88,6 +91,9 @@ const useRoomHook = () => {
 	const [selected, setSelected] = useState<number | null>(null)
 	const [availableMoves, setAvailableMoves] = useState<number[]>([])
 	const [previousMove, setPreviousMove] = useState<PreviousMoveProps | null>(null)
+	// Indices of enemy pieces currently giving check to myTeam's general. Highlighted
+	// the same way as a previous-move cell so the player can see what's threatening them.
+	const [checkingPieces, setCheckingPieces] = useState<number[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>({ red: [], black: [] })
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
 	const [isMovePending, setIsMovePending] = useState(false)
@@ -147,27 +153,28 @@ const useRoomHook = () => {
 		}
 
 		setRoom(roomData.room)
-		setGameId(roomData.game_id)
+		setGame(roomData.game)
 
-		if (!roomData.game_id) {
+		if (!roomData.game) {
 			setHistory([])
 			setAvailableMoves([])
 			setBoard(fenToBoard(EMPTY_BOARD_FEN))
 			setSelected(null)
 			setCurrentTurn(roomData.room.red_first ? "red" : "black")
 			setPreviousMove(null)
+			setCheckingPieces([])
 			setCapturedPieces({ red: [], black: [] })
 		}
 	}
 
 	async function loadGameHistory() {
-		if (!room || !gameId) {
+		if (!room || !game) {
 			return
 		}
 
 		if (room.status === 2) {
 			const token = getToken()
-			const history = await getGameHistory(token, gameId)
+			const history = await getGameHistory(token, game.id)
 			const userBlack = joinedUsers.find(user => user.team === "black")
 			const userRed = joinedUsers.find(user => user.team === "red")
 			const historyData = (history.data as HistoryData[]).map(m => {
@@ -211,7 +218,7 @@ const useRoomHook = () => {
 					label: translate("room.actions.start-room"),
 					onClick: handleStartGame,
 					visible: joinedUsers[0].id === currentUserId,
-					enabled: joinedUsers.length >= 1 && room !== null && room.status !== 2
+					enabled: joinedUsers.length >= 1 && room !== null && room.status === 1
 				},
 				{
 					key: "draw",
@@ -258,7 +265,7 @@ const useRoomHook = () => {
 			&& newIsPlayer
 			&& room !== null
 			&& room.status === 2
-			&& Boolean(gameId)
+			&& Boolean(game)
 			&& isMyTurn
 
 		const menus: RoomActionButton[] = [
@@ -308,11 +315,16 @@ const useRoomHook = () => {
 			nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
 		}
 
+		// Highlight enemy pieces giving check, but only against the logged-in player's
+		// general — spectators don't get the check highlight.
+		const nextCheckingPieces = myTeam ? findCheckingPieces(nextBoard, myTeam) : []
+
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
 		setBoard(nextBoard)
 		setSelected(null)
 		setPreviousMove(nextPreviousMove)
+		setCheckingPieces(nextCheckingPieces)
 		setCapturedPieces(nextCapturedPieces)
 	}
 
@@ -322,7 +334,7 @@ const useRoomHook = () => {
 
 	useEffect(() => {
 		loadGameHistory()
-	}, [room, gameId])
+	}, [room, game])
 
 	useEffect(() => {
 		boardRef.current = board
@@ -412,7 +424,7 @@ const useRoomHook = () => {
 		}
 
 		const handleDrawRequest = (data: { roomId: string | number; gameId: string; requestUserId: number }) => {
-			if (data.gameId !== gameId || data.requestUserId === currentUserId) {
+			if (game && (data.gameId !== game.id || data.requestUserId === currentUserId)) {
 				return
 			}
 			setPendingDrawRequest(data)
@@ -425,7 +437,7 @@ const useRoomHook = () => {
 			requestUserId: number
 			responseUserId?: number
 		}) => {
-			if (data.gameId !== gameId) {
+			if (game && data.gameId !== game.id) {
 				return
 			}
 
@@ -453,7 +465,7 @@ const useRoomHook = () => {
 			offDrawRequest(handleDrawRequest)
 			offDrawResponse(handleDrawResponse)
 		}
-	}, [isConnected, roomId, gameId, currentUserId, onDrawRequest, offDrawRequest, onDrawResponse, offDrawResponse])
+	}, [isConnected, roomId, game, currentUserId, onDrawRequest, offDrawRequest, onDrawResponse, offDrawResponse])
 
 	// Socket.io: Play the gong and initialize the board when a game starts in this room.
 	// Fires for everyone in the room (host, opponent, spectators) — the host plays it
@@ -468,10 +480,17 @@ const useRoomHook = () => {
 				return
 			}
 
-			playSound(GAME_START_SOUND_URL)
+			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + GAME_START_SOUND_URL)
 
 			if (data.gameId) {
-				setGameId(data.gameId)
+				const game = {
+					id: data.gameId,
+					room_id: roomId,
+					winner_id: null,
+					status: data.status ?? 2,
+					bot_difficulty: null
+				}
+				setGame(game)
 			}
 			setRoom(currentRoom => currentRoom
 				? { ...currentRoom, status: data.status ?? 2 }
@@ -560,7 +579,7 @@ const useRoomHook = () => {
 		// (handled in the effect above), so all clients react uniformly — including the host.
 		const nextStatus = Number(response.data?.room?.status) || 2
 		if (response.data?.game?.id) {
-			setGameId(response.data.game.id)
+			setGame(response.data.game.id)
 		}
 		setRoom(currentRoom => currentRoom
 			? {
@@ -572,7 +591,7 @@ const useRoomHook = () => {
 	}
 
 	const handleDraw = async () => {
-		if (!gameId) {
+		if (!game) {
 			return
 		}
 
@@ -599,11 +618,11 @@ const useRoomHook = () => {
 		}
 
 		// Emit draw request to opponent
-		emitDrawRequest(roomId, gameId, currentUserId)
+		emitDrawRequest(roomId, game.id, currentUserId)
 	}
 
 	const handleSurrender = async () => {
-		if (!gameId) {
+		if (!game) {
 			return
 		}
 
@@ -630,7 +649,7 @@ const useRoomHook = () => {
 		}
 
 		const token = getToken()
-		const response = await surrenderGame(token, gameId)
+		const response = await surrenderGame(token, game.id)
 		if (!response || !response.success) {
 			await openAlert({
 				title: "popup.alert.title",
@@ -671,7 +690,7 @@ const useRoomHook = () => {
 		// Prevent piece selection while a move is pending
 		if (isMovePending) return
 
-		const clickedTeam = board[id]?.team
+		const clickedTeam = getTeamFromPieceChar(board[id]?.piece)
 		const isAvailableMove = availableMoves.includes(id)
 
 		// A player may only control pieces of their assigned team. Clicking an
@@ -691,7 +710,6 @@ const useRoomHook = () => {
 			gameStateClone[oldIndex] = {
 				id: oldIndex,
 				piece: gameStateClone[oldIndex]!.piece,
-				team: gameStateClone[oldIndex]!.team,
 				animateTo: id
 			}
 
@@ -717,9 +735,9 @@ const useRoomHook = () => {
 			const remoteWasCapture = remoteMoveRef.current?.fen === moveRecord.fen
 				&& remoteMoveRef.current.isCapture
 			if (remoteWasCapture) {
-				playSound(CAPTURE_SOUND_URL)
+				playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + CAPTURE_SOUND_URL)
 			} else {
-				playSound(MOVE_SOUND_URL)
+				playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + MOVE_SOUND_URL)
 			}
 			setHistory(prev => prev.some(h => h._id === moveRecord._id)
 				? prev
@@ -736,13 +754,17 @@ const useRoomHook = () => {
 		const targetId = board[selectedId]!.animateTo
 		if (targetId === undefined) return
 		const oldTarget = board[targetId]
-		const movedTeam = board[selectedId]!.team
+		const movedTeam = getTeamFromPieceChar(board[selectedId]!.piece)
+		if (!movedTeam) {
+			return
+		}
 
 		// Create new board state with the move applied
 		const gameStateClone = applyMove(board, selectedId, targetId)
 
 		// Check if this move puts the moving team's general in check
-		const isMovedTeamGeneralInCheck = isGeneralInCheck(gameStateClone, movedTeam)
+		const checkingPieces = findCheckingPieces(gameStateClone, movedTeam)
+		const isMovedTeamGeneralInCheck = checkingPieces.length > 0
 
 		if (isMovedTeamGeneralInCheck) {
 			// Revert the move if it puts general in check - restore original board state
@@ -750,7 +772,6 @@ const useRoomHook = () => {
 			revertedBoard[selectedId] = {
 				id: selectedId,
 				piece: revertedBoard[selectedId]!.piece,
-				team: revertedBoard[selectedId]!.team,
 			}
 
 			await openAlert({
@@ -766,16 +787,17 @@ const useRoomHook = () => {
 		// Move is valid, commit it
 		const capturedPiecesClone = structuredClone(capturedPieces)
 		let capturedPieceCharacter: PieceCharacter | null = null
-		if (oldTarget && oldTarget.team !== movedTeam) {
-			capturedPieceCharacter = toCapturedFenChar(oldTarget.piece, movedTeam)
+		const oldTargetTeam = getTeamFromPieceChar(oldTarget?.piece)
+		if (oldTarget?.piece && oldTargetTeam !== movedTeam) {
+			capturedPieceCharacter = oldTarget.piece
 			capturedPiecesClone[movedTeam].push(capturedPieceCharacter)
 		}
 
 		const enemyTeam = movedTeam === "red" ? "black" : "red"
 		if (capturedPieceCharacter) {
-			playSound(CAPTURE_SOUND_URL)
+			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + CAPTURE_SOUND_URL)
 		} else {
-			playSound(MOVE_SOUND_URL)
+			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + MOVE_SOUND_URL)
 		}
 		setAvailableMoves([])
 		setCapturedPieces(capturedPiecesClone)
@@ -783,12 +805,14 @@ const useRoomHook = () => {
 		setSelected(null)
 		// The logged-in player's own move is never highlighted
 		setPreviousMove(null)
+		// A legal local move always resolves any check against the moving side.
+		setCheckingPieces([])
 		setCurrentTurn(enemyTeam)
 
-		if (room?.status === 2 && gameId) {
+		if (room?.status === 2 && game) {
 			const newFen = boardToFen(gameStateClone)
 			const body: MovePieceRequest = {
-				gameId,
+				gameId: game.id,
 				newFen,
 				capturePiece: capturedPieceCharacter,
 				team: movedTeam // active team (the one who just moved)
@@ -806,7 +830,7 @@ const useRoomHook = () => {
 			}
 		}
 
-		if (oldTarget?.piece === "general") {
+		if (getPieceFromCharacter(oldTarget?.piece) === "general") {
 			openAlert({
 				message: translate("game.general.captured"),
 				title: translate("popup.alert.title")
@@ -830,18 +854,38 @@ const useRoomHook = () => {
 		callback()
 	}
 
+	const settingsVisible = joinedUsers.length > 0 && joinedUsers[0].id === currentUserId
+
+	const showHideSettings = (open: boolean) => () => setSettingsOpen(open)
+
+	const handleSettingsSaved = (newName: string) => {
+		setRoom(prev => prev ? { ...prev, name: newName } : prev)
+	}
+
+	const roomSettingsDialogValue = {
+		isOpen: settingsOpen,
+		room,
+
+		closeSettings: showHideSettings(false),
+		handleSettingsSaved,
+		openSettings: showHideSettings(true)
+	}
+
 	return {
 		actionMenuItems,
 		availableMoves,
 		board,
 		bottomSideUser,
 		capturedPieces,
+		checkingPieces,
 		currentTurn,
 		isActionMenuOpen,
 		menuAnchorEl,
 		myTeam,
 		previousMove,
+		roomSettingsDialogValue,
 		selected,
+		settingsVisible,
 		topSideUser,
 
 		closeActionMenu,

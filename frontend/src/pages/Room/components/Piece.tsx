@@ -1,16 +1,19 @@
 import classnames from "classnames"
 import styled from "styled-components"
 import { BOARD_COLUMNS } from "common/constant"
+import { getTeamFromPieceChar } from "../common"
 import { PieceItemProps } from "../types"
 
 const isSelected = (props: PieceItemProps) => {
-	return props.$turn === props.$cell.team && props.$selectedId === props.$cell.id
+	const cellTeam = getTeamFromPieceChar(props.$cell.piece)
+	return cellTeam !== null && props.$turn === cellTeam && props.$selectedId === props.$cell.id
 }
 
 const isClickable = (props: PieceItemProps) => {
+	const cellTeam = getTeamFromPieceChar(props.$cell.piece)
 	// A player can only point at their own pieces; available move targets
-	const isOwnPiece = !props.$myTeam || props.$myTeam === props.$cell.team
-	return ((props.$turn === props.$cell.team && isOwnPiece) || props.$available)
+	const isOwnPiece = !props.$myTeam || props.$myTeam === cellTeam
+	return ((props.$turn === cellTeam && isOwnPiece) || props.$available)
 		&& props.$cell.animateTo === undefined
 }
 
@@ -60,13 +63,13 @@ const PieceItem = (props: PieceItemProps) => {
 		$click,
 	} = props
 
-	const cls = classnames("piece", $cell.team)
+	const cls = classnames("piece", getTeamFromPieceChar($cell.piece))
 	const wrapperClass = classnames(
 		"piece-wrapper",
 		`row-${$top}-piece`,
 		`col-${$left}-piece`,
 		// Skip the highlight while selected/available so those outlines keep priority
-		{ "previous-move": $previousMove && !isSelected(props) && !$available }
+		{ "highlight": $previousMove && !isSelected(props) && !$available }
 	)
 	return (
 		<PieceWrapper

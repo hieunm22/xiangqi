@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 backend/src/generated/*
-database/schema.hash
 
 node_modules*
 dist

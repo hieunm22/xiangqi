@@ -10,6 +10,7 @@ import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { TTypography } from "components/TranslationTag"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { CreateRoomDialog } from "./components/CreateRoomDialog"
+import { JoinRoomDialog } from "./components/JoinRoomDialog"
 import { RoomCard } from "./components/RoomCard"
 import { SkeletonRoom } from "./components/SkeletonRoom"
 import { getToken } from "common/helper"
@@ -17,7 +18,10 @@ import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
-import { CreateRoomDialogContext } from "hooks/useAppContext"
+import {
+	CreateRoomDialogContext,
+	JoinRoomDialogContext
+} from "hooks/useAppContext"
 import {
 	DashboardFilter,
 	DashboardRoom,
@@ -42,7 +46,14 @@ const DashboardPage = () => {
 	const [loading, setLoading] = useState(true)
 	const [errorMessage, setErrorMessage] = useState("")
 	const [open, setOpen] = useState(false)
+	const [joinRoomTarget, setJoinRoomTarget] = useState<DashboardRoom | null>(null)
 	const loadingCards = Array.from({ length: 9 }, (_, i) => i)
+
+	const joinRoomDialogValue = {
+		room: joinRoomTarget,
+		openJoinRoom: setJoinRoomTarget,
+		closeJoinRoom: () => setJoinRoomTarget(null)
+	}
 
 
 	useEffect(() => {
@@ -168,6 +179,7 @@ const DashboardPage = () => {
 
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
+			<JoinRoomDialogContext.Provider value={joinRoomDialogValue}>
 			<Box className="dashboard">
 				<Stack spacing={3}>
 					<TTypography
@@ -216,7 +228,9 @@ const DashboardPage = () => {
 				</Stack>
 
 				<CreateRoomDialog />
+				<JoinRoomDialog />
 			</Box>
+			</JoinRoomDialogContext.Provider>
 		</CreateRoomDialogContext.Provider>
 	)
 }

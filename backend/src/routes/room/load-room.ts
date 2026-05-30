@@ -61,7 +61,11 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 						status: 1
 					},
 					select: {
-						id: true
+						id: true,
+						room_id: true,
+						winner_id: true,
+						status: true,
+						bot_difficulty: true
 					},
 					orderBy: {
 						id: "desc"
@@ -97,10 +101,31 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			return
 		}
 
-		let gameId: string | null = null
-		const games = (room as { games?: Array<{ id: string }> }).games ?? []
+		let game: {
+			id: string
+			room_id: number
+			winner_id: number | null
+			status: number
+			bot_difficulty: number | null
+		} | null = null
+		const games =
+			(room as {
+				games?: Array<{
+					id: string
+					room_id: string | number | bigint
+					winner_id: string | number | bigint | null
+					status: number
+					bot_difficulty: number | null
+				}>
+			}).games ?? []
 		if (Number(room.status) === 2 && games.length > 0) {
-			gameId = games[0].id
+			game = {
+				id: games[0].id,
+				room_id: Number(games[0].room_id),
+				winner_id: games[0].winner_id === null ? null : Number(games[0].winner_id),
+				status: games[0].status,
+				bot_difficulty: games[0].bot_difficulty
+			}
 		}
 
 		const { room_users } = room
@@ -131,7 +156,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					updated_at: room.updated_at
 				},
 				users: formattedUsers,
-				game_id: gameId
+				game
 			}
 		})
 	} catch (err) {

@@ -7,8 +7,7 @@ export interface CapturedPieces {
 
 export interface CellProps {
 	id: number
-	piece: Piece
-	team: Team
+	piece: PieceCharacter | null
 	animateTo?: number
 }
 

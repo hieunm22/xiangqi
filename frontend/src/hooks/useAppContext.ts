@@ -1,6 +1,11 @@
 import { createContext, useContext } from "react"
 import { AuthContextProps } from "components/AuthProvider/types"
-import { CreateRoomContextValue, PieceSelectionContextValue } from "pages/Dashboard/types"
+import {
+	CreateRoomContextValue,
+	JoinRoomDialogContextValue,
+	PieceSelectionContextValue
+} from "pages/Dashboard/types"
+import { RoomSettingsDialogContextValue } from "pages/Room/types"
 import { ProfilePopupContextValue } from "components/Layout/types"
 
 export const AuthContext = createContext<AuthContextProps>({
@@ -19,6 +24,18 @@ export const useCreateRoomDialogContext = () => {
 
 	if (!context) {
 		throw new Error("CreateRoomDialog must be used within CreateRoomDialogContext.Provider")
+	}
+
+	return context
+}
+
+export const JoinRoomDialogContext = createContext<JoinRoomDialogContextValue | null>(null)
+
+export const useJoinRoomDialogContext = () => {
+	const context = useContext(JoinRoomDialogContext)
+
+	if (!context) {
+		throw new Error("JoinRoomDialog must be used within JoinRoomDialogContext.Provider")
 	}
 
 	return context
@@ -44,6 +61,18 @@ export const usePopups = () => {
 	const context = useContext(PopupContext)
 	if (!context) {
 		throw new Error("usePopups must be used within PopupProvider")
+	}
+
+	return context
+}
+
+export const RoomSettingsDialogContext = createContext<RoomSettingsDialogContextValue | null>(null)
+
+export const useRoomSettingsDialogContext = () => {
+	const context = useContext(RoomSettingsDialogContext)
+
+	if (!context) {
+		throw new Error("RoomSettingsDialog must be used within RoomSettingsDialogContext.Provider")
 	}
 
 	return context

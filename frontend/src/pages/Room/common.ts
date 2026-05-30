@@ -1,14 +1,27 @@
 import classnames from "classnames"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
-import {
-	fenPieceMap,
-	pieceFenMap
-} from "./constant"
+import { fenPieceMap } from "./constant"
 import { getAvailableMoves } from "common/helper"
 import { NullableCellProps, Piece, PieceCharacter, Team } from "types/GameState"
-import { HistoryData, RoomUser } from "./types"
+import { HistoryData, PieceSideUser, RoomUser } from "./types"
 
 const totalCells = BOARD_COLUMNS * BOARD_ROWS
+
+export function getTeamFromPieceChar(piece?: PieceCharacter | null): Team | null {
+	if (!piece) {
+		return null
+	}
+
+	return piece === piece.toLowerCase() ? "red" : "black"
+}
+
+export function getPieceFromCharacter(piece?: PieceCharacter | null): Piece | null {
+	if (!piece) {
+		return null
+	}
+
+	return fenPieceMap[piece]
+}
 
 // Reuse one Audio element per effect so rapid moves don't spawn an element per call.
 const soundCache: Record<string, HTMLAudioElement> = {}
@@ -44,17 +57,18 @@ export function scanLine(
 	let hasScreen = false
 	while (isValid(cur)) {
 		const cell = gameState[cur]
+		const cellTeam = getTeamFromPieceChar(cell?.piece)
 		if (!cannon) {
-			if (!cell) { result.push(cur); cur += step; continue }
-			if (cell.team !== team) result.push(cur)
+			if (!cell || !cell.piece) { result.push(cur); cur += step; continue }
+			if (cellTeam !== team) result.push(cur)
 			break
 		} else {
 			if (!hasScreen) {
-				if (!cell) { result.push(cur); cur += step; continue }
+				if (!cell || !cell.piece) { result.push(cur); cur += step; continue }
 				hasScreen = true
 			} else {
-				if (!cell) { cur += step; continue }
-				if (cell.team !== team) result.push(cur)
+				if (!cell || !cell.piece) { cur += step; continue }
+				if (cellTeam !== team) result.push(cur)
 				break
 			}
 		}
@@ -69,8 +83,14 @@ export function pushElephantIfValid(gameState: NullableCellProps[], fromId: numb
 	}
 
 	const selectedPiece = gameState[fromId]!
+	const selectedTeam = getTeamFromPieceChar(selectedPiece?.piece)
 	const targetCell = gameState[toId]
-	if (!targetCell || targetCell.team !== selectedPiece.team) {
+	const targetTeam = getTeamFromPieceChar(targetCell?.piece)
+	if (!selectedTeam) {
+		return []
+	}
+
+	if (!targetCell || !targetCell.piece || targetTeam !== selectedTeam) {
 		return [toId]
 	}
 
@@ -101,8 +121,14 @@ export function pushHorseTarget(gameState: NullableCellProps[], selectedId: numb
 	}
 
 	const selectedPiece = gameState[selectedId]!
+	const selectedTeam = getTeamFromPieceChar(selectedPiece?.piece)
 	const targetCell = gameState[index]
-	if (!targetCell || targetCell.team !== selectedPiece.team) {
+	const targetTeam = getTeamFromPieceChar(targetCell?.piece)
+	if (!selectedTeam) {
+		return []
+	}
+
+	if (!targetCell || !targetCell.piece || targetTeam !== selectedTeam) {
 		return [index]
 	}
 	return []
@@ -124,24 +150,26 @@ export function getCapturedPiecesFromHistory(records: HistoryData[]) {
 	}
 }
 
-export function isGeneralInCheck(board: NullableCellProps[], team: Team) {
-	const generalIndex = board.findIndex(cell => cell?.piece === "general" && cell.team === team)
-	if (generalIndex < 0) return false
+export function findCheckingPieces(board: NullableCellProps[], team: Team): number[] {
+	const generalIndex = board.findIndex(cell => getPieceFromCharacter(cell?.piece) === "general"
+		&& getTeamFromPieceChar(cell?.piece) === team)
+	if (generalIndex < 0) return []
 
 	const enemyTeam: Team = team === "red" ? "black" : "red"
+	const checkers: number[] = []
 
 	for (let id = 0; id < board.length; id += 1) {
 		const cell = board[id]
-		if (!cell || cell.team !== enemyTeam) continue
+		if (!cell || getTeamFromPieceChar(cell.piece) !== enemyTeam) continue
 
-		const enemyDirection = cell.team === "red" ? -1 : 1
+		const enemyDirection = enemyTeam === "red" ? -1 : 1
 		const moves = getAvailableMoves(board, id, enemyDirection)
 		if (moves.includes(generalIndex)) {
-			return true
+			checkers.push(id)
 		}
 	}
 
-	return false
+	return checkers
 }
 
 export function fenToBoard(fen: string): NullableCellProps[] {
@@ -162,17 +190,14 @@ export function fenToBoard(fen: string): NullableCellProps[] {
 				continue
 			}
 
-			const piece = fenPieceMap[token.toLowerCase() as PieceCharacter]
-			if (!piece) {
+			if (!(token in fenPieceMap)) {
 				throw new Error(`Invalid FEN piece token: '${token}'`)
 			}
 
 			const id = board.length
-			const isLowerCase = token === token.toLowerCase()
 			board.push({
 				id,
-				piece,
-				team: isLowerCase ? "red" : "black"
+				piece: token as PieceCharacter
 			})
 		}
 
@@ -203,7 +228,7 @@ export function boardToFen(board: NullableCellProps[]): string {
 			const index = row * BOARD_COLUMNS + col
 			const cell = board[index]
 
-			if (!cell) {
+			if (!cell || !cell.piece) {
 				emptyCount += 1
 				continue
 			}
@@ -213,8 +238,7 @@ export function boardToFen(board: NullableCellProps[]): string {
 				emptyCount = 0
 			}
 
-			const token = pieceFenMap[cell.piece]
-			rowFen += cell.team === "red" ? token : token.toUpperCase()
+			rowFen += cell.piece
 		}
 
 		if (emptyCount > 0) {
@@ -245,16 +269,8 @@ export function getMoveDirection(redFirst: boolean, turn: Team): -1 | 1 {
 	return turn === bottomTeam ? -1 : 1
 }
 
-/** FEN character for a captured piece, cased for the team that captured it. */
-export function toCapturedFenChar(piece: Piece, movedTeam: Team): PieceCharacter {
-	const lower = pieceFenMap[piece]
-	return movedTeam === "red"
-		? lower.toUpperCase() as PieceCharacter
-		: lower.toLocaleLowerCase() as PieceCharacter
-}
-
 /** Split the two players into top/bottom seats based on which side moves first. */
-export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): { top: RoomUser; bottom: RoomUser } {
+export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): PieceSideUser {
 	const bottomTeam: Team = redFirst ? "red" : "black"
 	const isFirstUserOnBottom = joinedUsers[0].team === bottomTeam
 	return {
@@ -270,7 +286,6 @@ export function applyMove(board: NullableCellProps[], fromId: number, toId: numb
 	next[toId] = {
 		id: toId,
 		piece: moving.piece,
-		team: moving.team,
 	}
 	next[fromId] = null
 	return next

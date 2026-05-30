@@ -1,5 +1,5 @@
 import classnames from "classnames"
-import { fenPieceMap, pieceSymbolByType } from "../constant"
+import { pieceSymbolByType } from "../constant"
 import { TI } from "components/TranslationTag"
 import { requireImage } from "common/helper"
 import { usePopups } from "hooks/useAppContext"
@@ -72,8 +72,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				</div>
 				<div className={classnames("captured-pieces", `team-${capturedTeam}`)}>
 					{capturedList.map((symbol, index) => {
-						const piece = fenPieceMap[symbol]
-						const symbolText = pieceSymbolByType[capturedTeam][piece]
+						const symbolText = pieceSymbolByType[symbol]
 						return (
 							<span
 								className="captured-piece"
