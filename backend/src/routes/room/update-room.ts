@@ -127,7 +127,12 @@ router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, re
 			success: true,
 			message: "update-room.messages.success",
 			status_code: 200,
-			data: { room: updatedRoom }
+			data: {
+				room: {
+					...updatedRoom,
+					id: Number(updatedRoom.id)
+				}
+			}
 		})
 	} catch (error) {
 		console.error("[update-room] Error:", error)

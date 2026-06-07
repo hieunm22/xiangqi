@@ -1,0 +1,86 @@
+<h1>Mục tiêu của trò chơi</h1>
+<p>Ván cờ được tiến hành giữa 2 đấu thủ, một người cầm Quân Đỏ, một người cầm Quân Đen. Mục đích của mỗi đấu thủ là tìm mọi cách sử dụng các quân trên bàn cờ để <b>chiếu bí Tướng</b> của đối phương, giành thắng lợi.</p>
+
+<h1>Quân cờ</h1>
+<p>Mỗi ván cờ lúc bắt đầu phải có đủ 32 quân, gồm 7 loại chia đều cho mỗi bên gồm 16 quân Đỏ và 16 quân Đen. <b>7 loại quân</b> có ký hiệu và số lượng như sau:</p>
+
+<table border="1" cellpadding="5">
+  <tr>
+    <th>Quân</th>
+    <th>Ký hiệu</th>
+    <th>Số lượng</th>
+  </tr>
+  <tr><td>Tướng</td><td>將 帥</td><td>1</td></tr>
+  <tr><td>Sĩ</td><td>士 仕</td><td>2</td></tr>
+  <tr><td>Tượng</td><td>象 相</td><td>2</td></tr>
+  <tr><td>Mã</td><td>馬 傌</td><td>2</td></tr>
+  <tr><td>Xe</td><td>車 俥</td><td>2</td></tr>
+  <tr><td>Pháo</td><td>砲 炮</td><td>2</td></tr>
+  <tr><td>Tốt</td><td>卒 兵</td><td>5</td></tr>
+</table>
+
+<h1>Đi quân</h1>
+<p>Mỗi nước đi, mỗi bên chỉ được di chuyển quân của mình theo đúng quy định. Quy định di chuyển của các quân như sau:</p>
+
+<p><b>Quân Tướng</b>: Mỗi nước được đi một bước <em>ngang hoặc dọc</em> tùy ý trong cung Tướng.<br>
+Hai tướng của 2 bên không được đối mặt nhau trực tiếp trên cùng một đường thẳng.<br>
+Nếu đối mặt, bắt buộc phải có quân của bất kỳ bên nào đứng che mặt.</p>
+
+<img src="/src/assets/general.png" alt="Hình minh họa quân Tướng" style="width: 200px;">
+
+<p><b>Quân Sĩ</b>: Mỗi nước <em>đi chéo một bước</em> trong cung Tướng.</p>
+
+<img src="/src/assets/advisor.png" alt="Hình minh họa quân Sĩ" style="width: 200px;">
+
+<p><b>Quân Tượng</b>: Mỗi nước <em>đi chéo hai bước</em> tại trận địa bên mình, không được qua sông.<br>
+Nếu ở giữa đường chéo đó có quân khác đứng thì quân Tượng bị cản, không đi được.</p>
+
+<img src="/src/assets/elephant.png" alt="Hình minh họa quân Tượng" style="width: 200px;">
+
+<p><b>Quân Xe</b>: Mỗi nước được <em>đi dọc hoặc đi ngang</em>, không hạn chế số bước đi nếu không có quân khác cản đường.</p>
+
+<img src="/src/assets/chariot.png" alt="Hình minh họa quân Xe" style="width: 200px;">
+
+<p><b>Quân Mã</b>: Đi theo <em>đường chéo hình chữ nhật</em> của hai ô vuông liền nhau. Nếu giao điểm liền kề bước thẳng dọc ngang có một quân khác đứng thì Mã bị cản, không đi được.</p>
+
+<img src="/src/assets/horse.png" alt="Hình minh họa quân Mã" style="width: 200px;">
+
+<p><b>Quân Pháo</b>: Khi không bắt quân, mỗi nước đi ngang, dọc giống Xe. Khi bắt quân đối phương thì bắt buộc phải <em>nhảy qua đầu 1 quân khác</em>. Trên đường đi giữa Pháo và quân bị bắt buộc phải có một quân khác bất kỳ đứng làm "ngòi". Pháo không có ngòi hay có hai ngòi trở lên thì không được quyền bắt quân đối phương.</p>
+
+<img src="/src/assets/cannon.png" alt="Hình minh họa quân Pháo" style="width: 200px;">
+
+<p><b>Quân Tốt</b>: Mỗi nước đi một bước. Khi chưa qua sông, Tốt chỉ được tiến. Khi Tốt đã qua sông được quyền đi tiến và đi ngang, không được phép lùi.</p>
+
+  <img src="/src/assets/soldier.png" alt="Hình minh họa quân Tốt" style="width: 200px;">
+<br />
+<h1>Bắt quân</h1>
+<p>Khi một quân đi tới <em>một giao điểm khác</em> đã có quân đối phương đứng thì được quyền bắt quân đó, đồng thời chiếm giữ vị trí quân bị bắt.</p>
+
+<p><em>Không được bắt quân bên mình</em>. Được phép cho đối phương bắt đầu quân mình chủ động hiến mình cho đối phương, <em>trừ Tướng</em>.</p>
+
+<p>Quân bị bắt phải bị loại và bị nhấc ra khỏi bàn cờ. Không được đuổi 1 quân <em>quá 6 nước cờ liên tiếp</em>.</p>
+
+
+<h1>Chiếu tướng</h1>
+<p>Quân của một bên đi một nước uy hiếp để nước tiếp theo chính quân đó hoặc quân khác bắt được Tướng của đối phương thì gọi là <em>nước Chiếu Tướng</em>. Bên bị chiếu Tướng phải tìm cách chống đỡ ứng phó, tránh nước chiếu tướng, nếu không sẽ bị thua ván cờ.</p>
+
+<p><em>Tướng bị chiếu từ cả bốn hướng</em> (bị chiếu cả từ phía sau) có thể ứng phó với nước chiếu tướng bằng một trong các cách sau:</p>
+
+<ul>
+  <li>Di chuyển tướng sang vị trí khác để tránh nước chiếu</li>
+  <li>Bắt quân đang chiếu</li>
+  <li>Dùng quân khác cản quân chiếu, đi quân che đỡ cho tướng</li>
+  <li>Không được chiếu tướng quá 6 nước cờ liên tiếp</li>
+</ul>
+
+<h1>Kết quả</h1>
+<p>Khi một bên <em>chiếu Tướng</em> mà bên còn lại không thể làm gì để <em>bảo vệ Tướng</em> thì được gọi là <em>Chiếu Hết</em>, bên thực hiện được <em>Chiếu Hết</em> sẽ giành chiến thắng.</p>
+
+<p>Khi hết thời gian một nước đi (ví dụ: 90s) mà vẫn chưa di chuyển quân thì bên còn lại sẽ được <em>xử Thắng</em>.</p>
+
+<p>Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <em>xử Thắng</em>.</p>
+
+<p>Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được xử Hòa.<br>
+Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <em>xử Hòa</em>.</p>
+
+<p>Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <em>xử Hòa</em>.</p>

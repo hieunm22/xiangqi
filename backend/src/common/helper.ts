@@ -17,3 +17,10 @@ export function hashArrayOrderInvariant(arr: number[]): string {
 		.update(arrStr, "utf8")
 		.digest("hex")
 }
+
+export function getAvatarUrl(userId: number | bigint, avatarSeq: number): string {
+	if (avatarSeq > 0) {
+		return `/images/${userId}_${avatarSeq}.jpg`
+	}
+	return `/images/${userId}.jpg`
+}

@@ -154,42 +154,58 @@ export function getAvailableMoves(
 			let newIndex = -1
 			// Up leg
 			if (selectedRow > 0 && !gameState[toIndex(selectedRow - 1, selectedCol)]) {
-				newIndex = (selectedRow - 2) * BOARD_COLUMNS + selectedCol - 1
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
-				newIndex = (selectedRow - 2) * BOARD_COLUMNS + selectedCol + 1
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
+				if (selectedRow >= 2 && selectedCol > 0) {
+					newIndex = (selectedRow - 2) * BOARD_COLUMNS + selectedCol - 1
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
+				if (selectedRow >= 2 && selectedCol < BOARD_COLUMNS - 1) {
+					newIndex = (selectedRow - 2) * BOARD_COLUMNS + selectedCol + 1
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
 			}
 
 			// Down leg
 			if (selectedRow < BOARD_ROWS - 1 && !gameState[toIndex(selectedRow + 1, selectedCol)]) {
-				newIndex = (selectedRow + 2) * BOARD_COLUMNS + selectedCol - 1
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
-				newIndex = (selectedRow + 2) * BOARD_COLUMNS + selectedCol + 1
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
+				if (selectedRow < BOARD_ROWS - 2 && selectedCol > 0) {
+					newIndex = (selectedRow + 2) * BOARD_COLUMNS + selectedCol - 1
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
+				if (selectedRow < BOARD_ROWS - 2 && selectedCol < BOARD_COLUMNS - 1) {
+					newIndex = (selectedRow + 2) * BOARD_COLUMNS + selectedCol + 1
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
 			}
 
 			// Left leg
 			if (selectedCol > 0 && !gameState[toIndex(selectedRow, selectedCol - 1)]) {
-				newIndex = (selectedRow - 1) * BOARD_COLUMNS + selectedCol - 2
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
-				newIndex = (selectedRow + 1) * BOARD_COLUMNS + selectedCol - 2
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
+				if (selectedCol >= 2 && selectedRow > 0) {
+					newIndex = (selectedRow - 1) * BOARD_COLUMNS + selectedCol - 2
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
+				if (selectedCol >= 2 && selectedRow < BOARD_ROWS - 1) {
+					newIndex = (selectedRow + 1) * BOARD_COLUMNS + selectedCol - 2
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
 			}
 
 			// Right leg
 			if (selectedCol < BOARD_COLUMNS - 1 && !gameState[toIndex(selectedRow, selectedCol + 1)]) {
-				newIndex = (selectedRow - 1) * BOARD_COLUMNS + selectedCol + 2
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
-				newIndex = (selectedRow + 1) * BOARD_COLUMNS + selectedCol + 2
-				push = pushHorseTarget(gameState, selectedId, newIndex)
-				moves.push(...push)
+				if (selectedCol < BOARD_COLUMNS - 2 && selectedRow > 0) {
+					newIndex = (selectedRow - 1) * BOARD_COLUMNS + selectedCol + 2
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
+				if (selectedCol < BOARD_COLUMNS - 2 && selectedRow < BOARD_ROWS - 1) {
+					newIndex = (selectedRow + 1) * BOARD_COLUMNS + selectedCol + 2
+					push = pushHorseTarget(gameState, selectedId, newIndex)
+					moves.push(...push)
+				}
 			}
 
 			break

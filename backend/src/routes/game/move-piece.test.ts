@@ -19,6 +19,8 @@ const sortMock = vi.fn()
 const findMock = vi.fn()
 const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
+const gameHistoryCreateMock = vi.fn()
+const gameFindUniqueMock = vi.fn()
 
 const PATH = "/api/game/move-piece"
 
@@ -30,6 +32,17 @@ vi.mock("../../common/redis", () => ({
 
 vi.mock("../../common/mongodb", () => ({
 	getGameHistoryCollection: getGameHistoryCollectionMock
+}))
+
+vi.mock("prisma", () => ({
+	default: {
+		gameHistory: {
+			create: gameHistoryCreateMock
+		},
+		game: {
+			findUnique: gameFindUniqueMock
+		}
+	}
 }))
 
 describe("POST /api/game/move-piece", () => {

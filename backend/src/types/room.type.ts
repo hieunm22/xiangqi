@@ -19,6 +19,10 @@ export interface JoinRoomRequest extends RoomRequestBase { }
 
 export interface LeaveRoomRequest extends RoomRequestBase { }
 
+export interface KickUserRequest extends RoomRequestBase {
+	userId: number
+}
+
 export interface SetRoomStatusRequest extends RoomRequestBase {
 	status: RoomStatus
 }

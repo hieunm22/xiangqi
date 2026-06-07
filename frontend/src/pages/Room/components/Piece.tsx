@@ -10,9 +10,11 @@ const isSelected = (props: PieceItemProps) => {
 }
 
 const isClickable = (props: PieceItemProps) => {
+	// Spectators (no assigned team) can't control anything. Seated players can
+	// only point at their own pieces, plus any available move target.
+	if (!props.$myTeam) return false
 	const cellTeam = getTeamFromPieceChar(props.$cell.piece)
-	// A player can only point at their own pieces; available move targets
-	const isOwnPiece = !props.$myTeam || props.$myTeam === cellTeam
+	const isOwnPiece = props.$myTeam === cellTeam
 	return ((props.$turn === cellTeam && isOwnPiece) || props.$available)
 		&& props.$cell.animateTo === undefined
 }

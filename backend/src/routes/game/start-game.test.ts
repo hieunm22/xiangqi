@@ -11,6 +11,8 @@ const gameCreateMock = vi.fn()
 const gameHistoryInsertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
+const roomUserFindManyMock = vi.fn()
+const gameUserCreateMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -109,6 +111,11 @@ describe("POST /api/room/start", () => {
 			room_id: BigInt(101),
 			bot_difficulty: null
 		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: BigInt(11) },
+			{ user_id: BigInt(12) }
+		])
+		gameUserCreateMock.mockResolvedValue({})
 		transactionMock.mockImplementation(async callback =>
 			callback({
 				room: {
@@ -116,6 +123,12 @@ describe("POST /api/room/start", () => {
 				},
 				game: {
 					create: gameCreateMock
+				},
+				roomUser: {
+					findMany: roomUserFindManyMock
+				},
+				gameUser: {
+					create: gameUserCreateMock
 				}
 			})
 		)
@@ -134,7 +147,8 @@ describe("POST /api/room/start", () => {
 				game: {
 					id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
 					status: 1,
-					room_id: 101
+					room_id: 101,
+					bot_difficulty: null
 				},
 				room: {
 					id: 101,
@@ -145,7 +159,7 @@ describe("POST /api/room/start", () => {
 
 		expect(roomUpdateMock).toHaveBeenCalledWith({
 			where: { id: BigInt(101) },
-			data: { status: 2 },
+			data: { updated_at: expect.any(Date), status: 2 },
 			select: {
 				id: true,
 				status: true,
@@ -171,6 +185,18 @@ describe("POST /api/room/start", () => {
 			fen: INITIAL_FEN_BLACK_TOP,
 			time_stamp: expect.any(Number)
 		})
+
+		expect(gameUserCreateMock).toHaveBeenCalledTimes(2)
+		expect(gameUserCreateMock).toHaveBeenNthCalledWith(1, {
+			data: {
+				game_id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
+				user_id: BigInt(11)
+			}
+		})
+		expect(roomUserFindManyMock).toHaveBeenCalledWith({
+			where: { room_id: BigInt(101), team: { not: null } },
+			select: { user_id: true }
+		})
 	})
 
 	it("stores lowercase fen when red_first is false", async () => {
@@ -194,6 +220,11 @@ describe("POST /api/room/start", () => {
 			room_id: BigInt(102),
 			bot_difficulty: null
 		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: BigInt(13) },
+			{ user_id: BigInt(14) }
+		])
+		gameUserCreateMock.mockResolvedValue({})
 		transactionMock.mockImplementation(async callback =>
 			callback({
 				room: {
@@ -201,6 +232,12 @@ describe("POST /api/room/start", () => {
 				},
 				game: {
 					create: gameCreateMock
+				},
+				roomUser: {
+					findMany: roomUserFindManyMock
+				},
+				gameUser: {
+					create: gameUserCreateMock
 				}
 			})
 		)
@@ -216,6 +253,25 @@ describe("POST /api/room/start", () => {
 			team: "black",
 			fen: INITIAL_FEN_BLACK_BOTTOM,
 			time_stamp: expect.any(Number)
+		})
+
+		expect(gameUserCreateMock).toHaveBeenCalledTimes(2)
+		expect(gameUserCreateMock).toHaveBeenNthCalledWith(1, {
+			data: {
+				game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
+				user_id: BigInt(13)
+			}
+		})
+		expect(gameUserCreateMock).toHaveBeenNthCalledWith(2, {
+			data: {
+				game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
+				user_id: BigInt(14)
+			}
+		})
+
+		expect(roomUserFindManyMock).toHaveBeenCalledWith({
+			where: { room_id: BigInt(102), team: { not: null } },
+			select: { user_id: true }
 		})
 	})
 

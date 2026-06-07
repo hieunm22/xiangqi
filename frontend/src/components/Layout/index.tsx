@@ -25,8 +25,11 @@ import {
 	LS_DARKMODE,
 	LS_TOKEN_KEY
 } from "common/constant"
+import { PopupState } from "./enums"
+import { GameHistoryPopup } from "./components/GameHistoryPopup"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { PopupProvider, useAuth } from "hooks/useAppContext"
+import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SettingsPopup } from "./components/SettingsPopup"
 import {
@@ -37,7 +40,7 @@ import {
 import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
-import { setDarkMode } from "toolkit/slice/home"
+import { setDarkMode, setPopup } from "toolkit/slice/home"
 import { translate } from "locales/translate"
 import { Users } from "types/Entities"
 import "./Layout.scss"
@@ -48,8 +51,6 @@ const miniWidth = 60
 export default function Layout() {
 	const [drawerOpen, setDrawerOpen] = useState(true)
 	const [mobileOpen, setMobileOpen] = useState(false)
-	const [openSettings, setOpenSettings] = useState(false)
-	const [openProfilePopup, setOpenProfilePopup] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 	const [showDebugMenu, setShowDebugMenu] = useState(false)
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null)
@@ -88,12 +89,9 @@ export default function Layout() {
 
 			const user = await getUserById(userId)
 			if (!user?.data) return
-			const { id, display_name, avatar_seq } = user.data
-			const avatarPath = avatar_seq === 0
-				? `/images/${id}.jpg`
-				: `/images/${id}_${avatar_seq}.jpg`
+			const { avatar_url, display_name } = user.data
+			const avatar = requireImage(avatar_url)
 
-			const avatar = requireImage(avatarPath)
 			setUserImage(avatar)
 			setUserDisplayName(display_name)
 		}
@@ -121,7 +119,13 @@ export default function Layout() {
 
 	const handleShowSettings = () => {
 		(document.activeElement as HTMLElement)?.blur()
-		setOpenSettings(true)
+		dispatch(setPopup(PopupState.SETTINGS))
+		setMobileOpen(false)
+	}
+
+	const handleShowGuide = () => {
+		(document.activeElement as HTMLElement)?.blur()
+		dispatch(setPopup(PopupState.GUIDE))
 		setMobileOpen(false)
 	}
 
@@ -160,7 +164,7 @@ export default function Layout() {
 		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
-		setOpenProfilePopup(true)
+		dispatch(setPopup(PopupState.PROFILE))
 		await loadProfileUser(currentUserId)
 	}
 
@@ -190,10 +194,13 @@ export default function Layout() {
 		navigate(HOME_PATH)
 	}
 
+	const isInRoom = location.pathname.startsWith("/room/")
+
 	const menuItems = [
 		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
+		{ text: "menu.guide", icon: "fa-book", click: handleShowGuide },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		{ text: "Restart", icon: "fa-rotate", click: handleRestart },
+		...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -367,14 +374,7 @@ export default function Layout() {
 			</Box>
 
 			{/* popups */}
-			<PopupProvider value={{
-				openProfilePopup,
-				openSettings,
-				profileUser,
-				setOpenProfilePopup,
-				setOpenSettings,
-				setProfileUser
-			}}>
+			<PopupProvider value={{ profileUser, setProfileUser }}>
 				<Box
 					component="main"
 					sx={{
@@ -391,6 +391,8 @@ export default function Layout() {
 					{isMobile && <Toolbar />}
 					<Outlet />
 
+					<GameHistoryPopup />
+					<GuidePopup />
 					<ProfilePopup />
 					<SettingsPopup />
 				</Box>

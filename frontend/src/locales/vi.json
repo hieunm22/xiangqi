@@ -3,6 +3,7 @@
 		"input": {
 			"is-required": "bắt buộc nhập"
 		},
+		"loading": "Đang tải...",
 		"password": {
 			"policy-1": "Phải chứa một ký tự chữ in thường",
 			"policy-2": "Phải chứa một ký tự chữ in hoa",
@@ -16,13 +17,16 @@
 			"title": "Trang chủ"
 		},
 		"history": {
-			"title": "Lịch sử"
+			"title": "Lịch sử",
+			"no-games": "Chưa có trận đấu nào hoàn thành",
+			"point-label": "Điểm:"
 		},
 		"about": {
 			"title": "Thông tin"
 		}
 	},
 	"menu": {
+		"guide": "Luật chơi",
 		"setting": {
 			"button": "Cài đặt"
 		},
@@ -67,6 +71,7 @@
 		"header": "Cài đặt",
 		"language": "Ngôn ngữ",
 		"dark-mode": "Chế độ tối",
+		"debug-mode": "Chế độ test",
 		"close": "Đóng",
 		"change-password": "Đổi mật khẩu"
 	},
@@ -85,14 +90,29 @@
 			"title": "Lượt đánh"
 		}
 	},
+	"game": {
+		"general": {
+			"captured": "Tướng đã bị bắt. Game kết thúc",
+			"in-check": "Tướng của bạn đang bị chiếu"
+		}
+	},
 	"room": {
+		"bot-difficulty": {
+			"title": "Chọn độ khó của Bot",
+			"beginner": "Mới bắt đầu",
+			"amateur": "Nghiệp dư",
+			"intermediate": "Trung bình",
+			"advanced": "Nâng cao",
+			"master": "Lão luyện"
+		},
 		"actions": {
 			"start-room": "Bắt đầu chơi",
+			"undo": "Hoán tác",
 			"surrender": "Đầu hàng",
+			"draw": "Hòa",
 			"back-home": "Thoát phòng",
 			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
 			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
-			"draw": "Hòa",
 			"confirm-draw": "Bạn có chắc chắn muốn hòa không?",
 			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"accept-draw": "Chấp nhận",
@@ -100,18 +120,15 @@
 			"draw-accepted": "Đối phương đã đồng ý hòa",
 			"draw-rejected": "Đối phương từ chối hòa",
 			"draw-completed": "Hòa cờ thành công",
+			"opponent-surrendered": "Đối phương đã đầu hàng! Bạn thắng!",
+			"kick": "Kick",
 			"settings": "Cài đặt phòng"
 		},
 		"settings": {
 			"title": "Cài đặt phòng",
 			"room-name": "Tên phòng",
+			"players": "Người xem",
 			"save": "Lưu"
-		}
-	},
-	"game": {
-		"general": {
-			"captured": "Tướng đã bị bắt. Game kết thúc",
-			"in-check": "Tướng của bạn đang bị chiếu"
 		}
 	},
 	"login": {
@@ -280,6 +297,20 @@
 			"success": "Tham gia phòng thành công"
 		}
 	},
+	"kick-user": {
+		"messages": {
+			"cannot-kick-self": "Bạn không thể kick chính mình",
+			"forbidden": "Chỉ chủ phòng mới có thể kick người dùng",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
+			"invalid-user-id": "Trường 'userId' là bắt buộc và phải là số nguyên dương",
+			"room-not-found": "Không tìm thấy phòng",
+			"room-not-waiting": "Chỉ có thể kick người dùng khi phòng đang ở trạng thái chờ",
+			"success": "Người dùng đã bị kick",
+			"user-not-in-room": "Người dùng không trong phòng này",
+			"you-were-kicked": "Bạn đã bị chủ phòng đưa ra khỏi phòng"
+		}
+	},
 	"leave-room": {
 		"messages": {
 			"internal-server-error": "Lỗi máy chủ nội bộ",
@@ -352,9 +383,111 @@
 			"success": "Đã đầu hàng"
 		}
 	},
+	"undo": {
+		"messages": {
+			"invalid-game-id": "ID trò chơi không hợp lệ",
+			"unauthorized": "Không được phép truy cập",
+			"game-not-found": "Không tìm thấy trò chơi",
+			"not-in-game": "Bạn không phải là người chơi trong trò chơi này",
+			"not-in-room": "Bạn không trong phòng này",
+			"spectator-cannot-undo": "Người xem không thể hoàn tác nước đi",
+			"no-moves": "Không có nước đi để hoàn tác",
+			"delete-failed": "Không thể hoàn tác nước đi",
+			"undo-limit-exceeded": "Đã đạt tối đa 3 lần hoàn tác trong trò chơi",
+			"success": "Hoàn tác nước đi thành công",
+			"internal-server-error": "Lỗi máy chủ nội bộ"
+		}
+	},
+	"player-history": {
+		"messages": {
+			"invalid-user-id": "ID người dùng không hợp lệ",
+			"success": "Lấy lịch sử trò chơi thành công"
+		}
+	},
 	"validate-token": {
 		"messages": {
 			"success": "Token hợp lệ"
+		}
+	},
+	"guide": {
+		"section": {
+			"objective": "Mục tiêu của trò chơi",
+			"pieces": "Quân cờ",
+			"moving-pieces": "Đi quân",
+			"capturing": "Bắt quân",
+			"check": "Chiếu tướng",
+			"result": "Kết quả"
+		},
+		"table": {
+			"piece": "Quân",
+			"symbol": "Ký hiệu",
+			"quantity": "Số lượng"
+		},
+		"objective": {
+			"paragraph1": "Ván cờ được tiến hành giữa 2 đấu thủ, một người cầm Quân Đỏ, một người cầm Quân Đen. Mục đích của mỗi đấu thủ là tìm mọi cách sử dụng các quân trên bàn cờ để <b>chiếu bí Tướng</b> của đối phương, giành thắng lợi."
+		},
+		"pieces": {
+			"paragraph1": "Mỗi ván cờ lúc bắt đầu phải có đủ 32 quân, gồm 7 loại chia đều cho mỗi bên gồm 16 quân Đỏ và 16 quân Đen. <b>7 loại quân</b> có ký hiệu và số lượng như sau:"
+		},
+		"piece": {
+			"general": "Tướng",
+			"advisor": "Sĩ",
+			"elephant": "Tượng",
+			"chariot": "Xe",
+			"horse": "Mã",
+			"cannon": "Pháo",
+			"soldier": "Tốt"
+		},
+		"moving-pieces": {
+			"paragraph1": "Mỗi nước đi, mỗi bên chỉ được di chuyển quân của mình theo đúng quy định. Quy định di chuyển của các quân như sau:"
+		},
+		"general": {
+			"paragraph1": "Tướng",
+			"paragraph2": "Mỗi nước được đi một bước <b>ngang hoặc dọc</b> tùy ý trong cung Tướng. Hai tướng của 2 bên không được đối mặt nhau trực tiếp trên cùng một đường thẳng. Nếu đối mặt, bắt buộc phải có quân của bất kỳ bên nào đứng che mặt."
+		},
+		"advisor": {
+			"paragraph1": "Sĩ",
+			"paragraph2": "Mỗi nước <b>đi chéo một bước</b> trong cung Tướng."
+		},
+		"elephant": {
+			"paragraph1": "Tượng",
+			"paragraph2": "Mỗi nước <b>đi chéo hai bước</b> tại trận địa bên mình, không được qua sông. Nếu ở giữa đường chéo đó có quân khác đứng thì quân Tượng bị cản, không đi được."
+		},
+		"chariot": {
+			"paragraph1": "Xe",
+			"paragraph2": "Mỗi nước được <b>đi dọc hoặc đi ngang</b>, không hạn chế số bước đi nếu không có quân khác cản đường."
+		},
+		"horse": {
+			"paragraph1": "Mã",
+			"paragraph2": "Đi theo <b>đường chéo hình chữ nhật</b> của hai ô vuông liền nhau. Nếu giao điểm liền kề bước thẳng dọc ngang có một quân khác đứng thì Mã bị cản, không đi được."
+		},
+		"cannon": {
+			"paragraph1": "Pháo",
+			"paragraph2": "Đi ngang hoặc dọc giống Xe khi không bắt quân. Để bắt quân, nó phải <b>nhảy qua đúng một quân khác</b> để đến mục tiêu. Nếu không có hoặc có nhiều hơn một quân giữa Pháo và mục tiêu, nó không thể bắt quân."
+		},
+		"soldier": {
+			"paragraph1": "Tốt",
+			"paragraph2": "Mỗi nước đi <b>một bước</b>. Khi chưa qua sông, Tốt chỉ được tiến. Khi Tốt đã qua sông được quyền <b>đi tiến và đi ngang</b>, không được phép lùi."
+		},
+		"capturing": {
+			"paragraph1": "Khi một quân đi tới một giao điểm khác đã có quân đối phương đứng thì được quyền <b>bắt quân đó</b>, đồng thời chiếm giữ vị trí quân bị bắt.",
+			"paragraph2": "Không được bắt quân bên mình. Được phép cho đối phương bắt đầu quân mình chủ động hiến mình cho đối phương, <b>trừ Tướng</b>.",
+			"paragraph3": "Quân bị bắt phải bị loại và bị nhấc ra khỏi bàn cờ. <b>Không được đuổi 1 quân quá 6 nước cờ liên tiếp</b>."
+		},
+		"check": {
+			"paragraph1": " otherwise, that side loses.",
+			"paragraph2": "Tướng bị chiếu từ cả bốn hướng (bị chiếu cả từ phía sau) có thể ứng phó với nước chiếu tướng bằng một trong các cách sau:",
+			"paragraph3": "Di chuyển tướng sang vị trí khác để tránh nước chiếu",
+			"paragraph4": "Bắt quân đang chiếu",
+			"paragraph5": "Dùng quân khác cản quân chiếu, đi quân che đỡ cho tướng",
+			"paragraph6": "Không được chiếu tướng quá 6 nước cờ liên tiếp"
+		},
+		"result": {
+			"paragraph1": "Khi một bên chiếu Tướng mà bên còn lại không thể làm gì để bảo vệ Tướng thì được gọi là <b>Chiếu Hết</b>, bên thực hiện được Chiếu Hết sẽ giành chiến thắng.",
+			"paragraph2": "Khi hết thời gian một nước đi (ví dụ: 90s) mà vẫn chưa di chuyển quân thì bên còn lại sẽ được <b>xử Thắng</b>.",
+			"paragraph3": "Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.",
+			"paragraph4": "Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.",
+			"paragraph5": "Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>."
 		}
 	}
 }

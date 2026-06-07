@@ -39,7 +39,7 @@ export class UciEngine {
 		await this.send("isready", line => line === "readyok")
 	}
 
-	async findBestMove(standardFen: string, config: DifficultyConfig): Promise<string> {
+	async findBestMove(standardFen: string, config: DifficultyConfig): Promise<string | null> {
 		if (!this.process) {
 			throw new Error("UciEngine.init() must be called before findBestMove")
 		}
@@ -56,7 +56,7 @@ export class UciEngine {
 		const parts = bestMoveLine.trim().split(/\s+/)
 		const move = parts[1]
 		if (!move || move === "(none)" || move === "0000") {
-			throw new Error(`Engine returned no move: '${bestMoveLine}'`)
+			return null
 		}
 		return move
 	}

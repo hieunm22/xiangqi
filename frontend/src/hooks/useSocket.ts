@@ -173,6 +173,28 @@ export function useSocket() {
 		}
 	}, [])
 
+	const emitSurrender = useCallback((roomId: string | number, gameId: string, surrenderingUserId: number) => {
+		if (socketRef.current) {
+			socketRef.current.emit("surrender", { roomId, gameId, surrenderingUserId })
+		} else {
+			console.warn("[Socket.io] Socket not initialized for surrender emit")
+		}
+	}, [])
+
+	const onSurrender = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("surrender", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for surrender listener")
+		}
+	}, [])
+
+	const offSurrender = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("surrender", callback)
+		}
+	}, [])
+
 	const onRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.on("room-users-updated", callback)
@@ -184,6 +206,20 @@ export function useSocket() {
 	const offRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.off("room-users-updated", callback)
+		}
+	}, [])
+
+	const onUserKicked = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("user-kicked", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for user-kicked listener")
+		}
+	}, [])
+
+	const offUserKicked = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("user-kicked", callback)
 		}
 	}, [])
 
@@ -249,6 +285,7 @@ export function useSocket() {
 		emitDrawRequest,
 		emitDrawResponse,
 		emitPlayerMove,
+		emitSurrender,
 		joinRoom,
 		leaveRoom,
 		offDashboardRoomUsersUpdated,
@@ -259,6 +296,8 @@ export function useSocket() {
 		offRoomCreated,
 		offRoomDeleted,
 		offRoomUsersUpdated,
+		offSurrender,
+		offUserKicked,
 		onDrawRequest,
 		onDrawResponse,
 		onDashboardRoomUsersUpdated,
@@ -267,5 +306,7 @@ export function useSocket() {
 		onRoomCreated,
 		onRoomDeleted,
 		onRoomUsersUpdated,
+		onSurrender,
+		onUserKicked,
 	}
 }

@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { getAvatarUrl } from "common/helper"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -134,10 +135,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			display_name: ru.users.display_name,
 			team: ru.team,
 			joined_at: ru.joined_at,
-			avatar_url:
-				Number(ru.users.avatar_seq) === 0
-					? `/images/${Number(ru.users.id)}.jpg`
-					: `/images/${Number(ru.users.id)}_${Number(ru.users.avatar_seq)}.jpg`
+			avatar_url: getAvatarUrl(ru.users.id, ru.users.avatar_seq)
 		}))
 
 		res.status(200).json({

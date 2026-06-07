@@ -62,7 +62,6 @@ export const JoinRoomDialog = () => {
 	}
 
 	const handleDialogClose = (_: React.SyntheticEvent, reason: string) => {
-		console.log(reason)
 		if (reason === "escapeKeyDown") {
 			closeJoinRoom()
 		}
@@ -85,7 +84,7 @@ export const JoinRoomDialog = () => {
 						direction="row"
 						alignItems="center"
 						justifyContent="space-evenly"
-						gap={3}
+						gap={8}
 					>
 						<SeatAvatar user={players[0]} isHost={Boolean(players[0])} />
 						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
@@ -123,8 +122,16 @@ export const JoinRoomDialog = () => {
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogActions sx={{ px: 3, pb: 2 }}>
-				<TButton variant="contained" onClick={handleJoin} value="dashboard.popup.join-room" />
-				<TButton onClick={closeJoinRoom} value="popup.confirm.cancel" />
+				<TButton
+					variant="contained"
+					onClick={handleJoin}
+					value="dashboard.popup.join-room"
+				/>
+				<TButton
+					variant="outlined"
+					onClick={closeJoinRoom}
+					value="popup.confirm.cancel"
+				/>
 			</DialogActions>
 		</Dialog>
 	)

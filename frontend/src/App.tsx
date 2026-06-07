@@ -9,17 +9,18 @@ import {
 import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
 import { AuthProvider } from "components/AuthProvider"
+import BotDifficultyProvider from "components/BotDifficultyProvider"
 import ConfirmProvider from "components/ConfirmProvider"
+import Dashboard from "pages/Dashboard"
 import Layout from "components/Layout"
 import LayoutUnAuth from "components/LayoutUnAuth"
-import { ProtectedRoute } from "components/ProtectedRoute"
-import Dashboard from "pages/Dashboard"
-import RoomPage from "pages/Room"
 import LoginPage from "pages/Login"
 import LostPasswordPage from "pages/LostPassword"
-import ResetPasswordPage from "pages/ResetPassword"
 import NotFoundPage from "pages/NotFound"
+import { ProtectedRoute } from "components/ProtectedRoute"
 import RegisterPage from "pages/Register"
+import ResetPasswordPage from "pages/ResetPassword"
+import RoomPage from "pages/Room"
 import useToolkit from "hooks/useToolkit"
 import "App.scss"
 import "styles/responsive.scss"
@@ -75,7 +76,9 @@ function AppWithTheme() {
 	const RoomPageElement = (
 		<ConfirmProvider>
 			<AlertProvider>
-				<RoomPage />
+				<BotDifficultyProvider>
+					<RoomPage />
+				</BotDifficultyProvider>
 			</AlertProvider>
 		</ConfirmProvider>
 	)

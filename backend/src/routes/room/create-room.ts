@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID } from "common/bot-engine"
+import { getAvatarUrl } from "common/helper"
 import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { CreateRoomRequest } from "types/room.type"
@@ -113,7 +114,11 @@ router.post(
 		}
 
 		// Validate bet amount
-		if (betAmount === undefined || betAmount === null || !ACCEPTABLE_BET_AMOUNTS.includes(betAmount)) {
+		const isValidBetAmount = pveMode
+			? betAmount === 0
+			: ACCEPTABLE_BET_AMOUNTS.includes(betAmount) || betAmount === 0
+
+		if (!isValidBetAmount) {
 			res.status(400).json({
 				success: false,
 				message: "create-room.messages.invalid-bet-amount",
@@ -192,10 +197,7 @@ router.post(
 					...gu.users,
 					id: gu.users.id.toString(),
 					team: gu.team,
-					avatar_url:
-						gu.users.avatar_seq === 0
-							? `/images/${gu.users.id.toString()}.jpg`
-							: `/images/${gu.users.id.toString()}_${gu.users.avatar_seq}.jpg`
+					avatar_url: getAvatarUrl(gu.users.id, gu.users.avatar_seq)
 				})),
 				room_users: undefined
 			}
@@ -213,10 +215,7 @@ router.post(
 					id: Number(gu.users.id),
 					display_name: gu.users.display_name,
 					avatar_seq: Number(gu.users.avatar_seq),
-					avatar_url:
-						Number(gu.users.avatar_seq) === 0
-							? `/images/${Number(gu.users.id)}.jpg`
-							: `/images/${Number(gu.users.id)}_${Number(gu.users.avatar_seq)}.jpg`
+					avatar_url: getAvatarUrl(gu.users.id, gu.users.avatar_seq)
 				}))
 			}
 			emitRoomCreated(dashboardRoom)

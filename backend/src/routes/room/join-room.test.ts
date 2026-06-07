@@ -109,7 +109,7 @@ describe("POST /api/room/join", () => {
 	it("returns 201 and refreshes join time when user already in room", async () => {
 		const accessToken = buildAccessToken(41, "session-join-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 41 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false })
 		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
 		roomUserFindUniqueMock.mockResolvedValue({ room_id: BigInt(101), user_id: BigInt(41) })
 		roomUserUpdateMock.mockResolvedValue({})
@@ -161,10 +161,52 @@ describe("POST /api/room/join", () => {
 		expect(roomUserCreateMock).not.toHaveBeenCalled()
 	})
 
-	it("returns 201 and assigns opposite team for second user", async () => {
+	it("assigns red team when no team is assigned yet in PVP room", async () => {
 		const accessToken = buildAccessToken(42, "session-join-4")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 42 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		roomUserFindManyMock
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{
+					joined_at: new Date("2026-05-12T00:01:00.000Z"),
+					team: "red",
+					users: {
+						id: BigInt(42),
+						display_name: "Bob",
+						avatar_seq: 2
+					}
+				}
+			])
+		roomUserCreateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(201)
+		expect(res.body.data[0]).toMatchObject({
+			id: 42,
+			display_name: "Bob",
+			team: "red"
+		})
+
+		expect(roomUserCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					team: "red"
+				})
+			})
+		)
+	})
+
+	it("assigns black team when red is taken in PVP room", async () => {
+		const accessToken = buildAccessToken(42, "session-join-4b")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 42 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false })
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
 		roomUserFindUniqueMock.mockResolvedValue(null)
 		roomUserFindManyMock
@@ -197,30 +239,162 @@ describe("POST /api/room/join", () => {
 			.send({ id: 101 })
 
 		expect(res.status).toBe(201)
-		expect(res.body).toMatchObject({
-			success: true,
-			message: "join-room.messages.success",
-			status_code: 201
-		})
-		expect(res.body.data).toHaveLength(2)
 		expect(res.body.data[1]).toMatchObject({
 			id: 42,
-			display_name: "Bob",
-			avatar_seq: 2,
-			avatar_url: "/images/42_2.jpg",
 			team: "black"
 		})
 
 		expect(roomUserCreateMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					room_id: BigInt(101),
-					user_id: BigInt(42),
-					team: "black",
-					joined_at: expect.any(Date)
+					team: "black"
 				})
 			})
 		)
+	})
+
+	it("assigns spectator (null) when both teams are taken in PVP room", async () => {
+		const accessToken = buildAccessToken(43, "session-join-4c")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 43 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		roomUserFindManyMock
+			.mockResolvedValueOnce([
+				{ team: "red" },
+				{ team: "black" }
+			])
+			.mockResolvedValueOnce([
+				{
+					joined_at: new Date("2026-05-12T00:00:00.000Z"),
+					team: "red",
+					users: {
+						id: BigInt(41),
+						display_name: "Alice",
+						avatar_seq: 0
+					}
+				},
+				{
+					joined_at: new Date("2026-05-12T00:00:30.000Z"),
+					team: "black",
+					users: {
+						id: BigInt(42),
+						display_name: "Bob",
+						avatar_seq: 2
+					}
+				},
+				{
+					joined_at: new Date("2026-05-12T00:01:00.000Z"),
+					team: null,
+					users: {
+						id: BigInt(43),
+						display_name: "Charlie",
+						avatar_seq: 1
+					}
+				}
+			])
+		roomUserCreateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(201)
+		expect(res.body.data[2]).toMatchObject({
+			id: 43,
+			team: null
+		})
+
+		expect(roomUserCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					team: null
+				})
+			})
+		)
+	})
+
+	it("returns 201 and assigns spectator team for new user joining PVE room", async () => {
+		const accessToken = buildAccessToken(42, "session-join-6")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 42 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(201), pve_mode: true })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				joined_at: new Date("2026-05-12T00:01:00.000Z"),
+				team: null,
+				users: {
+					id: BigInt(42),
+					display_name: "Bob",
+					avatar_seq: 0
+				}
+			}
+		])
+		roomUserCreateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 201 })
+
+		expect(res.status).toBe(201)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "join-room.messages.success",
+			status_code: 201
+		})
+		expect(res.body.data[0]).toMatchObject({ team: null })
+
+		// Should NOT query existing members for team assignment
+		expect(roomUserFindManyMock).toHaveBeenCalledTimes(1)
+
+		expect(roomUserCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					team: null
+				})
+			})
+		)
+	})
+
+	it("returns 201 and keeps spectator team when re-joining PVE room with only one existing player slot", async () => {
+		const accessToken = buildAccessToken(41, "session-join-7")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 41 }))
+		// PVE room with only 1 member slot taken — user is already in the room
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(201), pve_mode: true })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
+		roomUserFindUniqueMock.mockResolvedValue({ room_id: BigInt(201), user_id: BigInt(41) })
+		roomUserUpdateMock.mockResolvedValue({})
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				joined_at: new Date("2026-05-12T00:00:00.000Z"),
+				team: null,
+				users: {
+					id: BigInt(41),
+					display_name: "Alice",
+					avatar_seq: 0
+				}
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 201 })
+
+		expect(res.status).toBe(201)
+		expect(res.body.data[0]).toMatchObject({ team: null })
+
+		expect(roomUserUpdateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					team: null
+				})
+			})
+		)
+		expect(roomUserCreateMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 500 when unexpected error happens", async () => {

@@ -156,15 +156,27 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 			time_stamp: Math.floor(Date.now() / 1000)
 		})
 
-		await prisma.game.update({
-			where: {
-				id: normalizedGameId
-			},
-			data: {
-				status: 2,
-				winner_id: null
-			}
-		})
+		await prisma.$transaction([
+			prisma.game.update({
+				where: {
+					id: normalizedGameId
+				},
+				data: {
+					ends_at: new Date(),
+					status: 2,
+					winner_id: null
+				}
+			}),
+			prisma.room.update({
+				where: {
+					id: game.room_id
+				},
+				data: {
+					updated_at: new Date(),
+					status: 1
+				}
+			})
+		])
 
 		res.status(200).json({
 			success: true,

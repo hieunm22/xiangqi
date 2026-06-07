@@ -26,7 +26,6 @@ export interface PlayerInfoCardProps {
 	username?: string
 	team: Team
 	active: boolean
-	capturedPieces: CapturedPieces
 	avatarUrl?: string | null
 	isEmpty?: boolean
 	userId?: number
@@ -75,6 +74,7 @@ export interface HistoryData {
 	fen: string
 	team: Team | null
 	time_stamp: number
+	undo?: number
 	capture?: string | null
 	captured?: CapturedPieces | null
 	userId?: number
@@ -95,16 +95,14 @@ export interface DrawRequest {
 	requestUserId: number
 }
 
-export interface RemoteMoveProps { 
-	fen: string
+export interface MoveProps {
 	from: number
 	to: number
-	isCapture: boolean
 }
 
-export interface PreviousMoveProps {
-	from: number
-	to: number
+export interface RemoteMoveProps extends MoveProps { 
+	fen: string
+	isCapture: boolean
 }
 
 export interface PieceSideUser {
@@ -114,8 +112,19 @@ export interface PieceSideUser {
 
 export interface RoomSettingsDialogContextValue {
 	isOpen: boolean
+	isHost: boolean
 	room: RoomInfo | null
+	users: RoomUser[]
 	openSettings: EmptyVoid
 	closeSettings: EmptyVoid
 	handleSettingsSaved: (newName: string) => void
+}
+
+export type SettingsButtonProps = RoomSettingsDialogContextValue
+
+export interface StartGameBody {
+	roomId: string | number
+	gameId?: string
+	status?: number
+	bot_difficulty?: number | null
 }

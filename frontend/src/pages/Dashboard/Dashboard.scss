@@ -25,6 +25,10 @@
 		border: 3px solid #9b613d;
     padding: 12px;
 
+		&.zero-bet {
+			background: linear-gradient(0deg, #bd65d9, #ba1fc7);
+		}
+
 		&.low {
 			background: linear-gradient(0deg, #93532a, #ee8543);
 		}
@@ -188,4 +192,10 @@
 .red-first, .pve-mode {
 	margin-left: 0;
 	margin-right: 10px;
+}
+
+.bet-amount-placeholder {
+	display: flex;
+	height: 37px;
+	align-items: center;
 }

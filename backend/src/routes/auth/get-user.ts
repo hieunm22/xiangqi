@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express"
 import prisma from "prisma"
+import { getAvatarUrl } from "common/helper"
 
 const router = Router()
 
@@ -85,10 +86,17 @@ router.get("/auth/user", async (req: Request, res: Response) => {
 			return
 		}
 
+		const avatarUrl = getAvatarUrl(user.id, user.avatar_seq)
+		const { avatar_seq: _avatarSeq, ...userWithoutAvatarSeq } = user
+
 		res.status(200).json({
 			success: true,
 			status_code: 200,
-			data: { ...user, id: Number(user.id) }
+			data: {
+				...userWithoutAvatarSeq,
+				id: Number(user.id),
+				avatar_url: avatarUrl
+			}
 		})
 	} catch (error) {
 		console.error("Get user error:", error)

@@ -1,5 +1,7 @@
 import { Response, Router } from "express"
 import jwt from "jsonwebtoken"
+import { REFRESH_TOKEN_KEY, REFRESH_TOKEN_TTL_SECONDS } from "common/constant"
+import { getRefreshCookieOptions } from "common/cookie"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -9,16 +11,16 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
 
 /**
  * @swagger
- * /api/auth/make-expired:
+ * /api/tool/make-expired:
  *   post:
- *     summary: Re-issue the current access token so it expires in 1 second (testing helper)
+ *     summary: make the current access token expire in 1 second and remove refresh token cookie
  *     description: >
  *       Takes the currently valid access token and signs a new one with the same
- *       payload but an expiry of now + 1 second. The signature stays valid; the
- *       token simply expires right after, which is useful to exercise the
- *       refresh-token flow.
+ *       payload but an expiry of now + 1 second.<br />The signature stays valid; the
+ *       token simply expires right after, and also removes the refresh token cookie to prevent silent re-auth.<br />
+ *       This is intended for testing and development purposes, not for regular client usage.
  *     tags:
- *       - Auth
+ *       - Tool
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
@@ -32,7 +34,7 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
  *       401:
  *         description: Unauthorized
  */
-router.post("/auth/make-expired", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+router.post("/tool/make-expired", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	// Reuse the verified payload from the current token, dropping the registered
 	// claims so jwt.sign can set fresh ones.
 	const { iat, exp, iss, ...restPayload } = req.auth!.payload ?? {}
@@ -41,6 +43,9 @@ router.post("/auth/make-expired", requireAuth(), async (req: AuthenticatedReques
 		expiresIn: 1, // seconds: token expires 1s from now, signature stays valid
 		issuer: JWT_ISSUER
 	})
+
+	const options = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
+	res.clearCookie(REFRESH_TOKEN_KEY, options)
 
 	res.status(200).type("text/plain").send(access_token)
 })

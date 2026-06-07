@@ -1,5 +1,6 @@
 ﻿Key;English;Vietnamese
 common.input.is-required;is required;bắt buộc nhập
+common.loading;Loading...;Đang tải...
 common.password.policy-1;Must contain lower case character;Phải chứa một ký tự chữ in thường
 common.password.policy-2;Must contain upper case character;Phải chứa một ký tự chữ in hoa
 common.password.policy-3;Must contain digit;Phải chứa một ký tự số
@@ -7,7 +8,10 @@ common.password.policy-4;Must contain a special character;Phải chứa một k�
 common.password.policy-5;Text length at least 8;Ít nhất 8 ký tự
 page.home.title;Home;Trang chủ
 page.history.title;History;Lịch sử
+page.history.no-games;No finished games yet;Chưa có trận đấu nào hoàn thành
+page.history.point-label;Points:;Điểm:
 page.about.title;About;Thông tin
+menu.guide;Guide;Luật chơi
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
@@ -34,6 +38,7 @@ dashboard.popup.join-room;Join room;Vào phòng
 settings.header;Settings;Cài đặt
 settings.language;Language;Ngôn ngữ
 settings.dark-mode;Dark mode;Chế độ tối
+settings.debug-mode;Debug mode;Chế độ test
 settings.close;Close;Đóng
 settings.change-password;Change password;Đổi mật khẩu
 popup.alert.title;Warning;Cảnh báo
@@ -41,12 +46,14 @@ popup.confirm.title;Confirm;Xác nhận
 popup.confirm.ok;Ok;Ok
 popup.confirm.cancel;Cancel;Huỷ
 home.turn.title;Turn;Lượt đánh
-room.actions.start-room;Start room;Bắt đầu chơi
-room.actions.surrender;Surrender;Đầu hàng
-room.actions.back-home;Back to home;Thoát phòng
-room.actions.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
 game.general.captured;General has been captured. Room over;Tướng đã bị bắt. Game kết thúc
 game.general.in-check;Your general is under attack;Tướng của bạn đang bị chiếu
+room.bot-difficulty.title;Select Bot Difficulty;Chọn độ khó của Bot
+room.bot-difficulty.beginner;Beginner;Mới bắt đầu
+room.bot-difficulty.amateur;Amateur;Nghiệp dư
+room.bot-difficulty.intermediate;Intermediate;Trung bình
+room.bot-difficulty.advanced;Advanced;Nâng cao
+room.bot-difficulty.master;Master;Lão luyện
 login.page.title;Login;Đăng nhập
 login.form.title;Login;Đăng nhập
 login.username.label;User name;Tên người dùng
@@ -129,6 +136,16 @@ join-room.messages.internal-server-error;Internal server error;Lỗi máy chủ 
 join-room.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
 join-room.messages.room-not-found;Room not found;Không tìm thấy phòng
 join-room.messages.success;Successfully joined the room;Tham gia phòng thành công
+kick-user.messages.cannot-kick-self;You cannot kick yourself;Bạn không thể kick chính mình
+kick-user.messages.forbidden;Only the host can kick users;Chỉ chủ phòng mới có thể kick người dùng
+kick-user.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+kick-user.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
+kick-user.messages.invalid-user-id;Field 'userId' is required and must be a positive integer;Trường 'userId' là bắt buộc và phải là số nguyên dương
+kick-user.messages.room-not-found;Room not found;Không tìm thấy phòng
+kick-user.messages.room-not-waiting;You can only kick users while the room is waiting;Chỉ có thể kick người dùng khi phòng đang ở trạng thái chờ
+kick-user.messages.success;User has been kicked;Người dùng đã bị kick
+kick-user.messages.user-not-in-room;User is not in this room;Người dùng không trong phòng này
+kick-user.messages.you-were-kicked;You have been removed from the room by the host;Bạn đã bị chủ phòng đưa ra khỏi phòng
 leave-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 leave-room.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
 leave-room.messages.player-not-in-room;Player is not in this room;Người chơi không trong phòng này
@@ -164,8 +181,13 @@ set-room-status.messages.invalid-room-id;Field 'id' is required and must be a po
 set-room-status.messages.invalid-status;Field 'status' must be either 1 or 2;Trường 'status' phải là 1 hoặc 2
 set-room-status.messages.room-not-found;Room not found;Không tìm thấy phòng
 set-room-status.messages.success;Set room status successfully;Đặt trạng thái phòng thành công
-room.actions.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
+room.actions.start-room;Start room;Bắt đầu chơi
+room.actions.undo;Undo;Hoán tác
+room.actions.surrender;Surrender;Đầu hàng
 room.actions.draw;Draw;Hòa
+room.actions.back-home;Back to home;Thoát phòng
+room.actions.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
+room.actions.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
 room.actions.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắn muốn hòa không?
 room.actions.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
 room.actions.accept-draw;Accept;Chấp nhận
@@ -173,9 +195,12 @@ room.actions.reject-draw;Reject;Từ chối
 room.actions.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
 room.actions.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
 room.actions.draw-completed;Draw completed;Hòa cờ thành công
+room.actions.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
+room.actions.kick;Kick;Kick
 room.actions.settings;Room settings;Cài đặt phòng
 room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
+room.settings.players;Spectators;Người xem
 room.settings.save;Save;Lưu
 update-room.messages.success;Room updated successfully;Cập nhật phòng thành công
 update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
@@ -198,4 +223,66 @@ surrender.messages.invalid-game-id;Invalid game ID;ID trò chơi không hợp l�
 surrender.messages.invalid-surrender-player;You are not a player in this game;Bạn không phải là người chơi trong trò chơi này
 surrender.messages.opponent-not-found;Opponent not found;Không tìm thấy đối thủ
 surrender.messages.success;Surrendered;Đã đầu hàng
+undo.messages.invalid-game-id;Invalid game ID;ID trò chơi không hợp lệ
+undo.messages.unauthorized;Unauthorized;Không được phép truy cập
+undo.messages.game-not-found;Game not found;Không tìm thấy trò chơi
+undo.messages.not-in-game;You are not part of this game;Bạn không phải là người chơi trong trò chơi này
+undo.messages.not-in-room;You are not in this room;Bạn không trong phòng này
+undo.messages.spectator-cannot-undo;Spectators cannot undo moves;Người xem không thể hoàn tác nước đi
+undo.messages.no-moves;No moves to undo;Không có nước đi để hoàn tác
+undo.messages.delete-failed;Failed to undo move;Không thể hoàn tác nước đi
+undo.messages.undo-limit-exceeded;Maximum 3 undo per game exceeded;Đã đạt tối đa 3 lần hoàn tác trong trò chơi
+undo.messages.success;Move undone successfully;Hoàn tác nước đi thành công
+undo.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+player-history.messages.invalid-user-id;Invalid user ID;ID người dùng không hợp lệ
+player-history.messages.success;Fetch game history successfully;Lấy lịch sử trò chơi thành công
 validate-token.messages.success;Token is valid;Token hợp lệ
+guide.section.objective;Objective of the game;Mục tiêu của trò chơi
+guide.section.pieces;Pieces;Quân cờ
+guide.section.moving-pieces;Moving pieces;Đi quân
+guide.section.capturing;Capturing;Bắt quân
+guide.section.check;Check;Chiếu tướng
+guide.section.result;Result;Kết quả
+guide.table.piece;Piece;Quân
+guide.table.symbol;Symbol;Ký hiệu
+guide.table.quantity;Quantity;Số lượng
+guide.objective.paragraph1;A match is played between two players: one controls the Red pieces, and the other controls the Black pieces. The objective of each player is to use their pieces on the board to <b>checkmate</b> the opponent's General, and win the game.;Ván cờ được tiến hành giữa 2 đấu thủ, một người cầm Quân Đỏ, một người cầm Quân Đen. Mục đích của mỗi đấu thủ là tìm mọi cách sử dụng các quân trên bàn cờ để <b>chiếu bí Tướng</b> của đối phương, giành thắng lợi.
+guide.pieces.paragraph1;At the start of each game, there must be 32 pieces in total, consisting of <b>7 piece types</b> split evenly between both sides: 16 Red pieces and 16 Black pieces. The 7 piece types with their symbols and quantities are as follows:;Mỗi ván cờ lúc bắt đầu phải có đủ 32 quân, gồm 7 loại chia đều cho mỗi bên gồm 16 quân Đỏ và 16 quân Đen. <b>7 loại quân</b> có ký hiệu và số lượng như sau:
+guide.piece.general;General;Tướng
+guide.piece.advisor;Advisor;Sĩ
+guide.piece.elephant;Elephant;Tượng
+guide.piece.chariot;Chariot;Xe
+guide.piece.horse;Horse;Mã
+guide.piece.cannon;Cannon;Pháo
+guide.piece.soldier;Soldier;Tốt
+guide.moving-pieces.paragraph1;On each turn, each side may move only one of its own pieces according to the rules. The movement rules are as follows:;Mỗi nước đi, mỗi bên chỉ được di chuyển quân của mình theo đúng quy định. Quy định di chuyển của các quân như sau:
+guide.general.paragraph1;General;Tướng
+guide.general.paragraph2;Moves one step <b>horizontally or vertically</b> within the palace. The two Generals may not face each other directly on the same file. If they are facing each other, there must be at least one piece of either side placed between them.;Mỗi nước được đi một bước <b>ngang hoặc dọc</b> tùy ý trong cung Tướng. Hai tướng của 2 bên không được đối mặt nhau trực tiếp trên cùng một đường thẳng. Nếu đối mặt, bắt buộc phải có quân của bất kỳ bên nào đứng che mặt.
+guide.advisor.paragraph1;Advisor;Sĩ
+guide.advisor.paragraph2;Moves one step <b>diagonally</b> within the palace.;Mỗi nước <b>đi chéo một bước</b> trong cung Tướng.
+guide.elephant.paragraph1;Elephant;Tượng
+guide.elephant.paragraph2;Moves <b>two steps diagonally</b> on its own side of the board and may not cross the river. If there is another piece on the midpoint of that diagonal path, the Elephant is blocked and cannot move.;Mỗi nước <b>đi chéo hai bước</b> tại trận địa bên mình, không được qua sông. Nếu ở giữa đường chéo đó có quân khác đứng thì quân Tượng bị cản, không đi được.
+guide.chariot.paragraph1;Chariot;Xe
+guide.chariot.paragraph2;Moves <b>horizontally or vertically</b> with no limit on distance, as long as no piece blocks the path.;Mỗi nước được <b>đi dọc hoặc đi ngang</b>, không hạn chế số bước đi nếu không có quân khác cản đường.
+guide.horse.paragraph1;Horse;Mã
+guide.horse.paragraph2;Moves in an <b>L-shape</b> (one step orthogonally then one step diagonally outward). If the adjacent orthogonal point is occupied by any piece, the Horse is blocked and cannot move.;Đi theo <b>đường chéo hình chữ nhật</b> của hai ô vuông liền nhau. Nếu giao điểm liền kề bước thẳng dọc ngang có một quân khác đứng thì Mã bị cản, không đi được.
+guide.cannon.paragraph1;Cannon;Pháo
+guide.cannon.paragraph2;Moves <b>horizontally or vertically</b> like a Chariot when not capturing. To capture, it must <b>jump over exactly one piece</b> to reach its target. If there are zero or more than one pieces between the Cannon and the target, it cannot capture.;Đi ngang hoặc dọc giống Xe khi không bắt quân. Để bắt quân, nó phải <b>nhảy qua đúng một quân khác</b> để đến mục tiêu. Nếu không có hoặc có nhiều hơn một quân giữa Pháo và mục tiêu, nó không thể bắt quân.
+guide.soldier.paragraph1;Soldier;Tốt
+guide.soldier.paragraph2;Moves <b>one step</b> each turn. Before crossing the river, it can only move forward. After crossing the river, it may move <b>forward or sideways</b>, but never backward.;Mỗi nước đi <b>một bước</b>. Khi chưa qua sông, Tốt chỉ được tiến. Khi Tốt đã qua sông được quyền <b>đi tiến và đi ngang</b>, không được phép lùi.
+guide.capturing.paragraph1;When a piece moves to an intersection occupied by an opponent's piece, it may <b>capture that piece</b> and occupy its position.;Khi một quân đi tới một giao điểm khác đã có quân đối phương đứng thì được quyền <b>bắt quân đó</b>, đồng thời chiếm giữ vị trí quân bị bắt.
+guide.capturing.paragraph2;You may not capture your own pieces. You may sacrifice your own pieces to be captured by the opponent, <b>except for the General</b>.;Không được bắt quân bên mình. Được phép cho đối phương bắt đầu quân mình chủ động hiến mình cho đối phương, <b>trừ Tướng</b>.
+guide.capturing.paragraph3;A captured piece is removed from the board. <b>Chasing one piece for more than 6 consecutive moves is not allowed</b>.;Quân bị bắt phải bị loại và bị nhấc ra khỏi bàn cờ. <b>Không được đuổi 1 quân quá 6 nước cờ liên tiếp</b>.
+guide.check.paragraph1;If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check; otherwise, that side loses.
+guide.check.paragraph2;When the General is checked from any direction (including from behind), the checked side may respond in one of the following ways:;Tướng bị chiếu từ cả bốn hướng (bị chiếu cả từ phía sau) có thể ứng phó với nước chiếu tướng bằng một trong các cách sau:
+guide.check.paragraph3;Move the General to another position to escape check;Di chuyển tướng sang vị trí khác để tránh nước chiếu
+guide.check.paragraph4;Capture the checking piece;Bắt quân đang chiếu
+guide.check.paragraph5;Block the checking line with another piece to protect the General;Dùng quân khác cản quân chiếu, đi quân che đỡ cho tướng
+guide.check.paragraph6;Repeatedly checking for more than 6 consecutive moves is not allowed;Không được chiếu tướng quá 6 nước cờ liên tiếp
+guide.result.paragraph1;When one side gives Check and the other side has no legal way to protect the General, it is called a <b>Checkmate</b>. The side that delivers Checkmate wins.;Khi một bên chiếu Tướng mà bên còn lại không thể làm gì để bảo vệ Tướng thì được gọi là <b>Chiếu Hết</b>, bên thực hiện được Chiếu Hết sẽ giành chiến thắng.
+guide.result.paragraph2;If a player runs out of time for a single move (for example: 90s) without moving, the other side is awarded a <b>win</b>.;Khi hết thời gian một nước đi (ví dụ: 90s) mà vẫn chưa di chuyển quân thì bên còn lại sẽ được <b>xử Thắng</b>.
+guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
+guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
+guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
+;;
+;;

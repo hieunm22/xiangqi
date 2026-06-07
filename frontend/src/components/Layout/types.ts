@@ -1,3 +1,4 @@
+import { UserAvatarType } from "types/Common"
 import { Users } from "types/Entities"
 
 export interface UserProfileProps {
@@ -5,10 +6,17 @@ export interface UserProfileProps {
 }
 
 export type ProfilePopupContextValue = {
-	openProfilePopup: boolean
-	openSettings: boolean
 	profileUser: Users | null
-	setOpenProfilePopup: (open: boolean) => void
-	setOpenSettings: (open: boolean) => void
 	setProfileUser: (user: Users | null) => void
+}
+
+interface GameHistory {
+	gameId: string
+	ends_at?: string | Date
+}
+
+export interface GameHistoryItem {
+	game: GameHistory
+	users: UserAvatarType[]
+	point: number
 }

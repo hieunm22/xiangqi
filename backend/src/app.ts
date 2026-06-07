@@ -17,6 +17,7 @@ import validateTokenRoutes from "./routes/auth/validate-token"
 import createRoomRoutes from "./routes/room/create-room"
 import fetchRoomsRoutes from "./routes/room/fetch-rooms"
 import joinRoomRoutes from "./routes/room/join-room"
+import kickUserRoutes from "./routes/room/kick-user"
 import leaveRoomRoutes from "./routes/room/leave-room"
 import loadRoomRoutes from "./routes/room/load-room"
 import updateRoomRoutes from "./routes/room/update-room"
@@ -24,9 +25,13 @@ import updateRoomRoutes from "./routes/room/update-room"
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
 import movePieceRoutes from "./routes/game/move-piece"
+import playerHistoryRoutes from "./routes/game/player-history"
 import resetGameRoutes from "./routes/game/reset-game"
 import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
+import undoRoutes from "./routes/game/undo"
+
+import sequenceRoutes from "./routes/tool/sequence"
 
 const app = express()
 
@@ -74,15 +79,20 @@ app.use("/api", createRoomRoutes)
 app.use("/api", fetchRoomsRoutes)
 app.use("/api", getGameHistoryRoutes)
 app.use("/api", joinRoomRoutes)
+app.use("/api", kickUserRoutes)
 app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
 app.use("/api", updateRoomRoutes)
 
 app.use("/api", drawGameRoutes)
 app.use("/api", movePieceRoutes)
+app.use("/api", playerHistoryRoutes)
 app.use("/api", resetGameRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
+app.use("/api", undoRoutes)
+
+app.use("/api", sequenceRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec))

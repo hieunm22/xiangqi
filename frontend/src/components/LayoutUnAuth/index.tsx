@@ -12,9 +12,8 @@ import {
 	Switch
 } from "@mui/material"
 import i18n from "locales/i18n"
-import { COUNTRIES_DROPDOWN, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
+import { COUNTRIES_OPTIONS, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
 import { TTypography } from "components/TranslationTag"
-import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
 import useToolkit from "hooks/useToolkit"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
@@ -90,14 +89,28 @@ export default function LayoutUnAuth() {
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent className="dialog-content">
-					<Grid container className="setting-row">
+					<Grid container className="setting-row" alignItems="center" gap={2}>
 						<TTypography sx={{ minWidth: "100px" }} content="settings.language" />
-						<ComboBoxWithLabel
-							id="language"
-							options={COUNTRIES_DROPDOWN}
-							value={language}
-							change={onChangeLanguage}
-						/>
+						<Grid container gap={1}>
+							{COUNTRIES_OPTIONS.map(option => (
+								<Button
+									key={option.key}
+									variant={language === option.key ? "contained" : "outlined"}
+									disabled={option.disabled}
+									onClick={onChangeLanguage}
+									startIcon={
+										<img
+											src={option.icon}
+											alt={option.value}
+											style={{ width: 20, height: 20 }}
+										/>
+									}
+									size="small"
+								>
+									{option.value}
+								</Button>
+							))}
+						</Grid>
 					</Grid>
 					<Grid container className="setting-row">
 						<TTypography content="settings.dark-mode" />

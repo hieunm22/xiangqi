@@ -1,28 +1,41 @@
 import { useEffect, useState } from "react"
 import {
+	Box,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
-	Divider
+	Divider,
 } from "@mui/material"
 import { openAlert } from "components/AlertProvider"
 import { Empty } from "components/Common"
-import { TButton, TTextField } from "components/TranslationTag"
+import { PopupState } from "components/Layout/enums"
+import { TButton, TTextField, TTypography } from "components/TranslationTag"
+import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { useRoomSettingsDialogContext } from "hooks/useAppContext"
+import { usePopups, useRoomSettingsDialogContext } from "hooks/useAppContext"
+import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
+import { setPopup } from "toolkit/slice/home"
+import { UserAvatarType } from "types/Common"
 
 const RoomSettingsDialog = () => {
 	const {
+    isHost,
     isOpen,
     room,
+    users,
 
     closeSettings,
     handleSettingsSaved
   } = useRoomSettingsDialogContext()
-	const { updateRoom } = useAPI()
+	const { dispatch } = useToolkit()
+	const { setProfileUser } = usePopups()
+	// Spectators are all users except the first 2 (players)
+	const spectatorsUsers = users?.slice(2) ?? []
+	const spectatorsUsersMap: UserAvatarType[] = spectatorsUsers.map(user => user as UserAvatarType)
+	const { getUserById, updateRoom } = useAPI()
 	const [name, setName] = useState(room?.name ?? "")
 	const [nameError, setNameError] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
@@ -80,21 +93,48 @@ const RoomSettingsDialog = () => {
 					onChange={handleNameChange}
 					onBlur={() => setNameError(name.trim().length === 0)}
 					error={nameError}
-					helperText={nameError ? translate("dashboard.popup.room-name-helptext") : undefined}
+					helperText={nameError ? "dashboard.popup.room-name-helptext" : undefined}
 					fullWidth
-					autoFocus
-					disabled={submitting}
+					autoFocus={isHost}
+					disabled={submitting || !isHost}
 				/>
+
+				{spectatorsUsers.length > 0 && (
+					<Box className="mt-24">
+						<TTypography
+							variant="subtitle2"
+							className="joined-users"
+							content="room.settings.players"
+						/>
+						<UserAvatarGroup
+							users={spectatorsUsersMap}
+							type="primary"
+							onUserClick={async (id) => {
+								const userData = await getUserById(id)
+								if (userData?.data) {
+									setProfileUser(userData.data)
+								}
+								dispatch(setPopup(PopupState.PROFILE))
+							}}
+						/>
+					</Box>
+				)}
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogActions className="pt-24 pb-16">
+				{isHost && (
+					<TButton
+						variant="contained"
+						onClick={handleSave}
+						value="room.settings.save"
+						disabled={submitting}
+					/>
+				)}
 				<TButton
-					variant="contained"
-					onClick={handleSave}
-					value="room.settings.save"
-					disabled={submitting}
+					variant="outlined"
+					onClick={closeSettings}
+					value="popup.confirm.cancel"
 				/>
-				<TButton onClick={closeSettings} value="popup.confirm.cancel" />
 			</DialogActions>
 		</Dialog>
 	)

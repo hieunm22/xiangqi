@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { getAvatarUrl } from "common/helper"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -53,7 +54,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 				is_active: true,
 				...(status !== undefined && { status })
 			},
-			orderBy: { created_at: "desc" },
+			orderBy: { created_at: "asc" },
 			select: {
 				id: true,
 				name: true,
@@ -88,10 +89,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 					...gu.users,
 					id: Number(gu.users.id),
 					avatar_seq: Number(gu.users.avatar_seq),
-					avatar_url:
-						Number(gu.users.avatar_seq) === 0
-							? `/images/${Number(gu.users.id)}.jpg`
-							: `/images/${Number(gu.users.id)}_${Number(gu.users.avatar_seq)}.jpg`
+					avatar_url: getAvatarUrl(gu.users.id, gu.users.avatar_seq)
 				}))
 			}
 		})

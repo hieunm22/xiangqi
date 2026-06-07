@@ -32,3 +32,11 @@ export interface BotMoveResult {
 	newFen: string
 	capturePiece: string | null
 }
+
+export interface EndGameParams {
+	gameId: string
+	roomId: bigint
+	winnerId: bigint
+	isBotGame: boolean
+	betAmount: number | null
+}

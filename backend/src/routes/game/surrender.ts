@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { buildEndGameTransaction } from "common/game/end-game.helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { SurrenderGameRequest } from "types/game.type"
 
@@ -163,25 +164,21 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			surrender: Number(userId)
 		})
 
-		await prisma.$transaction([
-			prisma.game.update({
-				where: {
-					id: normalizedGameId
-				},
-				data: {
-					winner_id: winner.user_id,
-					status: 2
-				}
-			}),
-			prisma.room.update({
-				where: {
-					id: game.room_id
-				},
-				data: {
-					status: 1
-				}
-			})
-		])
+		// Fetch room to determine PvE mode and bet amount
+		const roomWithBet = await prisma.room.findUnique({
+			where: { id: game.room_id },
+			select: { pve_mode: true, bet_amount: true }
+		})
+
+		const transactionUpdates = await buildEndGameTransaction({
+			gameId: normalizedGameId,
+			roomId: game.room_id,
+			winnerId: winner.user_id,
+			isBotGame: roomWithBet?.pve_mode ?? false,
+			betAmount: roomWithBet?.bet_amount ?? null
+		})
+
+		await prisma.$transaction(transactionUpdates)
 
 		res.status(200).json({
 			success: true,

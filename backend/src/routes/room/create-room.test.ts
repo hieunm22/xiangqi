@@ -381,7 +381,7 @@ describe("POST /api/room/create-room", () => {
 			status: 1,
 			red_first: false,
 			pve_mode: true,
-			bet_amount: 100,
+			bet_amount: 0,
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
 			room_users: [
@@ -412,7 +412,7 @@ describe("POST /api/room/create-room", () => {
 				teamName: "black",
 				redFirst: false,
 				pveMode: true,
-				betAmount: 100
+				betAmount: 0
 			})
 
 		expect(roomUserDeleteManyMock).toHaveBeenCalled()
@@ -427,7 +427,7 @@ describe("POST /api/room/create-room", () => {
 				status: 1,
 				red_first: false,
 				pve_mode: true,
-				bet_amount: 100
+				bet_amount: 0
 			}
 		})
 		expect(res.body.room.users).toHaveLength(2)
@@ -449,7 +449,7 @@ describe("POST /api/room/create-room", () => {
 					name: "PvE Table",
 					red_first: false,
 					pve_mode: true,
-					bet_amount: 100,
+					bet_amount: 0,
 					room_users: {
 						create: [
 							expect.objectContaining({
@@ -469,8 +469,109 @@ describe("POST /api/room/create-room", () => {
 		)
 	})
 
-	it("returns 500 when creating room fails unexpectedly", async () => {
+	it("returns 400 when PvE mode has non-zero bet amount", async () => {
 		const accessToken = buildAccessToken(11, "session-room-7")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "PvE Table Invalid",
+				teamName: "red",
+				redFirst: true,
+				pveMode: true,
+				betAmount: 50
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "create-room.messages.invalid-bet-amount",
+			status_code: 400
+		})
+	})
+
+	it("returns 201 when PvP mode has zero bet amount", async () => {
+		const accessToken = buildAccessToken(11, "session-room-7b")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomCreateMock.mockResolvedValue({
+			id: BigInt(103),
+			name: "PvP Table Zero",
+			status: 1,
+			red_first: true,
+			pve_mode: false,
+			bet_amount: 0,
+			created_at: new Date("2026-05-12T00:00:00.000Z"),
+			updated_at: new Date("2026-05-12T00:00:00.000Z"),
+			room_users: [
+				{
+					users: {
+						id: BigInt(11),
+						display_name: "Alice",
+						avatar_seq: 1
+					},
+					team: "red"
+				}
+			]
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "PvP Table Zero",
+				teamName: "red",
+				redFirst: true,
+				pveMode: false,
+				betAmount: 0
+			})
+
+		expect(res.status).toBe(201)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "create-room.messages.room-created",
+			status_code: 201,
+			room: {
+				id: 103,
+				name: "PvP Table Zero",
+				status: 1,
+				red_first: true,
+				pve_mode: false,
+				bet_amount: 0
+			}
+		})
+		expect(res.body.room.users).toHaveLength(1)
+		expect(res.body.room.users[0]).toMatchObject({
+			id: "11",
+			display_name: "Alice",
+			team: "red"
+		})
+
+		expect(roomCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					name: "PvP Table Zero",
+					red_first: true,
+					pve_mode: false,
+					bet_amount: 0,
+					room_users: {
+						create: [
+							expect.objectContaining({
+								user_id: BigInt(11),
+								team: "red",
+								joined_at: expect.any(Date)
+							})
+						]
+					}
+				})
+			})
+		)
+	})
+
+	it("returns 500 when creating room fails unexpectedly", async () => {
+		const accessToken = buildAccessToken(11, "session-room-8")
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })

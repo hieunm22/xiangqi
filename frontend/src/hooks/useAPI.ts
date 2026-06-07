@@ -16,7 +16,6 @@ const EP = { // end points
 	getUser: "/auth/user",
 	login: "/auth/login",
 	logout: "/auth/logout",
-	makeExpired: "/auth/make-expired",
 	refreshToken: "/auth/refresh-token",
 	register: "/auth/register",
 	validateToken: "/auth/validate-token",
@@ -28,17 +27,21 @@ const EP = { // end points
 	fetchRooms: "/room/fetch-rooms",
 	getRoomInfo: "/room/info",
 	joinRoom: "/room/join",
+	kickRoom: "/room/kick",
 	leaveRoom: "/room/leave",
 	startRoom: "/room/start",
 	updateRoom: "/room/update",
 
 	// game endpoints
+	drawGame: "/game/draw-game",
 	getGameHistory: "/game/history",
 	movePiece: "/game/move-piece",
-	drawGame: "/game/draw-game",
+	getPlayerHistory: "/game/player-history",
 	surrenderGame: "/game/surrender",
+	undoGame: "/game/undo",
 
 	// tool endpoints
+	makeExpired: "/tool/make-expired",
 	resetGame: "/tool/reset-game",
 }
 
@@ -128,6 +131,12 @@ export const useAPI = () => {
 							.json(getGameHistoryCallback)
 							.catch(handleError)
 
+	const getPlayerHistory = async (token: string, userId: number) => authFetch(`${EP.getPlayerHistory}?userId=${userId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getPlayerHistoryCallback)
+							.catch(handleError)
+
 	const getUserById = async (userId: number) => request.url(`${EP.getUser}?id=${userId}`)
 							.get()
 							.json(getUserCallback)
@@ -143,6 +152,12 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.post({ id: roomId })
 							.json(joinRoomCallback)
+							.catch(handleError)
+
+	const kickUser = async (token: string, roomId: number, userId: number) => authFetch(EP.kickRoom)
+							.auth(`Bearer ${token}`)
+							.post({ id: roomId, userId })
+							.json(kickUserCallback)
 							.catch(handleError)
 
 	const leaveRoom = async (token: string, roomId: number) => authFetch(EP.leaveRoom)
@@ -220,6 +235,12 @@ export const useAPI = () => {
 							.json(surrenderGameCallback)
 							.catch(handleError)
 
+	const undoGame = async (token: string, gameId: string) => authFetch(EP.undoGame)
+						.auth(`Bearer ${token}`)
+						.post({ gameId })
+						.json(undoGameCallback)
+						.catch(handleError)
+
 	const updateRoom = async (token: string, roomId: number, name: string) => authFetch(EP.updateRoom)
 							.auth(`Bearer ${token}`)
 							.patch({ id: roomId, name })
@@ -262,6 +283,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const getPlayerHistoryCallback = (response: any) => {
+		return response
+	}
+
 	const getRoomCallback = (response: any) => {
 		return response
 	}
@@ -271,6 +296,10 @@ export const useAPI = () => {
 	}
 
 	const joinRoomCallback = (response: any) => {
+		return response
+	}
+
+	const kickUserCallback = (response: any) => {
 		return response
 	}
 
@@ -322,6 +351,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const undoGameCallback = (response: any) => {
+		return response
+	}
+
 	const updateRoomCallback = (response: any) => {
 		return response
 	}
@@ -354,9 +387,11 @@ export const useAPI = () => {
 		fetchRooms,
 		forgotPassword,
 		getGameHistory,
+		getPlayerHistory,
 		getRoomById,
 		getUserById,
 		joinRoom,
+		kickUser,
 		leaveRoom,
 		login,
 		logout,
@@ -369,6 +404,7 @@ export const useAPI = () => {
 		resetPassword,
 		startRoom,
 		surrenderGame,
+		undoGame,
 		updateRoom,
 		validateToken
 	}

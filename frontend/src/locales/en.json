@@ -3,6 +3,7 @@
 		"input": {
 			"is-required": "is required"
 		},
+		"loading": "Loading...",
 		"password": {
 			"policy-1": "Must contain lower case character",
 			"policy-2": "Must contain upper case character",
@@ -16,13 +17,16 @@
 			"title": "Home"
 		},
 		"history": {
-			"title": "History"
+			"title": "History",
+			"no-games": "No finished games yet",
+			"point-label": "Points:"
 		},
 		"about": {
 			"title": "About"
 		}
 	},
 	"menu": {
+		"guide": "Guide",
 		"setting": {
 			"button": "Settings"
 		},
@@ -67,6 +71,7 @@
 		"header": "Settings",
 		"language": "Language",
 		"dark-mode": "Dark mode",
+		"debug-mode": "Debug mode",
 		"close": "Close",
 		"change-password": "Change password"
 	},
@@ -85,14 +90,29 @@
 			"title": "Turn"
 		}
 	},
+	"game": {
+		"general": {
+			"captured": "General has been captured. Room over",
+			"in-check": "Your general is under attack"
+		}
+	},
 	"room": {
+		"bot-difficulty": {
+			"title": "Select Bot Difficulty",
+			"beginner": "Beginner",
+			"amateur": "Amateur",
+			"intermediate": "Intermediate",
+			"advanced": "Advanced",
+			"master": "Master"
+		},
 		"actions": {
 			"start-room": "Start room",
+			"undo": "Undo",
 			"surrender": "Surrender",
+			"draw": "Draw",
 			"back-home": "Back to home",
 			"confirm-leave": "Are you sure you want to leave room?",
 			"confirm-surrender": "Are you sure you want to surrender?",
-			"draw": "Draw",
 			"confirm-draw": "Are you sure you want to draw?",
 			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
 			"accept-draw": "Accept",
@@ -100,18 +120,15 @@
 			"draw-accepted": "Opponent accepted the draw",
 			"draw-rejected": "Opponent rejected the draw",
 			"draw-completed": "Draw completed",
+			"opponent-surrendered": "Opponent surrendered! You won!",
+			"kick": "Kick",
 			"settings": "Room settings"
 		},
 		"settings": {
 			"title": "Room Settings",
 			"room-name": "Room name",
+			"players": "Spectators",
 			"save": "Save"
-		}
-	},
-	"game": {
-		"general": {
-			"captured": "General has been captured. Room over",
-			"in-check": "Your general is under attack"
 		}
 	},
 	"login": {
@@ -280,6 +297,20 @@
 			"success": "Successfully joined the room"
 		}
 	},
+	"kick-user": {
+		"messages": {
+			"cannot-kick-self": "You cannot kick yourself",
+			"forbidden": "Only the host can kick users",
+			"internal-server-error": "Internal server error",
+			"invalid-room-id": "Field 'id' is required and must be a positive integer",
+			"invalid-user-id": "Field 'userId' is required and must be a positive integer",
+			"room-not-found": "Room not found",
+			"room-not-waiting": "You can only kick users while the room is waiting",
+			"success": "User has been kicked",
+			"user-not-in-room": "User is not in this room",
+			"you-were-kicked": "You have been removed from the room by the host"
+		}
+	},
 	"leave-room": {
 		"messages": {
 			"internal-server-error": "Internal server error",
@@ -352,9 +383,111 @@
 			"success": "Surrendered"
 		}
 	},
+	"undo": {
+		"messages": {
+			"invalid-game-id": "Invalid game ID",
+			"unauthorized": "Unauthorized",
+			"game-not-found": "Game not found",
+			"not-in-game": "You are not part of this game",
+			"not-in-room": "You are not in this room",
+			"spectator-cannot-undo": "Spectators cannot undo moves",
+			"no-moves": "No moves to undo",
+			"delete-failed": "Failed to undo move",
+			"undo-limit-exceeded": "Maximum 3 undo per game exceeded",
+			"success": "Move undone successfully",
+			"internal-server-error": "Internal server error"
+		}
+	},
+	"player-history": {
+		"messages": {
+			"invalid-user-id": "Invalid user ID",
+			"success": "Fetch game history successfully"
+		}
+	},
 	"validate-token": {
 		"messages": {
 			"success": "Token is valid"
+		}
+	},
+	"guide": {
+		"section": {
+			"objective": "Objective of the game",
+			"pieces": "Pieces",
+			"moving-pieces": "Moving pieces",
+			"capturing": "Capturing",
+			"check": "Check",
+			"result": "Result"
+		},
+		"table": {
+			"piece": "Piece",
+			"symbol": "Symbol",
+			"quantity": "Quantity"
+		},
+		"objective": {
+			"paragraph1": "A match is played between two players: one controls the Red pieces, and the other controls the Black pieces. The objective of each player is to use their pieces on the board to <b>checkmate</b> the opponent's General, and win the game."
+		},
+		"pieces": {
+			"paragraph1": "At the start of each game, there must be 32 pieces in total, consisting of <b>7 piece types</b> split evenly between both sides: 16 Red pieces and 16 Black pieces. The 7 piece types with their symbols and quantities are as follows:"
+		},
+		"piece": {
+			"general": "General",
+			"advisor": "Advisor",
+			"elephant": "Elephant",
+			"chariot": "Chariot",
+			"horse": "Horse",
+			"cannon": "Cannon",
+			"soldier": "Soldier"
+		},
+		"moving-pieces": {
+			"paragraph1": "On each turn, each side may move only one of its own pieces according to the rules. The movement rules are as follows:"
+		},
+		"general": {
+			"paragraph1": "General",
+			"paragraph2": "Moves one step <b>horizontally or vertically</b> within the palace. The two Generals may not face each other directly on the same file. If they are facing each other, there must be at least one piece of either side placed between them."
+		},
+		"advisor": {
+			"paragraph1": "Advisor",
+			"paragraph2": "Moves one step <b>diagonally</b> within the palace."
+		},
+		"elephant": {
+			"paragraph1": "Elephant",
+			"paragraph2": "Moves <b>two steps diagonally</b> on its own side of the board and may not cross the river. If there is another piece on the midpoint of that diagonal path, the Elephant is blocked and cannot move."
+		},
+		"chariot": {
+			"paragraph1": "Chariot",
+			"paragraph2": "Moves <b>horizontally or vertically</b> with no limit on distance, as long as no piece blocks the path."
+		},
+		"horse": {
+			"paragraph1": "Horse",
+			"paragraph2": "Moves in an <b>L-shape</b> (one step orthogonally then one step diagonally outward). If the adjacent orthogonal point is occupied by any piece, the Horse is blocked and cannot move."
+		},
+		"cannon": {
+			"paragraph1": "Cannon",
+			"paragraph2": "Moves <b>horizontally or vertically</b> like a Chariot when not capturing. To capture, it must <b>jump over exactly one piece</b> to reach its target. If there are zero or more than one pieces between the Cannon and the target, it cannot capture."
+		},
+		"soldier": {
+			"paragraph1": "Soldier",
+			"paragraph2": "Moves <b>one step</b> each turn. Before crossing the river, it can only move forward. After crossing the river, it may move <b>forward or sideways</b>, but never backward."
+		},
+		"capturing": {
+			"paragraph1": "When a piece moves to an intersection occupied by an opponent's piece, it may <b>capture that piece</b> and occupy its position.",
+			"paragraph2": "You may not capture your own pieces. You may sacrifice your own pieces to be captured by the opponent, <b>except for the General</b>.",
+			"paragraph3": "A captured piece is removed from the board. <b>Chasing one piece for more than 6 consecutive moves is not allowed</b>."
+		},
+		"check": {
+			"paragraph1": "If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check",
+			"paragraph2": "When the General is checked from any direction (including from behind), the checked side may respond in one of the following ways:",
+			"paragraph3": "Move the General to another position to escape check",
+			"paragraph4": "Capture the checking piece",
+			"paragraph5": "Block the checking line with another piece to protect the General",
+			"paragraph6": "Repeatedly checking for more than 6 consecutive moves is not allowed"
+		},
+		"result": {
+			"paragraph1": "When one side gives Check and the other side has no legal way to protect the General, it is called a <b>Checkmate</b>. The side that delivers Checkmate wins.",
+			"paragraph2": "If a player runs out of time for a single move (for example: 90s) without moving, the other side is awarded a <b>win</b>.",
+			"paragraph3": "If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.",
+			"paragraph4": "If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.",
+			"paragraph5": "Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>."
 		}
 	}
 }

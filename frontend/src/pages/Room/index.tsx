@@ -1,10 +1,12 @@
 import React from "react"
 import classnames from "classnames"
+import ConfettiBoom from "react-confetti-boom"
 import { Menu, MenuItem } from "@mui/material"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
 import { Empty } from "components/Common"
 import { TI } from "components/TranslationTag"
+import CapturedPiecesDisplay from "./components/CapturedPiecesDisplay"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import SettingsButton from "./components/SettingsButton"
@@ -26,7 +28,7 @@ export default function RoomPage() {
 		previousMove,
 		roomSettingsDialogValue,
 		selected,
-		settingsVisible,
+		showConfetti,
 		topSideUser,
 
 		closeActionMenu,
@@ -39,29 +41,44 @@ export default function RoomPage() {
 
 	return (
 		<div className="room-container">
+			{showConfetti && <ConfettiBoom mode="boom" particleCount={50} />}
 			<div className="player-info-row view">
-				<PlayerInfoCard
-					username={topSideUser?.display_name}
-					team={
-						topSideUser?.team === "red" ? "red" :
-							topSideUser?.team === "black" ? "black" :
-								bottomSideUser?.team === "red" ? "black" : "red"
-					}
-					active={currentTurn === topSideUser?.team}
-					avatarUrl={topSideUser?.avatar_url || null}
-					capturedPieces={capturedPieces}
-					isEmpty={!topSideUser}
-					userId={topSideUser?.id}
-				/>
-				<PlayerInfoCard
-					username={bottomSideUser?.display_name}
-					team={bottomSideUser?.team === "black" ? "black" : "red"}
-					active={currentTurn === bottomSideUser?.team}
-					avatarUrl={bottomSideUser?.avatar_url || null}
-					capturedPieces={capturedPieces}
-					isEmpty={!bottomSideUser}
-					userId={bottomSideUser?.id}
-				/>
+				<div className="player-section top-player">
+					<PlayerInfoCard
+						username={topSideUser?.display_name}
+						team={
+							topSideUser?.team === "red" ? "red" :
+								topSideUser?.team === "black" ? "black" :
+									bottomSideUser?.team === "red" ? "black" : "red"
+						}
+						active={currentTurn === topSideUser?.team}
+						avatarUrl={topSideUser?.avatar_url || null}
+						isEmpty={!topSideUser}
+						userId={topSideUser?.id}
+					/>
+					<CapturedPiecesDisplay
+						capturedPieces={capturedPieces}
+						team={
+							topSideUser?.team === "red" ? "red" :
+								topSideUser?.team === "black" ? "black" :
+									bottomSideUser?.team === "red" ? "black" : "red"
+						}
+					/>
+				</div>
+				<div className="player-section bottom-player">
+					<CapturedPiecesDisplay
+						capturedPieces={capturedPieces}
+						team={bottomSideUser?.team === "black" ? "black" : "red"}
+					/>
+					<PlayerInfoCard
+						username={bottomSideUser?.display_name}
+						team={bottomSideUser?.team === "black" ? "black" : "red"}
+						active={currentTurn === bottomSideUser?.team}
+						avatarUrl={bottomSideUser?.avatar_url || null}
+						isEmpty={!bottomSideUser}
+						userId={bottomSideUser?.id}
+					/>
+				</div>
 			</div>
 			<div className="xiangqi-board">
 				<div className="board-frame">
@@ -168,7 +185,7 @@ export default function RoomPage() {
 						)
 					})}
 				</Menu>
-				{settingsVisible && <SettingsButton {...roomSettingsDialogValue} />}
+				<SettingsButton {...roomSettingsDialogValue} />
 			</div>
 		</div>
 	)

@@ -11,9 +11,13 @@ reset:
 	git reset --hard
 
 destroy:
-	docker container stop xiangqi-api
-	docker container rm xiangqi-api
-	docker image rm xiangqi-api
+	@if docker container inspect xiangqi-api >/dev/null 2>&1; then \
+		docker container stop xiangqi-api; \
+		docker container rm xiangqi-api; \
+		docker image rm xiangqi-api; \
+	else \
+		echo "Container xiangqi-api does not exist"; \
+	fi
 
 docker:
 	rm -rf dist

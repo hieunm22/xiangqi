@@ -46,3 +46,9 @@ export interface FenMoveDiffResult {
 	movedCell: CellProps
 	capturedCell: CellProps | null
 }
+
+export type UserAvatarType = {
+	id: number
+	display_name: string
+	avatar_url: string
+}

@@ -3,8 +3,9 @@ import prisma from "prisma"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
+import { getAvatarUrl } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
-import { emitGameStarted } from "common/socket"
+import { emitGameStarted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { RoomStatus, StartGameRequest } from "types/room.type"
 
@@ -137,7 +138,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		const { game, room } = await prisma.$transaction(async tx => {
 			const updatedRoom = await tx.room.update({
 				where: { id: roomIdBigInt },
-				data: { status: RoomStatus.Playing },
+				data: { updated_at: new Date(), status: RoomStatus.Playing },
 				select: { id: true, status: true, red_first: true }
 			})
 
@@ -159,6 +160,21 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				},
 				select: { id: true, status: true, room_id: true, bot_difficulty: true }
 			})
+
+			// Add game_users records for the 2 active players (with assigned teams)
+			const roomPlayers = await tx.roomUser.findMany({
+				where: { room_id: roomIdBigInt, team: { not: null } },
+				select: { user_id: true }
+			})
+
+			for (const player of roomPlayers) {
+				await tx.gameUser.create({
+					data: {
+						game_id: createdGame.id,
+						user_id: player.user_id
+					}
+				})
+			}
 
 			return { game: createdGame, room: updatedRoom }
 		})
@@ -192,11 +208,40 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			}
 		})
 
+		// Notify everyone in the room about the updated user list (includes bot if PvE)
+		if (requestedDifficulty !== null) {
+			const roomUsers = await prisma.roomUser.findMany({
+				where: { room_id: roomIdBigInt },
+				select: {
+					user_id: true,
+					team: true,
+					users: {
+						select: {
+							id: true,
+							display_name: true,
+							avatar_seq: true
+						}
+					}
+				}
+			})
+
+			const users = roomUsers.map((ru: any) => ({
+				id: Number(ru.user_id),
+				display_name: ru.users?.display_name ?? (Number(ru.user_id) === 0 ? "Bot" : "Unknown"),
+				avatar_url: getAvatarUrl(ru.users?.id ?? 0, ru.users?.avatar_seq ?? 0),
+				team: ru.team,
+				joined_at: new Date().toISOString()
+			}))
+
+			emitRoomUsersUpdated(Number(room.id), users)
+		}
+
 		// Notify everyone in the room (host, opponent, spectators) that the game began,
 		// so each client can play the start sound and initialize the board in real time.
 		emitGameStarted(Number(room.id), {
 			gameId: game.id,
-			status: room.status
+			status: room.status,
+			bot_difficulty: game.bot_difficulty
 		})
 
 		// If the bot is on the move first, kick off its opening reply after responding.

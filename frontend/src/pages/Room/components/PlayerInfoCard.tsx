@@ -1,9 +1,11 @@
 import classnames from "classnames"
-import { pieceSymbolByType } from "../constant"
+import { PopupState } from "components/Layout/enums"
 import { TI } from "components/TranslationTag"
 import { requireImage } from "common/helper"
 import { usePopups } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
+import useToolkit from "hooks/useToolkit"
+import { setPopup } from "toolkit/slice/home"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
 import { PlayerInfoCardProps } from "../types"
@@ -12,14 +14,14 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
 		avatarUrl,
-		capturedPieces,
 		isEmpty = false,
 		team,
 		userId = null,
 		username,
 	} = props
-	const { setOpenProfilePopup, setProfileUser } = usePopups()
+	const { setProfileUser } = usePopups()
 	const { getUserById } = useAPI()
+	const { dispatch } = useToolkit()
 
 	if (username === undefined) {
 		return (
@@ -46,16 +48,13 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"active-turn": active,
 	})
 
-	const capturedList = capturedPieces[team]
-	const capturedTeam = team === "red" ? "black" : "red"
-
 	const handlePlayerNameClick = async () => {
 		if (!userId) return
 
 		const userResponse: APIResponse<Users> = await getUserById(userId)
 		if (userResponse && userResponse.data) {
 			setProfileUser(userResponse.data)
-			setOpenProfilePopup(true)
+			dispatch(setPopup(PopupState.PROFILE)) // open profile popup
 		}
 	}
 
@@ -69,18 +68,6 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					{username}
 				</div>
 				<div className={classnames("player-general", `team-${team}`)}>
-				</div>
-				<div className={classnames("captured-pieces", `team-${capturedTeam}`)}>
-					{capturedList.map((symbol, index) => {
-						const symbolText = pieceSymbolByType[symbol]
-						return (
-							<span
-								className="captured-piece"
-								key={`${symbol}-${index}`}
-								data-content={symbolText}
-							/>
-						)
-					})}
 				</div>
 			</div>
 		</div>

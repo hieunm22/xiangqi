@@ -96,18 +96,71 @@
 	height: 28px !important;
 }
 
-.profile-dialog-divider {
-	margin-top: 0;
-	margin-bottom: 0;
-}
-
-.profile-dialog-actions {
+.profile-dialog-actions, .guide-dialog-actions {
 	justify-content: center;
 	margin-top: 16px;
 	gap: 16px !important;
+	display: flex;
+	padding-bottom: 16px;
 }
 
-.settings-dialog-divider {
-	margin-top: 5px;
-	margin-bottom: 5px;
+.guide-popup {
+	max-height: min(65vh, 560px);
+	overflow-y: auto;
+	padding: 16px 20px;
+}
+
+.settings-popup-title {
+	padding: 5px 20px !important;
+}
+
+.game-history-item {
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.game-history-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.85rem;
+	color: rgba(0, 0, 0, 0.6);
+	padding-bottom: 8px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+	.game-history-date {
+		flex: 0 0 auto;
+	}
+
+	.game-history-time-only {
+		flex: 0 0 auto;
+		text-align: right;
+	}
+}
+
+.game-history-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.game-score {
+	font-size: 1.2rem;
+	font-weight: bold;
+	&.win {
+		color: #4caf50;
+	}
+	&.lose {
+		color: #f44336;
+	}
+}
+
+.game-history-footer {
+	padding: 16px;
+	display: flex;
+	justify-content: flex-end;
+	padding: 16px;
 }

@@ -1,22 +1,42 @@
 import classnames from "classnames"
 import { Avatar, Stack, Tooltip } from "@mui/material"
 import { requireImage } from "common/helper"
-import { User, UserAvatarGroupProps } from "../types"
+import { UserAvatarType } from "types/Common"
+import { UserAvatarGroupProps } from "../types"
 
-export const UserAvatar = (user: User) => (
-	<Tooltip key={user.id} title={user.display_name} arrow placement="top">
-		<Avatar
-			className="dashboard__avatar"
-			src={requireImage(user.avatar_url || "")}
-			alt={user.display_name}
-		>
-			{user.display_name.trim().charAt(0).toUpperCase() || "U"}
-		</Avatar>
-	</Tooltip>
-)
+interface UserAvatarProps extends UserAvatarType {
+	onUserClick?: (id: number) => Promise<void>
+}
+
+export const UserAvatar = (props: UserAvatarProps) => {
+	const { id, display_name, avatar_url, onUserClick } = props
+
+	const handleClick = () => {
+		if (onUserClick) {
+			onUserClick(id)
+		}
+	}
+
+	return (
+		<Tooltip key={id} title={display_name} arrow placement="top">
+			<Avatar
+				className="dashboard__avatar"
+				src={requireImage(avatar_url || "")}
+				alt={display_name}
+				onClick={handleClick}
+				sx={{
+					cursor: onUserClick ? "pointer" : "default",
+					"&:hover": onUserClick ? { opacity: 0.8 } : {}
+				}}
+			>
+				{display_name.trim().charAt(0).toUpperCase() || "U"}
+			</Avatar>
+		</Tooltip>
+	)
+}
 
 export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
-	const { users, type } = props
+	const { users, type, onUserClick } = props
 	const stackClass = classnames("dashboard__avatar-group", type)
 
 	return (
@@ -25,7 +45,7 @@ export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
 			alignItems="center"
 			className={stackClass}
 		>
-			{users.map(UserAvatar)}
+			{users.map(u => <UserAvatar key={u.id} {...u} onUserClick={onUserClick} />)}
 		</Stack>
 	)
 }

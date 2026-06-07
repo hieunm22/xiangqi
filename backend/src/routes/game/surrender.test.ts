@@ -7,6 +7,7 @@ const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
 const gameUpdateMock = vi.fn()
 const roomUpdateMock = vi.fn()
+const roomFindUniqueMock = vi.fn()
 const transactionMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const toArrayMock = vi.fn()
@@ -15,6 +16,7 @@ const sortMock = vi.fn()
 const findMock = vi.fn()
 const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
+const buildEndGameTransactionMock = vi.fn()
 
 const PATH = "/api/game/surrender"
 
@@ -32,6 +34,7 @@ vi.mock("prisma", () => ({
 			update: gameUpdateMock
 		},
 		room: {
+			findUnique: roomFindUniqueMock,
 			update: roomUpdateMock
 		},
 		roomUser: {
@@ -42,6 +45,10 @@ vi.mock("prisma", () => ({
 
 vi.mock("../../common/mongodb", () => ({
 	getGameHistoryCollection: getGameHistoryCollectionMock
+}))
+
+vi.mock("../../common/game/end-game.helper", () => ({
+	buildEndGameTransaction: buildEndGameTransactionMock
 }))
 
 describe("POST /api/game/surrender", () => {
@@ -166,6 +173,11 @@ describe("POST /api/game/surrender", () => {
 			room_id: BigInt(100),
 			status: 0
 		})
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(100),
+			pve_mode: false,
+			bet_amount: 50
+		})
 		roomUserFindManyMock.mockResolvedValue([
 			{ user_id: BigInt(11), team: "red" },
 			{ user_id: BigInt(12), team: "black" }
@@ -174,6 +186,7 @@ describe("POST /api/game/surrender", () => {
 			{ _id: { toString: () => "history-1" }, game_id: "game-1", fen: "latest-fen" }
 		])
 		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "history-2" } })
+		buildEndGameTransactionMock.mockResolvedValue([])
 		transactionMock.mockResolvedValue([
 			{ id: "game-1", winner_id: BigInt(12), status: 2 },
 			{ id: BigInt(100), status: 1 }
@@ -194,15 +207,14 @@ describe("POST /api/game/surrender", () => {
 				surrender: 11
 			})
 		)
+		expect(buildEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "game-1",
+			roomId: BigInt(100),
+			winnerId: BigInt(12),
+			isBotGame: false,
+			betAmount: 50
+		})
 		expect(transactionMock).toHaveBeenCalled()
-		expect(gameUpdateMock).toHaveBeenCalledWith({
-			where: { id: "game-1" },
-			data: { winner_id: BigInt(12), status: 2 }
-		})
-		expect(roomUpdateMock).toHaveBeenCalledWith({
-			where: { id: BigInt(100) },
-			data: { status: 1 }
-		})
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "surrender.messages.success",

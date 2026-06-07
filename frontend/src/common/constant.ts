@@ -3,10 +3,11 @@ import type { DropdownProps } from "types/Common"
 export const LS_TOKEN_KEY = "xiangqi-token"
 export const LS_DARKMODE = "dark-mode"
 export const LS_LANGUAGE = "language"
+export const LS_DEBUG = "debug-mode"
 export const BOARD_COLUMNS = 9
 export const BOARD_ROWS = 10
 
-export const COUNTRIES_DROPDOWN: DropdownProps[] = [
+export const COUNTRIES_OPTIONS: DropdownProps[] = [
 	{
 		key: "en",
 		icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1fa-1f1f8.svg",

@@ -11,8 +11,6 @@ const router = Router()
  *     summary: Resync sequence for a table
  *     tags:
  *       - Tool
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -20,8 +18,12 @@ const router = Router()
  *           schema:
  *             type: object
  *             required:
+ *               - schema
  *               - tablename
  *             properties:
+ *               schema:
+ *                 type: string
+ *                 description: Name of the schema (e.g., public, auth)
  *               tablename:
  *                 type: string
  *                 description: Name of the table to resync sequence (e.g., rooms, users)
@@ -48,9 +50,8 @@ const router = Router()
  */
 router.post(
 	"/tool/sequence",
-	requireAuth(),
 	async (req: AuthenticatedRequest, res: Response) => {
-		const { tablename } = req.body
+		const { tablename, schema } = req.body
 
 		// Validate tablename
 		if (!tablename || typeof tablename !== "string" || tablename.trim() === "") {
@@ -77,8 +78,8 @@ router.post(
 			// Note: Using string interpolation is safe here because we validate the table name above
 			await prisma.$executeRawUnsafe(`
 				SELECT setval(
-					pg_get_serial_sequence('"game"."${tablename}"', 'id'),
-					COALESCE((SELECT MAX(id) FROM "game"."${tablename}"), 0) + 1,
+					pg_get_serial_sequence('"${schema}"."${tablename}"', 'id'),
+					COALESCE((SELECT MAX(id) FROM "${schema}"."${tablename}"), 0) + 1,
 					false
 				)
 			`)
@@ -88,11 +89,12 @@ router.post(
 				message: `Sequence resynced successfully for table '${tablename}'`,
 				status_code: 200
 			})
-		} catch (err) {
-			console.error("Error resyncing sequence:", err)
+		} catch (err: any) {
+			const message = err?.meta?.driverAdapterError?.message ?? (err instanceof Error ? err.message : String(err))
+			console.error("Error resyncing sequence:", message)
 			res.status(500).json({
 				success: false,
-				message: "Internal server error while resyncing sequence",
+				message,
 				status_code: 500
 			})
 		}

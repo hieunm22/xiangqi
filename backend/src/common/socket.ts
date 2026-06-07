@@ -136,6 +136,13 @@ export function initializeSocket(httpServer: HTTPServer) {
 			}
 		})
 
+		socket.on("surrender", (data: any) => {
+			console.log(`[Socket.io] [${new Date().toISOString()}] Received surrender from ${socket.id}:`, data)
+			if (data && data.roomId && data.gameId && typeof data.surrenderingUserId === "number") {
+				emitSurrender(data.roomId, data.gameId, data.surrenderingUserId)
+			}
+		})
+
 		socket.on("error", (error) => {
 			console.error(`[Socket.io] [${new Date().toISOString()}] Client error ${socket.id}:`, error)
 		})
@@ -170,20 +177,20 @@ export function getIO(): SocketIOServer {
 /**
  * Emit move piece event to all clients in room
  */
-export function emitMovePiece(roomId: string, moveRecord: any, userId?: number) {
+export function emitMovePiece(roomId: string | number, moveRecord: any, userId?: number) {
 	const io = getIO()
 	const roomChannel = `room-${roomId}`
-	
+
 	// Add userId to payload so client can identify sender
 	const payload = { ...moveRecord, userId }
-	
+
 	console.log(`[Socket.io] [${new Date().toISOString()}] Emitting move piece to ${roomChannel}:`, {
 		game_id: moveRecord.game_id,
 		team: moveRecord.team,
 		fen: moveRecord.fen,
 		userId
 	})
-	
+
 	io.to(roomChannel).emit("piece-moved", payload)
 	console.log(`[Socket.io] [${new Date().toISOString()}] Move piece emitted to all clients in ${roomChannel}`)
 }
@@ -242,6 +249,20 @@ export function emitDrawResponse(
 	console.log(`[Socket.io] [${new Date().toISOString()}] Draw response emitted to ${roomChannel}`)
 }
 
+/**
+ * Emit surrender event to all clients in a room
+ */
+export function emitSurrender(roomId: string | number, gameId: string, surrenderingUserId: number) {
+	const io = getIO()
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("surrender", {
+		roomId,
+		gameId,
+		surrenderingUserId
+	})
+	console.log(`[Socket.io] [${new Date().toISOString()}] Surrender event emitted to ${roomChannel}`)
+}
+
 // ------------------------------------------------------------------------
 
 /**
@@ -263,6 +284,24 @@ export function emitRoomUsersUpdated(roomId: string | number, users: any[]) {
 		users
 	})
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room users updated emitted to ${roomChannel}`)
+}
+
+/**
+ * Emit a kick event so the kicked user's client can leave the room.
+ * Broadcast on the room channel; the client filters by userId.
+ */
+export function emitUserKicked(roomId: string | number, userId: number) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit user-kicked: Socket.io server not initialized`)
+		return
+	}
+
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("user-kicked", {
+		roomId,
+		userId
+	})
+	console.log(`[Socket.io] [${new Date().toISOString()}] User ${userId} kicked emitted to ${roomChannel}`)
 }
 
 /**

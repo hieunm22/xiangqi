@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { JoinRoomRequest } from "types/room.type"
+import { getAvatarUrl } from "common/helper"
 
 const router = Router()
 
@@ -55,7 +56,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		const roomId = BigInt(id)
 		// Check if room exists
 		const room = await prisma.room.findUnique({
-			where: { id: roomId }
+			where: { id: roomId },
+			select: { id: true, pve_mode: true }
 		})
 
 		if (!room) {
@@ -90,7 +92,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		})
 
 		if (existingRoomUser) {
-			// User is already in this room: refresh join timestamp
+			// User is already in this room: refresh join timestamp.
+			// For PVE rooms, also force team to null (spectator).
 			await prisma.roomUser.update({
 				where: {
 					room_id_user_id: {
@@ -99,29 +102,39 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 					}
 				},
 				data: {
-					joined_at: now
+					joined_at: now,
+					...(room.pve_mode ? { team: null } : {})
 				}
 			})
 		} else {
-			// User is joining a new room: assign team by join order.
-			// - 2nd user: opposite of 1st user's team
-			// - 3rd+ user: null team (spectator)
-			const existingMembers = await prisma.roomUser.findMany({
-				where: {
-					room_id: roomId
-				},
-				select: {
-					team: true
-				},
-				orderBy: {
-					joined_at: "asc"
-				}
-			})
-
+			// User is joining a new room.
+			// PVE rooms: always spectator (team = null).
+			// PVP rooms: assign team by available slot.
+			//   - If red or black is missing: assign to that team
+			//   - If both teams taken: null team (spectator)
 			let assignedTeam: string | null = null
-			if (existingMembers.length === 1) {
-				const firstTeam = existingMembers[0].team
-				assignedTeam = firstTeam === "red" ? "black" : "red"
+
+			if (!room.pve_mode) {
+				const existingMembers = await prisma.roomUser.findMany({
+					where: {
+						room_id: roomId
+					},
+					select: {
+						team: true
+					},
+					orderBy: {
+						joined_at: "asc"
+					}
+				})
+
+				const assignedTeams = new Set(existingMembers.map(m => m.team).filter(t => t !== null))
+
+				if (!assignedTeams.has("red")) {
+					assignedTeam = "red"
+				} else if (!assignedTeams.has("black")) {
+					assignedTeam = "black"
+				}
+				// If both teams are assigned, assignedTeam remains null (spectator)
 			}
 
 			await prisma.roomUser.create({
@@ -159,10 +172,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			id: Number(roomUser.users.id),
 			display_name: roomUser.users.display_name,
 			avatar_seq: Number(roomUser.users.avatar_seq),
-			avatar_url:
-				Number(roomUser.users.avatar_seq) === 0
-					? `/images/${Number(roomUser.users.id)}.jpg`
-					: `/images/${Number(roomUser.users.id)}_${Number(roomUser.users.avatar_seq)}.jpg`,
+			avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 			team: roomUser.team,
 			joined_at: roomUser.joined_at
 		}))

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { ChangeEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
 	Stack,
@@ -13,6 +13,7 @@ import {
 	MenuItem,
 	DialogActions
 } from "@mui/material"
+import { betOptions } from "../constants"
 import Alert from "components/AlertWithIcon"
 import { TButton, TTextField } from "components/TranslationTag"
 import { PieceSelection } from "./PieceSelection"
@@ -31,10 +32,12 @@ export const CreateRoomDialog = () => {
 	const [isRedFirst, setIsRedFirst] = useState(true)
 	const [pveMode, setPveMode] = useState(false)
 	const [betAmount, setBetAmount] = useState(10)
+	const [oldBetAmount, setOldBetAmount] = useState(10)
 	const [selectedColor, setSelectedColor] = useState<Team>("red")
 	const [submitting, setSubmitting] = useState(false)
 	const [submitError, setSubmitError] = useState("")
-	const betOptions = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
+	const botBetOptions = [0]
+
 	const isRoomNameEmpty = roomName.trim().length === 0
 	const navigate = useNavigate()
 
@@ -50,6 +53,13 @@ export const CreateRoomDialog = () => {
 
 	const handleRoomNameBlur = () => {
 		setRoomNameError(roomName.trim().length === 0)
+	}
+
+	const onSwitchChanged = (e: ChangeEvent<HTMLInputElement>) => {
+		const checked = e.target.checked
+		setPveMode(checked)
+		setOldBetAmount(betAmount)
+		setBetAmount(checked ? 0 : oldBetAmount)
 	}
 
 	const formatBetAmount = (amount: number) => amount >= 1000 ? `${amount / 1000}k` : amount
@@ -68,7 +78,7 @@ export const CreateRoomDialog = () => {
 			teamName: selectedColor,
 			redFirst: isRedFirst,
 			pveMode,
-			betAmount
+			betAmount: pveMode ? 0 : betAmount
 		}
 		const response = await createRoom(token, body)
 
@@ -105,7 +115,7 @@ export const CreateRoomDialog = () => {
 		>
 			<DialogTitle>{translate("dashboard.room.create")}</DialogTitle>
 			<DialogContent>
-				<Stack spacing={2} sx={{ pt: 1 }}>
+				<Stack spacing={2}>
 					{submitError && <Alert severity="error">{submitError}</Alert>}
 					<TTextField
 						fullWidth
@@ -146,7 +156,7 @@ export const CreateRoomDialog = () => {
 							<Switch
 								className="ios-switch pve-mode"
 								checked={pveMode}
-								onChange={event => setPveMode(event.target.checked)}
+								onChange={onSwitchChanged}
 							/>
 						}
 						label={translate("dashboard.popup.pve-mode")}
@@ -154,14 +164,15 @@ export const CreateRoomDialog = () => {
 
 					<FormControl fullWidth size="small">
 						<FormLabel>{translate("dashboard.popup.bet-amount")}</FormLabel>
-						<Select
-							value={betAmount}
-							onChange={event => setBetAmount(Number(event.target.value))}
-						>
-							{betOptions.map(option => (
-								<MenuItem key={option} value={option}>{formatBetAmount(option)}</MenuItem>
-							))}
-						</Select>
+							<Select
+								value={betAmount}
+								disabled={pveMode}
+								onChange={e => setBetAmount(Number(e.target.value))}
+							>
+								{(pveMode ? botBetOptions : betOptions).map(option => (
+									<MenuItem key={option} value={option}>{formatBetAmount(option)}</MenuItem>
+								))}
+							</Select>
 					</FormControl>
 				</Stack>
 			</DialogContent>

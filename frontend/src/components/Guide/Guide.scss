@@ -1,0 +1,74 @@
+.guide-popup {
+	padding: 16px;
+	.piece-chip {
+		display: flex;
+		justify-content: center;
+		gap: 8px;
+	}
+
+	.piece-table {
+		width: 70%;
+		margin: 10px auto;
+
+		table {
+			border-collapse: collapse;
+		}
+
+		td,
+		th {
+			border: 1px solid #ddd;
+			padding: 8px;
+		}
+
+		th {
+			background-color: #b5b5b5;
+		}
+	}
+
+	.sample {
+		background: radial-gradient(circle at 35% 30%, #fff8e4 0, #f4dfb2 64%, #e0be84 100%);
+		box-shadow: 0 2px 0 rgba(82, 42, 18, 0.45), 0 6px 10px rgba(70, 32, 13, 0.2);
+		font-weight: bold;
+		width: 32px;
+
+		.MuiChip-label {
+			display: flex;
+			justify-content: center;
+		}
+	}
+
+	.piece-red {
+		color: red;
+		border: solid 1px;
+	}
+
+	.piece-black {
+		color: black;
+		border: solid 1px;
+	}
+
+	.section {
+		margin-top: 24px;
+		margin-bottom: 8px;
+		font-weight: bold;
+	}
+
+	.paragraph {
+		font-weight: bold;
+		margin-top: 16px;
+	}
+
+	.image {
+		width: 200px;
+		margin-top: 16px;
+	}
+
+	.list-item {
+		margin-left: 16px;
+
+		&::before {
+			content: "-";
+			margin-right: 24px;
+		}
+	}
+}

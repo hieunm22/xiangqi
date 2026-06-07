@@ -7,21 +7,18 @@ import {
 } from "@mui/material"
 import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
-import { TTypography } from "components/TranslationTag"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { CreateRoomDialog } from "./components/CreateRoomDialog"
 import { JoinRoomDialog } from "./components/JoinRoomDialog"
 import { RoomCard } from "./components/RoomCard"
 import { SkeletonRoom } from "./components/SkeletonRoom"
+import { TTypography } from "components/TranslationTag"
 import { getToken } from "common/helper"
-import { translate } from "locales/translate"
-import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
+import useAutoTitle from "hooks/useAutoTitle"
 import { useSocket } from "hooks/useSocket"
-import {
-	CreateRoomDialogContext,
-	JoinRoomDialogContext
-} from "hooks/useAppContext"
+import { translate } from "locales/translate"
+import { CreateRoomDialogContext, JoinRoomDialogContext } from "hooks/useAppContext"
 import {
 	DashboardFilter,
 	DashboardRoom,
@@ -34,12 +31,12 @@ const DashboardPage = () => {
 	const { fetchRooms } = useAPI()
 	const {
 		isConnected,
-		onDashboardRoomUsersUpdated,
-		onRoomCreated,
-		onRoomDeleted,
 		offRoomCreated,
 		offRoomDeleted,
 		offDashboardRoomUsersUpdated,
+		onDashboardRoomUsersUpdated,
+		onRoomCreated,
+		onRoomDeleted,
 	} = useSocket()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
 	const [rooms, setRooms] = useState<DashboardRoom[]>([])

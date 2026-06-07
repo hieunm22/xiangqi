@@ -159,6 +159,17 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 
 		const insertResult = await collection.insertOne(newRecord)
 
+		// Also save to PostgreSQL for test data
+		await prisma.gameHistory.create({
+			data: {
+				game_id: gameId,
+				fen: newFen,
+				team: nextTeam,
+				capture: capturePiece ? (team === "red" ? capturePiece.toUpperCase() : capturePiece.toLowerCase()) : null,
+				time_stamp: Math.floor(Date.now() / 1000)
+			}
+		})
+
 		const responseData: any = {
 			...newRecord,
 			_id: insertResult.insertedId.toString()
@@ -179,7 +190,7 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 
 			const userId = req.auth?.userId ? parseInt(req.auth.userId, 10) : undefined
 			if (game?.room_id) {
-				emitMovePiece(game.room_id.toString(), responseData, userId)
+				emitMovePiece(Number(game.room_id), responseData, userId)
 				if (game.bot_difficulty != null && game.room) {
 					pveContext = {
 						roomId: game.room_id,

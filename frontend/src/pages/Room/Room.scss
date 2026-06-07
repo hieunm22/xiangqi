@@ -290,6 +290,7 @@
 
 	&.highlight {
 		box-shadow: 0 0 0 2px #76c892;
+		border-radius: 50%;
 	}
 }
 
@@ -331,7 +332,6 @@
 .player-info-card {
 	width: calc((var(--board-width) + 2 * var(--board-padding) - 12px) / 2);
 	min-height: 72px;
-	height: 100px;
 	display: flex;
 	gap: 12px;
 	padding: 10px;
@@ -448,18 +448,54 @@
 	}
 }
 
+.player-section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: flex-end;
+
+	// &.top-player {
+	// }
+
+	&.bottom-player {
+		flex-direction: column;
+	}
+}
+
+.captured-pieces-display {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	width: fit-content;
+	max-height: calc(20px * 7 + 2px * 6);
+	gap: 2px;
+	direction: rtl;
+
+	&.team-red {
+		color: red;
+	}
+
+	&.team-black {
+		color: black;
+	}
+}
+
 .captured-piece {
-	display: inline-flex;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 2px solid #6b3d20;
+	background: radial-gradient(circle at 35% 30%, #fff8e4 0, #f4dfb2 64%, #e0be84 100%);
+	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 20px;
-	height: 20px;
-	border-radius: 50%;
-	border: 1px solid currentColor;
 	font-family: "Noto Serif SC", "Songti SC", serif;
-	font-size: 13px;
+	font-size: 18px;
+	font-weight: 700;
 	line-height: 1;
-	background: rgba(255, 255, 255, 0.45);
+	box-shadow: 0 2px 0 rgba(82, 42, 18, 0.45), 0 6px 10px rgba(70, 32, 13, 0.2);
+	z-index: 3;
+	user-select: none;
 
 	&::before {
 		content: attr(data-content);
@@ -480,4 +516,9 @@
 	margin-right: 10px;
 	width: 16px;
 	text-align: center;
+}
+
+.joined-users {
+	margin-bottom: 8px;
+	font-weight: 600;
 }

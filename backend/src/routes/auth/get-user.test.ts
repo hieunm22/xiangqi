@@ -102,7 +102,7 @@ describe("GET /api/auth/user?id=:id", () => {
 				email: "alice@example.com",
 				display_name: "Alice",
 				gender: true,
-				avatar_seq: 2
+				avatar_url: "/images/101_2.jpg"
 			}
 		})
 	})

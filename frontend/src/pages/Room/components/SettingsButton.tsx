@@ -1,16 +1,7 @@
 import { TI } from "components/TranslationTag"
 import RoomSettingsDialog from "./RoomSettingsDialog"
 import { RoomSettingsDialogContext } from "hooks/useAppContext"
-import { EmptyVoid } from "types/Common"
-import { RoomInfo } from "../types"
-
-interface SettingsButtonProps {
-	room: RoomInfo | null
-	isOpen: boolean
-	closeSettings: EmptyVoid
-	handleSettingsSaved: (newName: string) => void
-	openSettings: EmptyVoid
-}
+import { SettingsButtonProps } from "../types"
 
 export const SettingsButton = (props: SettingsButtonProps) => {
 	return (

@@ -44,7 +44,8 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
-		"low": room.bet_amount <= 100,
+		"zero-bet": !room.bet_amount,
+		"low": room.bet_amount <= 100 && room.bet_amount > 0,
 		"medium": room.bet_amount > 100 && room.bet_amount <= 2000,
 		"high": room.bet_amount > 2000
 	})
@@ -65,10 +66,10 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 						className="dashboard__room-name"
 						content={room.name}
 					/>
-					<i className="fas fa-coin bet-icon" />
-					<Typography component="span" className="dashboard__room-bet" noWrap>
+					{room.bet_amount > 0 && <i className="fas fa-coin bet-icon" />}
+					{room.bet_amount > 0 && <Typography component="span" className="dashboard__room-bet">
 						{formatBetAmount(room.bet_amount)}
-					</Typography>
+					</Typography>}
 				</Stack>
 
 				<Stack direction="row" className="dashboard__card-meta">

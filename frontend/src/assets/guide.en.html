@@ -1,0 +1,91 @@
+<h1>Objective of the game</h1>
+<p>A match is played between two players: one controls the Red pieces, and the other controls the Black pieces. The objective of each player is to use their pieces on the board to <b>checkmate the opponent's General</b>, and win the game.</p>
+
+
+<h1>Pieces</h1>
+<p>At the start of each game, there must be 32 pieces in total, consisting of 7 piece types split evenly between both sides: 16 Red pieces and 16 Black pieces. The <b>7 piece types</b> with their symbols and quantities are as follows:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Piece</th>
+      <th>Symbol</th>
+      <th>Quantity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>General</td><td>將 帥</td><td>1</td></tr>
+    <tr><td>Advisor</td><td>士 仕</td><td>2</td></tr>
+    <tr><td>Elephant</td><td>象 相</td><td>2</td></tr>
+    <tr><td>Horse</td><td>馬 傌</td><td>2</td></tr>
+    <tr><td>Chariot</td><td>車 俥</td><td>2</td></tr>
+    <tr><td>Cannon</td><td>砲 炮</td><td>2</td></tr>
+    <tr><td>Soldier</td><td>卒 兵</td><td>5</td></tr>
+  </tbody>
+</table>
+
+<h1>Moving pieces</h1>
+<p>On each turn, each side may move only one of its own pieces according to the rules. The movement rules are as follows:</p>
+
+<p><b>General</b>: Moves one step <em>horizontally or vertically</em> within the palace.<br>
+The two Generals may not face each other directly on the same file.<br>
+If they are facing each other, there must be at least one piece of either side placed between them.</p>
+
+<img src="/src/assets/general.png" alt="General image" style="width: 200px;">
+
+<p><b>Advisor</b>: Moves <em>one step diagonally</em> within the palace.</p>
+
+<img src="/src/assets/advisor.png" alt="Advisor image" style="width: 200px;">
+
+<p><b>Elephant</b>: Moves <em>two steps diagonally</em> on its own side of the board and may not cross the river.<br>
+If there is another piece on the midpoint of that diagonal path, the Elephant is blocked and cannot move.</p>
+
+<img src="/src/assets/elephant.png" alt="Elephant image" style="width: 200px;">
+
+<p><b>Chariot</b>: Moves <em>horizontally or vertically</em> with no limit on distance, as long as no piece blocks the path.</p>
+
+<img src="/src/assets/chariot.png" alt="Chariot image" style="width: 200px;">
+
+<p><b>Horse</b>: Moves in an <em>L-shape</em> (one step orthogonally then one step diagonally outward). If the adjacent orthogonal point is occupied by any piece, the Horse is blocked and cannot move.</p>
+
+<img src="/src/assets/horse.png" alt="Horse image" style="width: 200px;">
+
+<p><b>Cannon</b>: When not capturing, it moves horizontally or vertically like a Chariot. To capture, it must <em>jump over exactly one piece</em>. There must be exactly one piece (called the "screen") between the Cannon and the target piece. A Cannon cannot capture if there is no screen or more than one screen.</p>
+
+<img src="/src/assets/cannon.png" alt="Cannon image" style="width: 200px;">
+
+<p><b>Soldier</b>: Moves one step each turn. Before crossing the river, it can only move forward. After crossing the river, it may move forward or sideways, but never backward.</p>
+
+<img src="/src/assets/soldier.png" alt="Soldier image" style="width: 200px;">
+
+<h1>Capturing</h1>
+<p>When a piece moves to <em>an intersection</em> occupied by an opponent's piece, it may capture that piece and occupy its position.</p>
+
+<p>You may <em>not capture your own pieces</em>. You may sacrifice your own pieces to be captured by the opponent, <em>except for the General</em>.</p>
+
+<p>A captured piece is removed from the board. Chasing one piece for <em>more than 6 consecutive moves</em> is not allowed.</p>
+
+
+<h1>Check</h1>
+<p>If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <em>Check</em>. The checked side must respond to avoid check; otherwise, that side loses.</p>
+
+<p>When the <em>General is checked from any direction</em> (including from behind), the checked side may respond in one of the following ways:</p>
+
+<ul>
+  <li>Move the General to another position to escape check</li>
+  <li>Capture the checking piece</li>
+  <li>Block the checking line with another piece to protect the General</li>
+  <li>Repeatedly checking for more than 6 consecutive moves is not allowed</li>
+</ul>
+
+<h1>Result</h1>
+<p>When one side gives <em>Check</em> and the other side has no legal way to <em>protect the General</em>, it is called <em>Checkmate</em>. The side that delivers <em>Checkmate</em> wins.</p>
+
+<p>If a player runs out of time for a single move (for example: 90s) without moving, the other side is awarded a win.</p>
+
+<p>If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a win.</p>
+
+<p>If both sides have no pieces that have crossed the river, the game is declared a draw.<br>
+If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a draw.</p>
+
+<p>Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a draw.</p>

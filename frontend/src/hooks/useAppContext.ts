@@ -53,12 +53,12 @@ export const usePieceSelectionContext = () => {
 	return context
 }
 
-const PopupContext = createContext<ProfilePopupContextValue | null>(null)
+const ProfilePopupContext = createContext<ProfilePopupContextValue | null>(null)
 
-export const PopupProvider = PopupContext.Provider
+export const PopupProvider = ProfilePopupContext.Provider
 
 export const usePopups = () => {
-	const context = useContext(PopupContext)
+	const context = useContext(ProfilePopupContext)
 	if (!context) {
 		throw new Error("usePopups must be used within PopupProvider")
 	}

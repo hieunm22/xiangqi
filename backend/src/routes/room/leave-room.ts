@@ -1,6 +1,9 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID, engineManager } from "common/bot-engine"
+import { buildEndGameTransaction } from "common/game/end-game.helper"
+import { getAvatarUrl } from "common/helper"
+import { getGameHistoryCollection } from "common/mongodb"
 import { emitRoomDeleted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { LeaveRoomRequest } from "types/room.type"
@@ -58,7 +61,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true, pve_mode: true }
+			select: { id: true, pve_mode: true, status: true, bet_amount: true }
 		})
 		if (!room) {
 			res.status(404).json({
@@ -69,16 +72,24 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
-		const currentRoomUser = await prisma.roomUser.findUnique({
-			where: {
-				room_id_user_id: {
-					room_id: roomId,
-					user_id: userIdBigInt
+		const roomUsers = await prisma.roomUser.findMany({
+			where: { room_id: roomId },
+			select: {
+				user_id: true,
+				team: true,
+				joined_at: true,
+				users: {
+					select: {
+						id: true,
+						display_name: true,
+						avatar_seq: true
+					}
 				}
 			},
-			select: { team: true }
+			orderBy: { joined_at: "asc" }
 		})
 
+		const currentRoomUser = roomUsers.find(ru => ru.user_id === userIdBigInt)
 		if (!currentRoomUser) {
 			res.status(404).json({
 				success: false,
@@ -88,37 +99,27 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
-		// PvE: the human leaving ends the match. Tear down the bot's seat, mark the
-		// active game as a bot win, and deactivate the room. We never reuse a PvE
-		// room across sessions, so is_active=false is final.
-		if (room.pve_mode) {
+		// Spectator (team = null) leaving: just remove and emit updated list
+		if (!currentRoomUser.team) {
 			await prisma.roomUser.deleteMany({
-				where: {
-					room_id: roomId,
-					user_id: { in: [userIdBigInt, BOT_USER_ID] }
-				}
+				where: { room_id: roomId, user_id: userIdBigInt }
 			})
 
-			const activeGame = await prisma.game.findFirst({
-				where: { room_id: roomId, status: 1 },
-				select: { id: true }
+			const remainingCount = await prisma.roomUser.count({
+				where: { room_id: roomId }
 			})
-			if (activeGame) {
-				await prisma.game.update({
-					where: { id: activeGame.id },
-					data: { winner_id: BOT_USER_ID, status: 2 }
+
+			if (remainingCount === 0) {
+				await prisma.room.update({
+					where: { id: roomId },
+					data: { is_active: false }
 				})
-				engineManager.releaseEngine(activeGame.id).catch(err => {
-					console.error(`[leave-room] failed to release engine for game ${activeGame.id}:`, err)
-				})
+				emitRoomDeleted(id)
+			} else {
+				const remaining = roomUsers.filter(ru => ru.user_id !== userIdBigInt)
+				const formattedUsers = formatRoomUsers(remaining)
+				emitRoomUsersUpdated(id, formattedUsers)
 			}
-
-			await prisma.room.update({
-				where: { id: roomId },
-				data: { is_active: false }
-			})
-
-			emitRoomDeleted(id)
 
 			res.status(200).json({
 				success: true,
@@ -128,72 +129,123 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
-		// PvP flow: same as before, but soft-delete the room (is_active=false) instead
-		// of hard-deleting it when no players remain.
-		await prisma.roomUser.deleteMany({
-			where: { room_id: roomId, user_id: userIdBigInt }
+		// Player leaving: end active game (like surrender) then remove only this player
+		const activeGame = await prisma.game.findFirst({
+			where: { room_id: roomId, status: 1 },
+			select: { id: true }
 		})
 
-		if (currentRoomUser.team) {
-			const audienceToPromote = await prisma.roomUser.findFirst({
-				where: { room_id: roomId, team: null },
-				orderBy: { joined_at: "asc" },
-				select: { room_id: true, user_id: true }
-			})
+		let winnerId: bigint | null = null
+		if (activeGame) {
+			if (room.pve_mode) {
+				winnerId = BOT_USER_ID
+			} else {
+				// PvP: opponent wins
+				const opponent = roomUsers.find(ru => ru.team && ru.team !== currentRoomUser.team)
+				if (opponent) {
+					winnerId = opponent.user_id
+				}
+			}
 
-			if (audienceToPromote) {
-				await prisma.roomUser.update({
-					where: {
-						room_id_user_id: {
-							room_id: audienceToPromote.room_id,
-							user_id: audienceToPromote.user_id
-						}
-					},
-					data: { team: currentRoomUser.team }
+			if (winnerId) {
+				const collection = await getGameHistoryCollection()
+				const latestRecord = await collection
+					.find({ $or: [{ game_id: activeGame.id }, { gameId: activeGame.id }] })
+					.sort({ _id: -1 })
+					.limit(1)
+					.toArray()
+
+				const winnerTeam = currentRoomUser.team === "red" ? "black" : "red"
+				if (latestRecord?.length > 0 && latestRecord[0]?.fen) {
+					await collection.insertOne({
+						game_id: activeGame.id,
+						fen: latestRecord[0].fen,
+						team: winnerTeam,
+						time_stamp: Math.floor(Date.now() / 1000),
+						leave: Number(userId)
+					})
+				}
+
+				const transactionUpdates = await buildEndGameTransaction({
+					gameId: activeGame.id,
+					roomId,
+					winnerId,
+					isBotGame: room.pve_mode,
+					betAmount: room.bet_amount
+				})
+
+				await prisma.$transaction(transactionUpdates)
+
+				engineManager.releaseEngine(activeGame.id).catch(err => {
+					console.error(`[leave-room] failed to release engine for game ${activeGame.id}:`, err)
 				})
 			}
 		}
 
-		const countRemainingPlayers = await prisma.roomUser.count({
-			where: { room_id: roomId }
-		})
+		// In PvE mode, remove all users and deactivate room
+		if (room.pve_mode) {
+			await prisma.roomUser.deleteMany({
+				where: { room_id: roomId }
+			})
 
-		if (countRemainingPlayers === 0) {
 			await prisma.room.update({
 				where: { id: roomId },
 				data: { is_active: false }
 			})
+
 			emitRoomDeleted(id)
 		} else {
-			const roomUsers = await prisma.roomUser.findMany({
-				where: { room_id: roomId },
-				select: {
-					joined_at: true,
-					team: true,
-					users: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_seq: true
-						}
-					}
-				},
-				orderBy: { joined_at: "asc" }
+			// In PvP mode, only remove the leaving player
+			await prisma.roomUser.deleteMany({
+				where: { room_id: roomId, user_id: userIdBigInt }
 			})
 
-			const formattedUsers = roomUsers.map(roomUser => ({
-				id: Number(roomUser.users.id),
-				display_name: roomUser.users.display_name,
-				avatar_seq: Number(roomUser.users.avatar_seq),
-				avatar_url:
-					Number(roomUser.users.avatar_seq) === 0
-						? `/images/${Number(roomUser.users.id)}.jpg`
-						: `/images/${Number(roomUser.users.id)}_${Number(roomUser.users.avatar_seq)}.jpg`,
-				team: roomUser.team,
-				joined_at: roomUser.joined_at
-			}))
+			const remainingCount = await prisma.roomUser.count({
+				where: { room_id: roomId }
+			})
 
-			emitRoomUsersUpdated(id, formattedUsers)
+			// Deactivate room only if no users remain
+			if (remainingCount === 0) {
+				await prisma.room.update({
+					where: { id: roomId },
+					data: { is_active: false }
+				})
+				emitRoomDeleted(id)
+			} else {
+				// Promote first spectator to vacated team
+				const vacatedTeam = currentRoomUser.team
+				const firstSpectator = await prisma.roomUser.findFirst({
+					where: {
+						room_id: roomId,
+						team: null
+					},
+					orderBy: {
+						joined_at: "asc"
+					}
+				})
+
+				if (firstSpectator) {
+					await prisma.roomUser.update({
+						where: {
+							room_id_user_id: {
+								room_id: roomId,
+								user_id: firstSpectator.user_id
+							}
+						},
+						data: { team: vacatedTeam }
+					})
+					// Update the in-memory roomUsers to reflect the promotion
+					const promotedUser = roomUsers.find(ru => ru.user_id === firstSpectator.user_id)
+					if (promotedUser) {
+						promotedUser.team = vacatedTeam
+					}
+				}
+
+				// Emit updated user list with remaining players/spectators
+				const remaining = roomUsers.filter(ru => ru.user_id !== userIdBigInt)
+				const formattedUsers = formatRoomUsers(remaining)
+				emitRoomUsersUpdated(id, formattedUsers)
+			}
 		}
 
 		res.status(200).json({
@@ -210,5 +262,16 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 		})
 	}
 })
+
+function formatRoomUsers(roomUsers: any[]) {
+	return roomUsers.map(roomUser => ({
+		id: Number(roomUser.users.id),
+		display_name: roomUser.users.display_name,
+		avatar_seq: Number(roomUser.users.avatar_seq),
+		avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
+		team: roomUser.team,
+		joined_at: roomUser.joined_at
+	}))
+}
 
 export default router

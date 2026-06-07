@@ -14,6 +14,8 @@ import {
 const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
 const gameUpdateMock = vi.fn()
+const roomUpdateMock = vi.fn()
+const transactionMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const toArrayMock = vi.fn()
 const limitMock = vi.fn()
@@ -32,9 +34,13 @@ vi.mock("../../common/redis", () => ({
 
 vi.mock("prisma", () => ({
 	default: {
+		$transaction: transactionMock,
 		game: {
 			findUnique: gameFindUniqueMock,
 			update: gameUpdateMock
+		},
+		room: {
+			update: roomUpdateMock
 		},
 		roomUser: {
 			findMany: roomUserFindManyMock
@@ -300,6 +306,10 @@ describe("POST /api/game/draw-game", () => {
 			status: 2,
 			winner_id: null
 		})
+		transactionMock.mockResolvedValue([
+			{ id: "game-1", status: 2, winner_id: null },
+			{ id: BigInt(100), status: 1 }
+		])
 
 		const res = await request(app)
 			.post(PATH)
@@ -321,8 +331,18 @@ describe("POST /api/game/draw-game", () => {
 				id: "game-1"
 			},
 			data: {
+				ends_at: expect.any(Date),
 				status: 2,
 				winner_id: null
+			}
+		})
+		expect(roomUpdateMock).toHaveBeenCalledWith({
+			where: {
+				id: BigInt(100)
+			},
+			data: {
+				updated_at: expect.any(Date),
+				status: 1
 			}
 		})
 		expect(res.body).toMatchObject({

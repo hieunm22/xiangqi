@@ -1,30 +1,13 @@
-# Localization workflow
+# Copilot Instructions
 
-IMPORTANT:
-- Never edit `/src/locales/en.json` directly
-- Never edit `/src/locales/vi.json` directly
-- These files are generated files
+Before making any changes, follow:
 
-Source of truth:
-- `/tools/languages.xlsx`
+- docs/agent-workflow.md
+- docs/language-generation.md
+- docs/react-guidelines.md
 
-Excel structure:
-- Column 1: language key
-- Column 2: English value
-- Column 3: Vietnamese value
+## Git workflow
+- Do NOT auto-commit code after refactoring, optimizations, or test fixes
+- Only commit when explicitly requested by the user
+- Always verify tests pass before asking user permission to commit
 
-Example:
-- `page.login.username.label`
-- `User name`
-- `Tên người dùng`
-
-When adding or updating translations:
-1. Modify `/tools/languages.xlsx`
-2. Run:
-
-```sh
-./tools/generate-locales.sh
-```
-3. Verify generated JSON changes
-
-Always prefer updating the Excel source instead of editing generated JSON files.

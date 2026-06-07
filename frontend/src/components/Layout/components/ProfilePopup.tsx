@@ -7,22 +7,26 @@ import {
 	Divider,
 	Grid
 } from "@mui/material"
+import { PopupState } from "../enums"
+import { openAlert } from "components/AlertProvider"
 import { TButton, TSpan, TTooltip } from "components/TranslationTag"
 import { getClaimsFromLocalStorage, getToken } from "common/helper"
 import { usePopups } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
+import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
 import { RoomInfo } from "pages/Room/types"
+import { setGameHistoryUserId, setPopup } from "toolkit/slice/home"
 
 export const ProfilePopup = () => {
-	const { openProfilePopup, setOpenProfilePopup, profileUser: user } = usePopups()
-	const { getRoomById } = useAPI()
+	const { profileUser: user } = usePopups()
+	const { state, dispatch } = useToolkit()
+	const { getRoomById, kickUser } = useAPI()
 	const [isRoomHost, setIsRoomHost] = useState(false)
 	const [room, setRoom] = useState<RoomInfo | null>(null)
-	const [game, setGame] = useState<RoomInfo | null>(null)
 
 	const handleCloseProfilePopup = () => {
-		setOpenProfilePopup(false)
+		dispatch(setPopup(PopupState.NONE))
 	}
 
 	const handleChangePassword = () => {
@@ -36,7 +40,7 @@ export const ProfilePopup = () => {
 
 	useEffect(() => {
 		const loadRoomContext = async () => {
-			if (!openProfilePopup || isOwnProfile) {
+			if (state.popupState !== PopupState.PROFILE || isOwnProfile) {
 				setIsRoomHost(false)
 				return
 			}
@@ -61,46 +65,72 @@ export const ProfilePopup = () => {
 			}
 
 			setRoom(roomResponse?.data.room || null)
-			setGame(roomResponse?.data.game || null)
 
 			const hostId = roomResponse.data.users?.[0]?.id
 			setIsRoomHost(hostId === normalizedCurrentUserId)
 		}
 
-		if (!openProfilePopup) {
+		if (state.popupState !== PopupState.PROFILE) {
 			return
 		}
 
 		loadRoomContext()
-	}, [openProfilePopup])
+	}, [state.popupState])
 
 	const handleViewHistory = () => {
-		// TODO: open player history page/filter by selected user id.
-		console.info("TODO: view history for user", user?.id)
+		dispatch(setGameHistoryUserId(user!.id))
+		dispatch(setPopup(PopupState.GAME_HISTORY))
 	}
 
-	const handleKickUser = () => {
-		// TODO: add kick user API and socket flow.
-		console.info("TODO: kick user", user?.id)
+	const handleKickUser = async () => {
+		if (!user) {
+			return
+		}
+
+		const roomIdMatch = location.pathname.match(/^\/room\/(\d+)$/)
+		if (!roomIdMatch) {
+			return
+		}
+
+		const roomId = Number(roomIdMatch[1])
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const response = await kickUser(token, roomId, user.id)
+		if (!response || !response.success) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: response?.message ?? "kick-user.messages.internal-server-error"
+			})
+			return
+		}
+
+		// The kicked user is removed from everyone's seat list via the
+		// `room-users-updated` socket broadcast, so the host just closes the popup.
+		dispatch(setPopup(PopupState.NONE))
 	}
 
 	return (
 		<Dialog
-			open={openProfilePopup}
+			open={state.popupState === PopupState.PROFILE}
 			onClose={handleCloseProfilePopup}
 			maxWidth="xs"
 			fullWidth
 			disableRestoreFocus
 		>
 			<DialogTitle className="pt-8 pb-8">{translate("menu.profile")}</DialogTitle>
-			<Divider className="profile-dialog-divider" />
+			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
 				{user && (
 					<Box className="profile-user-info">
 						<TTooltip title="register.username.label" arrow placement="left">
 							<i className="far fa-user mr-20" />
 						</TTooltip>
-						<span>{user.user_name || "-"}</span>
+						<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
+							{user.user_name}
+						</a>
 						<TTooltip title="register.display-name.label" arrow placement="left">
 							<i className="far fa-tag" />
 						</TTooltip>
@@ -115,44 +145,43 @@ export const ProfilePopup = () => {
 						<a href={`mailto:${user.email}`}>{user.email}</a>
 					</Box>
 				)}
-
-				<Grid container className="profile-dialog-actions">
-					{user && !isOwnProfile && (
-						<TButton
-							variant="contained"
-							size="small"
-							color="success"
-							onClick={handleViewHistory}
-							value="page.history.title"
-						/>
-					)}
-					{user && !isOwnProfile && isRoomHost && (
-						<TButton
-							variant="contained"
-							size="small"
-							color="warning"
-							disabled={!room || room.status !== 2 || !game || game.status !== 1}
-							onClick={handleKickUser}
-						>
-							Kick
-						</TButton>
-					)}
-					<TButton
-						variant="outlined"
-						size="medium"
-						onClick={handleCloseProfilePopup}
-						value="settings.close"
-					/>
-					{isOwnProfile && (
-						<TButton
-							variant="contained"
-							size="small"
-							onClick={handleChangePassword}
-							value="settings.change-password"
-						/>
-					)}
-				</Grid>
 			</DialogContent>
+			<Divider sx={{ borderColor: "primary.main" }} />
+			<Grid container className="profile-dialog-actions">
+				{user && (
+					<TButton
+						variant="contained"
+						size="small"
+						color="success"
+						onClick={handleViewHistory}
+						value="page.history.title"
+					/>
+				)}
+				{user && !isOwnProfile && isRoomHost && (
+					<TButton
+						variant="contained"
+						size="small"
+						color="warning"
+						disabled={!room || room.status === 2} // Only allow kicking when the room is in "waiting" status
+						onClick={handleKickUser}
+						value="room.actions.kick"
+					/>
+				)}
+				{isOwnProfile && (
+					<TButton
+						variant="contained"
+						size="small"
+						onClick={handleChangePassword}
+						value="settings.change-password"
+					/>
+				)}
+				<TButton
+					variant="outlined"
+					size="medium"
+					onClick={handleCloseProfilePopup}
+					value="settings.close"
+				/>
+			</Grid>
 		</Dialog>
 	)
 }

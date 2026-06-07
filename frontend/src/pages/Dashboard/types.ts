@@ -1,3 +1,4 @@
+import { UserAvatarType } from "types/Common"
 import { Team } from "types/GameState"
 
 export type DashboardFilter = "all" | "available" | "playing"
@@ -9,7 +10,7 @@ export type DashboardRoom = {
 	bet_amount: number
 	created_at: string
 	updated_at: string
-	users: User[]
+	users: UserAvatarType[]
 }
 
 export type FetchRoomsResponse = {
@@ -19,15 +20,10 @@ export type FetchRoomsResponse = {
 	rooms: DashboardRoom[]
 }
 
-export type User = {
-	id: number
-	display_name: string
-	avatar_url: string | null
-}
-
 export interface UserAvatarGroupProps {
-	users: User[]
+	users: UserAvatarType[]
 	type: "primary" | "secondary"
+	onUserClick?: (id: number) => Promise<void>
 }
 
 export interface PieceSelectionContextValue {
@@ -47,7 +43,7 @@ export interface JoinRoomDialogContextValue {
 }
 
 export interface SeatAvatarProps {
-	user: User
+	user: UserAvatarType
 	isHost: boolean
 }
 

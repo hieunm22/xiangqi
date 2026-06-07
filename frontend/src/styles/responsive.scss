@@ -39,9 +39,13 @@
 		flex-direction: column;
 	}
 
+	.xiangqi-board {
+		order: -1;
+	}
+
 	.player-info-row, .room-action-row {
 		width: calc(var(--board-width) + var(--board-padding) * 2);
-		max-height: 100px;
+		height: fit-content;
 
 		&.view {
 			display: flex;
@@ -53,5 +57,21 @@
 
 	.dashboard__join-room-board {
 		display: none;
+	}
+
+	.piece-table {
+		width: 100% !important;
+	}
+	
+	.top-player > .captured-pieces-display {
+		flex-direction: row;
+	}
+
+	.bottom-player > .player-info-card {
+		order: -1;
+	}
+	
+	.bottom-player > .captured-pieces-display {
+		flex-direction: row;
 	}
 }

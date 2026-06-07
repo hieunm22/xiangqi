@@ -2,6 +2,7 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { REFRESH_TOKEN_TTL_SECONDS } from "common/constant"
 
 const prismaFindFirstMock = vi.fn()
 const redisSetMock = vi.fn()
@@ -103,12 +104,12 @@ describe("POST /api/auth/login", () => {
 		const [sessionKey, sessionRaw, expiryMode, ttl] = redisSetMock.mock.calls[0]
 		expect(sessionKey).toMatch(/^login-session:1:/)
 		expect(expiryMode).toBe("EX")
-		expect(ttl).toBe(24 * 60 * 60)
+		expect(ttl).toBe(REFRESH_TOKEN_TTL_SECONDS)
 
 		const [refreshKey, refreshValue, refreshExpiryMode, refreshTtl] = redisSetMock.mock.calls[1]
 		expect(refreshKey).toMatch(/^refresh-token:1:/)
 		expect(refreshExpiryMode).toBe("EX")
-		expect(refreshTtl).toBe(24 * 60 * 60)
+		expect(refreshTtl).toBe(REFRESH_TOKEN_TTL_SECONDS)
 		expect(refreshValue).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
 		expect(res.body.refresh_token).toBe(refreshValue)
 
