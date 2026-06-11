@@ -48,7 +48,7 @@ export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
 	return (
 		<Stack
 			direction="row"
-			alignItems="center"
+			sx={{ alignItems: "center" }}
 			className={stackClass}
 		>
 			{displayUsers.map(u => <UserAvatar key={u.id} {...u} onUserClick={onUserClick} />)}

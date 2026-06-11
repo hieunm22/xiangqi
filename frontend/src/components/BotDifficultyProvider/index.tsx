@@ -71,7 +71,7 @@ export const BotDifficultyProvider = (props: ComponentWithChild) => {
 		<>
 			{props.children}
 			<Dialog open={!!current} maxWidth="xs" fullWidth disableEnforceFocus>
-				<DialogTitle padding="5px 20px !important">
+				<DialogTitle sx={{ padding: "5px 20px !important" }}>
 					<Typography component="div" className="flex">
 						{translate("room.bot-difficulty.title")}
 					</Typography>
@@ -96,7 +96,7 @@ export const BotDifficultyProvider = (props: ComponentWithChild) => {
 							}
 						}}
 					/>
-					<Grid container justifyContent="flex-end" gap={2}>
+					<Grid container sx={{ justifyContent: "flex-end", gap: 2 }}>
 						<TButton
 							variant="contained"
 							size="small"

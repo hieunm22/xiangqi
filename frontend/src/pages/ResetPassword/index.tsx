@@ -267,7 +267,7 @@ export default function ResetPasswordPage() {
 					<TTypography
 						variant="h5"
 						component="h1"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						content="reset-password.form.title"
 					/>
 

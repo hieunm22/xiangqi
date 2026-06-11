@@ -61,7 +61,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 				<Stack direction="row" className="dashboard__card-header">
 					<TTypography
 						variant="h6"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						noWrap
 						className="dashboard__room-name"
 						content={room.name}

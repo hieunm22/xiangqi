@@ -178,12 +178,12 @@ const DashboardPage = () => {
 				<Stack spacing={3}>
 					<TTypography
 						variant="h5"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						gutterBottom
 						content="dashboard.page.title"
 					/>
 
-					<Stack direction="row" spacing={1.5} flexWrap="wrap">
+					<Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
 						{(["all", "available", "playing"] as DashboardFilter[]).map(filter => (
 							<Button
 								key={filter}

@@ -82,9 +82,9 @@ export const SettingsPopup = () => {
 			</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent className="dialog-content">
-				<Grid container className="setting-row" alignItems="center" gap={2}>
+				<Grid container sx={{ alignItems: "center", gap: 2 }} className="setting-row">
 					<TTypography sx={{ minWidth: "100px" }} content="settings.language" />
-					<Grid container gap={1}>
+					<Grid container sx={{ gap: 1 }}>
 						{COUNTRIES_OPTIONS.map(option => (
 							<Button
 								key={option.key}
@@ -108,7 +108,7 @@ export const SettingsPopup = () => {
 					</Grid>
 				</Grid>
 				<Grid container className="setting-row">
-					<TTypography content="settings.dark-mode" width={100} />
+					<TTypography sx={{ width: 100 }} content="settings.dark-mode" />
 					<Switch
 						className="ios-switch"
 						checked={state.darkMode}
@@ -116,7 +116,7 @@ export const SettingsPopup = () => {
 					/>
 				</Grid>
 				<Grid container className="setting-row">
-					<TTypography content="settings.debug-mode" width={100} />
+					<TTypography sx={{ width: 100 }} content="settings.debug-mode" />
 					<Switch
 						className="ios-switch"
 						checked={gameState.debugMode}
@@ -125,7 +125,7 @@ export const SettingsPopup = () => {
 				</Grid>
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
-			<Grid container justifyContent="center">
+			<Grid container sx={{ justifyContent: "center" }}>
 				<TButton
 					className="btn btn-primary mt-12 mb-12 center"
 					variant="outlined"

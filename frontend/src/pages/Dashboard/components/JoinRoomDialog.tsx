@@ -114,12 +114,10 @@ export const JoinRoomDialog = () => {
 			<DialogTitle align="center">{room?.name}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
-				<Stack spacing={2} alignItems="center" className="pt-8">
+				<Stack spacing={2} sx={{ alignItems: "center" }} className="pt-8">
 					<Stack
 						direction="row"
-						alignItems="center"
-						justifyContent="space-evenly"
-						gap={8}
+						sx={{ alignItems: "center", justifyContent: "space-evenly", gap: 8 }}
 					>
 						<SeatAvatar
 							user={players[0]}

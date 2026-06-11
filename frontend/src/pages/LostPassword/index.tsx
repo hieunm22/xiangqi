@@ -98,7 +98,7 @@ export default function LostPasswordPage() {
 					<TTypography
 						variant="h5"
 						component="h1"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						content="forgot-password.form.title"
 					/>
 

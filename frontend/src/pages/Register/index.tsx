@@ -262,7 +262,7 @@ export default function RegisterPage() {
 					<TTypography
 						variant="h5"
 						component="h1"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						content="register.form.title"
 					/>
 
@@ -400,7 +400,7 @@ export default function RegisterPage() {
 					{error && <Alert severity="error">{error}</Alert>}
 					{message && <Alert severity="success">{message}</Alert>}
 
-					<Stack direction="row" justifyContent="center" spacing={2}>
+					<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
 						<Link component={RouterLink} to={LOGIN_PATH} underline="hover" variant="body2">
 							{translate("register.form.login")}
 						</Link>
