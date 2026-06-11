@@ -4,7 +4,7 @@ import {
 	Stack,
 	Typography
 } from "@mui/material"
-import { FILTER_KEYS, FILTER_STATUS } from "../constants"
+import { FILTER_KEYS, FILTER_STATUS, GRID_SIZE } from "../constants"
 import { TI, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { useJoinRoomDialogContext } from "hooks/useAppContext"
@@ -54,7 +54,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 		<Grid
 			key={room.id}
 			className={roomCardClass}
-			size={{ xs: 6, sm: 4, md: 4 }}
+			size={GRID_SIZE}
 			onClick={() => openJoinRoom(room)}
 		>
 			<Stack spacing={1.5}>
@@ -73,11 +73,11 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 				</Stack>
 
 				<Stack direction="row" className="dashboard__card-meta">
-					<UserAvatarGroup users={oldestJoinedUsers} type="primary" />
+					<UserAvatarGroup users={oldestJoinedUsers} type="primary" maxVisible={2} />
 					<TI className={classIconRoomStatus} title={getStatusKey(room.status)} />
 				</Stack>
 
-				<UserAvatarGroup users={remainingUsers} type="secondary" />
+				<UserAvatarGroup users={remainingUsers} type="secondary" maxVisible={5} />
 			</Stack>
 		</Grid>
 	)

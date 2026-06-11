@@ -13,6 +13,7 @@ dist
 dist-ssr
 *.local
 **/.vite/**
+tools/venv
 
 # Editor directories and files
 .vscode/*

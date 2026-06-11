@@ -1,4 +1,5 @@
 import prisma from "prisma"
+import { getUTCNow } from "../helper"
 import { EndGameParams } from "types/game.type"
 
 export async function buildEndGameTransaction(params: EndGameParams) {
@@ -8,7 +9,7 @@ export async function buildEndGameTransaction(params: EndGameParams) {
 		prisma.game.update({
 			where: { id: gameId },
 			data: {
-				ends_at: new Date(),
+				ends_at: getUTCNow(),
 				winner_id: winnerId,
 				status: 2
 			}
@@ -16,14 +17,23 @@ export async function buildEndGameTransaction(params: EndGameParams) {
 		prisma.room.update({
 			where: { id: roomId },
 			data: {
-				updated_at: new Date(),
+				updated_at: getUTCNow(),
 				status: 1
 			}
 		})
 	]
 
+	// Draw: only update existing participants of this game
+	if (winnerId === null) {
+		updates.push(
+			prisma.gameUser.updateMany({
+				where: { game_id: gameId },
+				data: { point: isBotGame ? null : 0 }
+			})
+		)
+	}
 	// Calculate points for PvP games only
-	if (!isBotGame && betAmount && betAmount > 0) {
+	else if (!isBotGame && betAmount && betAmount > 0) {
 		const gameUsersUpdate = prisma.gameUser.upsert({
 			where: {
 				game_id_user_id: {
@@ -39,6 +49,17 @@ export async function buildEndGameTransaction(params: EndGameParams) {
 			}
 		})
 		updates.push(gameUsersUpdate)
+
+		// Update winner's point in auth.users table
+		const winnerPointUpdate = prisma.user.update({
+			where: { id: winnerId },
+			data: {
+				total_points: {
+					increment: betAmount
+				}
+			}
+		})
+		updates.push(winnerPointUpdate)
 
 		// Get all game users to find the loser and update their points
 		const gameUsers = await prisma.gameUser.findMany({
@@ -59,8 +80,20 @@ export async function buildEndGameTransaction(params: EndGameParams) {
 				data: { point: -betAmount }
 			})
 			updates.push(gameUsersLoserUpdate)
+
+			// Update losers' points in auth.users table
+			const losersPointUpdate = prisma.user.updateMany({
+				where: { id: { in: loserIds } },
+				data: {
+					total_points: {
+						decrement: betAmount
+					}
+				}
+			})
+			updates.push(losersPointUpdate)
 		}
 	}
 
 	return updates
 }
+

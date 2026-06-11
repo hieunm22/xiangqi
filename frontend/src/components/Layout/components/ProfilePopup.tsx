@@ -5,80 +5,105 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
-	Grid
+	Grid,
+	Skeleton,
+	Typography,
 } from "@mui/material"
 import { PopupState } from "../enums"
 import { openAlert } from "components/AlertProvider"
-import { TButton, TSpan, TTooltip } from "components/TranslationTag"
+import {
+	TButton,
+	TI,
+	TSpan,
+	TTooltip,
+	TTypography,
+} from "components/TranslationTag"
 import { getClaimsFromLocalStorage, getToken } from "common/helper"
-import { usePopups } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
+import { setPopup, setUserId } from "toolkit/slice/game"
+import { APIResponse } from "types/Common"
+import { Users } from "types/Entities"
 import { RoomInfo } from "pages/Room/types"
-import { setGameHistoryUserId, setPopup } from "toolkit/slice/home"
+import { GameStats, UserProfileWithStats } from "../types"
 
 export const ProfilePopup = () => {
-	const { profileUser: user } = usePopups()
-	const { state, dispatch } = useToolkit()
-	const { getRoomById, kickUser } = useAPI()
+	const { gameState: state, dispatch } = useToolkit()
+	const { getUserById, kickUser } = useAPI()
 	const [isRoomHost, setIsRoomHost] = useState(false)
 	const [room, setRoom] = useState<RoomInfo | null>(null)
+	const [isCopied, setIsCopied] = useState(false)
+	const [gameStats, setGameStats] = useState<GameStats | null>(null)
+	const [user, setUser] = useState<Users | null>(null)
 
 	const handleCloseProfilePopup = () => {
+		// dispatch(setUserId(null))
+		// setUser(null)
+		// setGameStats(null)
 		dispatch(setPopup(PopupState.NONE))
 	}
 
-	const handleChangePassword = () => {
-		// TODO: open change password dialog
+	const handleCopyEmail = async () => {
+		if (isCopied) return
+		if (!user?.email) return
+		try {
+			await navigator.clipboard.writeText(user.email)
+			setIsCopied(true)
+		}
+		catch (err) {
+			console.error("Failed to copy email:", err)
+			setIsCopied(false)
+		}
+	}
+
+	const onAnimationEnd = () => {
+		setIsCopied(false)
 	}
 
 	const claims = getClaimsFromLocalStorage()
 	const currentUserId = Number(claims?.sub)
-	const normalizedCurrentUserId = currentUserId ?? null
-	const isOwnProfile = user?.id === normalizedCurrentUserId
+	// const normalizedCurrentUserId = currentUserId ?? null
+	const isOwnProfile = user?.id === currentUserId
 
 	useEffect(() => {
 		const loadRoomContext = async () => {
-			if (state.popupState !== PopupState.PROFILE || isOwnProfile) {
+			if (state.popupState !== PopupState.PROFILE) {
 				setIsRoomHost(false)
 				return
 			}
 
-			const roomIdMatch = location.pathname.match(/^\/room\/(\d+)$/)
-			if (!roomIdMatch) {
+			if (!state.roomInfo) {
 				setIsRoomHost(false)
 				return
 			}
 
-			const roomId = Number(roomIdMatch[1])
+			setIsRoomHost(state.roomHostId === currentUserId)
+			setRoom(state.roomInfo)
+
+			// If the profile being viewed is the same as the previous one, skip fetching user data.
+			if (user?.id === state.activeUserId) {
+				return
+			}
+
 			const token = getToken()
-			if (!token || !Number.isInteger(roomId) || roomId <= 0) {
-				setIsRoomHost(false)
-				return
+			const userData = await getUserById(token, state.activeUserId!) as APIResponse<UserProfileWithStats>
+			if (userData?.success && userData.data) {
+				setUser(userData.data.user)
+				setGameStats(userData.data.stats || null)
 			}
-
-			const roomResponse = await getRoomById(token, roomId)
-			if (!roomResponse?.success || !roomResponse.data) {
-				setIsRoomHost(false)
-				return
-			}
-
-			setRoom(roomResponse?.data.room || null)
-
-			const hostId = roomResponse.data.users?.[0]?.id
-			setIsRoomHost(hostId === normalizedCurrentUserId)
-		}
-
-		if (state.popupState !== PopupState.PROFILE) {
-			return
 		}
 
 		loadRoomContext()
-	}, [state.popupState])
+	}, [state.popupState, state.roomHostId, state.roomInfo])
+
+	const handleSendPM = () => {
+		dispatch(setUserId(user!.id))
+		dispatch(setPopup(PopupState.SEND_PM))
+	}
 
 	const handleViewHistory = () => {
-		dispatch(setGameHistoryUserId(user!.id))
+		dispatch(setUserId(user!.id))
 		dispatch(setPopup(PopupState.GAME_HISTORY))
 	}
 
@@ -112,74 +137,120 @@ export const ProfilePopup = () => {
 		dispatch(setPopup(PopupState.NONE))
 	}
 
+	const isSameUser = user?.id === state.activeUserId
+
 	return (
 		<Dialog
 			open={state.popupState === PopupState.PROFILE}
 			onClose={handleCloseProfilePopup}
 			maxWidth="xs"
 			fullWidth
-			disableRestoreFocus
+			disableEnforceFocus
+			disableAutoFocus
 		>
 			<DialogTitle className="pt-8 pb-8">{translate("menu.profile")}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
-				{user && (
-					<Box className="profile-user-info">
-						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="far fa-user mr-20" />
-						</TTooltip>
-						<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
+				<Box className="profile-user-info">
+					<TTooltip title="register.username.label" arrow placement="left">
+						<i className="far fa-user mr-20" />
+					</TTooltip>
+					{isSameUser
+						? (<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
 							{user.user_name}
-						</a>
-						<TTooltip title="register.display-name.label" arrow placement="left">
-							<i className="far fa-tag" />
-						</TTooltip>
-						<span>{user.display_name || "-"}</span>
-						<TTooltip title="register.gender.label" arrow placement="left">
-							<i className="far fa-venus-mars" />
-						</TTooltip>
-						<TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
-						<TTooltip title="register.email.label" arrow placement="left">
-							<i className="far fa-envelope" />
-						</TTooltip>
-						<a href={`mailto:${user.email}`}>{user.email}</a>
+						</a>)
+						: <Skeleton variant="text" width="75%" height={24} />}
+					<TTooltip title="register.display-name.label" arrow placement="left">
+						<i className="far fa-tag" />
+					</TTooltip>
+					{isSameUser
+						? <span>{user.display_name}</span>
+						: <Skeleton variant="text" width="65%" height={24} />}
+					<TTooltip title="register.gender.label" arrow placement="left">
+						<i className="far fa-venus-mars" />
+					</TTooltip>
+					{isSameUser
+						? <TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
+						: <Skeleton variant="text" width="30%" height={24} />}
+					<TTooltip title="register.email.label" arrow placement="left">
+						<i className="far fa-envelope" />
+					</TTooltip>
+					<div className="email-with-copy">
+						{isSameUser
+							? <a href={`mailto:${user.email}`}>{user.email}</a>
+							: <Skeleton variant="text" width="90%" height={24} />}
+						<TI
+							className={isCopied ? "fas fa-circle-check copied-icon" : "far fa-copy cursor-pointer"}
+							onClick={handleCopyEmail}
+							onAnimationEnd={onAnimationEnd}
+							title="Copy email"
+						/>
+					</div>
+				</Box>
+				<Divider className="mt-20 mb-20" sx={{ borderColor: "primary.main" }} />
+
+				{gameStats && <Box className="profile-stats-title">
+					<Box className="statistic win">
+						{isSameUser
+							? <Typography component="span" className="statistic-value">{gameStats?.win ?? 0}</Typography>
+							: <Skeleton variant="text" width="90%" height={24} />}
+						<TTypography color="textPrimary" className="statistic-label" content="Win" />
 					</Box>
-				)}
+					<Box className="statistic draw">
+						{isSameUser
+							? <Typography component="span" className="statistic-value">{gameStats?.draw ?? 0}</Typography>
+							: <Skeleton variant="text" width="90%" height={24} />}
+						<TTypography color="textPrimary" className="statistic-label" content="Draw" />
+					</Box>
+					<Box className="statistic lose">
+						{isSameUser
+							? <Typography component="span" className="statistic-value">{gameStats?.lose ?? 0}</Typography>
+							: <Skeleton variant="text" width="90%" height={24} />}
+						<TTypography color="textPrimary" className="statistic-label" content="Lose" />
+					</Box>
+				</Box>}
+
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<Grid container className="profile-dialog-actions">
+				{!isOwnProfile && (
+					<TButton
+						variant="contained"
+						size="small"
+						color="info"
+						onClick={handleSendPM}
+						value="room.actions.send-pm"
+						startIcon={<i className="far fa-comment" />}
+					/>
+				)}
 				{user && (
 					<TButton
 						variant="contained"
 						size="small"
 						color="success"
 						onClick={handleViewHistory}
-						value="page.history.title"
+						value="room.actions.view-history"
+						startIcon={<i className="far fa-clock" />}
 					/>
 				)}
 				{user && !isOwnProfile && isRoomHost && (
 					<TButton
 						variant="contained"
 						size="small"
-						color="warning"
-						disabled={!room || room.status === 2} // Only allow kicking when the room is in "waiting" status
+						color="error"
+						// Only allow kicking when the room is in "waiting" status
+						disabled={!room || room.status === 2}
 						onClick={handleKickUser}
 						value="room.actions.kick"
-					/>
-				)}
-				{isOwnProfile && (
-					<TButton
-						variant="contained"
-						size="small"
-						onClick={handleChangePassword}
-						value="settings.change-password"
+						startIcon={<i className="far fa-ban" />}
 					/>
 				)}
 				<TButton
 					variant="outlined"
-					size="medium"
+					size="small"
 					onClick={handleCloseProfilePopup}
 					value="settings.close"
+					startIcon={<i className="far fa-xmark" />}
 				/>
 			</Grid>
 		</Dialog>

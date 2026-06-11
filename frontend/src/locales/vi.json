@@ -64,7 +64,8 @@
 			"bet-amount": "Giá trị cược",
 			"room-name-label": "Tên phòng chơi",
 			"room-name-helptext": "không được để trống",
-			"join-room": "Vào phòng"
+			"play": "Chơi",
+			"view": "Xem"
 		}
 	},
 	"settings": {
@@ -121,6 +122,8 @@
 			"draw-rejected": "Đối phương từ chối hòa",
 			"draw-completed": "Hòa cờ thành công",
 			"opponent-surrendered": "Đối phương đã đầu hàng! Bạn thắng!",
+			"send-pm": "Chat",
+			"view-history": "Lịch sử",
 			"kick": "Kick",
 			"settings": "Cài đặt phòng"
 		},
@@ -292,9 +295,11 @@
 	"join-room": {
 		"messages": {
 			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-team": "Trường 'team' phải là 'red', 'black', null hoặc không truyền",
 			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
 			"room-not-found": "Không tìm thấy phòng",
-			"success": "Tham gia phòng thành công"
+			"success": "Tham gia phòng thành công",
+			"team-seat-occupied": "Vị trí đội đã chọn đã có người chơi"
 		}
 	},
 	"kick-user": {
@@ -475,7 +480,7 @@
 			"paragraph3": "Quân bị bắt phải bị loại và bị nhấc ra khỏi bàn cờ. <b>Không được đuổi 1 quân quá 6 nước cờ liên tiếp</b>."
 		},
 		"check": {
-			"paragraph1": " otherwise, that side loses.",
+			"paragraph1": "Nếu người chơi thực hiện một nước đi đe dọa bắt Tướng của đối phương ở nước đi tiếp theo (bằng chính quân cờ đó hoặc một quân cờ khác), thì đó được gọi là <b>Chiếu</b>. Bên bị chiếu phải đáp trả để tránh bị chiếu. Nếu không sẽ bị xử thua",
 			"paragraph2": "Tướng bị chiếu từ cả bốn hướng (bị chiếu cả từ phía sau) có thể ứng phó với nước chiếu tướng bằng một trong các cách sau:",
 			"paragraph3": "Di chuyển tướng sang vị trí khác để tránh nước chiếu",
 			"paragraph4": "Bắt quân đang chiếu",

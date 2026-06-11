@@ -8,7 +8,7 @@ const toArrayMock = vi.fn()
 const findMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 
-const PATH = "/api/game/history"
+const PATH = "/api/game/movement-history"
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -20,7 +20,7 @@ vi.mock("../../common/mongodb", () => ({
 	getGameHistoryCollection: getGameHistoryCollectionMock
 }))
 
-describe("GET /api/game/history", () => {
+describe("GET /api/game/movement-history", () => {
 	let app: express.Express
 	let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 

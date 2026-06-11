@@ -2,7 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID, engineManager } from "common/bot-engine"
 import { buildEndGameTransaction } from "common/game/end-game.helper"
-import { getAvatarUrl } from "common/helper"
+import { getAvatarUrl, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitRoomDeleted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -32,6 +32,31 @@ const router = Router()
  *               id:
  *                 type: integer
  *                 format: int64
+ *     responses:
+ *       200:
+ *         description: Left room successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: leave-room.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *       400:
+ *         description: Invalid room id
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Room not found or player not in room
+ *       500:
+ *         description: Internal server error
  */
 router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	const { id } = req.body as LeaveRoomRequest
@@ -161,7 +186,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 						game_id: activeGame.id,
 						fen: latestRecord[0].fen,
 						team: winnerTeam,
-						time_stamp: Math.floor(Date.now() / 1000),
+						time_stamp: getUTCTimestamp(),
 						leave: Number(userId)
 					})
 				}

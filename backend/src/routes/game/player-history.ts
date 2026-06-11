@@ -18,8 +18,50 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Player history loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: player-history.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       game:
+ *                         type: object
+ *                         properties:
+ *                           gameId:
+ *                             type: string
+ *                           ends_at:
+ *                             type: string
+ *                             format: date-time
+ *                       users:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                             display_name:
+ *                               type: string
+ *                             avatar_url:
+ *                               type: string
+ *                       point:
+ *                         type: integer
+ *       400:
+ *         description: Invalid request
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
  *         description: Internal server error
  */

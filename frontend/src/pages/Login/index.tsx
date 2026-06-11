@@ -16,7 +16,7 @@ import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { useAuth } from "hooks/useAppContext"
-import { LoginSuccessResponse } from "./types"
+import { AuthResponse } from "./types"
 import "./Login.scss"
 
 export default function LoginPage() {
@@ -72,7 +72,7 @@ export default function LoginPage() {
 		}
 
 		try {
-			const response: LoginSuccessResponse = await login({
+			const response: AuthResponse = await login({
 				username,
 				password,
 				deviceName: navigator.userAgent,

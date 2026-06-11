@@ -25,8 +25,58 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Rooms fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: fetch-rooms.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       status:
+ *                         type: integer
+ *                       red_first:
+ *                         type: boolean
+ *                       bet_amount:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                       users:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                             display_name:
+ *                               type: string
+ *                             avatar_seq:
+ *                               type: integer
+ *                             avatar_url:
+ *                               type: string
  *       400:
  *         description: Invalid status query parameter
+ *       401:
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
  *         description: Internal server error
  */
@@ -98,7 +148,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 			success: true,
 			message: "fetch-rooms.messages.success",
 			status_code: 200,
-			rooms: formattedRooms
+			data: formattedRooms
 		})
 	} catch (err) {
 		console.error("Fetch rooms error:", err)

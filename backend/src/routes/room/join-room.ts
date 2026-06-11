@@ -1,9 +1,9 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { JoinRoomRequest } from "types/room.type"
-import { getAvatarUrl } from "common/helper"
 
 const router = Router()
 
@@ -29,9 +29,60 @@ const router = Router()
  *               id:
  *                 type: integer
  *                 format: int64
+ *               team:
+ *                 type: string
+ *                 enum: [red, black]
+ *                 nullable: true
+ *                 description: Optional preferred team. Use null for spectator and omit for auto-assign.
+ *     responses:
+ *       201:
+ *         description: Joined room successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: join-room.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 201
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       display_name:
+ *                         type: string
+ *                       avatar_seq:
+ *                         type: integer
+ *                       avatar_url:
+ *                         type: string
+ *                       team:
+ *                         type: string
+ *                         nullable: true
+ *                       total_points:
+ *                         type: integer
+ *                       joined_at:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Invalid room id
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Room not found
+ *       500:
+ *         description: Internal server error
  */
 router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
-	const { id } = req.body as JoinRoomRequest
+	const { id, team } = req.body as JoinRoomRequest
 	const userId = req.auth?.userId
 
 	if (!userId) {
@@ -47,6 +98,15 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		res.status(400).json({
 			success: false,
 			message: "join-room.messages.invalid-room-id",
+			status_code: 400
+		})
+		return
+	}
+
+	if (team !== undefined && team !== null && team !== "red" && team !== "black") {
+		res.status(400).json({
+			success: false,
+			message: "join-room.messages.invalid-team",
 			status_code: 400
 		})
 		return
@@ -70,7 +130,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		}
 
 		const userIdBigInt = BigInt(userId)
-		const now = new Date()
+		const now = getUTCNow()
 
 		// Remove user from all other rooms to ensure single-room participation
 		await prisma.roomUser.deleteMany({
@@ -91,9 +151,55 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			}
 		})
 
+		let assignedTeam: "red" | "black" | null = null
+
+		if (!room.pve_mode) {
+			const existingMembers = await prisma.roomUser.findMany({
+				where: {
+					room_id: roomId
+				},
+				select: {
+					team: true,
+					user_id: true
+				}
+			})
+
+			if (team !== undefined) {
+				if (team === null) {
+					assignedTeam = null
+				} else {
+					const occupiedByOther = existingMembers.some(
+						member => member.team === team && member.user_id !== userIdBigInt
+					)
+
+					if (occupiedByOther) {
+						res.status(409).json({
+							success: false,
+							message: "join-room.messages.team-seat-occupied",
+							status_code: 409
+						})
+						return
+					}
+
+					assignedTeam = team
+				}
+			} else {
+				const assignedTeams = new Set(
+					existingMembers
+						.filter(member => member.user_id !== userIdBigInt)
+						.map(member => member.team)
+						.filter(existingTeam => existingTeam !== null)
+				)
+
+				if (!assignedTeams.has("red")) {
+					assignedTeam = "red"
+				} else if (!assignedTeams.has("black")) {
+					assignedTeam = "black"
+				}
+			}
+		}
+
 		if (existingRoomUser) {
-			// User is already in this room: refresh join timestamp.
-			// For PVE rooms, also force team to null (spectator).
 			await prisma.roomUser.update({
 				where: {
 					room_id_user_id: {
@@ -103,40 +209,10 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 				},
 				data: {
 					joined_at: now,
-					...(room.pve_mode ? { team: null } : {})
+					team: assignedTeam
 				}
 			})
 		} else {
-			// User is joining a new room.
-			// PVE rooms: always spectator (team = null).
-			// PVP rooms: assign team by available slot.
-			//   - If red or black is missing: assign to that team
-			//   - If both teams taken: null team (spectator)
-			let assignedTeam: string | null = null
-
-			if (!room.pve_mode) {
-				const existingMembers = await prisma.roomUser.findMany({
-					where: {
-						room_id: roomId
-					},
-					select: {
-						team: true
-					},
-					orderBy: {
-						joined_at: "asc"
-					}
-				})
-
-				const assignedTeams = new Set(existingMembers.map(m => m.team).filter(t => t !== null))
-
-				if (!assignedTeams.has("red")) {
-					assignedTeam = "red"
-				} else if (!assignedTeams.has("black")) {
-					assignedTeam = "black"
-				}
-				// If both teams are assigned, assignedTeam remains null (spectator)
-			}
-
 			await prisma.roomUser.create({
 				data: {
 					room_id: roomId,
@@ -159,7 +235,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 					select: {
 						id: true,
 						display_name: true,
-						avatar_seq: true
+						avatar_seq: true,
+						total_points: true
 					}
 				}
 			},
@@ -174,6 +251,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			avatar_seq: Number(roomUser.users.avatar_seq),
 			avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 			team: roomUser.team,
+			total_points: roomUser.users.total_points,
 			joined_at: roomUser.joined_at
 		}))
 

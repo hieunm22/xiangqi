@@ -29,8 +29,35 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Reset password token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: reset-password.messages.token-valid
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     user_name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     display_name:
+ *                       type: string
+ *                     gender:
+ *                       type: boolean
  *       400:
- *         description: Missing id or token
+ *         description: Missing id or token, or invalid user id
  *       401:
  *         description: Invalid or expired token
  *       404:
@@ -147,8 +174,22 @@ router.get("/auth/reset-password", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: reset-password.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       400:
- *         description: Invalid request body
+ *         description: Missing userId or password, or invalid user id
  *       404:
  *         description: User not found
  *       500:

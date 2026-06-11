@@ -43,8 +43,6 @@ const router = Router()
  *                   type: integer
  *       400:
  *         description: Invalid request body
- *       401:
- *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

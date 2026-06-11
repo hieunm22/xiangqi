@@ -23,6 +23,7 @@ import ResetPasswordPage from "pages/ResetPassword"
 import RoomPage from "pages/Room"
 import useToolkit from "hooks/useToolkit"
 import "App.scss"
+import "styles/animation.scss"
 import "styles/responsive.scss"
 import "styles/common.scss"
 

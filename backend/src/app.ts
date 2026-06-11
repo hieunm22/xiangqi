@@ -95,6 +95,10 @@ app.use("/api", undoRoutes)
 app.use("/api", sequenceRoutes)
 
 app.use("/docs", swaggerUi.serve)
-app.get("/docs", swaggerUi.setup(swaggerSpec))
+app.get("/docs", swaggerUi.setup(swaggerSpec, {
+	swaggerOptions: {
+		persistAuthorization: true
+	}
+}))
 
 export default app

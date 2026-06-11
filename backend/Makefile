@@ -10,6 +10,10 @@ reset:
 	rm -f .env.local
 	git reset --hard
 
+reset-db:
+	npx prisma migrate reset --force
+	npx prisma db push
+
 destroy:
 	@if docker container inspect xiangqi-api >/dev/null 2>&1; then \
 		docker container stop xiangqi-api; \

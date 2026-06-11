@@ -116,22 +116,22 @@ describe("GET /api/room/fetch-rooms", () => {
 			message: "fetch-rooms.messages.success",
 			status_code: 200
 		})
-		expect(res.body.rooms).toHaveLength(1)
-		expect(res.body.rooms[0]).toMatchObject({
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0]).toMatchObject({
 			id: 101,
 			name: "Table A",
 			status: 1,
 			red_first: true,
 			bet_amount: 50
 		})
-		expect(res.body.rooms[0].users).toHaveLength(2)
-		expect(res.body.rooms[0].users[0]).toMatchObject({
+		expect(res.body.data[0].users).toHaveLength(2)
+		expect(res.body.data[0].users[0]).toMatchObject({
 			id: 11,
 			display_name: "Alice",
 			avatar_seq: 0,
 			avatar_url: "/images/11.jpg"
 		})
-		expect(res.body.rooms[0].users[1]).toMatchObject({
+		expect(res.body.data[0].users[1]).toMatchObject({
 			id: 12,
 			display_name: "Bob",
 			avatar_seq: 2,
@@ -168,7 +168,7 @@ describe("GET /api/room/fetch-rooms", () => {
 			success: true,
 			message: "fetch-rooms.messages.success",
 			status_code: 200,
-			rooms: []
+			data: []
 		})
 		expect(roomFindManyMock).toHaveBeenCalledWith(
 			expect.objectContaining({

@@ -22,7 +22,7 @@
 	}
 }
 
-@media screen and (min-width: 401px) and (max-width: 440px) {
+@media screen and (min-width: 401px) and (max-width: 450px) {
 	:root {
 		--cell-size: 45px;
 		--piece-size: 33px;
@@ -34,7 +34,7 @@
 	}
 }
 
-@media screen and (max-width: 440px) {
+@media screen and (max-width: 450px) {
 	.room-container {
 		flex-direction: column;
 	}
@@ -63,15 +63,23 @@
 		width: 100% !important;
 	}
 	
-	.top-player > .captured-pieces-display {
-		flex-direction: row;
+	.top-player {
+		align-items: flex-start;
+
+		> .captured-pieces-display {
+			flex-direction: row;
+			direction: ltr;
+		}
 	}
 
-	.bottom-player > .player-info-card {
-		order: -1;
-	}
-	
-	.bottom-player > .captured-pieces-display {
-		flex-direction: row;
+	.bottom-player {
+		> .player-info-card {
+			order: -1;
+		}
+
+		> .captured-pieces-display {
+			flex-direction: row;
+			direction: rtl;
+		}
 	}
 }

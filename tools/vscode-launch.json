@@ -2,28 +2,29 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Backend (ts-node)",
+      "name": "Debug Backend (Hot Reload)",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/backend",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
-      "args": ["${workspaceFolder}/backend/src/server.ts"],
+      "runtimeExecutable": "/Users/hieunm/.nvm/versions/node/v24.16.0/bin/node",
+      "runtimeArgs": [
+        "${workspaceFolder}/backend/node_modules/nodemon/bin/nodemon.js",
+        "--legacy-watch",
+        "--watch",
+        "src",
+        "--ext",
+        "ts",
+        "--exec",
+        "/Users/hieunm/.nvm/versions/node/v24.16.0/bin/node --inspect=9229 -r ts-node/register -r tsconfig-paths/register ./src/server.ts"
+      ],
       "env": {
         "TS_NODE_PROJECT": "${workspaceFolder}/backend/tsconfig.json"
       },
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "console": "integratedTerminal",
-      "sourceMaps": true
-    },
-    {
-      "name": "Debug Backend (attach to nodemon)",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
+      "sourceMaps": true,
       "restart": true,
-      "cwd": "${workspaceFolder}/backend",
-      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-      "sourceMaps": true
+      "autoAttachChildProcesses": true
     }
   ]
 }

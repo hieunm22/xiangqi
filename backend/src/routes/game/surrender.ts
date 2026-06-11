@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { buildEndGameTransaction } from "common/game/end-game.helper"
 import { getGameHistoryCollection } from "common/mongodb"
+import { getUTCTimestamp } from "common/helper"
 import { SurrenderGameRequest } from "types/game.type"
 
 const router = Router()
@@ -31,10 +32,24 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Surrender recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: surrender.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       400:
- *         description: Invalid request
+ *         description: Invalid request (invalid game id, game already finished, invalid surrender player, opponent not found, or game history not found)
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       404:
  *         description: Game not found
  *       500:
@@ -160,7 +175,7 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			game_id: normalizedGameId,
 			fen: latestRecord[0].fen,
 			team: surrenderingPlayer.team === "red" ? "black" : "red",
-			time_stamp: Math.floor(Date.now() / 1000),
+			time_stamp: getUTCTimestamp(),
 			surrender: Number(userId)
 		})
 

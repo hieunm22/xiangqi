@@ -5,7 +5,7 @@ export interface LoginBodyType {
 	timezoneOffset: number
 }
 
-export interface LoginSuccessResponse {
+export interface AuthResponse {
 	success: boolean
 	message: string
 	status_code: number

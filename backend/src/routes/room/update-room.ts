@@ -34,6 +34,38 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Room updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: update-room.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     room:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         status:
+ *                           type: integer
+ *                         red_first:
+ *                           type: boolean
+ *                         pve_mode:
+ *                           type: boolean
+ *                         bet_amount:
+ *                           type: integer
  *       400:
  *         description: Invalid request body
  *       401:

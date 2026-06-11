@@ -23,12 +23,11 @@ export interface PieceItemProps {
 }
 
 export interface PlayerInfoCardProps {
-	username?: string
+	user: RoomUser | null
 	team: Team
 	active: boolean
-	avatarUrl?: string | null
-	isEmpty?: boolean
-	userId?: number
+	room: RoomInfo | null
+	roomHostId: number | null
 }
 
 export interface RoomUser {
@@ -36,6 +35,7 @@ export interface RoomUser {
 	display_name: string
 	avatar_url: string | null
 	team: Team | null
+	total_points: number
 	joined_at: string
 }
 
@@ -55,10 +55,20 @@ export interface RoomInfoData {
 	game: GameInfo | null
 }
 
-export interface RoomInfoResponse {
-	success: boolean
-	status_code: number
-	data: RoomInfoData | null
+export interface RoomWithUsers {
+	room: RoomInfo
+	users: RoomUser[]
+}
+
+export interface GameMovements {
+	_id: string
+	game_id: string
+	team: Team
+	fen: string
+	time_stamp: number
+	capture?: PieceCharacter
+	surrender?: number
+	undo?: number
 }
 
 export interface MovePieceRequest {

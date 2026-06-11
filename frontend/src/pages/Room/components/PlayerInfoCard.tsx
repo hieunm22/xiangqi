@@ -1,29 +1,27 @@
 import classnames from "classnames"
+import { LS_TOKEN_KEY } from "common/constant"
 import { PopupState } from "components/Layout/enums"
 import { TI } from "components/TranslationTag"
-import { requireImage } from "common/helper"
-import { usePopups } from "hooks/useAppContext"
-import { useAPI } from "hooks/useAPI"
+import { formatNumber, requireImage } from "common/helper"
 import useToolkit from "hooks/useToolkit"
-import { setPopup } from "toolkit/slice/home"
-import { APIResponse } from "types/Common"
-import { Users } from "types/Entities"
+import {
+	setPopup,
+	setRoomInfo,
+	setUserId,
+} from "toolkit/slice/game"
 import { PlayerInfoCardProps } from "../types"
 
 export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
-		avatarUrl,
-		isEmpty = false,
+		room,
+		roomHostId,
 		team,
-		userId = null,
-		username,
+		user
 	} = props
-	const { setProfileUser } = usePopups()
-	const { getUserById } = useAPI()
-	const { dispatch } = useToolkit()
+	const { state, dispatch } = useToolkit()
 
-	if (username === undefined) {
+	if (user?.display_name === undefined) {
 		return (
 			<div className="player-info-card loading-slot">
 				<TI className="fas fa-circle-north fa-spin" />
@@ -31,9 +29,9 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		)
 	}
 
-	const fullAvatarUrl = requireImage(avatarUrl || "")
+	const fullAvatarUrl = requireImage(user?.avatar_url || "")
 
-	if (isEmpty) {
+	if (!user) {
 		const containerClass = classnames("player-info-card empty-slot", `team-${team}`)
 		return (
 			<div className={containerClass}>
@@ -49,25 +47,31 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	})
 
 	const handlePlayerNameClick = async () => {
-		if (!userId) return
-
-		const userResponse: APIResponse<Users> = await getUserById(userId)
-		if (userResponse && userResponse.data) {
-			setProfileUser(userResponse.data)
-			dispatch(setPopup(PopupState.PROFILE)) // open profile popup
-		}
+		if (!user?.id) return
+		
+		const token = localStorage.getItem(LS_TOKEN_KEY)
+		if (!token) return
+		dispatch(setRoomInfo({ roomInfo: room, roomHostId }))
+		dispatch(setUserId(user.id)) // open profile popup
+		dispatch(setPopup(PopupState.PROFILE)) // open profile popup
 	}
 
 	return (
 		<div className={containerClass}>
 			<div className="player-avatar">
-				<img className="player-avatar-image" src={fullAvatarUrl} alt={username} />
+				<img
+					className="player-avatar-image"
+					src={fullAvatarUrl}
+					alt={user?.display_name}
+				/>
 			</div>
 			<div className="player-meta">
 				<div className="player-name" onClick={handlePlayerNameClick}>
-					{username}
+					{user?.display_name}
 				</div>
-				<div className={classnames("player-general", `team-${team}`)}>
+				<div className="player-total-points">
+					<i className="fas fa-sack-dollar user-points" />
+					{formatNumber(user?.total_points, state.lang)}
 				</div>
 			</div>
 		</div>

@@ -15,7 +15,11 @@ interface RoomRequestBase {
 	id: number
 }
 
-export interface JoinRoomRequest extends RoomRequestBase { }
+export type JoinRoomTeam = "red" | "black" | null
+
+export interface JoinRoomRequest extends RoomRequestBase {
+	team?: JoinRoomTeam
+}
 
 export interface LeaveRoomRequest extends RoomRequestBase { }
 

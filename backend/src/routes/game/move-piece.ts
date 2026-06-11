@@ -4,6 +4,7 @@ import { fenToBoard } from "common/board-helper"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitMovePiece } from "common/socket"
+import { getUTCTimestamp } from "common/helper"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { MovePieceRequest, PVEContext } from "types/game.type"
 
@@ -45,10 +46,42 @@ const router = Router()
  *     responses:
  *       201:
  *         description: Move recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: move-piece.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 201
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     game_id:
+ *                       type: string
+ *                     fen:
+ *                       type: string
+ *                     team:
+ *                       type: string
+ *                       example: black
+ *                     time_stamp:
+ *                       type: integer
+ *                     capture:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Present only when a piece is captured
+ *                     _id:
+ *                       type: string
  *       400:
- *         description: Invalid request
+ *         description: Invalid request (invalid game id, invalid fen, invalid team, invalid capture piece, or game history not found)
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
  *         description: Internal server error
  */
@@ -148,7 +181,7 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			game_id: gameId,
 			fen: newFen,
 			team: nextTeam,
-			time_stamp: Math.floor(Date.now() / 1000)
+			time_stamp: getUTCTimestamp()
 		}
 
 		// Add capture piece if provided
@@ -166,7 +199,7 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 				fen: newFen,
 				team: nextTeam,
 				capture: capturePiece ? (team === "red" ? capturePiece.toUpperCase() : capturePiece.toLowerCase()) : null,
-				time_stamp: Math.floor(Date.now() / 1000)
+				time_stamp: getUTCTimestamp()
 			}
 		})
 

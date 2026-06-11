@@ -32,7 +32,7 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
  *             schema:
  *               type: string
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  */
 router.post("/tool/make-expired", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	// Reuse the verified payload from the current token, dropping the registered

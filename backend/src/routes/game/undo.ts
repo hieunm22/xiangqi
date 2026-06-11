@@ -30,12 +30,42 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Undo successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: undo.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: array
+ *                   description: Deleted game history records
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       game_id:
+ *                         type: string
+ *                       fen:
+ *                         type: string
+ *                       team:
+ *                         type: string
+ *                       time_stamp:
+ *                         type: integer
  *       400:
- *         description: Invalid request or no moves to undo
+ *         description: Invalid request (game not found, invalid game id, undo limit exceeded, no moves to undo, or delete failed)
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (not logged in)
  *       403:
- *         description: Forbidden (not in room, spectator, or not in game)
+ *         description: Forbidden (not in the game, not in the room, or spectator)
  *       500:
  *         description: Internal server error
  */
@@ -87,10 +117,10 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 		// Verify user is part of the game
 		const isUserInGame = game.game_users.some(gu => gu.user_id === userId)
 		if (!isUserInGame) {
-			res.status(401).json({
+			res.status(403).json({
 				success: false,
 				message: "undo.messages.not-in-game",
-				status_code: 401
+				status_code: 403
 			})
 			return
 		}

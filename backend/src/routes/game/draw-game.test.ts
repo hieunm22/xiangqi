@@ -15,6 +15,7 @@ const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
 const gameUpdateMock = vi.fn()
 const roomUpdateMock = vi.fn()
+const roomFindUniqueMock = vi.fn()
 const transactionMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const toArrayMock = vi.fn()
@@ -23,6 +24,7 @@ const sortMock = vi.fn()
 const findMock = vi.fn()
 const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
+const buildEndGameTransactionMock = vi.fn()
 
 const PATH = "/api/game/draw-game"
 
@@ -40,6 +42,7 @@ vi.mock("prisma", () => ({
 			update: gameUpdateMock
 		},
 		room: {
+			findUnique: roomFindUniqueMock,
 			update: roomUpdateMock
 		},
 		roomUser: {
@@ -50,6 +53,10 @@ vi.mock("prisma", () => ({
 
 vi.mock("../../common/mongodb", () => ({
 	getGameHistoryCollection: getGameHistoryCollectionMock
+}))
+
+vi.mock("../../common/game/end-game.helper", () => ({
+	buildEndGameTransaction: buildEndGameTransactionMock
 }))
 
 describe("POST /api/game/draw-game", () => {
@@ -301,15 +308,12 @@ describe("POST /api/game/draw-game", () => {
 			{ _id: { toString: () => "history-1" }, game_id: "game-1", fen: "latest-fen" }
 		])
 		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "history-2" } })
-		gameUpdateMock.mockResolvedValue({
-			id: "game-1",
-			status: 2,
-			winner_id: null
-		})
+		buildEndGameTransactionMock.mockResolvedValue([])
 		transactionMock.mockResolvedValue([
 			{ id: "game-1", status: 2, winner_id: null },
 			{ id: BigInt(100), status: 1 }
 		])
+		roomFindUniqueMock.mockResolvedValue({ pve_mode: false })
 
 		const res = await request(app)
 			.post(PATH)
@@ -326,24 +330,12 @@ describe("POST /api/game/draw-game", () => {
 				time_stamp: expect.any(Number)
 			})
 		)
-		expect(gameUpdateMock).toHaveBeenCalledWith({
-			where: {
-				id: "game-1"
-			},
-			data: {
-				ends_at: expect.any(Date),
-				status: 2,
-				winner_id: null
-			}
-		})
-		expect(roomUpdateMock).toHaveBeenCalledWith({
-			where: {
-				id: BigInt(100)
-			},
-			data: {
-				updated_at: expect.any(Date),
-				status: 1
-			}
+		expect(buildEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "game-1",
+			roomId: BigInt(100),
+			winnerId: null,
+			isBotGame: false,
+			betAmount: 0
 		})
 		expect(res.body).toMatchObject({
 			success: true,

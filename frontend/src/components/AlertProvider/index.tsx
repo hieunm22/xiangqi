@@ -55,7 +55,7 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				open={!!current}
 				maxWidth="xs"
 				fullWidth
-				disableRestoreFocus
+				disableEnforceFocus
 			>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" sx={textCenterStyle}>

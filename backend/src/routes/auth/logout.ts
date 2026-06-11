@@ -24,8 +24,22 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Logout handled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: logout.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       401:
- *         description: Missing or invalid Authorization header
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
  *         description: Internal server error
  */

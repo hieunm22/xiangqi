@@ -40,9 +40,12 @@ import {
 import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
-import { setDarkMode, setPopup } from "toolkit/slice/home"
+import { setPopup, setUserId } from "toolkit/slice/game"
+import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
+import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
+import { UserProfileWithStats } from "./types"
 import "./Layout.scss"
 
 const fullWidth = 240
@@ -80,23 +83,23 @@ export default function Layout() {
 	}, [])
 
 	useEffect(() => {
-		const getUserInfo = async () => {
+		const getLoginUserInfo = async () => {
 			const token = getToken()
 			const claims = decodePayload(token)
 			const userId = Number(claims?.sub)
 			if (!Number.isInteger(userId) || userId <= 0) return
 			setCurrentUserId(userId)
 
-			const user = await getUserById(userId)
+			const user = await getUserById(token, userId) as APIResponse<UserProfileWithStats>
 			if (!user?.data) return
-			const { avatar_url, display_name } = user.data
+			const { avatar_url, display_name } = user.data.user
 			const avatar = requireImage(avatar_url)
 
 			setUserImage(avatar)
 			setUserDisplayName(display_name)
 		}
 
-		getUserInfo()
+		getLoginUserInfo()
 	}, [])
 
 	const { setLogout } = useAuth()
@@ -141,15 +144,6 @@ export default function Layout() {
 	const displayName = userDisplayName
 	const userMenuOpen = Boolean(userMenuAnchor)
 
-	const loadProfileUser = async (userId: number) => {
-		setProfileUser(null)
-
-		const user = await getUserById(userId)
-		if (user?.data) {
-			setProfileUser(user.data)
-		}
-	}
-
 	const handleOpenUserMenu = (e: React.MouseEvent<HTMLElement>) => {
 		setShowDebugMenu(e.shiftKey)
 		setUserMenuAnchor(e.currentTarget)
@@ -164,8 +158,9 @@ export default function Layout() {
 		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
+		dispatch(setUserId(currentUserId))
 		dispatch(setPopup(PopupState.PROFILE))
-		await loadProfileUser(currentUserId)
+		// await loadProfileUser(currentUserId)
 	}
 
 	const handleMakeExpired = async () => {

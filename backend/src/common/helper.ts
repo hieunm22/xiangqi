@@ -24,3 +24,21 @@ export function getAvatarUrl(userId: number | bigint, avatarSeq: number): string
 	}
 	return `/images/${userId}.jpg`
 }
+
+export function getUTCNow(): Date {
+	const now = new Date()
+	const utcNow = Date.UTC(
+		now.getUTCFullYear(),
+		now.getUTCMonth(),
+		now.getUTCDate(),
+		now.getUTCHours(),
+		now.getUTCMinutes(),
+		now.getUTCSeconds(),
+		now.getUTCMilliseconds()
+	)
+	return new Date(utcNow)
+}
+
+export function getUTCTimestamp(): number {
+	return Math.floor(getUTCNow().getTime() / 1000)
+}

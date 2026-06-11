@@ -6,18 +6,17 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
+	Grid,
 } from "@mui/material"
 import { openAlert } from "components/AlertProvider"
 import { Empty } from "components/Common"
-import { PopupState } from "components/Layout/enums"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { usePopups, useRoomSettingsDialogContext } from "hooks/useAppContext"
-import useToolkit from "hooks/useToolkit"
+import { useRoomSettingsDialogContext } from "hooks/useAppContext"
+// import useLayoutAuth from "pages/Dashboard/hooks"
 import { translate } from "locales/translate"
-import { setPopup } from "toolkit/slice/home"
 import { UserAvatarType } from "types/Common"
 
 const RoomSettingsDialog = () => {
@@ -30,12 +29,11 @@ const RoomSettingsDialog = () => {
     closeSettings,
     handleSettingsSaved
   } = useRoomSettingsDialogContext()
-	const { dispatch } = useToolkit()
-	const { setProfileUser } = usePopups()
 	// Spectators are all users except the first 2 (players)
 	const spectatorsUsers = users?.slice(2) ?? []
 	const spectatorsUsersMap: UserAvatarType[] = spectatorsUsers.map(user => user as UserAvatarType)
-	const { getUserById, updateRoom } = useAPI()
+	const { updateRoom } = useAPI()
+	// const { loadUserData } = useLayoutAuth()
 	const [name, setName] = useState(room?.name ?? "")
 	const [nameError, setNameError] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
@@ -82,10 +80,14 @@ const RoomSettingsDialog = () => {
   if (!room) return <Empty />
 
 	return (
-		<Dialog open={isOpen} onClose={closeSettings} fullWidth maxWidth="xs">
+		<Dialog
+			open={isOpen}
+			onClose={closeSettings}
+			sx={{ "& .MuiDialog-paper": { width: "calc(100% - 32px)", margin: 0 } }}
+		>
 			<DialogTitle>{translate("room.settings.title")}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
-			<DialogContent className="pt-16">
+			<DialogContent className="pt-16 room-settings-dialog">
 				<TTextField
 					label="room.settings.room-name"
 					value={name}
@@ -98,9 +100,13 @@ const RoomSettingsDialog = () => {
 					autoFocus={isHost}
 					disabled={submitting || !isHost}
 				/>
+				<Grid className="room-bet-amount">
+					<i className="fas fa-sack-dollar user-points" />
+					{room.bet_amount}
+				</Grid>
 
 				{spectatorsUsers.length > 0 && (
-					<Box className="mt-24">
+					<Box>
 						<TTypography
 							variant="subtitle2"
 							className="joined-users"
@@ -109,13 +115,8 @@ const RoomSettingsDialog = () => {
 						<UserAvatarGroup
 							users={spectatorsUsersMap}
 							type="primary"
-							onUserClick={async (id) => {
-								const userData = await getUserById(id)
-								if (userData?.data) {
-									setProfileUser(userData.data)
-								}
-								dispatch(setPopup(PopupState.PROFILE))
-							}}
+							maxVisible={7}
+							// onUserClick={loadUserData}	// temporary comment
 						/>
 					</Box>
 				)}

@@ -64,7 +64,8 @@
 			"bet-amount": "Bet amount",
 			"room-name-label": "Room table name",
 			"room-name-helptext": "is required",
-			"join-room": "Join room"
+			"play": "Play",
+			"view": "View"
 		}
 	},
 	"settings": {
@@ -121,6 +122,8 @@
 			"draw-rejected": "Opponent rejected the draw",
 			"draw-completed": "Draw completed",
 			"opponent-surrendered": "Opponent surrendered! You won!",
+			"send-pm": "Send PM",
+			"view-history": "History",
 			"kick": "Kick",
 			"settings": "Room settings"
 		},
@@ -292,9 +295,11 @@
 	"join-room": {
 		"messages": {
 			"internal-server-error": "Internal server error",
+			"invalid-team": "Field 'team' must be 'red', 'black', null, or undefined",
 			"invalid-room-id": "Field 'id' is required and must be a positive integer",
 			"room-not-found": "Room not found",
-			"success": "Successfully joined the room"
+			"success": "Successfully joined the room",
+			"team-seat-occupied": "Selected team seat is already occupied"
 		}
 	},
 	"kick-user": {
@@ -475,7 +480,7 @@
 			"paragraph3": "A captured piece is removed from the board. <b>Chasing one piece for more than 6 consecutive moves is not allowed</b>."
 		},
 		"check": {
-			"paragraph1": "If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check",
+			"paragraph1": "If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check. Otherwise, that side loses",
 			"paragraph2": "When the General is checked from any direction (including from behind), the checked side may respond in one of the following ways:",
 			"paragraph3": "Move the General to another position to escape check",
 			"paragraph4": "Capture the checking piece",

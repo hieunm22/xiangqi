@@ -17,8 +17,9 @@ import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
-import { setGameHistoryUserId, setPopup } from "toolkit/slice/home"
+import { setPopup, setUserId } from "toolkit/slice/game"
 import { GameHistoryItem } from "../types"
+import "../Layout.scss"
 
 interface PlayerAvatarsProps {
 	game: GameHistoryItem
@@ -72,7 +73,7 @@ const PlayerAvatars = ({ game, userId: currentUserId }: PlayerAvatarsProps) => {
 }
 
 export const GameHistoryPopup = () => {
-	const { state, dispatch } = useToolkit()
+	const { state, gameState, dispatch } = useToolkit()
 	const { getPlayerHistory } = useAPI()
 	const [gameHistories, setGameHistories] = useState<GameHistoryItem[]>([])
 	const [loading, setLoading] = useState(false)
@@ -81,13 +82,13 @@ export const GameHistoryPopup = () => {
 		if (reason === "backdropClick") {
 			return
 		}
-		dispatch(setGameHistoryUserId(null))
+		dispatch(setUserId(null))
 		dispatch(setPopup(PopupState.NONE))
 	}
 
 	useEffect(() => {
 		const loadGameHistory = async () => {
-			if (state.popupState !== PopupState.GAME_HISTORY) {
+			if (gameState.popupState !== PopupState.GAME_HISTORY) {
 				return
 			}
 
@@ -98,7 +99,7 @@ export const GameHistoryPopup = () => {
 				return
 			}
 
-			const response = await getPlayerHistory(token, state.gameHistoryUserId!)
+			const response = await getPlayerHistory(token, gameState.activeUserId!)
 			if (response?.success && response.data) {
 				setGameHistories(response.data)
 			}
@@ -106,7 +107,7 @@ export const GameHistoryPopup = () => {
 		}
 
 		loadGameHistory()
-	}, [state.gameHistoryUserId, state.popupState])
+	}, [gameState.activeUserId, gameState.popupState])
 
 	const getClassNameForScore = (game: GameHistoryItem) => {
 		if (game.point > 0) {
@@ -131,17 +132,17 @@ export const GameHistoryPopup = () => {
 
 	return (
 		<Dialog
-			open={state.popupState === PopupState.GAME_HISTORY}
+			open={gameState.popupState === PopupState.GAME_HISTORY}
 			onClose={handleCloseGameHistory}
 			maxWidth="sm"
 			fullWidth
-			disableRestoreFocus
+			disableEnforceFocus
 		>
 			<DialogTitle className="pt-8 pb-8">
 				{translate("page.history.title")}
 			</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
-			<DialogContent>
+			<DialogContent sx={{ maxHeight: 400 }}>
 				{loading ? (
 					<Typography>{translate("common.loading")}</Typography>
 				) : gameHistories.length === 0 ? (
@@ -155,25 +156,20 @@ export const GameHistoryPopup = () => {
 								variant="outlined"
 							>
 								<Box className="game-history-header">
-									<Typography
-										className="game-history-date"
-										variant="caption"
-										color="textPrimary"
-									>
+									<Typography variant="caption" color="textPrimary">
 										{formatGameDate(item.game.ends_at)}
 									</Typography>
-									<Typography
-										className="game-history-time-only"
-										variant="caption"
-										color="textSecondary"
-									>
+									<Typography variant="caption" color="textSecondary">
 										{formatGameTimeOnly(item.game.ends_at)}
 									</Typography>
 								</Box>
 								<Box className="game-history-content">
-									<PlayerAvatars game={item} userId={state.gameHistoryUserId!} />
+									<PlayerAvatars game={item} userId={gameState.activeUserId!} />
 									<span className={getClassNameForScore(item)}>
-										{item.point.toLocaleString(state.lang)}
+										{item.point !== 0
+											? item.point.toLocaleString(state.lang)
+											: <i className="fas fa-handshake history-handshake" />
+										}
 									</span>
 								</Box>
 							</Paper>

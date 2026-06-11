@@ -1,37 +1,45 @@
 # Xiangqi (Chinese Chess)
 
-A web-based Xiangqi (Chinese Chess) application with a React frontend and a Node.js/Express backend API.
+A web-based Xiangqi (Chinese Chess) platform with a React frontend and a Node.js/Express backend API. Play online against other players in real time or challenge a bot opponent across 5 difficulty levels.
 
 ## About
 
 This project is an online Xiangqi (Chinese Chess) platform featuring:
 
-- **Interactive game board** with real-time multiplayer gameplay via Socket.IO
-- **User authentication** (login, register, password recovery with email verification)
-- **Real-time synchronization** for piece movements and game state
-- **Dark/Light theme support** with persistent user preferences
-- **Internationalization** (English and Vietnamese) with automatic locale management
-- **Responsive design** for desktop and tablet devices
+- **Real-time multiplayer (PvP)** — play against other players with live piece-movement and game-state synchronization via Socket.IO
+- **Play vs. Bot (PvE)** — challenge a [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) UCI engine across 5 tunable difficulty tiers (Beginner → Master)
+- **Full in-game actions** — move, surrender, offer/accept draw, request undo, and reset
+- **Rooms** — create rooms, join as a player or spectator, leave, kick users, and update room settings (red-first, PvE mode, bet amount)
+- **Player profiles & ranking** — point-based scoring, per-player game history, and profile popups
+- **Authentication** — register, login, logout, and password recovery with email verification; JWT access + refresh tokens with protected routes
+- **Polish** — sound effects on game events, win confetti, an in-app guide popup, and avatar groups
+- **Dark / Light theme** with persistent user preferences
+- **Internationalization** (English & Vietnamese) with an Excel-driven locale generation workflow
+- **Responsive design** for desktop, tablet, and mobile
 - **REST API** with comprehensive Swagger documentation
-- **Secure authentication** using JWT tokens with refresh mechanism
-- **Rate limiting & CORS protection** for API security
+- **CI/CD** — automated deploy via GitHub Actions with Telegram notifications
 
 ## Tech Stack
 
 **Frontend**
 - React 19, TypeScript, Vite
-- MUI (Material UI), Bootstrap, SCSS
+- MUI (Material UI), Bootstrap, SCSS, styled-components
 - Redux Toolkit for state management
 - React Router DOM for routing
-- i18next for internationalization
+- i18next / react-i18next for internationalization
 - Socket.IO client for real-time communication
+- wretch for HTTP requests, FontAwesome Pro icons, react-confetti-boom for win effects
 
 **Backend**
 - Node.js, Express 5, TypeScript
-- Prisma ORM with PostgreSQL/MongoDB
+- Prisma ORM with PostgreSQL (multi-schema: `auth` + `game`)
+- MongoDB driver and Redis (ioredis) integrations
 - Socket.IO server for real-time gameplay
 - Redis for caching
 - JWT authentication
+- Fairy-Stockfish UCI engine integration for the bot opponent
+- JWT authentication (access + refresh tokens via cookies)
+- Nodemailer for transactional email (password recovery)
 - Swagger UI for API documentation
 - CORS enabled with configurable origins
 
@@ -39,123 +47,44 @@ This project is an online Xiangqi (Chinese Chess) platform featuring:
 
 ```
 xiangqi/
-├── backend/                      # Express.js API server
+├── backend/                    # Express.js API server
 │   ├── src/
-│   │   ├── server.ts             # Entry point & HTTP server setup
-│   │   ├── app.ts                # Express app configuration & CORS
-│   │   ├── env.ts                # Environment variable loading
-│   │   ├── swagger.ts            # Swagger/OpenAPI documentation
-│   │   ├── prisma.ts             # Prisma client initialization
-│   │   ├── common/
-│   │   │   ├── board-helper.ts   # Xiangqi board logic
-│   │   │   ├── socket.ts         # Socket.IO server setup & handlers
-│   │   │   ├── mongodb.ts        # MongoDB connection
-│   │   │   ├── redis.ts          # Redis cache initialization
-│   │   │   ├── constant.ts       # Game constants
-│   │   │   └── helper.ts         # Utility functions
-│   │   ├── middleware/
-│   │   │   └── auth.ts           # JWT authentication middleware
-│   │   ├── routes/
-│   │   │   ├── auth/             # Authentication endpoints (login, register, tokens)
-│   │   │   ├── game/             # Game endpoints (moves, surrender)
-│   │   │   ├── room/             # Room endpoints (create, join, leave)
-│   │   │   └── tool/             # Tool endpoints
-│   │   ├── templates/            # Email templates (HTML)
-│   │   └── types/
-│   │       ├── auth.type.ts      # Auth type definitions
-│   │       ├── game.type.ts      # Game type definitions
-│   │       └── room.type.ts      # Room type definitions
-│   ├── prisma/
-│   │   └── schema.prisma         # Database schema
-│   ├── generated/                # Generated Prisma client & types
+│   │   ├── common/             # Board logic, socket, bot engine, DB connections, helpers
+│   │   ├── middleware/         # JWT auth middleware
+│   │   ├── routes/             # auth / room / game / tool endpoints
+│   │   ├── templates/          # Email templates (HTML)
+│   │   ├── types/              # Type definitions
+│   │   └── generated/prisma/   # Generated Prisma client
+│   ├── prisma/                 # Database schema & migrations
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── vitest.config.ts
 │   ├── Dockerfile
 │   └── Makefile
 │
-├── frontend/                     # React SPA
+├── frontend/                   # React SPA
 │   ├── src/
-│   │   ├── main.tsx              # App entry point
-│   │   ├── App.tsx               # Root component & routing
-│   │   ├── App.scss              # Global styles
-│   │   ├── common/
-│   │   │   ├── browser.ts        # Browser detection utilities
-│   │   │   ├── constant.ts       # Application constants & paths
-│   │   │   ├── helper.ts         # Utility functions
-│   │   │   └── browser.types.ts  # Browser type definitions
-│   │   ├── components/
-│   │   │   ├── AlertProvider/    # Global alert provider
-│   │   │   ├── AuthProvider/     # Authentication provider
-│   │   │   ├── ConfirmProvider/  # Confirmation dialog provider
-│   │   │   ├── Layout/           # Main layout wrapper
-│   │   │   ├── LayoutUnAuth/     # Unauthenticated layout
-│   │   │   ├── ProtectedRoute/   # Route protection HOC
-│   │   │   ├── TranslationTag/   # i18n tag component
-│   │   │   ├── TranslationText/  # i18n text component
-│   │   │   ├── Common.tsx        # Shared components
-│   │   │   ├── Opponent/         # Opponent info component
-│   │   │   └── ...               # Other UI components
-│   │   ├── hooks/
-│   │   │   ├── useSocket.ts      # Socket.IO hook for real-time updates
-│   │   │   ├── useAPI.ts         # API request hook
-│   │   │   ├── useAppContext.ts  # App context hook
-│   │   │   ├── useGameToolkit.ts # Game state hook
-│   │   │   ├── useAutoTitle.ts   # Page title hook
-│   │   │   └── useToolkit.ts     # Redux store hook
-│   │   ├── locales/
-│   │   │   ├── en.json           # English translations (generated)
-│   │   │   ├── vi.json           # Vietnamese translations (generated)
-│   │   ├── pages/
-│   │   │   ├── Dashboard/        # Home/dashboard page
-│   │   │   ├── Login/            # Login page
-│   │   │   ├── Register/         # Registration page
-│   │   │   ├── LostPassword/     # Password recovery page
-│   │   │   ├── ResetPassword/    # Password reset page
-│   │   │   ├── Room/             # Game room page
-│   │   │   └── NotFound/         # 404 page
-│   │   ├── styles/
-│   │   │   ├── common.scss       # Global styles
-│   │   │   └── responsive.scss   # Responsive breakpoints
-│   │   ├── toolkit/
-│   │   │   ├── store.ts          # Redux store configuration
-│   │   │   └── slice/            # Redux slices
-│   │   └── types/
-│   │       ├── Common.ts         # Common type definitions
-│   │       ├── Entities.ts       # Entity models
-│   │       ├── GameState.ts      # Game state types
-│   │       └── ReduxState.ts     # Redux state types
-│   ├── public/                   # Static assets
-│   ├── deploy/
-│   │   ├── nginx.conf            # Nginx configuration for production
-│   │   └── frontend-docker-log.md
+│   │   ├── common/             # Browser utils, constants, helpers, enums
+│   │   ├── components/         # Shared UI components & providers
+│   │   ├── hooks/              # Custom hooks (socket, API, store, ...)
+│   │   ├── locales/            # en.json / vi.json (generated)
+│   │   ├── pages/              # Dashboard, Login, Register, Room, ...
+│   │   ├── styles/             # Global & responsive SCSS
+│   │   ├── toolkit/            # Redux store & slices
+│   │   └── types/              # Type definitions
+│   ├── public/                 # Static assets
+│   ├── deploy/                 # Nginx configuration for production
 │   ├── package.json
 │   ├── vite.config.ts
-│   ├── tsconfig.json
 │   ├── Dockerfile
-│   ├── Makefile
-│   └── README.md
+│   └── Makefile
 │
-├── database/
-│   ├── data.sql                  # Database seed/initial data
-│   └── game_history.json         # Game history sample data
-│
-├── tools/
-│   ├── generate-locales.sh       # Script to generate i18n JSON from Excel
-│   ├── languages.xlsx            # Source of truth for translations
-│   ├── convert-to-csv.py         # Utility scripts
-│   ├── convert-to-json.py
-│   ├── update-excel.py
-│   ├── change.sh / change.ps1
-│   └── pre-commit                # Git pre-commit hook
-│
-├── .github/
-│   ├── instructions/
-│   │   ├── localization.instructions.md  # Localization workflow rules
-│   │   └── ...
-│   └── copilot-instructions.md   # Copilot/IDE AI customization
-│
-├── docker-compose.yml            # Docker services (PostgreSQL, MongoDB, Redis)
+├── database/                   # Seed data & sample game history
+├── tools/                      # Locale generation scripts & Excel source
+├── docs/                       # Agent workflow, localization & coding convention docs
+├── .github/                    # CI/CD workflows & AI instruction files
+├── docker-compose.yml          # Docker services (PostgreSQL, MongoDB, mongo-express, API)
+├── CLAUDE.md                   # Project instructions for AI agents
 └── README.md
 ```
 
@@ -164,10 +93,11 @@ xiangqi/
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) v18 or higher
-- [npm](https://www.npmjs.com/) v9 or higher (or [yarn](https://yarnpkg.com/))
-- [PostgreSQL](https://www.postgresql.org/) 14+ (for user database)
-- [MongoDB](https://www.mongodb.com/) 5+ (for game data, optional)
-- [Redis](https://redis.io/) (for caching)
+- [Yarn](https://yarnpkg.com/) (or npm v9+)
+- [PostgreSQL](https://www.postgresql.org/) 14+ (primary database)
+- [MongoDB](https://www.mongodb.com/) 5+ (game data, optional)
+- [Redis](https://redis.io/) (caching, optional)
+- [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) binary on `PATH` (required for the bot / PvE mode)
 - [Docker & Docker Compose](https://www.docker.com/) (for containerized setup)
 
 ### Install & Run Backend
@@ -178,9 +108,9 @@ yarn
 yarn dev
 ```
 
-The API server starts at **http://localhost:8000**.  
-Swagger docs are available at **http://localhost:8000/docs**.  
-Socket.IO server is ready for real-time connections at **http://localhost:8000/socket.io**.
+The API server starts at **http://localhost:8000**.
+Swagger docs are available at **http://localhost:8000/docs** (the root `/` redirects there).
+The Socket.IO server is ready for real-time connections at **http://localhost:8000/socket.io**.
 
 ### Install & Run Frontend
 
@@ -194,17 +124,22 @@ The frontend dev server starts at **http://localhost:3004**.
 
 ### Environment Variables
 
-**Backend** (`.env.backend` or `.env`)
+The backend loads env files in order: `.env.local`, `.env.backend`, `.env`. `DATABASE_URL` and `JWT_SECRET` are required (the server throws on startup if missing).
+
+**Backend** (`.env.local` / `.env.backend` / `.env`)
 ```
 DATABASE_URL=postgresql://user:pass@localhost:5432/xiangqi
 JWT_SECRET=your-secret-key
+PORT=8000
 CORS_ORIGINS=http://localhost:3004,https://your-domain.com
 REDIS_HOST=localhost
+REDIS_PASSWORD=your-redis-password
 MONGO_CONNECTION_STRING=mongodb://root:pass@localhost:27017/?authSource=admin
 MONGODB_DB_NAME=xiangqi
 API_HOST=http://localhost:5001
 APP_EMAIL=your-email@gmail.com
 APP_PASSWORD=your-app-password
+FAIRY_STOCKFISH_PATH=fairy-stockfish
 ```
 
 **Frontend** (`.env.frontend`)
@@ -213,13 +148,22 @@ VITE_BACKEND_BASE_URL=http://localhost:8000
 VITE_PUBLIC_DISTRIBUTION=https://your-cdn-domain.com
 ```
 
+### Database Migrations
+
+```bash
+cd backend
+yarn migrate:new          # create & apply a new migration (dev)
+yarn migrate:deploy       # apply pending migrations (production)
+yarn migrate:export-sql   # export schema diff to ../database/schema.sql
+```
+
 ### Docker Compose Setup
 
 ```bash
 docker-compose up -d
 ```
 
-This starts PostgreSQL, MongoDB, and Redis containers with all necessary configurations.
+This starts PostgreSQL, MongoDB, mongo-express (DB admin UI on **http://localhost:8081**), and the backend API container. Update the placeholder passwords in `docker-compose.yml` and provide `backend/.env.local` before running. The Redis service is included as a commented template.
 
 ## Build for Production
 
@@ -228,8 +172,8 @@ This starts PostgreSQL, MongoDB, and Redis containers with all necessary configu
 ```bash
 cd backend
 yarn
-yarn build
-npm start
+yarn build       # tsc + tsc-alias
+yarn start       # node dist/server.js
 ```
 
 ### Frontend
@@ -237,34 +181,46 @@ npm start
 ```bash
 cd frontend
 yarn
-yarn build
+yarn build       # tsc -b + vite build
 yarn preview
 ```
 
-## Real-time Features
+## Game Rules & Behavior
 
-The application uses **Socket.IO** for real-time multiplayer gameplay:
-- Real-time piece movement synchronization
-- Instant game state updates
-- Player connection status
-- Live room notifications
+### Game Modes
 
-## Game Rules
+- **PvP** — two human players in a room synchronize moves in real time.
+- **PvE** — a single player faces the Fairy-Stockfish bot. Difficulty is selectable from 5 tiers (Beginner, Amateur, Intermediate, Advanced, Master), each tuned with a distinct UCI skill level, search depth, and per-move time budget. Each PvE game owns a dedicated engine process that is released after the game ends or a long idle period.
 
 ### Piece Placement & Board Orientation
 
-When creating a game room, you have the option to select **"Red First"**:
+When creating a room you can toggle **"Red First"**:
 
-- **If "Red First" is selected:** Red pieces are positioned at the **bottom** of the board, Black pieces at the top
-- **If "Red First" is NOT selected:** Black pieces are positioned at the **bottom** of the board, Red pieces at the top
+- **Red First enabled:** Red pieces sit at the **bottom** of the board, Black at the top.
+- **Red First disabled:** Black pieces sit at the **bottom**, Red at the top.
 
-The player information cards (showing player names and captured pieces) are always positioned on the **same side as their pieces**:
-- If your pieces are at the bottom, your player card appears at the bottom
-- If your pieces are at the top, your player card appears at the top
+Player info cards (names, scores, captured pieces) always appear on the **same side as that player's pieces**.
 
 ### Move Order
 
-The side with pieces positioned at the **bottom of the board always moves first**, regardless of which color they are. The opponent with pieces at the top moves second.
+The side with pieces at the **bottom of the board moves first**, regardless of color. The opponent at the top moves second.
+
+### In-Game Actions
+
+- **Move** — only your assigned team's pieces are controllable; the last-moved piece is highlighted.
+- **Surrender** — concede the game.
+- **Draw** — offer a draw; the opponent accepts or declines.
+- **Undo** — request to take back the last move.
+- **Reset** — restart the game in the room.
+
+## Real-time Communication
+
+Socket.IO powers all live updates. Key events include:
+
+- `join-room`, `leave-room` — room presence
+- `player-move` / `piece-moved` — move synchronization
+- `game-started`, `surrender` / `game-surrendered`, `draw-request` / `draw-response` — game lifecycle
+- `room-users-updated`, `user-kicked`, `room-created`, `room-deleted`, `dashboard-room-users-updated` — room & lobby updates
 
 ### Socket.IO Configuration
 
@@ -273,7 +229,7 @@ The side with pieces positioned at the **bottom of the board always moves first*
 - **CORS origins:** Configured via `CORS_ORIGINS` environment variable
 - **Credentials:** Enabled for cross-origin requests
 
-**For production with nginx reverse proxy**, ensure the following configuration:
+**For production behind an nginx reverse proxy:**
 ```nginx
 location /socket.io {
     proxy_pass http://backend:8000;
@@ -302,53 +258,61 @@ Translations are managed via Excel source and auto-generated to JSON files.
    ```
 3. Verify generated files: `frontend/src/locales/en.json` and `vi.json`
 
-⚠️ **Never edit the generated JSON files directly** – they are auto-generated.
+⚠️ **Never edit the generated JSON files directly** — they are overwritten on regeneration. See `docs/language-generation.md` for the full workflow.
 
 ## Testing
 
 ### Backend Tests
+
+The backend ships with Vitest coverage across auth, room, game, and bot-engine modules.
+
 ```bash
 cd backend
-yarn test
+yarn test          # run once
+yarn test:watch    # watch mode
 ```
 
 ### Frontend Build Validation
+
 ```bash
 cd frontend
+yarn lint
 yarn build
 ```
 
 ## Troubleshooting
 
+### Bot / PvE Not Responding
+
+- Ensure the Fairy-Stockfish binary is installed and on your `PATH`, or set `FAIRY_STOCKFISH_PATH` to its absolute path.
+- Each PvE game spawns one engine process; check backend logs for `[bot-engine]` errors.
+
 ### WebSocket Connection Issues
 
-**Problem:** Frontend can't connect to Socket.IO on remote domain (CORS 400 error)
+**Problem:** Frontend can't connect to Socket.IO on a remote domain (CORS 400 error).
 
-**Solution:** 
-1. Verify `CORS_ORIGINS` environment variable includes the frontend domain:
+1. Verify `CORS_ORIGINS` includes the frontend domain:
    ```bash
    CORS_ORIGINS=http://localhost:3004,https://your-domain.com
    ```
-
-2. For reverse proxy setups, ensure nginx has proper WebSocket upgrade configuration (see Socket.IO nginx config above)
-
-3. Frontend automatically falls back to polling if WebSocket fails (check browser console for transport type)
+2. For reverse proxy setups, ensure nginx has the WebSocket upgrade configuration shown above.
+3. The frontend falls back to polling automatically if WebSocket fails (check the browser console for the transport type).
 
 ### Database Connection Issues
 
 **PostgreSQL connection refused:**
 - Ensure PostgreSQL is running: `docker-compose up -d postgres`
-- Check DATABASE_URL format and credentials
+- Check the `DATABASE_URL` format and credentials.
 
 **MongoDB connection issues:**
 - Verify MongoDB is running: `docker-compose up -d mongodb`
-- Check MONGO_CONNECTION_STRING environment variable
+- Check the `MONGO_CONNECTION_STRING` environment variable.
 
 ### Port Already in Use
 
-If ports 3004 (frontend), 8000 (backend), or 5432 (PostgreSQL) are already in use:
+If ports 3004 (frontend), 8000 (backend), 5432 (PostgreSQL), 27017 (MongoDB), or 8081 (mongo-express) are in use:
 ```bash
-# Find process using port (macOS/Linux)
+# Find the process using a port (macOS/Linux)
 lsof -i :PORT_NUMBER
 
 # Or kill directly (use with caution)
@@ -358,11 +322,12 @@ kill -9 PID
 ## Contributing
 
 When working with the codebase, please follow:
-- Check `.github/copilot-instructions.md` for AI assistant guidelines
-- Follow localization workflow in `.github/instructions/localization.instructions.md`
-- Use provided Makefile commands in backend/ and frontend/ for common tasks
+- `CLAUDE.md` and `docs/agent-workflow.md` for the agent/contribution workflow
+- `docs/react-guidelines.md` for frontend coding conventions
+- `docs/language-generation.md` for the localization workflow
+- `.github/copilot-instructions.md` for AI assistant guidelines
+- Use the provided Makefile commands in `backend/` and `frontend/` for common tasks
 
 ## License
 
 This project is created for educational and entertainment purposes.
-

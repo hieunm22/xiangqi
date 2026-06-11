@@ -4,6 +4,7 @@ import {
 	LS_LANGUAGE,
 	LS_TOKEN_KEY
 } from "./constant"
+import { fenPieceMap } from "pages/Room/constant"
 import {
 	getPieceFromCharacter,
 	getTeamFromPieceChar,
@@ -13,13 +14,8 @@ import {
 	scanLine,
 	toIndex
 } from "pages/Room/common"
-import { fenPieceMap } from "pages/Room/constant"
 import { FenMoveDiffResult } from "types/Common"
-import {
-	CellProps,
-	NullableCellProps,
-	PieceCharacter
-} from "types/GameState"
+import { NullableCellProps, PieceCharacter } from "types/GameState"
 
 const processSoldierMove = (
 	state: any,
@@ -344,6 +340,13 @@ function normalizeBase64Str(encoded: string) {
 	}
 }
 
+export function formatNumber(num?: number, locale: string = "en") {
+	if (num === undefined) {
+		return "-"
+	}
+	return num.toLocaleString(locale)
+}
+
 export function requireImage(url: string) {
 	if (!url) {
 		return "https://clf.hieunm.io.vn/public/notfound.png"
@@ -406,10 +409,6 @@ function parseFenBoard(fen: string): Array<PieceCharacter | null> {
 	return board
 }
 
-function toCellPropsFromToken(id: number, token: PieceCharacter): CellProps {
-	return { id, piece: token }
-}
-
 /**
  * Compare two FEN strings and infer the moved piece.
  * Returns null when the diff cannot be identified as one legal "from -> to" move.
@@ -459,7 +458,7 @@ export function diffFenMove(oldFen: string, newFen: string): FenMoveDiffResult |
 	return {
 		oldIndex,
 		newIndex,
-		movedCell: toCellPropsFromToken(newIndex, movedToken),
-		capturedCell: capturedToken ? toCellPropsFromToken(newIndex, capturedToken) : null,
+		movedCell: { id: newIndex, piece: movedToken },
+		capturedCell: capturedToken ? { id: newIndex, piece: capturedToken } : null,
 	}
 }

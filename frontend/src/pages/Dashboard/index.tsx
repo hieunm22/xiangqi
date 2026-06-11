@@ -15,15 +15,12 @@ import { SkeletonRoom } from "./components/SkeletonRoom"
 import { TTypography } from "components/TranslationTag"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { CreateRoomDialogContext, JoinRoomDialogContext } from "hooks/useAppContext"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useSocket } from "hooks/useSocket"
 import { translate } from "locales/translate"
-import { CreateRoomDialogContext, JoinRoomDialogContext } from "hooks/useAppContext"
-import {
-	DashboardFilter,
-	DashboardRoom,
-	FetchRoomsResponse
-} from "./types"
+import { APIResponse } from "types/Common"
+import { DashboardFilter, DashboardRoom } from "./types"
 import "./Dashboard.scss"
 
 const DashboardPage = () => {
@@ -65,7 +62,7 @@ const DashboardPage = () => {
 			const response = await fetchRooms(
 				token,
 				activeFilter === "all" ? undefined : FILTER_STATUS[activeFilter]
-			) as FetchRoomsResponse
+			) as APIResponse<DashboardRoom[]>
 
 			if (ignore) {
 				return
@@ -78,7 +75,7 @@ const DashboardPage = () => {
 				return
 			}
 
-			setRooms(response.rooms || [])
+			setRooms(response.data || [])
 			setLoading(false)
 		}
 

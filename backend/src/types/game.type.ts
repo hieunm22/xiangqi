@@ -36,7 +36,7 @@ export interface BotMoveResult {
 export interface EndGameParams {
 	gameId: string
 	roomId: bigint
-	winnerId: bigint
+	winnerId: bigint | null
 	isBotGame: boolean
 	betAmount: number | null
 }

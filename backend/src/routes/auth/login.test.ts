@@ -146,6 +146,54 @@ describe("POST /api/auth/login", () => {
 		expect(prismaFindFirstMock).toHaveBeenCalledTimes(1)
 	})
 
+	it("supports login with email", async () => {
+		prismaFindFirstMock.mockResolvedValue({ id: 3, user_name: "charlie" })
+
+		const res = await request(app)
+			.post(PATH)
+			.field("username", "charlie@example.com")
+			.field("password", "correct-password")
+			.field("timezoneOffset", "-480")
+			.field("deviceName", "Safari")
+
+		expect(res.status).toBe(200)
+		expect(res.body.success).toBe(true)
+
+		const calledWith = prismaFindFirstMock.mock.calls[0][0]
+		const orConditions = calledWith.where.OR as Array<Record<string, unknown>>
+
+		// email condition must be present
+		expect(orConditions).toContainEqual({ email: "charlie@example.com" })
+
+		// id condition must NOT be present (NaN would cause Prisma to throw)
+		expect(orConditions.some(c => "id" in c)).toBe(false)
+	})
+
+	it("supports login with numeric ID", async () => {
+		prismaFindFirstMock.mockResolvedValue({ id: 42, user_name: "diana" })
+
+		const res = await request(app)
+			.post(PATH)
+			.field("username", "42")
+			.field("password", "correct-password")
+			.field("timezoneOffset", "540")
+			.field("deviceName", "Mobile")
+
+		expect(res.status).toBe(200)
+		expect(res.body.success).toBe(true)
+
+		// Verify the query includes numeric ID in OR conditions
+		expect(prismaFindFirstMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					OR: expect.arrayContaining([
+						expect.objectContaining({ id: 42 })
+					])
+				})
+			})
+		)
+	})
+
 	it("returns 500 when unexpected error happens", async () => {
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		prismaFindFirstMock.mockRejectedValue(new Error("db down"))

@@ -108,12 +108,26 @@ const normalizeBaseUrl = () => {
  *     responses:
  *       200:
  *         description: Forgot password email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: forgot-password.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       400:
- *         description: Invalid request body
+ *         description: Missing email or invalid email format
  *       409:
  *         description: Email not found
  *       500:
- *         description: Internal server error
+ *         description: Internal server error or email service not configured
  */
 router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 	const { email } = req.body as ForgotPasswordRequest

@@ -61,10 +61,13 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: login.messages.success
  *                 status_code:
  *                   type: integer
+ *                   example: 200
  *                 access_token:
  *                   type: string
  *                   description: JWT token to be used in Authorization header for subsequent requests
@@ -75,9 +78,9 @@ const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
  *                   type: string
  *                   example: Bearer
  *       400:
- *         description: Bad request (Authorization header attached or missing credentials)
+ *         description: Missing credentials
  *       401:
- *         description: Invalid credentials
+ *         description: Incorrect username or password
  *       500:
  *         description: Internal server error
  */
@@ -114,13 +117,20 @@ router.post("/auth/login", (req, res, next) => {
 				.digest("hex")
 				.toUpperCase()
 
+		const orConditions: any[] = [
+			{ user_name: username },
+			{ email: username }
+		]
+		
+		// Only add id condition if username is a valid number
+		const numId = Number(username)
+		if (!isNaN(numId) && Number.isInteger(numId)) {
+			orConditions.unshift({ id: numId })
+		}
+
 		const user = await prisma.user.findFirst({
 			where: {
-				OR: [
-					{ id: Number(username) },
-					{ user_name: username },
-					{ email: username }
-				],
+				OR: orConditions,
 				password: hashedPassword
 			},
 			select: { id: true, user_name: true }

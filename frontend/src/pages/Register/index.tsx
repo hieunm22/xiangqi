@@ -1,4 +1,5 @@
 import { ChangeEvent, FocusEvent, SubmitEvent, useState } from "react"
+import { Link as RouterLink, useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	Box,
@@ -8,15 +9,14 @@ import {
 	Paper,
 	Stack
 } from "@mui/material"
-import { Link as RouterLink, useNavigate } from "react-router-dom"
 import { LOGIN_PATH } from "common/constant"
 import { GENDER_OPTIONS, VALIDATION_RULES } from "./constants"
 import Alert from "components/AlertWithIcon"
-import { TI, TSpan, TTextField, TTypography } from "components/TranslationTag"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
-import { translate } from "locales/translate"
+import { TI, TSpan, TTextField, TTypography } from "components/TranslationTag"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
+import { translate } from "locales/translate"
 import { RegisterBodyType } from "./types"
 import "./Register.scss"
 

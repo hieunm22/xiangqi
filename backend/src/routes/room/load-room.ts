@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { getAvatarUrl } from "common/helper"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { totalmem } from "node:os"
 
 const router = Router()
 
@@ -25,8 +26,83 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Room loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: load-room.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     room:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         status:
+ *                           type: integer
+ *                         red_first:
+ *                           type: boolean
+ *                         pve_mode:
+ *                           type: boolean
+ *                         bet_amount:
+ *                           type: integer
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                     users:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           display_name:
+ *                             type: string
+ *                           team:
+ *                             type: string
+ *                             nullable: true
+ *                           total_points:
+ *                             type: integer
+ *                           joined_at:
+ *                             type: string
+ *                             format: date-time
+ *                           avatar_url:
+ *                             type: string
+ *                     game:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         room_id:
+ *                           type: integer
+ *                         winner_id:
+ *                           type: integer
+ *                           nullable: true
+ *                         status:
+ *                           type: integer
+ *                         bot_difficulty:
+ *                           type: integer
+ *                           nullable: true
  *       400:
  *         description: Invalid room id
+ *       401:
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       404:
  *         description: Room not found
  *       500:
@@ -47,7 +123,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 	try {
 		const roomIdBigInt = BigInt(roomId)
 		const room = await prisma.room.findUnique({
-			where: { id: roomIdBigInt },
+			where: { id: roomIdBigInt, is_active: true },
 			select: {
 				id: true,
 				name: true,
@@ -83,7 +159,8 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 							select: {
 								id: true,
 								display_name: true,
-								avatar_seq: true
+								avatar_seq: true,
+								total_points: true
 							}
 						},
 						team: true
@@ -134,6 +211,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			id: Number(ru.users.id),
 			display_name: ru.users.display_name,
 			team: ru.team,
+			total_points: ru.users.total_points,
 			joined_at: ru.joined_at,
 			avatar_url: getAvatarUrl(ru.users.id, ru.users.avatar_seq)
 		}))

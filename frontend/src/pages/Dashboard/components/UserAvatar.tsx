@@ -1,5 +1,5 @@
 import classnames from "classnames"
-import { Avatar, Stack, Tooltip } from "@mui/material"
+import { Avatar, Stack, Tooltip, useMediaQuery } from "@mui/material"
 import { requireImage } from "common/helper"
 import { UserAvatarType } from "types/Common"
 import { UserAvatarGroupProps } from "../types"
@@ -36,7 +36,13 @@ export const UserAvatar = (props: UserAvatarProps) => {
 }
 
 export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
-	const { users, type, onUserClick } = props
+	const { maxVisible, type, users, onUserClick } = props
+	const isMobile = useMediaQuery("(max-width:450px)");
+	
+	// Determine which users to display
+	const needsTruncation = isMobile && users.length > maxVisible + 1
+	const displayUsers = needsTruncation ? users.slice(0, maxVisible) : users	
+	const remainingCount = needsTruncation ? users.length - maxVisible : 0
 	const stackClass = classnames("dashboard__avatar-group", type)
 
 	return (
@@ -45,7 +51,14 @@ export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
 			alignItems="center"
 			className={stackClass}
 		>
-			{users.map(u => <UserAvatar key={u.id} {...u} onUserClick={onUserClick} />)}
+			{displayUsers.map(u => <UserAvatar key={u.id} {...u} onUserClick={onUserClick} />)}
+			{remainingCount > 0 && (
+				<Tooltip title={`${remainingCount} more spectators`} arrow placement="top">
+					<Avatar className="dashboard__avatar dashboard__avatar-more">
+						+{remainingCount}
+					</Avatar>
+				</Tooltip>
+			)}
 		</Stack>
 	)
 }

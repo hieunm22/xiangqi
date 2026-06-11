@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(brew *)",
-      "Bash(yarn *)"
+      "Bash(yarn *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

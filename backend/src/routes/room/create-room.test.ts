@@ -158,16 +158,18 @@ describe("POST /api/room/create-room", () => {
 			success: true,
 			message: "create-room.messages.room-created",
 			status_code: 201,
-			room: {
-				id: 102,
-				name: "Table Null Team",
-				status: 1,
-				red_first: false,
-				bet_amount: 20
+			data: {
+				room: {
+					id: 102,
+					name: "Table Null Team",
+					status: 1,
+					red_first: false,
+					bet_amount: 20
+				}
 			}
 		})
-		expect(res.body.room.users).toHaveLength(1)
-		expect(res.body.room.users[0]).toMatchObject({
+		expect(res.body.data.users).toHaveLength(1)
+		expect(res.body.data.users[0]).toMatchObject({
 			id: "11",
 			display_name: "Alice",
 			team: null,
@@ -328,18 +330,20 @@ describe("POST /api/room/create-room", () => {
 			success: true,
 			message: "create-room.messages.room-created",
 			status_code: 201,
-			room: {
-				id: 101,
-				name: "Table 1",
-				status: 1,
-				red_first: true,
-				pve_mode: false,
-				bet_amount: 50
+			data: {
+				room: {
+					id: 101,
+					name: "Table 1",
+					status: 1,
+					red_first: true,
+					pve_mode: false,
+					bet_amount: 50
+				}
 			}
 		})
-		expect(res.body.room.room_users).toBeUndefined()
-		expect(res.body.room.users).toHaveLength(1)
-		expect(res.body.room.users[0]).toMatchObject({
+		expect(res.body.data.room.room_users).toBeUndefined()
+		expect(res.body.data.users).toHaveLength(1)
+		expect(res.body.data.users[0]).toMatchObject({
 			id: "11",
 			display_name: "Alice",
 			team: "red",
@@ -421,23 +425,25 @@ describe("POST /api/room/create-room", () => {
 			success: true,
 			message: "create-room.messages.room-created",
 			status_code: 201,
-			room: {
-				id: 102,
-				name: "PvE Table",
-				status: 1,
-				red_first: false,
-				pve_mode: true,
-				bet_amount: 0
+			data: {
+				room: {
+					id: 102,
+					name: "PvE Table",
+					status: 1,
+					red_first: false,
+					pve_mode: true,
+					bet_amount: 0
+				}
 			}
 		})
-		expect(res.body.room.users).toHaveLength(2)
-		expect(res.body.room.users[0]).toMatchObject({
+		expect(res.body.data.users).toHaveLength(2)
+		expect(res.body.data.users[0]).toMatchObject({
 			id: "11",
 			display_name: "Alice",
 			team: "black",
 			avatar_url: "/images/11_1.jpg"
 		})
-		expect(res.body.room.users[1]).toMatchObject({
+		expect(res.body.data.users[1]).toMatchObject({
 			id: "0",
 			display_name: "Bot",
 			team: "red"
@@ -533,17 +539,19 @@ describe("POST /api/room/create-room", () => {
 			success: true,
 			message: "create-room.messages.room-created",
 			status_code: 201,
-			room: {
-				id: 103,
-				name: "PvP Table Zero",
-				status: 1,
-				red_first: true,
-				pve_mode: false,
-				bet_amount: 0
+			data: {
+				room: {
+					id: 103,
+					name: "PvP Table Zero",
+					status: 1,
+					red_first: true,
+					pve_mode: false,
+					bet_amount: 0
+				}
 			}
 		})
-		expect(res.body.room.users).toHaveLength(1)
-		expect(res.body.room.users[0]).toMatchObject({
+		expect(res.body.data.users).toHaveLength(1)
+		expect(res.body.data.users[0]).toMatchObject({
 			id: "11",
 			display_name: "Alice",
 			team: "red"

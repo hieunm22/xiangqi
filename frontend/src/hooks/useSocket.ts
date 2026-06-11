@@ -39,31 +39,31 @@ export function useSocket() {
 
 		socket.on("connect", () => {
 			const transport = socket.io.engine.transport?.name || "unknown"
-			console.log("[Socket.io Client] Connected:", socket.id, "Transport:", transport)
+			console.log(`[Socket.io] [${new Date().toISOString()}] Connected: ${socket.id} Transport: ${transport}`)
 			if (transport === "websocket") {
-				console.log("[Socket.io Client] WebSocket connected")
+				console.log(`[Socket.io] [${new Date().toISOString()}] WebSocket connected`)
 			}
 			setIsConnected(true)
 		})
 
 		socket.io.engine.on("upgrade", (transport) => {
-			console.log("[Socket.io Client] Transport upgraded to:", transport.name)
+			console.log(`[Socket.io] [${new Date().toISOString()}] Transport upgraded to: ${transport.name}`)
 			if (transport.name === "websocket") {
-				console.log("[Socket.io Client] WebSocket connected")
+				console.log(`[Socket.io] [${new Date().toISOString()}] WebSocket connected`)
 			}
 		})
 
 		socket.on("disconnect", (reason) => {
-			console.log("[Socket.io Client] Disconnected, reason:", reason)
+			console.log(`[Socket.io] [${new Date().toISOString()}] Disconnected, reason: ${reason}`)
 			setIsConnected(false)
 		})
 
 		socket.on("connect_error", (error) => {
-			console.error("[Socket.io Client] Connection error:", error.message)
+			console.error(`[Socket.io] [${new Date().toISOString()}] Connection error: ${error.message}`)
 		})
 
 		socket.on("error", (error) => {
-			console.error("[Socket.io Client] Error:", error.message)
+			console.error(`[Socket.io] [${new Date().toISOString()}] Error: ${error.message}`)
 		})
 
 		socketRef.current = socket

@@ -159,7 +159,7 @@ describe("POST /api/game/undo", () => {
 		})
 	})
 
-	it("returns 401 when user is not in game", async () => {
+	it("returns 403 when user is not in game", async () => {
 		const accessToken = buildAccessToken(1, "session-undo-4")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
 		gameFindUniqueMock.mockResolvedValue({
@@ -175,11 +175,11 @@ describe("POST /api/game/undo", () => {
 				gameId: "game-1"
 			})
 
-		expect(res.status).toBe(401)
+		expect(res.status).toBe(403)
 		expect(res.body).toMatchObject({
 			success: false,
 			message: "undo.messages.not-in-game",
-			status_code: 401
+			status_code: 403
 		})
 	})
 

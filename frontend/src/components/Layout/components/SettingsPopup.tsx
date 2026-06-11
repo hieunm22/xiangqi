@@ -18,10 +18,11 @@ import { PopupState } from "../enums"
 import { TButton, TTypography } from "components/TranslationTag"
 import useToolkit from "hooks/useToolkit"
 import i18n from "locales/i18n"
-import { setDarkMode, setDebug, setLanguage, setPopup } from "toolkit/slice/home"
+import { setDebug, setPopup } from "toolkit/slice/game"
+import { setDarkMode, setLanguage } from "toolkit/slice/home"
 
 export const SettingsPopup = () => {
-	const { state, dispatch } = useToolkit()
+	const { state, gameState, dispatch } = useToolkit()
 	const setDarkModeAction = (darkMode: boolean) => dispatch(setDarkMode(darkMode))
 
 	useEffect(() => {
@@ -71,10 +72,10 @@ export const SettingsPopup = () => {
 
 	return (
 		<Dialog
-			open={state.popupState === PopupState.SETTINGS}
+			open={gameState.popupState === PopupState.SETTINGS}
 			onClose={handleCloseSettings}
 			maxWidth="xs"
-			disableRestoreFocus
+			disableEnforceFocus
 		>
 			<DialogTitle className="settings-popup-title">
 				<TTypography content="settings.header" sx={textCenterStyle} />
@@ -118,7 +119,7 @@ export const SettingsPopup = () => {
 					<TTypography content="settings.debug-mode" width={100} />
 					<Switch
 						className="ios-switch"
-						checked={state.debugMode}
+						checked={gameState.debugMode}
 						onChange={toogleDebugMode}
 					/>
 				</Grid>

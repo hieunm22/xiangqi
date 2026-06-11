@@ -351,6 +351,10 @@
 		color: black;
 	}
 
+	.player-total-points {
+		text-align: left;
+	}
+
 	&.active-turn {
 		box-shadow: 0 0 0 2px transparent, 0 8px 14px rgba(52, 24, 8, 0.24);
 		opacity: 1;
@@ -430,6 +434,19 @@
 			text-decoration-color: currentColor;
 		}
 	}
+}
+
+.room-bet-amount {
+	margin-top: 12px;
+	margin-bottom: 12px;
+	font-size: 18px;
+}
+
+.user-points {
+	color: #e5d10f;
+	-webkit-text-stroke: 1px #898989;
+	font-size: 24px;
+	margin-right: 10px;
 }
 
 .captured-pieces {

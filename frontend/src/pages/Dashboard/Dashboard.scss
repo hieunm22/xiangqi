@@ -141,6 +141,21 @@
 		height: 28px !important;
 		object-fit: cover;
 		border: solid 2px;
+
+		&.dashboard__avatar-more {
+			font-size: 12px !important;
+			font-weight: 700;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: rgba(155, 97, 61, 0.5) !important;
+			color: #fff;
+			cursor: default;
+			
+			&:hover {
+				opacity: 1 !important;
+			}
+		}
 	}
 
 	&__seat {
@@ -173,6 +188,15 @@
 	&__join-room-board {
     color: #9b613d;
     width: 160px;
+	}
+
+	&__join-room-actions {
+		padding: 16px !important;
+		justify-content: center !important;
+	}
+
+	&__action-btn {
+		width: 120px;
 	}
 
 	&__piece-btn.MuiButton-root {

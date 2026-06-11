@@ -34,10 +34,10 @@ export default function LayoutUnAuth() {
 		i18n.changeLanguage(lang)
 	}, [])
 
-	const onChangeLanguage = (e: any) => {
-		setLanguage(e.target.value)
-		i18n.changeLanguage(e.target.value)
-		localStorage.setItem(LS_LANGUAGE, e.target.value)
+	const onChangeLanguage = (lang: string) => {
+		setLanguage(lang)
+		i18n.changeLanguage(lang)
+		localStorage.setItem(LS_LANGUAGE, lang)
 	}
 
 	const toogleDarkMode = (e: ChangeEvent<HTMLElement>) => {
@@ -97,7 +97,7 @@ export default function LayoutUnAuth() {
 									key={option.key}
 									variant={language === option.key ? "contained" : "outlined"}
 									disabled={option.disabled}
-									onClick={onChangeLanguage}
+									onClick={() => onChangeLanguage(option.key)}
 									startIcon={
 										<img
 											src={option.icon}

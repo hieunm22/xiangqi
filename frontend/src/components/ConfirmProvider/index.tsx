@@ -57,7 +57,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 				open={!!current}
 				maxWidth="xs"
 				fullWidth
-				disableRestoreFocus
+				disableEnforceFocus
 			>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" className="flex">

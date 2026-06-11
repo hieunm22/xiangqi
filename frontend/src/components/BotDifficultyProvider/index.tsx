@@ -70,7 +70,7 @@ export const BotDifficultyProvider = (props: ComponentWithChild) => {
 	return (
 		<>
 			{props.children}
-			<Dialog open={!!current} maxWidth="xs" fullWidth disableRestoreFocus>
+			<Dialog open={!!current} maxWidth="xs" fullWidth disableEnforceFocus>
 				<DialogTitle padding="5px 20px !important">
 					<Typography component="div" className="flex">
 						{translate("room.bot-difficulty.title")}

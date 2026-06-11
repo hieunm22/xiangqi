@@ -1,7 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID } from "common/bot-engine"
-import { getAvatarUrl } from "common/helper"
+import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { CreateRoomRequest } from "types/room.type"
@@ -60,16 +60,57 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: create-room.messages.room-created
  *                 status_code:
  *                   type: integer
- *                 room:
+ *                   example: 201
+ *                 data:
  *                   type: object
+ *                   properties:
+ *                     room:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         status:
+ *                           type: integer
+ *                         red_first:
+ *                           type: boolean
+ *                         pve_mode:
+ *                           type: boolean
+ *                         bet_amount:
+ *                           type: integer
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                     users:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           display_name:
+ *                             type: string
+ *                           avatar_seq:
+ *                             type: integer
+ *                           team:
+ *                             type: string
+ *                             nullable: true
+ *                           avatar_url:
+ *                             type: string
  *       400:
  *         description: Invalid request body
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
  *         description: Internal server error
  */
@@ -140,7 +181,7 @@ router.post(
 			// Seed only the requester for PvP rooms. Add a bot seat too in PvE mode,
 			// on the team opposite to the requester.
 			const roomUserSeed: { user_id: bigint; team: string | null; joined_at: Date }[] = [
-				{ user_id: userIdBigInt, team: teamName, joined_at: new Date() }
+				{ user_id: userIdBigInt, team: teamName, joined_at: getUTCNow() }
 			]
 			if (pveMode) {
 				// Determine bot team (opposite of user's team)
@@ -148,7 +189,7 @@ router.post(
 				if (teamName === "red") {
 					botTeam = "black"
 				}
-				roomUserSeed.push({ user_id: BOT_USER_ID, team: botTeam, joined_at: new Date() })
+				roomUserSeed.push({ user_id: BOT_USER_ID, team: botTeam, joined_at: getUTCNow() })
 			}
 
 			const room = await prisma.room.create({
@@ -189,19 +230,22 @@ router.post(
 				}
 			})
 
+			const { room_users, ...roomData } = room
+			const normalizedRoom = {
+				...roomData,
+				id: Number(room.id)
+			}
+
 			// Format response
 			const formattedRoom = {
-				...room,
-				id: Number(room.id),
-				users: room.room_users.map((gu: any) => ({
+				room: normalizedRoom,
+				users: room_users.map((gu: any) => ({
 					...gu.users,
 					id: gu.users.id.toString(),
 					team: gu.team,
 					avatar_url: getAvatarUrl(gu.users.id, gu.users.avatar_seq)
-				})),
-				room_users: undefined
+				}))
 			}
-			delete (formattedRoom as any).room_users
 
 			const dashboardRoom = {
 				id: Number(room.id),
@@ -211,7 +255,7 @@ router.post(
 				bet_amount: room.bet_amount,
 				created_at: room.created_at,
 				updated_at: room.updated_at,
-				users: room.room_users.map(gu => ({
+				users: room_users.map(gu => ({
 					id: Number(gu.users.id),
 					display_name: gu.users.display_name,
 					avatar_seq: Number(gu.users.avatar_seq),
@@ -224,7 +268,7 @@ router.post(
 				success: true,
 				message: "create-room.messages.room-created",
 				status_code: 201,
-				room: formattedRoom
+				data: formattedRoom
 			})
 		} catch (err) {
 			console.error("Error creating room:", err)

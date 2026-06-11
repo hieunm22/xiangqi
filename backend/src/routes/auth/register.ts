@@ -69,6 +69,35 @@ function parseGender(value: RegisterRequest["gender"]): boolean | null {
  *     responses:
  *       201:
  *         description: User created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: register.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 201
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     user_name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     display_name:
+ *                       type: string
+ *                     gender:
+ *                       type: boolean
+ *                     avatar_seq:
+ *                       type: integer
  *       400:
  *         description: Invalid request body
  *       409:

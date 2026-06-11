@@ -16,6 +16,7 @@ model User {
   display_name         String
   gender               Boolean
   avatar_seq           Int        @default(0)
+  total_points         Int        @default(200)
   is_bot               Boolean    @default(false)
   room_users           RoomUser[]
   won_games            Game[]     @relation("Game_winner")

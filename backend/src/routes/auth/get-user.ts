@@ -1,6 +1,7 @@
-import { Request, Response, Router } from "express"
+import { Response, Router } from "express"
 import prisma from "prisma"
 import { getAvatarUrl } from "common/helper"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
 
@@ -11,6 +12,9 @@ const router = Router()
  *     summary: Get a user's information by ID (excluding password)
  *     tags:
  *       - Auth
+ *     security:
+ *       - basicAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: id
@@ -20,7 +24,7 @@ const router = Router()
  *         description: The user ID
  *     responses:
  *       200:
- *         description: User information
+ *         description: User information with game statistics
  *         content:
  *           application/json:
  *             schema:
@@ -28,23 +32,45 @@ const router = Router()
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *                 data:
  *                   type: object
  *                   properties:
- *                     id:
- *                       type: number
- *                     user_name:
- *                       type: string
- *                     email:
- *                       type: string
- *                     display_name:
- *                       type: string
- *                     gender:
- *                       type: boolean
- *                     avatar_seq:
- *                       type: number
- *                 status_code:
- *                   type: number
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         user_name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         display_name:
+ *                           type: string
+ *                         gender:
+ *                           type: boolean
+ *                         avatar_url:
+ *                           type: string
+ *                         total_points:
+ *                           type: integer
+ *                     stats:
+ *                       type: object
+ *                       properties:
+ *                         win:
+ *                           type: integer
+ *                           description: Number of games won (point > 0)
+ *                         draw:
+ *                           type: integer
+ *                           description: Number of games drawn (point = 0)
+ *                         lose:
+ *                           type: integer
+ *                           description: Number of games lost (point < 0)
  *       400:
  *         description: Invalid user ID
  *       404:
@@ -52,7 +78,7 @@ const router = Router()
  *       500:
  *         description: Internal server error
  */
-router.get("/auth/user", async (req: Request, res: Response) => {
+router.get("/auth/user", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	const id = Number(req.query.id)
 
 	if (!Number.isInteger(id) || id <= 0) {
@@ -73,7 +99,8 @@ router.get("/auth/user", async (req: Request, res: Response) => {
 				email: true,
 				display_name: true,
 				gender: true,
-				avatar_seq: true
+				avatar_seq: true,
+				total_points: true
 			}
 		})
 
@@ -86,16 +113,31 @@ router.get("/auth/user", async (req: Request, res: Response) => {
 			return
 		}
 
+		// Get game statistics
+		const gameUsers = await prisma.gameUser.findMany({
+			where: { user_id: id }
+		})
+
+		const stats = {
+			win: gameUsers.filter((gu) => gu.point !== null && gu.point > 0).length,
+			draw: gameUsers.filter((gu) => gu.point !== null && gu.point === 0).length,
+			lose: gameUsers.filter((gu) => gu.point !== null && gu.point < 0).length
+		}
+
 		const avatarUrl = getAvatarUrl(user.id, user.avatar_seq)
 		const { avatar_seq: _avatarSeq, ...userWithoutAvatarSeq } = user
 
 		res.status(200).json({
 			success: true,
+			message: "Success",
 			status_code: 200,
 			data: {
-				...userWithoutAvatarSeq,
-				id: Number(user.id),
-				avatar_url: avatarUrl
+				user: {
+					...userWithoutAvatarSeq,
+					id: Number(user.id),
+					avatar_url: avatarUrl
+				},
+				stats
 			}
 		})
 	} catch (error) {

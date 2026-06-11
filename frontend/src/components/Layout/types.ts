@@ -10,6 +10,17 @@ export type ProfilePopupContextValue = {
 	setProfileUser: (user: Users | null) => void
 }
 
+export interface GameStats {
+	win: number
+	draw: number
+	lose: number
+}
+
+export interface UserProfileWithStats {
+	user: Users
+	stats: GameStats
+}
+
 interface GameHistory {
 	gameId: string
 	ends_at?: string | Date

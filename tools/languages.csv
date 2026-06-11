@@ -34,7 +34,8 @@ dashboard.popup.pve-mode;PVE mode;Chơi với máy
 dashboard.popup.bet-amount;Bet amount;Giá trị cược
 dashboard.popup.room-name-label;Room table name;Tên phòng chơi
 dashboard.popup.room-name-helptext;is required;không được để trống
-dashboard.popup.join-room;Join room;Vào phòng
+dashboard.popup.play;Play;Chơi
+dashboard.popup.view;View;Xem
 settings.header;Settings;Cài đặt
 settings.language;Language;Ngôn ngữ
 settings.dark-mode;Dark mode;Chế độ tối
@@ -133,9 +134,11 @@ forgot-password.messages.invalid-email-format;Invalid email format;Định dạn
 forgot-password.messages.missing-email;Email is required;Email là bắt buộc
 forgot-password.messages.success;Forgot password email sent;Email đặt lại mật khẩu đã được gửi
 join-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+join-room.messages.invalid-team;Field 'team' must be 'red', 'black', null, or undefined;Trường 'team' phải là 'red', 'black', null hoặc không truyền
 join-room.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
 join-room.messages.room-not-found;Room not found;Không tìm thấy phòng
 join-room.messages.success;Successfully joined the room;Tham gia phòng thành công
+join-room.messages.team-seat-occupied;Selected team seat is already occupied;Vị trí đội đã chọn đã có người chơi
 kick-user.messages.cannot-kick-self;You cannot kick yourself;Bạn không thể kick chính mình
 kick-user.messages.forbidden;Only the host can kick users;Chỉ chủ phòng mới có thể kick người dùng
 kick-user.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
@@ -196,6 +199,8 @@ room.actions.draw-accepted;Opponent accepted the draw;Đối phương đã đồ
 room.actions.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
 room.actions.draw-completed;Draw completed;Hòa cờ thành công
 room.actions.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
+room.actions.send-pm;Send PM;Chat
+room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
 room.actions.settings;Room settings;Cài đặt phòng
 room.settings.title;Room Settings;Cài đặt phòng
@@ -273,7 +278,7 @@ guide.soldier.paragraph2;Moves <b>one step</b> each turn. Before crossing the ri
 guide.capturing.paragraph1;When a piece moves to an intersection occupied by an opponent's piece, it may <b>capture that piece</b> and occupy its position.;Khi một quân đi tới một giao điểm khác đã có quân đối phương đứng thì được quyền <b>bắt quân đó</b>, đồng thời chiếm giữ vị trí quân bị bắt.
 guide.capturing.paragraph2;You may not capture your own pieces. You may sacrifice your own pieces to be captured by the opponent, <b>except for the General</b>.;Không được bắt quân bên mình. Được phép cho đối phương bắt đầu quân mình chủ động hiến mình cho đối phương, <b>trừ Tướng</b>.
 guide.capturing.paragraph3;A captured piece is removed from the board. <b>Chasing one piece for more than 6 consecutive moves is not allowed</b>.;Quân bị bắt phải bị loại và bị nhấc ra khỏi bàn cờ. <b>Không được đuổi 1 quân quá 6 nước cờ liên tiếp</b>.
-guide.check.paragraph1;If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check; otherwise, that side loses.
+guide.check.paragraph1;If a player makes a move that threatens to capture the opponent's General on the next move (by the same piece or another piece), it is called a <b>Check</b>. The checked side must respond to avoid check. Otherwise, that side loses;Nếu người chơi thực hiện một nước đi đe dọa bắt Tướng của đối phương ở nước đi tiếp theo (bằng chính quân cờ đó hoặc một quân cờ khác), thì đó được gọi là <b>Chiếu</b>. Bên bị chiếu phải đáp trả để tránh bị chiếu. Nếu không sẽ bị xử thua
 guide.check.paragraph2;When the General is checked from any direction (including from behind), the checked side may respond in one of the following ways:;Tướng bị chiếu từ cả bốn hướng (bị chiếu cả từ phía sau) có thể ứng phó với nước chiếu tướng bằng một trong các cách sau:
 guide.check.paragraph3;Move the General to another position to escape check;Di chuyển tướng sang vị trí khác để tránh nước chiếu
 guide.check.paragraph4;Capture the checking piece;Bắt quân đang chiếu
@@ -284,5 +289,6 @@ guide.result.paragraph2;If a player runs out of time for a single move (for exam
 guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
 guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
+;;
 ;;
 ;;

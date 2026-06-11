@@ -1,7 +1,9 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { getUTCTimestamp } from "common/helper"
+import { buildEndGameTransaction } from "common/game/end-game.helper"
 import { getGameHistoryCollection } from "common/mongodb"
+import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { DrawGameRequest } from "types/game.type"
 
 const router = Router()
@@ -30,12 +32,26 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Draw recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: draw-game.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       400:
- *         description: Invalid request
+ *         description: Invalid request (invalid game id, game already finished, or game history not found)
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       403:
- *         description: Forbidden
+ *         description: Forbidden (not in the room or a spectator)
  *       404:
  *         description: Game not found
  *       500:
@@ -153,30 +169,22 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 			fen: latestRecord[0].fen,
 			team: currentRoomUser.team === "red" ? "black" : "red",
 			draw: Number(userId),
-			time_stamp: Math.floor(Date.now() / 1000)
+			time_stamp: getUTCTimestamp()
 		})
 
-		await prisma.$transaction([
-			prisma.game.update({
-				where: {
-					id: normalizedGameId
-				},
-				data: {
-					ends_at: new Date(),
-					status: 2,
-					winner_id: null
-				}
-			}),
-			prisma.room.update({
-				where: {
-					id: game.room_id
-				},
-				data: {
-					updated_at: new Date(),
-					status: 1
-				}
-			})
-		])
+		const roomWithMode = await prisma.room.findUnique({
+			where: { id: game.room_id },
+			select: { pve_mode: true }
+		})
+
+		const transactionUpdates = await buildEndGameTransaction({
+			gameId: normalizedGameId,
+			roomId: game.room_id,
+			winnerId: null,
+			isBotGame: roomWithMode?.pve_mode ?? false,
+			betAmount: 0
+		})
+		await prisma.$transaction(transactionUpdates)
 
 		res.status(200).json({
 			success: true,

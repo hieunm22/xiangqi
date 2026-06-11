@@ -3,7 +3,7 @@ import prisma from "prisma"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
-import { getAvatarUrl } from "common/helper"
+import { getAvatarUrl, getUTCNow, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitGameStarted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -44,10 +44,46 @@ const router = Router()
  *     responses:
  *       201:
  *         description: Game started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: start-game.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 201
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     game:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         status:
+ *                           type: integer
+ *                         room_id:
+ *                           type: integer
+ *                         bot_difficulty:
+ *                           type: integer
+ *                           nullable: true
+ *                     room:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         status:
+ *                           type: integer
  *       400:
- *         description: Invalid request body
+ *         description: Invalid request body (invalid room id, invalid difficulty, or requester must pick a team)
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing, invalid, or expired token)
  *       404:
  *         description: Room not found
  *       500:
@@ -138,7 +174,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		const { game, room } = await prisma.$transaction(async tx => {
 			const updatedRoom = await tx.room.update({
 				where: { id: roomIdBigInt },
-				data: { updated_at: new Date(), status: RoomStatus.Playing },
+				data: { updated_at: getUTCNow(), status: RoomStatus.Playing },
 				select: { id: true, status: true, red_first: true }
 			})
 
@@ -186,7 +222,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			game_id: game.id,
 			team: firstTeam,
 			fen: initialFen,
-			time_stamp: ~~(new Date().getTime() / 1000)
+			time_stamp: getUTCTimestamp()
 		}
 		await collection.insertOne(startRecord)
 

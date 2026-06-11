@@ -4,7 +4,9 @@ export interface Users {
 	email: string
 	display_name: string
 	gender: boolean
+	avatar_seq: number
 	avatar_url: string
+	total_points: number
 }
 
 export interface GameInfo {

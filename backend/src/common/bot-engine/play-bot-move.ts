@@ -1,5 +1,6 @@
 import { getGameHistoryCollection } from "../mongodb"
 import prisma from "prisma"
+import { getUTCNow, getUTCTimestamp } from "../helper"
 import { emitMovePiece, emitSurrender } from "../socket"
 import { BOT_USER_ID, requestBotMove } from "./index"
 
@@ -57,7 +58,7 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 				game_id: gameId,
 				fen: currentFen,
 				team: botTeam === "red" ? "black" : "red",
-				time_stamp: Math.floor(Date.now() / 1000),
+				time_stamp: getUTCTimestamp(),
 				surrender: Number(BOT_USER_ID)
 			})
 
@@ -68,7 +69,7 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 					fen: currentFen,
 					team: botTeam === "red" ? "black" : "red",
 					capture: null,
-					time_stamp: Math.floor(Date.now() / 1000),
+					time_stamp: getUTCTimestamp(),
 					surrender_id: BOT_USER_ID
 				}
 			})
@@ -85,11 +86,11 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 				await prisma.$transaction([
 					prisma.game.update({
 						where: { id: gameId },
-						data: { ends_at: new Date(), winner_id: winner.user_id, status: 2 }
+						data: { ends_at: getUTCNow(), winner_id: winner.user_id, status: 2 }
 					}),
 					prisma.room.update({
 						where: { id: BigInt(roomId) },
-						data: { updated_at: new Date(), status: 1 }
+						data: { updated_at: getUTCNow(), status: 1 }
 					})
 				])
 			}
@@ -111,7 +112,7 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 		game_id: gameId,
 		fen: newFen,
 		team: nextTeam,
-		time_stamp: Math.floor(Date.now() / 1000)
+		time_stamp: getUTCTimestamp()
 	}
 	if (capturePiece) {
 		record.capture = capturePiece
@@ -127,7 +128,7 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 			fen: newFen,
 			team: nextTeam,
 			capture: capturePiece || null,
-			time_stamp: Math.floor(Date.now() / 1000)
+			time_stamp: getUTCTimestamp()
 		}
 	})
 

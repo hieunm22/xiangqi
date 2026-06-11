@@ -38,6 +38,20 @@ const router = Router()
  *     responses:
  *       200:
  *         description: User has been kicked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: kick-user.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       400:
  *         description: Invalid request, kicking yourself, or room is not waiting
  *       401:

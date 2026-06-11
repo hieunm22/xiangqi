@@ -1,7 +1,8 @@
 import type { CellProps } from "./GameState"
-import type { ReduxState } from "./ReduxState"
+import type { GameState, ReduxState } from "./ReduxState"
 
 export interface ReduxStore {
+	game: GameState
 	home: ReduxState
 }
 
@@ -11,10 +12,17 @@ export type EmptyPromise = () => Promise<void>
 
 export type Nullable<T> = T | null
 
+export interface APIResponseEmpty {
+	success: boolean
+	status_code: number
+	message: string
+}
+
 export interface APIResponse<T> {
 	success: boolean
 	data: T | null
-	error: string
+	status_code: number
+	message: string
 }
 
 export interface DropdownProps {

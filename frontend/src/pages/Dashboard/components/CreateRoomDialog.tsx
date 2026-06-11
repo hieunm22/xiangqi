@@ -21,7 +21,9 @@ import { translate } from "locales/translate"
 import { getToken } from "common/helper"
 import { PieceSelectionContext, useCreateRoomDialogContext } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
+import { APIResponse } from "types/Common"
 import { Team } from "types/GameState"
+import { RoomWithUsers } from "pages/Room/types"
 import { CreateRoomRequest } from "../types"
 
 export const CreateRoomDialog = () => {
@@ -80,7 +82,7 @@ export const CreateRoomDialog = () => {
 			pveMode,
 			betAmount: pveMode ? 0 : betAmount
 		}
-		const response = await createRoom(token, body)
+		const response = await createRoom(token, body) as APIResponse<RoomWithUsers>
 
 		setSubmitting(false)
 
@@ -89,7 +91,7 @@ export const CreateRoomDialog = () => {
 			return
 		}
 
-		const createdRoomId = Number(response?.room?.id ?? response?.gameId)
+		const createdRoomId = Number(response?.data?.room?.id)
 		if (!Number.isInteger(createdRoomId) || createdRoomId <= 0) {
 			setSubmitError(translate("dashboard.feedback.error"))
 			return

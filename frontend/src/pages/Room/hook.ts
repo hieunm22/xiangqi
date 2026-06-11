@@ -34,7 +34,7 @@ import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
-import { EmptyVoid, FenMoveDiffResult } from "types/Common"
+import { APIResponse, EmptyVoid, FenMoveDiffResult } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
@@ -44,25 +44,27 @@ import {
 } from "types/GameState"
 import {
 	DrawRequest,
+	GameMovements,
 	HistoryData,
 	MovePieceRequest,
 	MoveProps,
 	RemoteMoveProps,
 	RoomActionButton,
 	RoomInfo,
-	RoomInfoResponse,
+	RoomInfoData,
 	RoomUser,
 	StartGameBody
 } from "./types"
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
-	const { state } = useToolkit()
+	const { gameState } = useToolkit()
 	const {
 		drawGame,
-		getGameHistory,
+		getGameMovementHistory,
 		getRoomById,
 		joinRoom,
+		leaveRoom,
 		movePiece,
 		startRoom,
 		surrenderGame,
@@ -127,9 +129,6 @@ const useRoomHook = () => {
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
-
-	const { leaveRoom } = useAPI()
-
 	const currentUserId = useMemo(() => {
 		const token = getToken()
 		const payload = decodePayload(token)
@@ -166,7 +165,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const roomInfoResponse: RoomInfoResponse = await getRoomById(token, roomId)
+		const roomInfoResponse: APIResponse<RoomInfoData> = await getRoomById(token, roomId)
 		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
 			// navigate to home if room doesn't exist or failed to load
 			navigate(HOME_PATH)
@@ -207,7 +206,7 @@ const useRoomHook = () => {
 
 		if (room.status === 2) {
 			const token = getToken()
-			const history = await getGameHistory(token, game.id)
+			const history: APIResponse<GameMovements[]> = await getGameMovementHistory(token, game.id)
 			const userBlack = joinedUsers.find(user => user.team === "black")
 			const userRed = joinedUsers.find(user => user.team === "red")
 
@@ -256,7 +255,7 @@ const useRoomHook = () => {
 				icon: "fas fa-swords",
 				label: translate("room.actions.start-room"),
 				onClick: handleStartGame,
-				visible: joinedUsers[0].id === currentUserId,
+				visible: joinedUsers[0].id === currentUserId && room.status === 1 && joinedUsers.length > 1,
 				enabled: joinedUsers.length >= 1 && room !== null && room.status === 1
 			},
 			{
@@ -781,12 +780,7 @@ const useRoomHook = () => {
 		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
 		const isInCurrentRoom = currentUser !== undefined
 		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-		const latest = history.length > 0 ? history[history.length - 1] : null
-		const isMyTurn = Boolean(currentUser?.team && latest && currentUser.team === latest.team)
-		const canDraw = isInCurrentRoom
-			&& isCurrentlyPlayer
-			&& room.status === 2
-			&& isMyTurn
+		const canDraw = isInCurrentRoom && isCurrentlyPlayer && room.status === 2
 		if (!canDraw) {
 			return
 		}
@@ -897,7 +891,7 @@ const useRoomHook = () => {
 		const clickedTeam = getTeamFromPieceChar(board[id]?.piece)
 		const isAvailableMove = availableMoves.includes(id)
 
-		if (!state.debugMode) {
+		if (!gameState.debugMode) {
 			// Only seated players may control pieces. Spectators (no assigned team) are
 			// locked out entirely — otherwise a third user in a B-vs-bot room could move
 			// B's pieces.

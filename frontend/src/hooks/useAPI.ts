@@ -4,16 +4,25 @@ import FormDataAddon from "wretch/addons/formData"
 import { LOGIN_PATH, LS_TOKEN_KEY } from "common/constant"
 import { getLanguage, getToken } from "common/helper"
 import { CreateRoomRequest } from "pages/Dashboard/types"
-import { LoginBodyType, LoginSuccessResponse } from "pages/Login/types"
+import { AuthResponse, LoginBodyType } from "pages/Login/types"
 import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
-import { APIResponse } from "types/Common"
-import { Users } from "types/Entities"
-import { MovePieceRequest } from "pages/Room/types"
+import { APIResponse, APIResponseEmpty } from "types/Common"
+import { Team } from "types/GameState"
+import { GameHistoryItem, UserProfileWithStats } from "components/Layout/types"
+import {
+	GameMovements,
+	MovePieceRequest,
+	RoomInfo,
+	RoomInfoData,
+	RoomUser,
+	RoomWithUsers,
+} from "pages/Room/types"
 
 const EP = { // end points
 	// auth endpoints
 	getUser: "/auth/user",
+	getUserInfo: "/auth/user-info",
 	login: "/auth/login",
 	logout: "/auth/logout",
 	refreshToken: "/auth/refresh-token",
@@ -34,7 +43,7 @@ const EP = { // end points
 
 	// game endpoints
 	drawGame: "/game/draw-game",
-	getGameHistory: "/game/history",
+	getGameMovementHistory: "/game/movement-history",
 	movePiece: "/game/move-piece",
 	getPlayerHistory: "/game/player-history",
 	surrenderGame: "/game/surrender",
@@ -44,6 +53,9 @@ const EP = { // end points
 	makeExpired: "/tool/make-expired",
 	resetGame: "/tool/reset-game",
 }
+
+// shared across all useAPI() instances so concurrent 401s trigger a single refresh
+let refreshPromise: Promise<string> | null = null
 
 export const useAPI = () => {
 	const navigate = useNavigate()
@@ -62,24 +74,26 @@ export const useAPI = () => {
 	const requestWithCookie = request
 		.options({ credentials: "include" })
 
-	const subscribers: ((token: string) => void)[] = []
-
-	const notifySubscribers = (token: string) => {
-		subscribers.forEach(cb => cb(token))
-		// empty subscribers array
-		subscribers.length = 0
-	}
-
 	const refreshAccessToken = async (currentToken: string) => {
-		const response: LoginSuccessResponse = await requestWithCookie
-			.auth(`Bearer ${currentToken}`)
-			.url(EP.refreshToken)
-			.options(wretchOptions)
-			.post() // refresh token should get from cookie from backend
-			.json()
+		// single-flight: concurrent 401s await the same refresh instead of calling it again
+		if (!refreshPromise) {
+			refreshPromise = (async () => {
+				const response: AuthResponse = await requestWithCookie
+					.auth(`Bearer ${currentToken}`)
+					.url(EP.refreshToken)
+					.options(wretchOptions)
+					.post() // refresh token should get from cookie from backend
+					.json()
 
-		localStorage.setItem(LS_TOKEN_KEY, response.access_token)
-		return response.access_token
+				localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+				return response.access_token
+			})().finally(() => {
+				// reset so a later expiry can refresh again
+				refreshPromise = null
+			})
+		}
+
+		return refreshPromise
 	}
 
 	const authFetch = (path: string) => {
@@ -92,7 +106,6 @@ export const useAPI = () => {
 				try {
 					// attach current access token to refresh token request's header
 					const newToken = await refreshAccessToken(accessToken)
-					notifySubscribers(newToken)
 					return request
 						.auth(`Bearer ${newToken}`)
 						.headers({ "skip-auth": "true" })
@@ -114,10 +127,20 @@ export const useAPI = () => {
 							.catch(handleError)
 
 	const drawGame = async (token: string, gameId: string) => authFetch(EP.drawGame)
-						.auth(`Bearer ${token}`)
-						.post({ gameId })
-						.json(drawGameCallback)
-						.catch(handleError)
+							.auth(`Bearer ${token}`)
+							.post({ gameId })
+							.json(drawGameCallback)
+							.catch(handleError)
+
+	const fetchRooms = async (token: string, status?: number) => {
+		const query = status === undefined ? "" : `?status=${status}`
+
+		return await authFetch(EP.fetchRooms + query)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(fetchRoomsCallback)
+							.catch(handleError)
+	}
 
 	const forgotPassword = (form: ForgotPasswordBodyType) => requestWithCookie.url(EP.forgotPassword)
 							.json(form)
@@ -125,7 +148,7 @@ export const useAPI = () => {
 							.json(forgotPasswordCallback)
 							.catch(handleError)
 
-	const getGameHistory = async (token: string, gameId: string) => authFetch(`${EP.getGameHistory}?gameId=${gameId}`)
+	const getGameMovementHistory = async (token: string, gameId: string) => authFetch(`${EP.getGameMovementHistory}?gameId=${gameId}`)
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getGameHistoryCallback)
@@ -137,20 +160,21 @@ export const useAPI = () => {
 							.json(getPlayerHistoryCallback)
 							.catch(handleError)
 
-	const getUserById = async (userId: number) => request.url(`${EP.getUser}?id=${userId}`)
-							.get()
-							.json(getUserCallback)
-							.catch(handleError)
-
 	const getRoomById = async (token: string, roomId: number) => authFetch(`${EP.getRoomInfo}?id=${roomId}`)
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getRoomCallback)
 							.catch(handleError)
 
-	const joinRoom = async (token: string, roomId: number) => authFetch(EP.joinRoom)
+	const getUserById = async (token: string, userId: number) => authFetch(`${EP.getUser}?id=${userId}`)
 							.auth(`Bearer ${token}`)
-							.post({ id: roomId })
+							.get()
+							.json(getUserCallback)
+							.catch(handleError)
+
+	const joinRoom = async (token: string, roomId: number, team?: Team | null) => authFetch(EP.joinRoom)
+							.auth(`Bearer ${token}`)
+							.post(team === undefined ? { id: roomId } : { id: roomId, team })
 							.json(joinRoomCallback)
 							.catch(handleError)
 
@@ -180,6 +204,13 @@ export const useAPI = () => {
 							.json(logoutCallback)
 							.catch(handleError)
 
+	const makeExpired = (token: string) => requestWithCookie.url(EP.makeExpired)
+							.auth(`Bearer ${token}`)
+							.options(wretchOptions)
+							.post()
+							.text(makeExpiredCallback)
+							.catch(handleError)
+
 	const movePiece = async (token: string, body: MovePieceRequest) => authFetch(EP.movePiece)
 							.auth(`Bearer ${token}`)
 							.post(body)
@@ -202,13 +233,6 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.post()
 							.json(refreshTokenCallback)
-							.catch(handleError)
-
-	const makeExpired = (token: string) => requestWithCookie.url(EP.makeExpired)
-							.auth(`Bearer ${token}`)
-							.options(wretchOptions)
-							.post()
-							.text(makeExpiredCallback)
 							.catch(handleError)
 
 	const register = (form: any) => requestWithCookie.url(EP.register)
@@ -236,10 +260,10 @@ export const useAPI = () => {
 							.catch(handleError)
 
 	const undoGame = async (token: string, gameId: string) => authFetch(EP.undoGame)
-						.auth(`Bearer ${token}`)
-						.post({ gameId })
-						.json(undoGameCallback)
-						.catch(handleError)
+							.auth(`Bearer ${token}`)
+							.post({ gameId })
+							.json(undoGameCallback)
+							.catch(handleError)
 
 	const updateRoom = async (token: string, roomId: number, name: string) => authFetch(EP.updateRoom)
 							.auth(`Bearer ${token}`)
@@ -248,30 +272,20 @@ export const useAPI = () => {
 							.catch(handleError)
 
 	const validateToken = (token: string) => authFetch(EP.validateToken)
-						.auth(`Bearer ${token}`)
-						.post()
-						.json(validateTokenCallback)
-						.catch(handleError)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(validateTokenCallback)
+							.catch(handleError)
 
-	const fetchRooms = async (token: string, status?: number) => {
-		const query = status === undefined ? "" : `?status=${status}`
-
-		return await authFetch(EP.fetchRooms + query)
-			.auth(`Bearer ${token}`)
-			.get()
-			.json(fetchRoomsCallback)
-			.catch(handleError)
-	}
-
-	const createRoomCallback = (response: any) => {
+	const createRoomCallback = (response: APIResponse<RoomWithUsers>) => {
 		return response
 	}
 
-	const drawGameCallback = (response: any) => {
+	const drawGameCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
-	const fetchRoomsCallback = (response: any) => {
+	const fetchRoomsCallback = (response: APIResponse<RoomInfoData>) => {
 		return response
 	}
 
@@ -279,23 +293,23 @@ export const useAPI = () => {
 		return response
 	}
 
-	const getGameHistoryCallback = (response: any) => {
+	const getGameHistoryCallback = (response: APIResponse<GameMovements[]>) => {
 		return response
 	}
 
-	const getPlayerHistoryCallback = (response: any) => {
+	const getPlayerHistoryCallback = (response: APIResponse<GameHistoryItem[]>) => {
 		return response
 	}
 
-	const getRoomCallback = (response: any) => {
+	const getRoomCallback = (response: APIResponse<RoomInfoData>) => {
 		return response
 	}
 
-	const getUserCallback = (response: APIResponse<Users>) => {
+	const getUserCallback = (response: APIResponse<UserProfileWithStats>) => {
 		return response
 	}
 
-	const joinRoomCallback = (response: any) => {
+	const joinRoomCallback = (response: APIResponse<RoomUser[]>) => {
 		return response
 	}
 
@@ -303,11 +317,15 @@ export const useAPI = () => {
 		return response
 	}
 
-	const leaveRoomCallback = (response: any) => {
+	const leaveRoomCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
-	const loginCallback = (response: any) => {
+	const loginCallback = (response: AuthResponse) => {
+		return response
+	}
+
+	const logoutCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
@@ -315,7 +333,7 @@ export const useAPI = () => {
 		return accessToken
 	}
 
-	const registerCallback = (response: any) => {
+	const registerCallback = (response: AuthResponse) => {
 		return response
 	}
 
@@ -327,15 +345,11 @@ export const useAPI = () => {
 		return response
 	}
 
-	const logoutCallback = (response: any) => {
+	const movePieceCallback = (response: APIResponse<GameMovements>) => {
 		return response
 	}
 
-	const movePieceCallback = (response: any) => {
-		return response
-	}
-
-	const refreshTokenCallback = (response: any) => {
+	const refreshTokenCallback = (response: AuthResponse) => {
 		return response
 	}
 
@@ -343,23 +357,23 @@ export const useAPI = () => {
 		return response
 	}
 
-	const startRoomCallback = (response: any) => {
+	const startRoomCallback = (response: APIResponse<Pick<RoomInfoData, "room" | "game">>) => {
 		return response
 	}
 
-	const surrenderGameCallback = (response: any) => {
+	const surrenderGameCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
-	const undoGameCallback = (response: any) => {
+	const undoGameCallback = (response: APIResponse<GameMovements[]>) => {
 		return response
 	}
 
-	const updateRoomCallback = (response: any) => {
+	const updateRoomCallback = (response: APIResponse<RoomInfo>) => {
 		return response
 	}
 
-	const validateTokenCallback = (response: any) => {
+	const validateTokenCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 	
@@ -386,7 +400,7 @@ export const useAPI = () => {
 		drawGame,
 		fetchRooms,
 		forgotPassword,
-		getGameHistory,
+		getGameMovementHistory,
 		getPlayerHistory,
 		getRoomById,
 		getUserById,

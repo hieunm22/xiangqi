@@ -26,6 +26,33 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Game history reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: reset-game.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     room_id:
+ *                       type: integer
+ *                     game_id:
+ *                       type: string
+ *                       nullable: true
+ *                     kept_record_id:
+ *                       type: string
+ *                       nullable: true
+ *                     deleted_count:
+ *                       type: integer
  *       500:
  *         description: Internal server error
  */

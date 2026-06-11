@@ -13,16 +13,10 @@ export type DashboardRoom = {
 	users: UserAvatarType[]
 }
 
-export type FetchRoomsResponse = {
-	success: boolean
-	message: string
-	status_code: number
-	rooms: DashboardRoom[]
-}
-
 export interface UserAvatarGroupProps {
 	users: UserAvatarType[]
 	type: "primary" | "secondary"
+	maxVisible: number
 	onUserClick?: (id: number) => Promise<void>
 }
 
@@ -45,6 +39,7 @@ export interface JoinRoomDialogContextValue {
 export interface SeatAvatarProps {
 	user: UserAvatarType
 	isHost: boolean
+	onUserClick?: (id: number) => Promise<void>
 }
 
 export interface PieceButtonProps {

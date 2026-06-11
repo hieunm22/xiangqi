@@ -16,10 +16,22 @@ const router = Router()
  *     responses:
  *       200:
  *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: validate-token.messages.success
+ *                 status_code:
+ *                   type: integer
+ *                   example: 200
  *       401:
- *         description: Token missing, invalid, or expired — session has been cleared
- *       500:
- *         description: Internal server error
+ *         description: Unauthorized (missing, invalid, or expired token)
  */
 router.post("/auth/validate-token", requireAuth(), async (_: AuthenticatedRequest, res: Response) => {
 	res.status(200).json({
