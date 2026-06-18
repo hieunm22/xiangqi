@@ -8,6 +8,7 @@ import {
 } from "@mui/material"
 import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
+import AnnouncePage from "pages/Announce"
 import { AuthProvider } from "components/AuthProvider"
 import BotDifficultyProvider from "components/BotDifficultyProvider"
 import ConfirmProvider from "components/ConfirmProvider"
@@ -136,6 +137,14 @@ function AppWithTheme() {
 						element={
 							<ProtectedRoute>
 								{RoomPageElement}
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/announce"
+						element={
+							<ProtectedRoute>
+								<AnnouncePage />
 							</ProtectedRoute>
 						}
 					/>

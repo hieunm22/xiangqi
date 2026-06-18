@@ -1,25 +1,18 @@
 import classnames from "classnames"
-import { LS_TOKEN_KEY } from "common/constant"
-import { PopupState } from "components/Layout/enums"
 import { TI } from "components/TranslationTag"
 import { formatNumber, requireImage } from "common/helper"
 import useToolkit from "hooks/useToolkit"
-import {
-	setPopup,
-	setRoomInfo,
-	setUserId,
-} from "toolkit/slice/game"
 import { PlayerInfoCardProps } from "../types"
+import useLayoutAuth from "pages/Dashboard/hook"
 
 export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
-		room,
-		roomHostId,
 		team,
 		user
 	} = props
-	const { state, dispatch } = useToolkit()
+	const { showProfilePopup } = useLayoutAuth()
+	const { state } = useToolkit()
 
 	if (user?.display_name === undefined) {
 		return (
@@ -46,14 +39,10 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"active-turn": active,
 	})
 
-	const handlePlayerNameClick = async () => {
-		if (!user?.id) return
-		
-		const token = localStorage.getItem(LS_TOKEN_KEY)
-		if (!token) return
-		dispatch(setRoomInfo({ roomInfo: room, roomHostId }))
-		dispatch(setUserId(user.id)) // open profile popup
-		dispatch(setPopup(PopupState.PROFILE)) // open profile popup
+	const handlePlayerNameClick = () => {
+		if (!user) return
+
+		showProfilePopup(user.id)
 	}
 
 	return (

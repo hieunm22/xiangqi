@@ -6,12 +6,24 @@ common.password.policy-2;Must contain upper case character;Phải chứa một k
 common.password.policy-3;Must contain digit;Phải chứa một ký tự số
 common.password.policy-4;Must contain a special character;Phải chứa một ký tự đặc biệt
 common.password.policy-5;Text length at least 8;Ít nhất 8 ký tự
+common.date.yesterday;Yesterday;Hôm qua
+common.date.mon;Mon;Thứ 2
+common.date.tue;Tue;Thứ 3
+common.date.wed;Wed;Thứ 4
+common.date.thu;Thu;Thứ 5
+common.date.fri;Fri;Thứ 6
+common.date.sat;Sat;Thứ 7
+common.date.sun;Sun;Chủ nhật
 page.home.title;Home;Trang chủ
 page.history.title;History;Lịch sử
 page.history.no-games;No finished games yet;Chưa có trận đấu nào hoàn thành
 page.history.point-label;Points:;Điểm:
 page.about.title;About;Thông tin
+menu.app-name;Xiangqi;Cờ tướng
+menu.profile;Profile;Trang cá nhân
+menu.messages;Message;Tin nhắn
 menu.guide;Guide;Luật chơi
+menu.announce;Announcement;Thông báo
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
@@ -19,6 +31,9 @@ menu.profile;Profile;Trang cá nhân
 menu.expired;Set expired;Hết hạn token
 menu.logout;Logout;Đăng xuất
 menu.rooms;Rooms;Trò chơi
+announce.title;Announcement;Thông báo
+announce.placeholder;Type an announcement...;Nhập thông báo...
+announce.empty;No announcements yet;Chưa có thông báo nào
 dashboard.page.title;Room list;Danh sách phòng
 dashboard.filters.all;All;Tất cả
 dashboard.filters.available;Available;Chờ
@@ -203,6 +218,7 @@ room.actions.send-pm;Send PM;Chat
 room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
 room.actions.settings;Room settings;Cài đặt phòng
+room.messages.unread;Unread messages;Tin nhắn chưa đọc
 room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
 room.settings.players;Spectators;Người xem
@@ -289,6 +305,14 @@ guide.result.paragraph2;If a player runs out of time for a single move (for exam
 guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
 guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
+;;
+;;
+;;
+;;
+;;
+;;
+;;
+;;
 ;;
 ;;
 ;;

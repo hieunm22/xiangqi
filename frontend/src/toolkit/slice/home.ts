@@ -4,6 +4,7 @@ import type { ReduxState } from "../../types/ReduxState"
 const initialState: ReduxState = {
 	darkMode: false,
 	lang: "en",
+	debugMode: false,
 }
 
 const homeSlice = createSlice({
@@ -13,6 +14,9 @@ const homeSlice = createSlice({
 		setDarkMode: (state, body: PayloadAction<boolean>) => {
 			state.darkMode = body.payload
 		},
+		setDebug: (state, body: PayloadAction<boolean>) => {
+			state.debugMode = body.payload
+		},
 		setLanguage: (state, body: PayloadAction<string>) => {
 			state.lang = body.payload
 		},
@@ -21,6 +25,7 @@ const homeSlice = createSlice({
 
 export const {
 	setDarkMode,
+	setDebug,
 	setLanguage,
 } = homeSlice.actions
 

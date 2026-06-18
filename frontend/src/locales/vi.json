@@ -10,6 +10,16 @@
 			"policy-3": "Phải chứa một ký tự số",
 			"policy-4": "Phải chứa một ký tự đặc biệt",
 			"policy-5": "Ít nhất 8 ký tự"
+		},
+		"date": {
+			"yesterday": "Hôm qua",
+			"mon": "Thứ 2",
+			"tue": "Thứ 3",
+			"wed": "Thứ 4",
+			"thu": "Thứ 5",
+			"fri": "Thứ 6",
+			"sat": "Thứ 7",
+			"sun": "Chủ nhật"
 		}
 	},
 	"page": {
@@ -26,16 +36,23 @@
 		}
 	},
 	"menu": {
+		"app-name": "Cờ tướng",
+		"profile": "Trang cá nhân",
+		"messages": "Tin nhắn",
 		"guide": "Luật chơi",
+		"announce": "Thông báo",
 		"setting": {
 			"button": "Cài đặt"
 		},
-		"app-name": "Cờ tướng",
 		"home": "Trang chủ",
-		"profile": "Trang cá nhân",
 		"expired": "Hết hạn token",
 		"logout": "Đăng xuất",
 		"rooms": "Trò chơi"
+	},
+	"announce": {
+		"title": "Thông báo",
+		"placeholder": "Nhập thông báo...",
+		"empty": "Chưa có thông báo nào"
 	},
 	"dashboard": {
 		"page": {
@@ -126,6 +143,9 @@
 			"view-history": "Lịch sử",
 			"kick": "Kick",
 			"settings": "Cài đặt phòng"
+		},
+		"messages": {
+			"unread": "Tin nhắn chưa đọc"
 		},
 		"settings": {
 			"title": "Cài đặt phòng",

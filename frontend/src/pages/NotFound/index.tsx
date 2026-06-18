@@ -17,7 +17,7 @@ export default function NotFoundPage() {
 
 	return (
 		<Container maxWidth="sm" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-			<Stack spacing={4} alignItems="center" textAlign="center">
+			<Stack spacing={4} sx={{ alignItems: "center", textAlign: "center" }}>
 				<Box className="not-found-decoration">
 					<Typography variant="h1" sx={{ fontSize: 120, fontWeight: 900, lineHeight: 1, color: "primary.main" }}>
 						404
@@ -32,7 +32,7 @@ export default function NotFoundPage() {
 					{translate("notfound.description")}
 				</Typography>
 
-				<Stack direction="row" spacing={2} justifyContent="center">
+				<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
 					<Button variant="contained" size="large" onClick={() => navigate(HOME_PATH)}>
 						{translate("notfound.home")}
 					</Button>

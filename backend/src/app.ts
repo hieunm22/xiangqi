@@ -33,6 +33,15 @@ import undoRoutes from "./routes/game/undo"
 
 import sequenceRoutes from "./routes/tool/sequence"
 
+import getPrivateConversationsRoutes from "./routes/message/get-private-conversations"
+import getPrivateMessageRoutes from "./routes/message/get-private"
+import getRoomMessageRoutes from "./routes/message/get-room-message"
+import markPrivateMessageAsReadRoutes from "./routes/message/mark-private-message-as-read"
+import markRoomMessageAsReadRoutes from "./routes/message/mark-room-as-read"
+import sendPrivateMessageRoutes from "./routes/message/send-private"
+import sendRoomMessageRoutes from "./routes/message/send-room-message"
+import unreadCountRoutes from "./routes/message/unread-count"
+
 const app = express()
 
 const rawOrigins = process.env.CORS_ORIGINS ?? "http://localhost:3004"
@@ -93,6 +102,15 @@ app.use("/api", surrenderGameRoutes)
 app.use("/api", undoRoutes)
 
 app.use("/api", sequenceRoutes)
+
+app.use("/api", getPrivateConversationsRoutes)
+app.use("/api", getPrivateMessageRoutes)
+app.use("/api", getRoomMessageRoutes)
+app.use("/api", markRoomMessageAsReadRoutes)
+app.use("/api", markPrivateMessageAsReadRoutes)
+app.use("/api", sendPrivateMessageRoutes)
+app.use("/api", sendRoomMessageRoutes)
+app.use("/api", unreadCountRoutes)
 
 app.use("/docs", swaggerUi.serve)
 app.get("/docs", swaggerUi.setup(swaggerSpec, {

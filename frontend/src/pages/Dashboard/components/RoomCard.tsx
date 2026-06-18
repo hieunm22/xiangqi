@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	Grid,
@@ -7,6 +8,7 @@ import {
 import { FILTER_KEYS, FILTER_STATUS, GRID_SIZE } from "../constants"
 import { TI, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
+import { getClaimsFromLocalStorage } from "common/helper"
 import { useJoinRoomDialogContext } from "hooks/useAppContext"
 import { RoomCardProps } from "../types"
 
@@ -41,6 +43,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 	const remainingUsers = room.users.slice(2)
 	const classIconRoomStatus = roomStatusClass(room.status)
 	const { openJoinRoom } = useJoinRoomDialogContext()
+	const navigate = useNavigate()
 
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
@@ -50,18 +53,27 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 		"high": room.bet_amount > 2000
 	})
 
+	const handleOpenJoinRoom = () => {
+		const claims = getClaimsFromLocalStorage()
+		if (room.users.some(user => user.id === claims?.sub)) {
+			navigate(`/room/${room.id}`)
+			return
+		}
+		openJoinRoom(room)
+	}
+
 	return (
 		<Grid
 			key={room.id}
 			className={roomCardClass}
 			size={GRID_SIZE}
-			onClick={() => openJoinRoom(room)}
+			onClick={handleOpenJoinRoom}
 		>
 			<Stack spacing={1.5}>
 				<Stack direction="row" className="dashboard__card-header">
 					<TTypography
 						variant="h6"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						noWrap
 						className="dashboard__room-name"
 						content={room.name}

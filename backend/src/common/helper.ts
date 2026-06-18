@@ -42,3 +42,9 @@ export function getUTCNow(): Date {
 export function getUTCTimestamp(): number {
 	return Math.floor(getUTCNow().getTime() / 1000)
 }
+
+export function getConversationKey(userId1: number, userId2: number): string {
+	const minId = Math.min(userId1, userId2)
+	const maxId = Math.max(userId1, userId2)
+	return `${minId}_${maxId}`
+}

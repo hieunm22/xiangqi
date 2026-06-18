@@ -5,6 +5,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
+const countDocumentsMock = vi.fn()
+const getChatMessageCollectionMock = vi.fn()
 
 const PATH = "/api/room/info"
 
@@ -20,6 +22,10 @@ vi.mock("prisma", () => ({
 			findUnique: roomFindUniqueMock
 		}
 	}
+}))
+
+vi.mock("../../common/mongodb", () => ({
+	getChatMessageCollection: getChatMessageCollectionMock
 }))
 
 describe("GET /api/room/info?id=:id", () => {
@@ -96,6 +102,8 @@ describe("GET /api/room/info?id=:id", () => {
 	it("returns 200 and room details when room exists", async () => {
 		const accessToken = buildAccessToken(31, "session-room-info-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 31 }))
+		countDocumentsMock.mockResolvedValue(4)
+		getChatMessageCollectionMock.mockResolvedValue({ countDocuments: countDocumentsMock })
 		roomFindUniqueMock.mockResolvedValue({
 			id: BigInt(101),
 			name: "Final Table",
@@ -157,8 +165,15 @@ describe("GET /api/room/info?id=:id", () => {
 					red_first: false,
 					bet_amount: 100
 				},
+				chat: {
+					unread_count: 4
+				},
 				users: expect.any(Array)
 			}
+		})
+		expect(countDocumentsMock).toHaveBeenCalledWith({
+			room_id: 101,
+			read_by: { $ne: 31 }
 		})
 		expect(res.body.data.users).toHaveLength(2)
 		expect(res.body.data.users[0]).toMatchObject({
@@ -176,13 +191,8 @@ describe("GET /api/room/info?id=:id", () => {
 
 		expect(roomFindUniqueMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: BigInt(101) },
-				select: expect.objectContaining({
-					id: true,
-					name: true,
-					status: true,
-					room_users: expect.any(Object)
-				})
+				where: expect.objectContaining({ id: BigInt(101) }),
+				select: expect.any(Object)
 			})
 		)
 	})

@@ -11,16 +11,19 @@ import {
 import { openAlert } from "components/AlertProvider"
 import { Empty } from "components/Common"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
+import { BotDifficultySlider } from "components/BotDifficultyProvider/components"
 import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useRoomSettingsDialogContext } from "hooks/useAppContext"
-// import useLayoutAuth from "pages/Dashboard/hooks"
+import useToolkit from "hooks/useToolkit"
+import useLayoutAuth from "pages/Dashboard/hook"
 import { translate } from "locales/translate"
 import { UserAvatarType } from "types/Common"
 
 const RoomSettingsDialog = () => {
 	const {
+		game,
     isHost,
     isOpen,
     room,
@@ -33,7 +36,8 @@ const RoomSettingsDialog = () => {
 	const spectatorsUsers = users?.slice(2) ?? []
 	const spectatorsUsersMap: UserAvatarType[] = spectatorsUsers.map(user => user as UserAvatarType)
 	const { updateRoom } = useAPI()
-	// const { loadUserData } = useLayoutAuth()
+	const { state } = useToolkit()
+	const { showProfilePopup } = useLayoutAuth()
 	const [name, setName] = useState(room?.name ?? "")
 	const [nameError, setNameError] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
@@ -77,12 +81,17 @@ const RoomSettingsDialog = () => {
 		}
 	}
 
+	const handleDialogClose = (_: any, reason?: "backdropClick" | "escapeKeyDown") => {
+		if (reason === "backdropClick") return
+		closeSettings()
+	}
+
   if (!room) return <Empty />
 
 	return (
 		<Dialog
 			open={isOpen}
-			onClose={closeSettings}
+			onClose={handleDialogClose}
 			sx={{ "& .MuiDialog-paper": { width: "calc(100% - 32px)", margin: 0 } }}
 		>
 			<DialogTitle>{translate("room.settings.title")}</DialogTitle>
@@ -100,10 +109,13 @@ const RoomSettingsDialog = () => {
 					autoFocus={isHost}
 					disabled={submitting || !isHost}
 				/>
-				<Grid className="room-bet-amount">
+				{room.bet_amount && <Grid className="room-bet-amount">
 					<i className="fas fa-sack-dollar user-points" />
-					{room.bet_amount}
-				</Grid>
+					{room.bet_amount.toLocaleString(state.lang)}
+				</Grid>}
+				{game && game.bot_difficulty !== null && <Grid className="game-lelvel">
+					<BotDifficultySlider level={game.bot_difficulty} disabled />
+				</Grid>}
 
 				{spectatorsUsers.length > 0 && (
 					<Box>
@@ -116,7 +128,7 @@ const RoomSettingsDialog = () => {
 							users={spectatorsUsersMap}
 							type="primary"
 							maxVisible={7}
-							// onUserClick={loadUserData}	// temporary comment
+							onUserClick={showProfilePopup}
 						/>
 					</Box>
 				)}

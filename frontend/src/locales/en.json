@@ -10,6 +10,16 @@
 			"policy-3": "Must contain digit",
 			"policy-4": "Must contain a special character",
 			"policy-5": "Text length at least 8"
+		},
+		"date": {
+			"yesterday": "Yesterday",
+			"mon": "Mon",
+			"tue": "Tue",
+			"wed": "Wed",
+			"thu": "Thu",
+			"fri": "Fri",
+			"sat": "Sat",
+			"sun": "Sun"
 		}
 	},
 	"page": {
@@ -26,16 +36,23 @@
 		}
 	},
 	"menu": {
+		"app-name": "Xiangqi",
+		"profile": "Profile",
+		"messages": "Message",
 		"guide": "Guide",
+		"announce": "Announcement",
 		"setting": {
 			"button": "Settings"
 		},
-		"app-name": "Xiangqi",
 		"home": "Home",
-		"profile": "Profile",
 		"expired": "Set expired",
 		"logout": "Logout",
 		"rooms": "Rooms"
+	},
+	"announce": {
+		"title": "Announcement",
+		"placeholder": "Type an announcement...",
+		"empty": "No announcements yet"
 	},
 	"dashboard": {
 		"page": {
@@ -126,6 +143,9 @@
 			"view-history": "History",
 			"kick": "Kick",
 			"settings": "Room settings"
+		},
+		"messages": {
+			"unread": "Unread messages"
 		},
 		"settings": {
 			"title": "Room Settings",

@@ -9,7 +9,7 @@ import {
 	Skeleton,
 	Typography,
 } from "@mui/material"
-import { PopupState } from "../enums"
+import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
 import {
 	TButton,
@@ -18,29 +18,27 @@ import {
 	TTooltip,
 	TTypography,
 } from "components/TranslationTag"
-import { getClaimsFromLocalStorage, getToken } from "common/helper"
+import { getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { usePopups } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
 import { setPopup, setUserId } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
-import { Users } from "types/Entities"
-import { RoomInfo } from "pages/Room/types"
-import { GameStats, UserProfileWithStats } from "../types"
+import { UserProfileWithStats } from "../types"
 
 export const ProfilePopup = () => {
 	const { gameState: state, dispatch } = useToolkit()
 	const { getUserById, kickUser } = useAPI()
 	const [isRoomHost, setIsRoomHost] = useState(false)
-	const [room, setRoom] = useState<RoomInfo | null>(null)
 	const [isCopied, setIsCopied] = useState(false)
-	const [gameStats, setGameStats] = useState<GameStats | null>(null)
-	const [user, setUser] = useState<Users | null>(null)
+	const { profileUser: user, gameStats, setGameStats, setProfileUser } = usePopups()
 
-	const handleCloseProfilePopup = () => {
-		// dispatch(setUserId(null))
-		// setUser(null)
-		// setGameStats(null)
+	const handleCloseProfilePopup = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
+		if (reason === "backdropClick") return
+		dispatch(setUserId(null))
+		setProfileUser(null)
+		setGameStats(null)
 		dispatch(setPopup(PopupState.NONE))
 	}
 
@@ -66,44 +64,37 @@ export const ProfilePopup = () => {
 	// const normalizedCurrentUserId = currentUserId ?? null
 	const isOwnProfile = user?.id === currentUserId
 
-	useEffect(() => {
-		const loadRoomContext = async () => {
-			if (state.popupState !== PopupState.PROFILE) {
-				setIsRoomHost(false)
-				return
-			}
-
-			if (!state.roomInfo) {
-				setIsRoomHost(false)
-				return
-			}
-
-			setIsRoomHost(state.roomHostId === currentUserId)
-			setRoom(state.roomInfo)
-
-			// If the profile being viewed is the same as the previous one, skip fetching user data.
-			if (user?.id === state.activeUserId) {
-				return
-			}
-
-			const token = getToken()
-			const userData = await getUserById(token, state.activeUserId!) as APIResponse<UserProfileWithStats>
-			if (userData?.success && userData.data) {
-				setUser(userData.data.user)
-				setGameStats(userData.data.stats || null)
-			}
+	const loadRoomContext = async () => {
+		if (state.popupState !== PopupState.PROFILE) {
+			setIsRoomHost(false)
+			return
 		}
 
+		setIsRoomHost(state.roomHostId === currentUserId)
+		
+		const token = getToken()
+		if (!token) {
+			return
+		}
+
+		const response = await getUserById(token, state.activeUserId!) as APIResponse<UserProfileWithStats>
+		if (response) {
+			setProfileUser(response.data.user)
+			setGameStats(response.data.stats)
+		}
+	}
+
+	useEffect(() => {
 		loadRoomContext()
-	}, [state.popupState, state.roomHostId, state.roomInfo])
+	}, [state.popupState, state.roomHostId])
 
 	const handleSendPM = () => {
-		dispatch(setUserId(user!.id))
+		dispatch(setUserId(state.activeUserId))
 		dispatch(setPopup(PopupState.SEND_PM))
 	}
 
 	const handleViewHistory = () => {
-		dispatch(setUserId(user!.id))
+		dispatch(setUserId(state.activeUserId))
 		dispatch(setPopup(PopupState.GAME_HISTORY))
 	}
 
@@ -143,7 +134,7 @@ export const ProfilePopup = () => {
 		<Dialog
 			open={state.popupState === PopupState.PROFILE}
 			onClose={handleCloseProfilePopup}
-			maxWidth="xs"
+			className="profile-dialog"
 			fullWidth
 			disableEnforceFocus
 			disableAutoFocus
@@ -151,104 +142,135 @@ export const ProfilePopup = () => {
 			<DialogTitle className="pt-8 pb-8">{translate("menu.profile")}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
-				<Box className="profile-user-info">
-					<TTooltip title="register.username.label" arrow placement="left">
-						<i className="far fa-user mr-20" />
-					</TTooltip>
-					{isSameUser
-						? (<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
-							{user.user_name}
-						</a>)
-						: <Skeleton variant="text" width="75%" height={24} />}
-					<TTooltip title="register.display-name.label" arrow placement="left">
-						<i className="far fa-tag" />
-					</TTooltip>
-					{isSameUser
-						? <span>{user.display_name}</span>
-						: <Skeleton variant="text" width="65%" height={24} />}
-					<TTooltip title="register.gender.label" arrow placement="left">
-						<i className="far fa-venus-mars" />
-					</TTooltip>
-					{isSameUser
-						? <TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
-						: <Skeleton variant="text" width="30%" height={24} />}
-					<TTooltip title="register.email.label" arrow placement="left">
-						<i className="far fa-envelope" />
-					</TTooltip>
-					<div className="email-with-copy">
+				<Box
+					sx={{
+						display: "flex",
+						flexDirection: { xs: "column", md: "row" },
+						gap: 2,
+						alignItems: { xs: "center", md: "flex-start" },
+					}}
+				>
+					<Box className="profile-avatar-container">
+						{!isSameUser ? (
+							<Skeleton variant="circular" width="120px" height="120px" sx={{ margin: "0 auto" }} />
+						) : (
+							<img
+								src={requireImage(user?.avatar_url || "")}
+								alt={user?.display_name}
+								className="profile-avatar"
+							/>
+						)}
+					</Box>
+
+					<Box className="profile-user-info">
+						<TTooltip title="register.username.label" arrow placement="left">
+							<i className="far fa-user mr-20" />
+						</TTooltip>
 						{isSameUser
-							? <a href={`mailto:${user.email}`}>{user.email}</a>
-							: <Skeleton variant="text" width="90%" height={24} />}
-						<TI
-							className={isCopied ? "fas fa-circle-check copied-icon" : "far fa-copy cursor-pointer"}
-							onClick={handleCopyEmail}
-							onAnimationEnd={onAnimationEnd}
-							title="Copy email"
-						/>
-					</div>
+							? (<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
+								{user.user_name}
+							</a>)
+							: <Skeleton variant="text" width="75%" height={24} />}
+						<TTooltip title="register.display-name.label" arrow placement="left">
+							<i className="far fa-tag" />
+						</TTooltip>
+						{isSameUser
+							? <span>{user.display_name}</span>
+							: <Skeleton variant="text" width="65%" height={24} />}
+						<TTooltip title="register.gender.label" arrow placement="left">
+							<i className="far fa-venus-mars" />
+						</TTooltip>
+						{isSameUser
+							? <TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
+							: <Skeleton variant="text" width="30%" height={24} />}
+						<TTooltip title="register.email.label" arrow placement="left">
+							<i className="far fa-envelope" />
+						</TTooltip>
+						<div className="email-with-copy">
+							{isSameUser
+								? <a href={`mailto:${user.email}`}>{user.email}</a>
+								: <Skeleton variant="text" width="90%" height={24} />}
+							<TI
+								className={isCopied ? "fas fa-circle-check copied-icon" : "far fa-copy cursor-pointer"}
+								onClick={handleCopyEmail}
+								onAnimationEnd={onAnimationEnd}
+								title="Copy email"
+							/>
+						</div>
+					</Box>
 				</Box>
 				<Divider className="mt-20 mb-20" sx={{ borderColor: "primary.main" }} />
 
-				{gameStats && <Box className="profile-stats-title">
+				<Box className="profile-stats-title">
 					<Box className="statistic win">
 						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.win ?? 0}</Typography>
+							? <Typography component="span" className="statistic-value">{gameStats?.win ?? -1}</Typography>
 							: <Skeleton variant="text" width="90%" height={24} />}
 						<TTypography color="textPrimary" className="statistic-label" content="Win" />
 					</Box>
 					<Box className="statistic draw">
 						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.draw ?? 0}</Typography>
+							? <Typography component="span" className="statistic-value">{gameStats?.draw ?? -1}</Typography>
 							: <Skeleton variant="text" width="90%" height={24} />}
 						<TTypography color="textPrimary" className="statistic-label" content="Draw" />
 					</Box>
 					<Box className="statistic lose">
 						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.lose ?? 0}</Typography>
+							? <Typography component="span" className="statistic-value">{gameStats?.lose ?? -1}</Typography>
 							: <Skeleton variant="text" width="90%" height={24} />}
 						<TTypography color="textPrimary" className="statistic-label" content="Lose" />
 					</Box>
-				</Box>}
+				</Box>
 
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<Grid container className="profile-dialog-actions">
-				{!isOwnProfile && (
-					<TButton
-						variant="contained"
-						size="small"
-						color="info"
-						onClick={handleSendPM}
-						value="room.actions.send-pm"
-						startIcon={<i className="far fa-comment" />}
-					/>
-				)}
-				{user && (
-					<TButton
-						variant="contained"
-						size="small"
-						color="success"
-						onClick={handleViewHistory}
-						value="room.actions.view-history"
-						startIcon={<i className="far fa-clock" />}
-					/>
-				)}
-				{user && !isOwnProfile && isRoomHost && (
-					<TButton
-						variant="contained"
-						size="small"
-						color="error"
-						// Only allow kicking when the room is in "waiting" status
-						disabled={!room || room.status === 2}
-						onClick={handleKickUser}
-						value="room.actions.kick"
-						startIcon={<i className="far fa-ban" />}
-					/>
+				{!isSameUser ? (
+					<>
+						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
+						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
+						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
+					</>
+				) : (
+					<>
+						{!isOwnProfile && (
+							<TButton
+								variant="contained"
+								size="small"
+								color="info"
+								onClick={handleSendPM}
+								value="room.actions.send-pm"
+								startIcon={<i className="far fa-comment" />}
+							/>
+						)}
+						{user && (
+							<TButton
+								variant="contained"
+								size="small"
+								color="success"
+								onClick={handleViewHistory}
+								value="room.actions.view-history"
+								startIcon={<i className="far fa-clock" />}
+							/>
+						)}
+						{user && !isOwnProfile && isRoomHost && (
+							<TButton
+								variant="contained"
+								size="small"
+								color="error"
+								// TODO: Only allow kicking when the room is in "waiting" status
+								disabled={!isRoomHost}
+								onClick={handleKickUser}
+								value="room.actions.kick"
+								startIcon={<i className="far fa-ban" />}
+							/>
+						)}
+					</>
 				)}
 				<TButton
 					variant="outlined"
 					size="small"
-					onClick={handleCloseProfilePopup}
+					onClick={e => handleCloseProfilePopup(e, "escapeKeyDown")}
 					value="settings.close"
 					startIcon={<i className="far fa-xmark" />}
 				/>

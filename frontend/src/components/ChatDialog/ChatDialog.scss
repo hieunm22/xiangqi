@@ -1,0 +1,193 @@
+.chat-dialog .MuiDialog-paper {
+	border-radius: 12px;
+}
+
+.chat-dialog-title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+
+	&.chat-dialog-drag-handle {
+		cursor: move;
+		user-select: none;
+	}
+
+	& .chat-title-left {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+	}
+
+	& .chat-title-text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	& .chat-menu-icon {
+		cursor: pointer;
+		padding: 4px;
+
+		&:hover {
+			opacity: 0.6;
+		}
+	}
+
+	& .chat-close-icon {
+		cursor: pointer;
+		padding: 4px;
+
+		&:hover {
+			opacity: 0.6;
+		}
+	}
+}
+
+.chat-dialog-content {
+	padding: 0 !important;
+	// Anchor the in-dialog drawer to the content area (below the title).
+	position: relative;
+	overflow: hidden;
+}
+
+// Slide-in panel contained within the dialog content, not the whole screen.
+.chat-inner-drawer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 70%;
+	max-width: 240px;
+	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+	transform: translateX(-100%);
+	transition: transform 0.25s ease;
+	z-index: 2;
+
+	&.open {
+		transform: translateX(0);
+	}
+}
+
+.chat-conversation-list {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.chat-conversation-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px !important;
+
+	&.active {
+		background-color: rgba(0, 102, 204, 0.1);
+	}
+}
+
+.chat-conversation-text {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.chat-conversation-name {
+	font-weight: 600;
+}
+
+// Dim the rest of the content while the drawer is open; click to dismiss.
+.chat-inner-drawer-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.3);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.25s ease, visibility 0.25s ease;
+	z-index: 1;
+
+	&.open {
+		opacity: 1;
+		visibility: visible;
+	}
+}
+
+.chat-messages-box {
+	height: min(50vh, 400px);
+	overflow-y: auto;
+	padding: 10px;
+}
+
+.chat-avatar-container {
+	width: 40px;
+	margin-right: 8px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: flex-start;
+}
+
+.chat-avatar {
+	width: 32px !important;
+	height: 32px !important;
+	margin-right: 8px;
+}
+
+.chat-message-content {
+	padding: 8px 12px;
+	border-radius: 8px;
+	max-width: 70%;
+	word-wrap: break-word;
+
+	&.sender {
+		background-color: #0066cc;
+		color: white;
+	}
+
+	&.receiver {
+		background-color: #f0f0f0;
+		color: black;
+	}
+}
+
+.chat-unread-divider {
+	margin: 10px 0 6px !important;
+
+	&::before,
+	&::after {
+		border-color: rgba(0, 102, 204, 0.35) !important;
+	}
+
+	.chat-unread-divider-text {
+		padding: 2px 10px;
+		border-radius: 999px;
+		font-weight: 600;
+		letter-spacing: 0.2px;
+		color: #0066cc;
+		background: rgba(0, 102, 204, 0.1);
+	}
+}
+
+.chat-input-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: solid 1px rgba(0, 0, 0, 0.12);
+
+	& .end-icon {
+		padding: 8px;
+    color: #0084ff;
+    cursor: pointer;
+    transform: rotate(45deg) translate(-10px, 5px);
+    font-size: 20px;
+
+		&:hover {
+			opacity: 0.8;
+		}
+
+		&.disabled {
+			color: rgba(0, 0, 0, 0.26);
+			cursor: not-allowed;
+		}
+	}
+}

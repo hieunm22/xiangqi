@@ -20,7 +20,7 @@ export interface APIResponseEmpty {
 
 export interface APIResponse<T> {
 	success: boolean
-	data: T | null
+	data: T
 	status_code: number
 	message: string
 }

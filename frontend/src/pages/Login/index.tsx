@@ -117,7 +117,7 @@ export default function LoginPage() {
 					<TTypography
 						variant="h5"
 						component="h1"
-						fontWeight={700}
+						sx={{ fontWeight: 700 }}
 						content="login.form.title"
 					/>
 					<TTextField
@@ -167,7 +167,7 @@ export default function LoginPage() {
 						}}
 					/>
 
-					<Stack direction="row" justifyContent="space-between" spacing={2}>
+					<Stack direction="row" spacing={2} sx={{ justifyContent: "space-between" }}>
 						<Link component={RouterLink} to="/lost-password" underline="hover" variant="body2">
 							{translate("login.form.forgot-password")}
 						</Link>

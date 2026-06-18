@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { MouseEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { HOME_PATH, LOGIN_PATH } from "common/constant"
 import {
@@ -10,6 +10,7 @@ import {
 import { openAlert } from "components/AlertProvider"
 import { openBotDifficulty } from "components/BotDifficultyProvider"
 import { openConfirm } from "components/ConfirmProvider"
+import { RoomChatMessage } from "components/ChatDialog/types"
 import {
 	decodePayload,
 	diffFenMove,
@@ -44,21 +45,24 @@ import {
 } from "types/GameState"
 import {
 	DrawRequest,
+	GameMenuActionContextValue,
 	GameMovements,
 	HistoryData,
 	MovePieceRequest,
 	MoveProps,
 	RemoteMoveProps,
 	RoomActionButton,
+	RoomChatDialogContextValue,
 	RoomInfo,
 	RoomInfoData,
+	RoomSettingsDialogContextValue,
 	RoomUser,
 	StartGameBody
 } from "./types"
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
-	const { gameState } = useToolkit()
+	const { state } = useToolkit()
 	const {
 		drawGame,
 		getGameMovementHistory,
@@ -83,6 +87,7 @@ const useRoomHook = () => {
 		offDrawResponse,
 		offGameStarted,
 		offMovePiece,
+		offRoomMessageSent,
 		offRoomUsersUpdated,
 		offSurrender,
 		offUserKicked,
@@ -90,6 +95,7 @@ const useRoomHook = () => {
 		onDrawResponse,
 		onGameStarted,
 		onMovePiece,
+		onRoomMessageSent,
 		onRoomUsersUpdated,
 		onSurrender,
 		onUserKicked,
@@ -99,7 +105,10 @@ const useRoomHook = () => {
 	const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([])
 	const [game, setGame] = useState<GameInfo | null>(null)
 	const [history, setHistory] = useState<HistoryData[]>([])
-	const [settingsOpen, setSettingsOpen] = useState(false)
+	const [isOpen, setIsOpen] = useState(false)
+	const [openRoomChat, setOpenRoomChat] = useState(false)
+	const [unreadChatCount, setUnreadChatCount] = useState(0)
+	const [incomingChatMessage, setIncomingChatMessage] = useState<RoomChatMessage | null>(null)
 
 	const [actionMenuItems, setActionMenuItems] = useState<RoomActionButton[]>([])
 	// Game board state (formerly the redux `game` slice). `currentTurn` doubles as
@@ -126,6 +135,10 @@ const useRoomHook = () => {
 	// history-based diff in updateToState is unreliable in real time (local moves are
 	// never appended to history, so consecutive history entries can span two moves).
 	const remoteMoveRef = useRef<RemoteMoveProps | null>(null)
+	// Mirror the chat-open state into a ref so the room-message-sent listener can
+	// decide whether to bump the unread badge without re-subscribing on toggle.
+	const openRoomChatRef = useRef(openRoomChat)
+	openRoomChatRef.current = openRoomChat
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
@@ -186,6 +199,7 @@ const useRoomHook = () => {
 
 		setRoom(roomData.room)
 		setGame(roomData.game)
+		setUnreadChatCount(roomData.chat.unread_count)
 
 		if (!roomData.game) {
 			setHistory([])
@@ -489,6 +503,32 @@ const useRoomHook = () => {
 			socketLeaveRoom(roomId)
 		}
 	}, [isConnected, roomId, onMovePiece, offMovePiece, socketJoinRoom, socketLeaveRoom])
+
+	// Socket.io: Listen for new room chat messages from other players
+	useEffect(() => {
+		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const handleRoomMessage = (message: RoomChatMessage & { userId?: number }) => {
+			// Ignore our own message — the sender already appended it locally
+			if (message.userId === currentUserId || message.sender?.id === currentUserId) {
+				return
+			}
+
+			setIncomingChatMessage(message)
+			// Only bump the unread badge while the chat dialog is closed
+			if (!openRoomChatRef.current) {
+				setUnreadChatCount(count => count + 1)
+			}
+		}
+
+		onRoomMessageSent(handleRoomMessage)
+
+		return () => {
+			offRoomMessageSent(handleRoomMessage)
+		}
+	}, [isConnected, roomId, currentUserId, onRoomMessageSent, offRoomMessageSent])
 
 	// Socket.io: Listen for draw request and response events
 	useEffect(() => {
@@ -891,7 +931,7 @@ const useRoomHook = () => {
 		const clickedTeam = getTeamFromPieceChar(board[id]?.piece)
 		const isAvailableMove = availableMoves.includes(id)
 
-		if (!gameState.debugMode) {
+		if (!state.debugMode) {
 			// Only seated players may control pieces. Spectators (no assigned team) are
 			// locked out entirely — otherwise a third user in a B-vs-bot room could move
 			// B's pieces.
@@ -1046,8 +1086,8 @@ const useRoomHook = () => {
 	const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
 	const isActionMenuOpen = Boolean(menuAnchorEl)
 
-	const openActionMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setMenuAnchorEl(event.currentTarget)
+	const openActionMenu = (e: MouseEvent<HTMLButtonElement>) => {
+		setMenuAnchorEl(e.currentTarget)
 	}
 
 	const closeActionMenu = () => {
@@ -1059,14 +1099,38 @@ const useRoomHook = () => {
 		callback()
 	}
 
-	const showHideSettings = (open: boolean) => () => setSettingsOpen(open)
+	const showHideSettings = (open: boolean) => () => setIsOpen(open)
 
 	const handleSettingsSaved = (newName: string) => {
 		setRoom(prev => prev ? { ...prev, name: newName } : prev)
 	}
 
-	const roomSettingsDialogValue = {
-		isOpen: settingsOpen,
+
+	const gameMenuActionContextValue: GameMenuActionContextValue = {
+		actionMenuItems,
+		isActionMenuOpen,
+		menuAnchorEl,
+		closeActionMenu,
+		handleMenuItemClick,
+		openActionMenu
+	}
+
+	const roomChatDialogContextValue: RoomChatDialogContextValue = {
+		open: openRoomChat,
+		roomId: room?.id || 0,
+		roomName: room?.name || "room.chat.title",
+		unreadCount: unreadChatCount,
+		incomingMessage: incomingChatMessage,
+		openChat: () => {
+			setUnreadChatCount(0)
+			setOpenRoomChat(true)
+		},
+		onClose: () => setOpenRoomChat(false)
+	}
+
+	const roomSettingsDialogValue: RoomSettingsDialogContextValue = {
+		game,
+		isOpen,
 		isHost: joinedUsers.length > 0 && joinedUsers[0].id === currentUserId,
 		room,
 		users: joinedUsers,
@@ -1077,28 +1141,24 @@ const useRoomHook = () => {
 	}
 
 	return {
-		actionMenuItems,
 		availableMoves,
 		board,
 		bottomSideUser,
 		capturedPieces,
 		checkingPieces,
 		currentTurn,
-		isActionMenuOpen,
-		menuAnchorEl,
+		gameMenuActionContextValue,
 		myTeam,
 		previousMove,
+		roomChatDialogContextValue,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,
 		topSideUser,
 
-		closeActionMenu,
-		handleMenuItemClick,
 		markerClass,
 		onAnimateEnd,
-		onPieceClick,
-		openActionMenu
+		onPieceClick
 	}
 }
 

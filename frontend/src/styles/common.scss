@@ -5,6 +5,22 @@
 .flex {
 	display: flex;
 	justify-content: space-around;
+
+	&.start {
+		justify-content: flex-start;
+	}
+
+	&.end {
+		justify-content: flex-end;
+	}
+}
+
+.align-center {
+	align-items: center;
+}
+
+.bold {
+	font-weight: bold;
 }
 
 @for $i from 1 through 50 {
@@ -37,6 +53,6 @@
 		padding-bottom: $length !important;
 	}
 	.fsx-#{$i} {
-		font-size: $length;
+		font-size: $length !important;
 	}
 }

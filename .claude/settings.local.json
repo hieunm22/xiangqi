@@ -3,8 +3,11 @@
     "allow": [
       "Bash(brew *)",
       "Bash(yarn *)",
-      "Bash(npx tsc *)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(grep -E \"\\\\.\\(ts|prisma\\)$\")",
+      "Bash(npx *)",
+      "Bash(npm *)",
+      "Bash(python3 *)"
     ]
   }
 }

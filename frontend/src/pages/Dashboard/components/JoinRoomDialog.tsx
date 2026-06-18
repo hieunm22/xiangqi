@@ -18,7 +18,7 @@ import { UserAvatarGroup } from "./UserAvatar"
 import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useJoinRoomDialogContext } from "hooks/useAppContext"
-// import useLayoutAuth from "../hooks"
+import useLayoutAuth from "../hook"
 import { Team } from "types/GameState"
 import { SeatAvatarProps } from "../types"
 
@@ -57,7 +57,7 @@ export const JoinRoomDialog = () => {
 	const navigate = useNavigate()
 	const { joinRoom } = useAPI()
 	const { room, closeJoinRoom } = useJoinRoomDialogContext()
-	// const { loadUserData } = useLayoutAuth()
+		const { showProfilePopup } = useLayoutAuth()
 	const [isJoining, setIsJoining] = useState(false)
 
 	const players = room?.users.slice(0, 2) ?? []
@@ -114,23 +114,18 @@ export const JoinRoomDialog = () => {
 			<DialogTitle align="center">{room?.name}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
-				<Stack spacing={2} alignItems="center" className="pt-8">
-					<Stack
-						direction="row"
-						alignItems="center"
-						justifyContent="space-evenly"
-						gap={8}
-					>
+				<Stack className="dashboard__join-room-user-stack" >
+					<Stack direction="row" className="dashboard__join-room-player-stack">
 						<SeatAvatar
 							user={players[0]}
 							isHost={Boolean(players[0])}
-							// onUserClick={loadUserData}
+							onUserClick={showProfilePopup}
 						/>
 						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
 						<SeatAvatar
 							user={players[1]}
 							isHost={false}
-							// onUserClick={loadUserData}
+							onUserClick={showProfilePopup}
 						/>
 					</Stack>
 
@@ -139,7 +134,7 @@ export const JoinRoomDialog = () => {
 							users={spectators}
 							type="primary"
 							maxVisible={6}
-							// onUserClick={loadUserData}
+							onUserClick={showProfilePopup}
 						/>)
 					}
 				</Stack>

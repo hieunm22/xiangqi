@@ -4,6 +4,7 @@ import classnames from "classnames"
 import {
 	AppBar,
 	Avatar,
+	Badge,
 	Box,
 	Button,
 	CssBaseline,
@@ -25,7 +26,8 @@ import {
 	LS_DARKMODE,
 	LS_TOKEN_KEY
 } from "common/constant"
-import { PopupState } from "./enums"
+import { PopupState } from "common/enums"
+import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { GameHistoryPopup } from "./components/GameHistoryPopup"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { PopupProvider, useAuth } from "hooks/useAppContext"
@@ -40,12 +42,13 @@ import {
 import { useAPI } from "hooks/useAPI"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
-import { setPopup, setUserId } from "toolkit/slice/game"
+import { setPopup } from "toolkit/slice/game"
 import { setDarkMode } from "toolkit/slice/home"
 import { translate } from "locales/translate"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
-import { UserProfileWithStats } from "./types"
+import useLayoutAuth from "pages/Dashboard/hook"
+import { GameStats, UserProfileWithStats } from "./types"
 import "./Layout.scss"
 
 const fullWidth = 240
@@ -55,20 +58,23 @@ export default function Layout() {
 	const [drawerOpen, setDrawerOpen] = useState(true)
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-	const [showDebugMenu, setShowDebugMenu] = useState(false)
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null)
 	const [profileUser, setProfileUser] = useState<Users | null>(null)
+	const [gameStats, setGameStats] = useState<GameStats | null>(null)
 	const [userDisplayName, setUserDisplayName] = useState("")
 	const [userImage, setUserImage] = useState("")
+	const [unreadCount, setUnreadCount] = useState(0)
 	const navigate = useNavigate()
 	const {
+		getUnreadCount,
 		getUserById,
 		leaveRoom,
 		logout,
 		makeExpired,
 		resetGame
 	} = useAPI()
-	const { dispatch } = useToolkit()
+	const { state, dispatch } = useToolkit()
+	const { showProfilePopup } = useLayoutAuth()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
 	useAutoTitle()
@@ -99,7 +105,22 @@ export default function Layout() {
 			setUserDisplayName(display_name)
 		}
 
+		const getPrivateMessagesUnread = async () => {
+			const token = getToken()
+			if (!token) return
+
+			try {
+				const response = await getUnreadCount(token)
+				if (response?.success && response.data) {
+					setUnreadCount(response.data.total)
+				}
+			} catch (error) {
+				console.error("Failed to get unread count:", error)
+			}
+		}
+
 		getLoginUserInfo()
+		getPrivateMessagesUnread()
 	}, [])
 
 	const { setLogout } = useAuth()
@@ -132,6 +153,11 @@ export default function Layout() {
 		setMobileOpen(false)
 	}
 
+	const handleShowAnnounce = () => {
+		navigate("/announce")
+		setMobileOpen(false)
+	}
+
 	const handleRestart = async () => {
 		const token = getToken()
 		if (!token) return
@@ -145,7 +171,6 @@ export default function Layout() {
 	const userMenuOpen = Boolean(userMenuAnchor)
 
 	const handleOpenUserMenu = (e: React.MouseEvent<HTMLElement>) => {
-		setShowDebugMenu(e.shiftKey)
 		setUserMenuAnchor(e.currentTarget)
 	}
 
@@ -153,14 +178,23 @@ export default function Layout() {
 		setUserMenuAnchor(null)
 	}
 
-	const handleGoProfile = async () => {
+	const handleGoProfile = () => {
 		if (!currentUserId) return
 		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
-		dispatch(setUserId(currentUserId))
-		dispatch(setPopup(PopupState.PROFILE))
-		// await loadProfileUser(currentUserId)
+
+		showProfilePopup(currentUserId)
+	}
+
+	const handleGoMessages = () => {
+		handleCloseUserMenu()
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
+
+		// Open the private message popup without a preselected conversation;
+		// the user picks one from the drawer.
+		dispatch(setPopup(PopupState.SEND_PM))
 	}
 
 	const handleMakeExpired = async () => {
@@ -194,6 +228,7 @@ export default function Layout() {
 	const menuItems = [
 		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
 		{ text: "menu.guide", icon: "fa-book", click: handleShowGuide },
+		{ text: "menu.announce", icon: "fa-bullhorn", click: handleShowAnnounce },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
 		...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
 	]
@@ -211,7 +246,7 @@ export default function Layout() {
 					variant="h6"
 					noWrap
 					component="div"
-					sx={{ fontWeight: "bold" }}
+					className="bold"
 					content="menu.app-name"
 				/>
 			</Toolbar>
@@ -221,7 +256,7 @@ export default function Layout() {
 					<ListItem key={item.text} disablePadding>
 						<ListItemButton onClick={item.click}>
 							<TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />
-							{drawerOpen && <TTypography content={item.text} sx={{ fontSize: 14 }} />}
+							{drawerOpen && <TTypography content={item.text} className="fsx-14" />}
 						</ListItemButton>
 					</ListItem>
 				))}
@@ -233,7 +268,7 @@ export default function Layout() {
 				<ListItem disablePadding>
 					<ListItemButton onClick={logoutClick}>
 						<i className="fas fa-right-from-bracket" />
-						{drawerOpen && <TTypography content="menu.logout" sx={{ fontSize: 14, ml: 1 }} />}
+						{drawerOpen && <TTypography className="fsx-14 ml-8" content="menu.logout" />}
 					</ListItemButton>
 					<i className={toogleDrawerClass} onClick={handleDrawerToggle} />
 				</ListItem>
@@ -254,24 +289,31 @@ export default function Layout() {
 					display: { xs: "none", sm: "block" }
 				}}
 			>
-				<Button
-					onClick={handleOpenUserMenu}
-					variant="outlined"
-					size="small"
-					sx={{
-						textTransform: "none",
-						display: "flex",
-						gap: 1,
-						borderRadius: 2,
-						backgroundColor: "background.paper",
-						boxShadow: 1,
-						pl: 1,
-						pr: 1.5
-					}}
+				<Badge
+					color="error"
+					badgeContent={unreadCount}
+					invisible={unreadCount === 0}
+					overlap="circular"
 				>
-					<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
-					<span>{displayName}</span>
-				</Button>
+					<Button
+						onClick={handleOpenUserMenu}
+						variant="outlined"
+						size="small"
+						sx={{
+							textTransform: "none",
+							display: "flex",
+							gap: 1,
+							borderRadius: 2,
+							backgroundColor: "background.paper",
+							boxShadow: 1,
+							pl: 1,
+							pr: 1.5
+						}}
+					>
+						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+						<span>{displayName}</span>
+					</Button>
+				</Badge>
 
 				<Menu
 					anchorEl={userMenuAnchor}
@@ -290,20 +332,31 @@ export default function Layout() {
 						list: { dense: true, sx: { left: 1, py: 0.5 } }
 					}}
 				>
-					<MenuItem onClick={handleGoProfile} sx={{ gap: 1 }}>
+					<MenuItem onClick={handleGoProfile} className="menu-item-gap">
 						<i className="fas fa-user fsx-14" />
 						{translate("menu.profile")}
 					</MenuItem>
-					{showDebugMenu && <Divider />}
-					{showDebugMenu && (
-						<MenuItem onClick={handleMakeExpired} sx={{ gap: 1 }}>
+					<MenuItem onClick={handleGoMessages} className="menu-item-gap">
+						<i className="far fa-comment fsx-14" />
+						<Box className="menu-message">
+							{translate("menu.messages")}
+							{unreadCount > 0 && (
+								<Box className="menu-unread-count">
+									{unreadCount > 99 ? "99+" : unreadCount}
+								</Box>
+							)}
+						</Box>
+					</MenuItem>
+					{state.debugMode && <Divider className="menu-divider" />}
+					{state.debugMode && (
+						<MenuItem onClick={handleMakeExpired} className="menu-item-gap">
 							<i className="fas fa-clock fsx-14" />
 							{translate("menu.expired")}
 						</MenuItem>
 					)}
-					<Divider />
-					<MenuItem onClick={handleLogoutFromMenu} sx={{ gap: 1 }}>
-						<i className="fas fa-right-from-bracket fsx-14" />
+					<Divider className="menu-divider" />
+					<MenuItem onClick={handleLogoutFromMenu} className="menu-logout">
+						<i className="fas fa-right-from-bracket" />
 						{translate("menu.logout")}
 					</MenuItem>
 				</Menu>
@@ -315,15 +368,22 @@ export default function Layout() {
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
-					<Button
-						onClick={handleOpenUserMenu}
-						variant="outlined"
-						size="small"
-						className="layout-mobile-user-btn"
+					<Badge
+						color="error"
+						badgeContent={unreadCount}
+						invisible={unreadCount <= 0}
+						overlap="circular"
 					>
-						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
-						<TSpan content={displayName} />
-					</Button>
+						<Button
+							onClick={handleOpenUserMenu}
+							variant="outlined"
+							size="small"
+							className="layout-mobile-user-btn"
+						>
+							<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+							<TSpan content={displayName} />
+						</Button>
+					</Badge>
 				</Toolbar>
 			</AppBar>}
 
@@ -369,7 +429,7 @@ export default function Layout() {
 			</Box>
 
 			{/* popups */}
-			<PopupProvider value={{ profileUser, setProfileUser }}>
+			<PopupProvider value={{ gameStats, profileUser, setGameStats, setProfileUser }}>
 				<Box
 					component="main"
 					sx={{
@@ -386,10 +446,11 @@ export default function Layout() {
 					{isMobile && <Toolbar />}
 					<Outlet />
 
-					<GameHistoryPopup />
-					<GuidePopup />
-					<ProfilePopup />
 					<SettingsPopup />
+					<ProfilePopup />
+					<GuidePopup />
+					<GameHistoryPopup />
+					<PrivateChatPopup />
 				</Box>
 			</PopupProvider>
 		</Box>

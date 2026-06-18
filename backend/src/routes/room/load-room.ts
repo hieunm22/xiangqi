@@ -1,8 +1,8 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { getAvatarUrl } from "common/helper"
+import { getChatMessageCollection } from "common/mongodb"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { totalmem } from "node:os"
 
 const router = Router()
 
@@ -109,6 +109,7 @@ const router = Router()
  *         description: Internal server error
  */
 router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
+	const userId = Number(req.auth?.userId)
 	const roomId = Number(req.query.id)
 
 	if (!Number.isInteger(roomId) || roomId <= 0) {
@@ -158,8 +159,11 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 						users: {
 							select: {
 								id: true,
+								user_name: true,
 								display_name: true,
 								avatar_seq: true,
+								email: true,
+								gender: true,
 								total_points: true
 							}
 						},
@@ -206,10 +210,20 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			}
 		}
 
+		// Count messages in this room the current user has not read yet
+		const chatCollection = await getChatMessageCollection()
+		const unreadCount = await chatCollection.countDocuments({
+			room_id: roomId,
+			read_by: { $ne: userId }
+		})
+
 		const { room_users } = room
 		const formattedUsers = room_users.map(ru => ({
 			id: Number(ru.users.id),
+			user_name: ru.users.user_name,
 			display_name: ru.users.display_name,
+			email: ru.users.email,
+			gender: ru.users.gender,
 			team: ru.team,
 			total_points: ru.users.total_points,
 			joined_at: ru.joined_at,
@@ -231,6 +245,9 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					created_at: room.created_at,
 					updated_at: room.updated_at
 				},
+				chat: {
+					unread_count: unreadCount
+				},
 				users: formattedUsers,
 				game
 			}
@@ -247,4 +264,3 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 })
 
 export default router
-

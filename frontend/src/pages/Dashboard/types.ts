@@ -17,7 +17,7 @@ export interface UserAvatarGroupProps {
 	users: UserAvatarType[]
 	type: "primary" | "secondary"
 	maxVisible: number
-	onUserClick?: (id: number) => Promise<void>
+	onUserClick?: (id: number) => void
 }
 
 export interface PieceSelectionContextValue {
@@ -39,7 +39,7 @@ export interface JoinRoomDialogContextValue {
 export interface SeatAvatarProps {
 	user: UserAvatarType
 	isHost: boolean
-	onUserClick?: (id: number) => Promise<void>
+	onUserClick?: (id: number) => void
 }
 
 export interface PieceButtonProps {

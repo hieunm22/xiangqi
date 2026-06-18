@@ -1,3 +1,4 @@
+import { PrivateConversation } from "components/ChatDialog/types"
 import { UserAvatarType } from "types/Common"
 import { Users } from "types/Entities"
 
@@ -5,9 +6,16 @@ export interface UserProfileProps {
 	isOwnProfile: boolean
 }
 
+export interface ConversationDrawerProps {
+	conversations: PrivateConversation[]
+	onSelect: (conversation: PrivateConversation) => void
+}
+
 export type ProfilePopupContextValue = {
 	profileUser: Users | null
 	setProfileUser: (user: Users | null) => void
+	gameStats: GameStats | null
+	setGameStats: (stats: GameStats | null) => void
 }
 
 export interface GameStats {
@@ -30,4 +38,14 @@ export interface GameHistoryItem {
 	game: GameHistory
 	users: UserAvatarType[]
 	point: number
+}
+
+interface UnreadCountByConversation {
+	conversation_key: string
+	count: number
+}
+
+export interface UnreadCountResponse {
+	total: number
+	conversations: UnreadCountByConversation[]
 }

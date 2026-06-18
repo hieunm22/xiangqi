@@ -125,24 +125,23 @@
 			gap: 0;
 			flex-wrap: wrap;
 			justify-content: flex-start;
-
-			.dashboard__avatar {
-				margin-left: -10px;
-
-				&:first-child {
-					margin-left: 0;
-				}
-			}
 		}
 	}
 
 	&__avatar {
-		width: 28px !important;
-		height: 28px !important;
+		width: 28px;
+		height: 28px;
 		object-fit: cover;
 		border: solid 2px;
+		margin-left: -10px;
+
+		&:first-child {
+			margin-left: 0;
+		}
 
 		&.dashboard__avatar-more {
+			width: 28px;
+			height: 28px;
 			font-size: 12px !important;
 			font-weight: 700;
 			display: flex;
@@ -183,6 +182,18 @@
 	&__seat-crown-placeholder {
 		width: 56px;
 		height: 30px;
+	}
+
+	&__join-room-user-stack {
+		align-items: center;
+		padding-top: 8px;
+	}
+
+	&__join-room-player-stack {
+		align-items: center;
+		justify-content: space-evenly;
+		gap: 48px;
+		margin-bottom: 16px;
 	}
 
 	&__join-room-board {

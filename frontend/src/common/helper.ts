@@ -5,6 +5,7 @@ import {
 	LS_TOKEN_KEY
 } from "./constant"
 import { fenPieceMap } from "pages/Room/constant"
+import { translate } from "locales/translate"
 import {
 	getPieceFromCharacter,
 	getTeamFromPieceChar,
@@ -461,4 +462,74 @@ export function diffFenMove(oldFen: string, newFen: string): FenMoveDiffResult |
 		movedCell: { id: newIndex, piece: movedToken },
 		capturedCell: capturedToken ? { id: newIndex, piece: capturedToken } : null,
 	}
+}
+
+/**
+ * Convert a timestamp (in seconds) to a date/time string array
+ */
+export function formatTimestampToDateTimeArray(timestamp: string, language: string): [string | null, string] {
+	const date = new Date(timestamp)
+	const now = new Date()
+
+	// Get dates without time for comparison
+	const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+	const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	const yesterdayOnly = new Date(todayOnly)
+	yesterdayOnly.setDate(yesterdayOnly.getDate() - 1)
+
+	// Calculate difference in days
+	const daysDiff = Math.floor((todayOnly.getTime() - dateOnly.getTime()) / (1000 * 60 * 60 * 24))
+
+	// Format time as H:mm
+	const hours = date.getHours()
+	const minutes = date.getMinutes().toString().padStart(2, '0')
+	const timeString = `${hours}:${minutes}`
+
+	// Determine date string
+	let dateString: string | null = null
+
+	if (daysDiff === 0) {
+		// Same day - return null
+		dateString = null
+	} else if (daysDiff === 1) {
+		// Yesterday
+		dateString = translate('common.date.yesterday')
+	} else if (daysDiff >= 2 && daysDiff < 7) {
+		// 2-7 days ago - show day of week
+		const dayOfWeekKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()]
+		dateString = translate(`common.date.${dayOfWeekKey}`)
+	} else if (daysDiff >= 7) {
+		// >= 7 days ago
+		if (date.getFullYear() === now.getFullYear()) {
+			// Same year - show dd/MM or MM/dd based on language
+			if (language === 'vi') {
+				// Vietnamese: dd/MM
+				const day = date.getDate().toString().padStart(2, '0')
+				const month = (date.getMonth() + 1).toString().padStart(2, '0')
+				dateString = `${day}/${month}`
+			} else {
+				// English: MM/dd
+				const month = (date.getMonth() + 1).toString().padStart(2, '0')
+				const day = date.getDate().toString().padStart(2, '0')
+				dateString = `${month}/${day}`
+			}
+		} else {
+			// Different year - show full date dd/MM/yyyy or MM/dd/yyyy
+			if (language === 'vi') {
+				// Vietnamese: dd/MM/yyyy
+				const day = date.getDate().toString().padStart(2, '0')
+				const month = (date.getMonth() + 1).toString().padStart(2, '0')
+				const year = date.getFullYear()
+				dateString = `${day}/${month}/${year}`
+			} else {
+				// English: MM/dd/yyyy
+				const month = (date.getMonth() + 1).toString().padStart(2, '0')
+				const day = date.getDate().toString().padStart(2, '0')
+				const year = date.getFullYear()
+				dateString = `${month}/${day}/${year}`
+			}
+		}
+	}
+
+	return [dateString, timeString]
 }

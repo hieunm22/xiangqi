@@ -11,29 +11,29 @@ export const COUNTRIES_OPTIONS: DropdownProps[] = [
 	{
 		key: "en",
 		icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1fa-1f1f8.svg",
-		value: "United States (English)"
+		value: "English"
 	},
 	{
 		key: "vi",
 		icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1fb-1f1f3.svg",
-		value: "Tiếng Việt (Vietnamese)"
+		value: "Tiếng Việt"
 	}
 	// {
 	// 	key: "jp",
 	// 	icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1ef-1f1f5.svg",
-	// 	value: "日本語 (Japanese)",
+	// 	value: "日本語",
 	// 	 disabled: true
 	// },
 	// {
 	// 	key: "kr",
 	// 	icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1f0-1f1f7.svg",
-	// 	value: "한국인 (Korean)",
+	// 	value: "한국인",
 	// 	disabled: true
 	// },
 	// {
 	// 	key: "cn",
 	// 	icon: "https://cdn.jsdelivr.net/npm/twemoji@latest/2/svg/1f1e8-1f1f3.svg",
-	// 	value: "中国人 (Chinese)",
+	// 	value: "中国人",
 	// 	disabled: true
 	// }
 ]

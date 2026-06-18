@@ -9,7 +9,12 @@ import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
 import { APIResponse, APIResponseEmpty } from "types/Common"
 import { Team } from "types/GameState"
-import { GameHistoryItem, UserProfileWithStats } from "components/Layout/types"
+import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
+import {
+	GameHistoryItem,
+	UnreadCountResponse,
+	UserProfileWithStats
+} from "components/Layout/types"
 import {
 	GameMovements,
 	MovePieceRequest,
@@ -48,6 +53,16 @@ const EP = { // end points
 	getPlayerHistory: "/game/player-history",
 	surrenderGame: "/game/surrender",
 	undoGame: "/game/undo",
+
+	// message endpoints
+	getPrivateConversations: "/message/get-private-conversations",
+	getPrivateMessages: "/message/get-private",
+	getRoomMessages: "/message/get-room-message",
+	markPrivateMessageAsRead: "/message/mark-private-message-as-read",
+	markRoomMessageAsRead: "/message/mark-room-as-read",
+	sendPrivateMessage: "/message/send-private",
+	sendRoomMessage: "/message/send-room-message",
+	unreadCount: "/message/unread-count",
 
 	// tool endpoints
 	makeExpired: "/tool/make-expired",
@@ -166,6 +181,30 @@ export const useAPI = () => {
 							.json(getRoomCallback)
 							.catch(handleError)
 
+	const getPrivateConversations = async (token: string) => authFetch(EP.getPrivateConversations)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getPrivateConversationsCallback)
+							.catch(handleError)
+
+	const getPrivateMessages = async (token: string, receiverId: number) => authFetch(`${EP.getPrivateMessages}?receiver_id=${receiverId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getPrivateMessagesCallback)
+							.catch(handleError)
+
+	const getRoomMessages = async (token: string, roomId: number) => authFetch(`${EP.getRoomMessages}?roomId=${roomId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getRoomMessagesCallback)
+							.catch(handleError)
+
+	const getUnreadCount = async (token: string) => authFetch(EP.unreadCount)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getUnreadCountCallback)
+							.catch(handleError)
+
 	const getUserById = async (token: string, userId: number) => authFetch(`${EP.getUser}?id=${userId}`)
 							.auth(`Bearer ${token}`)
 							.get()
@@ -247,6 +286,30 @@ export const useAPI = () => {
 							.json(resetGameCallback)
 							.catch(handleError)
 
+	const sendPrivateMessage = async (token: string, receiverId: number, message: string) => authFetch(EP.sendPrivateMessage)
+							.auth(`Bearer ${token}`)
+							.post({ message, receiver_id: receiverId })
+							.json(sendPrivateMessageCallback)
+							.catch(handleError)
+
+	const sendRoomMessage = async (token: string, roomId: number, message: string) => authFetch(EP.sendRoomMessage)
+							.auth(`Bearer ${token}`)
+							.post({ message, room_id: roomId })
+							.json(sendRoomMessageCallback)
+							.catch(handleError)
+							
+	const markPrivateMessageAsRead = async (token: string, receiverId: number) => authFetch(EP.markPrivateMessageAsRead)
+							.auth(`Bearer ${token}`)
+							.post({ receiver_id: receiverId })
+							.json(markPrivateMessageAsReadCallback)
+							.catch(handleError)
+
+	const markRoomMessageAsRead = async (token: string, roomId: number) => authFetch(EP.markRoomMessageAsRead)
+							.auth(`Bearer ${token}`)
+							.post({ room_id: roomId })
+							.json(markRoomMessageAsReadCallback)
+							.catch(handleError)
+
 	const startRoom = async (token: string, roomId: number, botDifficulty?: number) => authFetch(EP.startRoom)
 							.auth(`Bearer ${token}`)
 							.post(botDifficulty !== undefined ? { id: roomId, botDifficulty } : { id: roomId })
@@ -301,11 +364,27 @@ export const useAPI = () => {
 		return response
 	}
 
+	const getPrivateConversationsCallback = (response: APIResponse<PrivateConversation[]>) => {
+		return response
+	}
+
+	const getPrivateMessagesCallback = (response: APIResponse<PrivateChatMessage[]>) => {
+		return response
+	}
+
 	const getRoomCallback = (response: APIResponse<RoomInfoData>) => {
 		return response
 	}
 
+	const getRoomMessagesCallback = (response: any) => {
+		return response
+	}
+
 	const getUserCallback = (response: APIResponse<UserProfileWithStats>) => {
+		return response
+	}
+
+	const getUnreadCountCallback = (response: APIResponse<UnreadCountResponse>) => {
 		return response
 	}
 
@@ -333,6 +412,10 @@ export const useAPI = () => {
 		return accessToken
 	}
 
+	const movePieceCallback = (response: APIResponse<GameMovements>) => {
+		return response
+	}
+
 	const registerCallback = (response: AuthResponse) => {
 		return response
 	}
@@ -345,15 +428,27 @@ export const useAPI = () => {
 		return response
 	}
 
-	const movePieceCallback = (response: APIResponse<GameMovements>) => {
-		return response
-	}
-
 	const refreshTokenCallback = (response: AuthResponse) => {
 		return response
 	}
 
 	const resetGameCallback = (response: any) => {
+		return response
+	}
+
+	const sendPrivateMessageCallback = (response: APIResponse<PrivateChatMessage>) => {
+		return response
+	}
+
+	const sendRoomMessageCallback = (response: any) => {
+		return response
+	}
+
+	const markPrivateMessageAsReadCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
+	const markRoomMessageAsReadCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
@@ -402,7 +497,11 @@ export const useAPI = () => {
 		forgotPassword,
 		getGameMovementHistory,
 		getPlayerHistory,
+		getPrivateConversations,
+		getPrivateMessages,
+		getRoomMessages,
 		getRoomById,
+		getUnreadCount,
 		getUserById,
 		joinRoom,
 		kickUser,
@@ -410,12 +509,16 @@ export const useAPI = () => {
 		login,
 		logout,
 		makeExpired,
+		markPrivateMessageAsRead,
+		markRoomMessageAsRead,
 		movePiece,
 		register,
 		refreshToken,
 		resetGame,
 		resetPasswordValidate,
 		resetPassword,
+		sendPrivateMessage,
+		sendRoomMessage,
 		startRoom,
 		surrenderGame,
 		undoGame,

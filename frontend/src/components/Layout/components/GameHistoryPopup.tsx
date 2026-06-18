@@ -11,7 +11,7 @@ import {
 	Tooltip,
 	Typography
 } from "@mui/material"
-import { PopupState } from "../enums"
+import { PopupState } from "common/enums"
 import { TButton } from "components/TranslationTag"
 import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
@@ -47,7 +47,7 @@ const PlayerAvatars = ({ game, userId: currentUserId }: PlayerAvatarsProps) => {
 	const winnerUserId = getWinnerUserId(game)
 
 	return (
-		<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-start">
+		<Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-start" }}>
 			{game.users.slice(0, 2).map(user => {
 				const isWinner = winnerUserId === user.id
 

@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import jwt from "jsonwebtoken"
 import { REFRESH_TOKEN_KEY, REFRESH_TOKEN_TTL_SECONDS } from "common/constant"
 import { getRefreshCookieOptions } from "common/cookie"
+import redis from "common/redis"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -46,6 +47,8 @@ router.post("/tool/make-expired", requireAuth(), async (req: AuthenticatedReques
 
 	const options = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
 	res.clearCookie(REFRESH_TOKEN_KEY, options)
+	
+	await redis.del(`${REFRESH_TOKEN_KEY}:${req.auth!.userId}:${req.auth!.sessionId}`)
 
 	res.status(200).type("text/plain").send(access_token)
 })

@@ -84,14 +84,14 @@ export default function LayoutUnAuth() {
 				maxWidth="xs"
 				disableRestoreFocus
 			>
-				<DialogTitle padding="5px 20px !important">
+				<DialogTitle className="setting-title">
 					<TTypography content="settings.header" sx={textCenterStyle} />
 				</DialogTitle>
 				<Divider sx={{ my: "5px" }} />
 				<DialogContent className="dialog-content">
-					<Grid container className="setting-row" alignItems="center" gap={2}>
+					<Grid container sx={{ alignItems: "center", gap: 2 }} className="setting-row">
 						<TTypography sx={{ minWidth: "100px" }} content="settings.language" />
-						<Grid container gap={1}>
+						<Grid container sx={{ gap: 1 }}>
 							{COUNTRIES_OPTIONS.map(option => (
 								<Button
 									key={option.key}
@@ -120,7 +120,7 @@ export default function LayoutUnAuth() {
 							onChange={toogleDarkMode}
 						/>
 					</Grid>
-					<Grid container justifyContent="center">
+					<Grid container sx={{ justifyContent: "center" }}>
 						<Button
 							className="btn btn-primary mt-20 center"
 							variant="outlined"

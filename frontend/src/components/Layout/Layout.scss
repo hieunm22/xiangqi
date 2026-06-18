@@ -35,12 +35,47 @@
 	}
 }
 
+.menu-item-gap {
+	gap: 8px;
+}
+
 .menu-profile {
 	border-radius: 50%;
 	width: 24px;
 	height: 24px;
 	object-fit: cover;
 	margin-right: 10px;
+}
+
+.menu-message {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex: 1;
+
+	& .menu-unread-count {
+		background-color: #d32f2f;
+		color: white;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.75rem;
+		font-weight: bold;									
+	}
+}
+
+.menu-divider {
+	margin: 4px 0 !important;
+}
+
+.menu-logout {
+	margin: 4px 0 !important;
+	color: #d32f2f !important;
+	gap: 8px;
 }
 
 .setting-row {
@@ -57,13 +92,29 @@
 	}
 }
 
+.profile-dialog .MuiDialog-paper {
+	border-radius: 12px;
+}
+
+.profile-avatar-container {
+	flex-shrink: 0;
+	width: 120px;
+	height: 120px;
+}
+
+.profile-avatar {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
 .profile-user-info {
 	display: grid;
 	grid-template-columns: auto 1fr;
 	row-gap: 0.5rem;
 	column-gap: 0.5rem;
-	margin-left: auto;
-	text-align: left;
+	margin-left: 10px;
 	align-items: center;
 }
 

@@ -57,7 +57,7 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				fullWidth
 				disableEnforceFocus
 			>
-				<DialogTitle padding="5px 20px !important">
+				<DialogTitle sx={{ padding: "5px 20px !important" }}>
 					<Typography component="div" sx={textCenterStyle}>
 						{translate(current?.options.title ?? "popup.alert.title")}
 					</Typography>
@@ -67,7 +67,7 @@ export const AlertProvider = (props: ComponentWithChild) => {
 					<Typography sx={{ textAlign: "center", mb: 1 }}>
 						{translate(current?.options.message)}
 					</Typography>
-					<Grid container justifyContent="center">
+					<Grid container sx={{ justifyContent: "center" }}>
 						<Button
 							className="btn btn-primary mt-20 center"
 							variant="outlined"

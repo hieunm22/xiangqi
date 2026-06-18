@@ -265,6 +265,20 @@ export function useSocket() {
 		}
 	}, [])
 
+	const onRoomMessageSent = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("room-message-sent", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-message-sent listener")
+		}
+	}, [])
+
+	const offRoomMessageSent = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("room-message-sent", callback)
+		}
+	}, [])
+
 	const onDashboardRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.on("dashboard-room-users-updated", callback)
@@ -295,6 +309,7 @@ export function useSocket() {
 		offMovePiece,
 		offRoomCreated,
 		offRoomDeleted,
+		offRoomMessageSent,
 		offRoomUsersUpdated,
 		offSurrender,
 		offUserKicked,
@@ -305,6 +320,7 @@ export function useSocket() {
 		onMovePiece,
 		onRoomCreated,
 		onRoomDeleted,
+		onRoomMessageSent,
 		onRoomUsersUpdated,
 		onSurrender,
 		onUserKicked,

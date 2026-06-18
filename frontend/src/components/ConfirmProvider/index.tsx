@@ -59,7 +59,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 				fullWidth
 				disableEnforceFocus
 			>
-				<DialogTitle padding="5px 20px !important">
+				<DialogTitle sx={{ padding: "5px 20px !important" }}>
 					<Typography component="div" className="flex">
 						{translate(current?.options.title ?? "popup.confirm.title")}
 					</Typography>
@@ -70,7 +70,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 						<i className="fas fa-circle-question mt-4" />
 						<TSpan content={current?.options.message ?? "popup.confirm.message"} />
 					</Typography>
-					<Grid container justifyContent="flex-end" gap={2}>
+					<Grid container sx={{ justifyContent: "flex-end", gap: 2 }}>
 						<TButton
 							variant="contained"
 							size="small"

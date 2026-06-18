@@ -97,12 +97,13 @@ export const CreateRoomDialog = () => {
 			return
 		}
 
-		handleClose()
+		handleClose(null, "escapeKeyDown")
 		// navigate to the newly created room page
 		navigate(`/room/${createdRoomId}`)
 	}
 
-	const handleClose = () => {
+	const handleClose = (_: any, reason?: "backdropClick" | "escapeKeyDown") => {
+		if (reason === "backdropClick") return
 		setOpen(false)
 		resetForm()
 	}

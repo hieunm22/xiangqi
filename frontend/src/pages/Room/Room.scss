@@ -307,25 +307,22 @@
 
 .room-action-row {
 	justify-content: space-between;
-}
 
-.room-more-action {
-	width: 48px;
-	height: 48px;
-	border: none;
-	border-radius: 10px;
-	background: linear-gradient(145deg, #7a4f27, #9d6836);
-	color: #fff;
-	font-size: 18px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	box-shadow: 0 6px 12px rgba(52, 24, 8, 0.2);
-	transition: transform 160ms ease, filter 160ms ease;
+	.room-more-action {
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+		background: linear-gradient(145deg, #7a4f27, #9d6836);
+		color: #fff;
+		font-size: 18px;
+		line-height: 48px;
+		cursor: pointer;
+		box-shadow: 0 6px 12px rgba(52, 24, 8, 0.2);
+		transition: filter 160ms ease;
 
-	&:hover {
-		filter: brightness(1.06);
+		&:hover {
+			filter: brightness(1.2);
+		}
 	}
 }
 
@@ -442,11 +439,16 @@
 	font-size: 18px;
 }
 
+.game-lelvel {
+	width: 90%;
+	margin: 0 auto;
+}
+
 .user-points {
 	color: #e5d10f;
 	-webkit-text-stroke: 1px #898989;
 	font-size: 24px;
-	margin-right: 10px;
+	margin-right: 5px;
 }
 
 .captured-pieces {
@@ -501,7 +503,7 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 50%;
-	border: 2px solid #6b3d20;
+	border: 1px solid #6b3d20;
 	background: radial-gradient(circle at 35% 30%, #fff8e4 0, #f4dfb2 64%, #e0be84 100%);
 	display: flex;
 	align-items: center;

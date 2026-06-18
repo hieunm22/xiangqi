@@ -5,7 +5,8 @@ import { UserAvatarType } from "types/Common"
 import { UserAvatarGroupProps } from "../types"
 
 interface UserAvatarProps extends UserAvatarType {
-	onUserClick?: (id: number) => Promise<void>
+	size: number
+	onUserClick?: (id: number) => void
 }
 
 export const UserAvatar = (props: UserAvatarProps) => {
@@ -25,6 +26,8 @@ export const UserAvatar = (props: UserAvatarProps) => {
 				alt={display_name}
 				onClick={handleClick}
 				sx={{
+					width: props.size,
+					height: props.size,
 					cursor: onUserClick ? "pointer" : "default",
 					"&:hover": onUserClick ? { opacity: 0.8 } : {}
 				}}
@@ -41,17 +44,13 @@ export const UserAvatarGroup = (props: UserAvatarGroupProps) => {
 	
 	// Determine which users to display
 	const needsTruncation = isMobile && users.length > maxVisible + 1
-	const displayUsers = needsTruncation ? users.slice(0, maxVisible) : users	
+	const players = needsTruncation ? users.slice(0, maxVisible) : users	
 	const remainingCount = needsTruncation ? users.length - maxVisible : 0
-	const stackClass = classnames("dashboard__avatar-group", type)
+	const stackClass = classnames("dashboard__avatar-group align-center", type)
 
 	return (
-		<Stack
-			direction="row"
-			alignItems="center"
-			className={stackClass}
-		>
-			{displayUsers.map(u => <UserAvatar key={u.id} {...u} onUserClick={onUserClick} />)}
+		<Stack direction="row" className={stackClass}>
+			{players.map(u => <UserAvatar key={u.id} {...u} size={28} onUserClick={onUserClick} />)}
 			{remainingCount > 0 && (
 				<Tooltip title={`${remainingCount} more spectators`} arrow placement="top">
 					<Avatar className="dashboard__avatar dashboard__avatar-more">

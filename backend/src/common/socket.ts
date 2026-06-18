@@ -196,6 +196,21 @@ export function emitMovePiece(roomId: string | number, moveRecord: any, userId?:
 }
 
 /**
+ * Emit a new room chat message to all clients in a room.
+ * The payload carries `userId` so the sender's client can ignore its own message.
+ */
+export function emitRoomMessage(roomId: string | number, message: any, senderId: number) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit room-message-sent: Socket.io server not initialized`)
+		return
+	}
+
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("room-message-sent", { ...message, userId: senderId })
+	console.log(`[Socket.io] [${new Date().toISOString()}] Room message emitted to ${roomChannel}`)
+}
+
+/**
  * Emit game surrender event to all clients in a room
  */
 export function emitGameSurrender(roomId: string, data: any) {

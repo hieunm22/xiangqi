@@ -42,6 +42,12 @@
 	.xiangqi-board {
 		order: -1;
 	}
+	
+	.profile-user-info {
+		flex-direction: column;
+		margin-left: 0;
+		gap: 8px;
+	}
 
 	.player-info-row, .room-action-row {
 		width: calc(var(--board-width) + var(--board-padding) * 2);

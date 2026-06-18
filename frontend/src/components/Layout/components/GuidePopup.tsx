@@ -4,7 +4,7 @@ import {
 	DialogTitle,
 	Divider,
 } from "@mui/material"
-import { PopupState } from "../enums"
+import { PopupState } from "common/enums"
 import { Guide } from "components/Guide"
 import { TButton } from "components/TranslationTag"
 import useToolkit from "hooks/useToolkit"
@@ -14,7 +14,10 @@ import "../Layout.scss"
 
 export const GuidePopup = () => {
 	const { gameState, dispatch } = useToolkit()
-	const handleCloseGuide = () => dispatch(setPopup(PopupState.NONE))
+	const handleCloseGuide = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
+		if (reason === "backdropClick") return
+		dispatch(setPopup(PopupState.NONE))
+	}
 
 	return (
 		<Dialog
@@ -34,7 +37,7 @@ export const GuidePopup = () => {
 				<TButton
 					variant="outlined"
 					size="medium"
-					onClick={handleCloseGuide}
+					onClick={e => handleCloseGuide(e, "escapeKeyDown")}
 					value="settings.close"
 				/>
 			</div>

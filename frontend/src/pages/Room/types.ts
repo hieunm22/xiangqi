@@ -1,3 +1,5 @@
+import { MouseEvent } from "react"
+import { RoomChatMessage } from "components/ChatDialog/types"
 import { EmptyPromise, EmptyVoid } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -26,7 +28,6 @@ export interface PlayerInfoCardProps {
 	user: RoomUser | null
 	team: Team
 	active: boolean
-	room: RoomInfo | null
 	roomHostId: number | null
 }
 
@@ -49,10 +50,15 @@ export interface RoomInfo {
 	pve_mode: boolean
 }
 
+interface RoomChatInfo {
+	unread_count: number
+}
+
 export interface RoomInfoData {
 	room: RoomInfo
 	users: RoomUser[]
 	game: GameInfo | null
+	chat: RoomChatInfo
 }
 
 export interface RoomWithUsers {
@@ -120,11 +126,34 @@ export interface PieceSideUser {
 	bottom: RoomUser
 }
 
+export interface GameMenuActionContextValue {
+	actionMenuItems: RoomActionButton[]
+	isActionMenuOpen: boolean
+	menuAnchorEl: HTMLElement | null
+
+	closeActionMenu: EmptyVoid
+	handleMenuItemClick: (onClick: EmptyVoid) => () => void
+	openActionMenu: (e: MouseEvent<HTMLButtonElement>) => void
+}
+
+export interface RoomChatDialogContextValue {
+	open: boolean
+	incomingMessage: RoomChatMessage | null
+	roomId: number
+	roomName: string
+	unreadCount: number
+	openChat: EmptyVoid
+	onClose: EmptyVoid
+}
+
+export type RoomChatButtonProps = RoomChatDialogContextValue
+
 export interface RoomSettingsDialogContextValue {
 	isOpen: boolean
 	isHost: boolean
 	room: RoomInfo | null
 	users: RoomUser[]
+	game: GameInfo | null
 	openSettings: EmptyVoid
 	closeSettings: EmptyVoid
 	handleSettingsSaved: (newName: string) => void

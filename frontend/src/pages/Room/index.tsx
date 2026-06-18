@@ -1,42 +1,38 @@
 import React from "react"
 import classnames from "classnames"
+import { Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
-import { Menu, MenuItem } from "@mui/material"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
-import { Empty } from "components/Common"
-import { TI } from "components/TranslationTag"
 import CapturedPiecesDisplay from "./components/CapturedPiecesDisplay"
+import { GameMenu } from "./components/GameMenu"
 import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
+import { RoomChatButton } from "./components/RoomChatButton"
 import SettingsButton from "./components/SettingsButton"
 import useRoomHook from "./hook"
 import "./Room.scss"
 
 export default function RoomPage() {
 	const {
-		actionMenuItems,
 		availableMoves,
 		board,
 		bottomSideUser,
 		capturedPieces,
 		checkingPieces,
 		currentTurn,
-		isActionMenuOpen,
-		menuAnchorEl,
+		gameMenuActionContextValue,
 		myTeam,
 		previousMove,
+		roomChatDialogContextValue,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,
 		topSideUser,
 
-		closeActionMenu,
-		handleMenuItemClick,
 		markerClass,
 		onAnimateEnd,
-		onPieceClick,
-		openActionMenu
+		onPieceClick
 	} = useRoomHook()
 
 	return (
@@ -52,7 +48,6 @@ export default function RoomPage() {
 									bottomSideUser?.team === "red" ? "black" : "red"
 						}
 						active={currentTurn === topSideUser?.team}
-						room={roomSettingsDialogValue.room}
 						roomHostId={roomSettingsDialogValue.users[0]?.id ?? null}
 					/>
 					<CapturedPiecesDisplay
@@ -73,7 +68,6 @@ export default function RoomPage() {
 						user={bottomSideUser}
 						team={bottomSideUser?.team === "black" ? "black" : "red"}
 						active={currentTurn === bottomSideUser?.team}
-						room={roomSettingsDialogValue.room}
 						roomHostId={roomSettingsDialogValue.users[0]?.id ?? null}
 					/>
 				</div>
@@ -156,34 +150,11 @@ export default function RoomPage() {
 				</div>
 			</div>
 			<div className="room-action-row view">
-				<TI className="room-more-action fas fa-ellipsis-h" onClick={openActionMenu} />
-				<Menu
-					anchorEl={menuAnchorEl}
-					open={isActionMenuOpen}
-					onClose={closeActionMenu}
-					anchorOrigin={{ vertical: "top", horizontal: "left" }}
-					transformOrigin={{ vertical: "center", horizontal: "right" }}
-					slotProps={{
-						root: {
-							"aria-hidden": false
-						}
-					}}
-				>
-					{actionMenuItems.map(item => {
-						if (!item.visible) return <Empty key={item.key} />
-						return (
-							<MenuItem
-								key={item.key}
-								onClick={handleMenuItemClick(item.onClick)}
-								disabled={!item.enabled}
-							>
-								<i className={`${item.icon} action-menu-icon`} />
-								{item.label}
-							</MenuItem>
-						)
-					})}
-				</Menu>
-				<SettingsButton {...roomSettingsDialogValue} />
+				<GameMenu {...gameMenuActionContextValue} />
+				<Stack direction={{ xs: "row", sm: "column" }} spacing={1}>
+					<RoomChatButton {...roomChatDialogContextValue} />
+					<SettingsButton {...roomSettingsDialogValue} />
+				</Stack>
 			</div>
 		</div>
 	)
