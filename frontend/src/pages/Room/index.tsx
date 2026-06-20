@@ -152,7 +152,7 @@ export default function RoomPage() {
 			<div className="room-action-row view">
 				<GameMenu {...gameMenuActionContextValue} />
 				<Stack direction={{ xs: "row", sm: "column" }} spacing={1}>
-					<RoomChatButton {...roomChatDialogContextValue} />
+					{!roomChatDialogContextValue.pveMode && <RoomChatButton {...roomChatDialogContextValue} />}
 					<SettingsButton {...roomSettingsDialogValue} />
 				</Stack>
 			</div>

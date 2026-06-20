@@ -132,7 +132,7 @@ export const ProfilePopup = () => {
 
 	return (
 		<Dialog
-			open={state.popupState === PopupState.PROFILE}
+			open={(state.popupState & PopupState.PROFILE) === PopupState.PROFILE}
 			onClose={handleCloseProfilePopup}
 			className="profile-dialog"
 			fullWidth

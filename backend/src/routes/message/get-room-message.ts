@@ -107,7 +107,7 @@ router.get("/message/get-room-message", requireAuth(), async (req: Authenticated
 					user_id: BigInt(userId)
 				}
 			},
-			select: { room_id: true }
+			select: { room_id: true, joined_at: true }
 		})
 
 		if (!roomUser) {
@@ -139,6 +139,7 @@ router.get("/message/get-room-message", requireAuth(), async (req: Authenticated
 					} : null,
 					message: msg.message,
 					read_by: msg.read_by || [],
+					seen: (msg.read_by || []).includes(userId) && roomUser.joined_at < new Date(msg.timestamp),
 					timestamp: new Date(msg.timestamp).toISOString()
 				}
 			})

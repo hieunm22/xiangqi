@@ -135,7 +135,8 @@ describe("GET /api/message/get-room-message", () => {
 		const accessToken = buildAccessToken(1, "session-get-room-4")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
 		roomFindUniqueMock.mockResolvedValue({ id: 101n })
-		roomUserFindUniqueMock.mockResolvedValue({ room_id: 101n })
+		const joinedAt = new Date("2026-06-15T09:00:00Z")
+		roomUserFindUniqueMock.mockResolvedValue({ room_id: 101n, joined_at: joinedAt })
 
 		userFindUniqueMock
 			.mockResolvedValueOnce({
@@ -160,6 +161,7 @@ describe("GET /api/message/get-room-message", () => {
 				room_id: 101,
 				sender_id: 1,
 				message: "Hello room",
+				read_by: [1, 2],
 				timestamp: timestamp1
 			},
 			{
@@ -167,6 +169,7 @@ describe("GET /api/message/get-room-message", () => {
 				room_id: 101,
 				sender_id: 2,
 				message: "Hi there",
+				read_by: [2],
 				timestamp: timestamp2
 			}
 		])
@@ -196,6 +199,8 @@ describe("GET /api/message/get-room-message", () => {
 				avatar_url: expect.any(String)
 			},
 			message: "Hello room",
+			read_by: [1, 2],
+			seen: true,
 			timestamp: timestamp1.toISOString()
 		})
 		expect(res.body.data[1]).toMatchObject({
@@ -207,6 +212,8 @@ describe("GET /api/message/get-room-message", () => {
 				avatar_url: expect.any(String)
 			},
 			message: "Hi there",
+			read_by: [2],
+			seen: false,
 			timestamp: timestamp2.toISOString()
 		})
 	})

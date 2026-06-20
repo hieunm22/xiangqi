@@ -1,12 +1,12 @@
 import { ReactNode } from "react"
-import { UserAvatarType } from "types/Common"
+import { EmptyVoid, UserAvatarType } from "types/Common"
 
 export interface ChatDialogProps {
 	open: boolean
 	refId: number | null // roomId for room chat, receiverId for private chat
 	title: string
 	dialogType: "room" | "private"
-	onClose: () => void
+	onClose: EmptyVoid
 	getMessages: (token: string, refId: number) => Promise<any>
 	sendMessage: (token: string, refId: number, message: string) => Promise<any>
 	markAsRead: (token: string, refId: number) => Promise<any>
@@ -30,6 +30,7 @@ export type BaseChatMessage = {
 export interface RoomChatMessage extends BaseChatMessage {
 	room_id: number
 	read_by: number[] // array of userIds who have read this message
+	seen: boolean // whether current user has seen this message
 }
 
 export interface PrivateChatMessage extends BaseChatMessage {

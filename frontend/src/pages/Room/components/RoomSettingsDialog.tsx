@@ -109,7 +109,7 @@ const RoomSettingsDialog = () => {
 					autoFocus={isHost}
 					disabled={submitting || !isHost}
 				/>
-				{room.bet_amount && <Grid className="room-bet-amount">
+				{room.bet_amount > 0 && <Grid className="room-bet-amount">
 					<i className="fas fa-sack-dollar user-points" />
 					{room.bet_amount.toLocaleString(state.lang)}
 				</Grid>}

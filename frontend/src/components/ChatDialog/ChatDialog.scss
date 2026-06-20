@@ -6,6 +6,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	padding-top: 8px;
+	padding-bottom: 8px;
 	gap: 8px;
 
 	&.chat-dialog-drag-handle {
@@ -94,6 +96,22 @@
 
 .chat-conversation-name {
 	font-weight: 600;
+}
+
+.chat-conversation-preview-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	.chat-conversation-preview {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.chat-conversation-time {
+		flex-shrink: 0;
+		white-space: nowrap;
+	}
 }
 
 // Dim the rest of the content while the drawer is open; click to dismiss.

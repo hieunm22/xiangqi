@@ -11,6 +11,9 @@ Before making any changes, review and follow:
 ## Frontend coding convention
 - docs/react-guidelines.md
 
+## New function / entry convention
+- docs/new-function-convention.md (e.g. when editing frontend/src/hooks/useAPI.ts)
+
 ## Git workflow
 - Do NOT auto-commit code after refactoring, optimizations, or test fixes
 - Only commit when explicitly requested by the user

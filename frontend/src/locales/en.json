@@ -54,6 +54,39 @@
 		"placeholder": "Type an announcement...",
 		"empty": "No announcements yet"
 	},
+	"archivement": {
+		"title-01": "Checkmate an opponent who still has 13 or more pieces",
+		"title-02": "Win your first game",
+		"title-03": "Leave your opponent with no legal moves",
+		"title-04": "Defeat opponents of equal or higher rank in 10 games",
+		"title-05": "Hold a draw with only your king remaining",
+		"title-06": "Win 100 games",
+		"title-07": "Draw 50 games",
+		"title-08": "Checkmate an opponent with only 1 attacking piece remaining",
+		"title-09": "Checkmate an opponent with only a knight remaining",
+		"title-10": "Checkmate an opponent with only a pawn remaining",
+		"title-11": "Checkmate an opponent with only a cannon remaining",
+		"title-12": "Defeat opponents with master rank in 50 games"
+	},
+	"chat": {
+		"conversation": {
+			"you": "You",
+			"new": "New conversation"
+		},
+		"messages": {
+			"unread": "Unread messages"
+		}
+	},
+	"search": {
+		"user": {
+			"title": "New conversation",
+			"placeholder": "Search user...",
+			"no-results": "No users found"
+		},
+		"button": {
+			"search": "Search"
+		}
+	},
 	"dashboard": {
 		"page": {
 			"title": "Room list"
@@ -143,9 +176,6 @@
 			"view-history": "History",
 			"kick": "Kick",
 			"settings": "Room settings"
-		},
-		"messages": {
-			"unread": "Unread messages"
 		},
 		"settings": {
 			"title": "Room Settings",

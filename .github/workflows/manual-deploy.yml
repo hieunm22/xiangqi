@@ -1,0 +1,53 @@
+name: Manual Deploy
+
+# Manual "deploy button": go to the Actions tab -> "Manual Deploy" -> "Run workflow".
+# GitHub's native branch selector in that dialog lists every branch of the repo,
+# so the selected branch (github.ref_name) is what gets deployed.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH (run predefined script)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.SERVER_IP }}
+          username: root
+          port: 23
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          envs: DEPLOY_BRANCH
+          script_path: .github/workflows/full-deploy.sh
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+
+  notify:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram message
+        run: |
+          STATUS="${{ needs.deploy.result }}"
+          TIMESTAMP=$(TZ='Asia/Ho_Chi_Minh' date '+%Y-%m-%d %H:%M:%S')
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$STATUS" = "success" ]; then
+            EMOJI="✅"
+          else
+            EMOJI="❌"
+          fi
+
+          printf -v MESSAGE '%s Manual Deploy (%s) finished at %s: %s\n%s' "$EMOJI" "${{ github.ref_name }}" "$TIMESTAMP" "$STATUS" "$RUN_URL"
+
+          curl -s \
+            -X POST \
+            https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            --data-urlencode "text=$MESSAGE"

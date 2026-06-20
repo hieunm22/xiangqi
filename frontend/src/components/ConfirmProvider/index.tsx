@@ -59,7 +59,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 				fullWidth
 				disableEnforceFocus
 			>
-				<DialogTitle sx={{ padding: "5px 20px !important" }}>
+				<DialogTitle className="popup-title">
 					<Typography component="div" className="flex">
 						{translate(current?.options.title ?? "popup.confirm.title")}
 					</Typography>

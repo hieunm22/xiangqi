@@ -21,7 +21,8 @@ import {
 	Tooltip,
 	Typography
 } from "@mui/material"
-import { TI, TTypography } from "components/TranslationTag"
+import { PopupState } from "common/enums"
+import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
 import {
 	formatTimestampToDateTimeArray,
@@ -31,6 +32,7 @@ import {
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
 import { translate } from "locales/translate"
+import { setPopup } from "toolkit/slice/game"
 import {
 	ChatDialogDragPosition,
 	ChatDialogHandle,
@@ -44,14 +46,15 @@ import "./ChatDialog.scss"
 type ChatMessage = RoomChatMessage | PrivateChatMessage
 
 const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) => {
-	const { state } = useToolkit()
+	const { gameState, state, dispatch } = useToolkit()
 	const {
 		getMessages,
 		markAsRead,
 		sendMessage,
 	} = props
 	const [messageContent, setMessageContent] = useState("")
-	const [firstUnreadIndex, setFirstUnreadIndex] = useState<number | null>(null)
+	// _id of the first unread message; null when everything has been read.
+	const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null)
 	const [messages, setMessages] = useState<ChatMessage[]>([])
 	const [sending, setSending] = useState(false)
 	const [position, setPosition] = useState<MousePosition>({ x: 0, y: 0 })
@@ -117,7 +120,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		if (props.dialogType === "private")
 			return (msg as PrivateChatMessage).status === 1
 		else if (props.dialogType === "room") {
-			return !(msg as RoomChatMessage).read_by.includes(currentUserId || 0)
+			return (msg as RoomChatMessage).seen
 		}
 		return false
 	}
@@ -152,7 +155,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 				const unreadIndex = nextMessages.findIndex(findIndexCallback)
 
 				setMessages(nextMessages)
-				setFirstUnreadIndex(unreadIndex >= 0 ? unreadIndex : null)
+				setFirstUnreadId(unreadIndex >= 0 ? nextMessages[unreadIndex]._id : null)
 
 				// Mark as read only when there is at least one unread message.
 				if (unreadIndex >= 0) {
@@ -174,7 +177,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 				}
 				return [...prev, message as ChatMessage]
 			})
-			setFirstUnreadIndex(null)
+			setFirstUnreadId(message._id)
 		}
 	}), [])
 
@@ -201,7 +204,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 				status: response.data.status || 1
 			}
 			setMessages([...messages, nextMessage])
-			setFirstUnreadIndex(null)
+			setFirstUnreadId(null)
 			setMessageContent("")
 		}
 		setSending(false)
@@ -217,6 +220,10 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	const onShowProfile = (userId: number) => {
 		handleClose(null, "escapeKeyDown")
 		showProfilePopup(userId)
+	}
+
+	const onNewConversation = () => {
+		dispatch(setPopup(gameState.popupState | PopupState.SEARCH_USERS))
 	}
 
 	const sendClass = classnames("fas fa-paper-plane end-icon", {
@@ -250,18 +257,25 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 			}}
 		>
 			<DialogTitle
-				className="chat-dialog-title chat-dialog-drag-handle pt-8 pb-8"
+				className="chat-dialog-title chat-dialog-drag-handle"
 				onMouseDown={handleDragStart}
 			>
 				<Box className="chat-title-left">
 					{hasDrawer && (
 						<TI
-							className="fas fa-bars chat-menu-icon"
-							onClick={() => setMenuOpen(prev => !prev)}
-							title="menu.app-name"
+							className="fas fa-plus chat-menu-icon"
+							onClick={onNewConversation}
+							title="chat.conversations.new"
 						/>
 					)}
-					<span className="chat-title-text">{translate(props.title)}</span>
+					{hasDrawer && (
+						<TI
+							className="fas fa-bars chat-menu-icon"
+							onClick={() => setMenuOpen(prev => !prev)}
+							title="chat.conversations.toggle"
+						/>
+					)}
+					<TSpan className="chat-title-text" content={props.title} />
 				</Box>
 				<TI
 					className="fas fa-xmark chat-close-icon"
@@ -285,19 +299,24 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 				<Box className="chat-messages-box">
 					<Stack spacing={1}>
 						{messages.map((msg, idx) => {
-							const showUnreadDivider = firstUnreadIndex !== null && idx === firstUnreadIndex
 							const isSender = msg.sender?.id === currentUserId
 							const senderId = msg.sender?.id ?? null
 							const nextSenderId = messages[idx + 1]?.sender?.id ?? null
 							const isLastMessageInSenderGroup = senderId === null || senderId !== nextSenderId
 							const shouldShowAvatar = !isSender && isLastMessageInSenderGroup
+							const isUnread = !isSender && (
+								(msg as PrivateChatMessage).status === 1
+								|| (msg as RoomChatMessage).seen === true
+							)
+							const showUnreadDivider = firstUnreadId !== null && msg._id === firstUnreadId && isUnread
 							const boxContent = classnames("flex", {
 								"end": isSender,
 								"start": !isSender
 							})
 							const contentClass = classnames("chat-message-content", {
 								sender: isSender,
-								receiver: !isSender
+								receiver: !isSender,
+								unread: isUnread
 							})
 							const senderName = msg.sender?.display_name || "Unknown user"
 							const times = formatTimestampToDateTimeArray(msg.timestamp, state.lang)
@@ -309,7 +328,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 											<TTypography
 												variant="caption"
 												className="chat-unread-divider-text"
-												content="room.messages.unread"
+												content="chat.messages.unread"
 											/>
 										</Divider>
 									)}

@@ -92,6 +92,11 @@
 	}
 }
 
+.layout-user-btn {
+	gap: 8px;
+	border-radius: 8px !important;
+}
+
 .profile-dialog .MuiDialog-paper {
 	border-radius: 12px;
 }
@@ -213,7 +218,7 @@
 	padding: 16px 20px;
 }
 
-.settings-popup-title {
+.popup-title {
 	padding: 5px 20px !important;
 }
 

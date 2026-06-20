@@ -141,6 +141,7 @@ export interface RoomChatDialogContextValue {
 	incomingMessage: RoomChatMessage | null
 	roomId: number
 	roomName: string
+	pveMode: boolean
 	unreadCount: number
 	openChat: EmptyVoid
 	onClose: EmptyVoid

@@ -34,6 +34,25 @@ menu.rooms;Rooms;Trò chơi
 announce.title;Announcement;Thông báo
 announce.placeholder;Type an announcement...;Nhập thông báo...
 announce.empty;No announcements yet;Chưa có thông báo nào
+archivement.title-01;Checkmate an opponent who still has 13 or more pieces;Chiếu bí khi đối thủ vẫn còn >= 13 quân
+archivement.title-02;Win your first game;Thắng trận đầu khi chơi game
+archivement.title-03;Leave your opponent with no legal moves;Đánh cho đối thủ không còn nước đi
+archivement.title-04;Defeat opponents of equal or higher rank in 10 games;Thắng đối thủ cùng hoặc hơn đẳng cấp 10 ván
+archivement.title-05;Hold a draw with only your king remaining;Cầm hoà đối thủ khi chỉ còn tướng
+archivement.title-06;Win 100 games;Thắng 100 trận
+archivement.title-07;Draw 50 games;Hoà 50 trận
+archivement.title-08;Checkmate an opponent with only 1 attacking piece remaining;Chiếu bí khi đối thủ khi chỉ còn 1 quân tấn công
+archivement.title-09;Checkmate an opponent with only a knight remaining;Chiếu bí khi đối thủ khi chỉ còn mã
+archivement.title-10;Checkmate an opponent with only a pawn remaining;Chiếu bí khi đối thủ khi chỉ còn tốt
+archivement.title-11;Checkmate an opponent with only a cannon remaining;Chiếu bí khi đối thủ khi chỉ còn pháo
+archivement.title-12;Defeat opponents with master rank in 50 games;Thắng đối thủ có đẳng cấp kỳ thủ 50 ván
+chat.conversation.you;You;Bạn
+chat.conversation.new;New conversation;Cuộc trò chuyện mới
+chat.messages.unread;Unread messages;Tin nhắn chưa đọc
+search.user.title;New conversation;Cuộc trò chuyện mới
+search.user.placeholder;Search user...;Tìm kiếm người dùng...
+search.user.no-results;No users found;Không tìm thấy người dùng
+search.button.search;Search;Tìm kiếm
 dashboard.page.title;Room list;Danh sách phòng
 dashboard.filters.all;All;Tất cả
 dashboard.filters.available;Available;Chờ
@@ -218,7 +237,6 @@ room.actions.send-pm;Send PM;Chat
 room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
 room.actions.settings;Room settings;Cài đặt phòng
-room.messages.unread;Unread messages;Tin nhắn chưa đọc
 room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
 room.settings.players;Spectators;Người xem

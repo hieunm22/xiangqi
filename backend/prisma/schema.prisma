@@ -104,3 +104,20 @@ model GameUser {
   @@map("game_users")
   @@schema("game")
 }
+
+model Archivement {
+  id         BigInt     @id @default(autoincrement())
+  name       String
+
+  @@map("archivement")
+  @@schema("game")
+}
+
+model UserArchivement {
+  user_id          BigInt
+  archivement_id   BigInt
+
+  @@id([user_id, archivement_id])
+  @@map("user_archivements")
+  @@schema("game")
+}

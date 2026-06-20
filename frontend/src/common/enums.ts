@@ -7,10 +7,11 @@ export interface BotDifficulty {
 }
 
 export const PopupState = {
-	NONE: 0,
-	SETTINGS: 1,
-	PROFILE: 2,
-	GUIDE: 3,
-	GAME_HISTORY: 4,
-	SEND_PM: 5,
+	NONE: 1,
+	SETTINGS: 2,
+	PROFILE: 4,
+	GUIDE: 8,
+	GAME_HISTORY: 16,
+	SEND_PM: 32,
+	SEARCH_USERS: 64,
 }

@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
+const roomUserFindUniqueMock = vi.fn()
 const countDocumentsMock = vi.fn()
 const getChatMessageCollectionMock = vi.fn()
 
@@ -20,6 +21,9 @@ vi.mock("prisma", () => ({
 	default: {
 		room: {
 			findUnique: roomFindUniqueMock
+		},
+		roomUser: {
+			findUnique: roomUserFindUniqueMock
 		}
 	}
 }))
@@ -101,7 +105,9 @@ describe("GET /api/room/info?id=:id", () => {
 
 	it("returns 200 and room details when room exists", async () => {
 		const accessToken = buildAccessToken(31, "session-room-info-3")
+		const joinedAt = new Date("2026-05-12T10:00:00.000Z")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 31 }))
+		roomUserFindUniqueMock.mockResolvedValue({ joined_at: joinedAt })
 		countDocumentsMock.mockResolvedValue(4)
 		getChatMessageCollectionMock.mockResolvedValue({ countDocuments: countDocumentsMock })
 		roomFindUniqueMock.mockResolvedValue({
@@ -173,7 +179,10 @@ describe("GET /api/room/info?id=:id", () => {
 		})
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			room_id: 101,
-			read_by: { $ne: 31 }
+			$or: [
+				{ read_by: { $nin: [31] } },
+				{ timestamp: { $gt: joinedAt } }
+			]
 		})
 		expect(res.body.data.users).toHaveLength(2)
 		expect(res.body.data.users[0]).toMatchObject({

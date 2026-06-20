@@ -76,6 +76,24 @@ export function initializeSocket(httpServer: HTTPServer) {
 			console.log(`[Socket.io] [${new Date().toISOString()}] Client ${socket.id} left room: ${roomChannel}`)
 		})
 
+		// Register the authenticated user so private messages can be delivered to
+		// every device/tab of that user, regardless of which page they are on.
+		socket.on("register-user", (data: any) => {
+			const userId = typeof data === "object" ? Number(data?.userId) : Number(data)
+			if (!Number.isInteger(userId) || userId <= 0) return
+
+			socket.join(`user-${userId}`)
+
+			let socketIds = userIdToSocketIds.get(userId)
+			if (!socketIds) {
+				socketIds = new Set<string>()
+				userIdToSocketIds.set(userId, socketIds)
+			}
+			socketIds.add(socket.id)
+			socketIdToUserId.set(socket.id, userId)
+			console.log(`[Socket.io] [${new Date().toISOString()}] User ${userId} (socket ${socket.id}) registered`)
+		})
+
 		socket.on("disconnect", async (reason) => {
 			const disconnectedUserId = socketIdToUserId.get(socket.id)
 
@@ -208,6 +226,21 @@ export function emitRoomMessage(roomId: string | number, message: any, senderId:
 	const roomChannel = `room-${roomId}`
 	io.to(roomChannel).emit("room-message-sent", { ...message, userId: senderId })
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room message emitted to ${roomChannel}`)
+}
+
+/**
+ * Emit a new private message to the receiver's personal channel so their
+ * conversation list / unread badge can update in real time.
+ */
+export function emitPrivateMessage(receiverId: number, message: any) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit private-message-sent: Socket.io server not initialized`)
+		return
+	}
+
+	const userChannel = `user-${receiverId}`
+	io.to(userChannel).emit("private-message-sent", message)
+	console.log(`[Socket.io] [${new Date().toISOString()}] Private message emitted to ${userChannel}`)
 }
 
 /**

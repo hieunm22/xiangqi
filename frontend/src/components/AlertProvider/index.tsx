@@ -57,7 +57,7 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				fullWidth
 				disableEnforceFocus
 			>
-				<DialogTitle sx={{ padding: "5px 20px !important" }}>
+				<DialogTitle className="popup-title">
 					<Typography component="div" sx={textCenterStyle}>
 						{translate(current?.options.title ?? "popup.alert.title")}
 					</Typography>

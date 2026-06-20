@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from "react"
 import { PrivateConversation } from "components/ChatDialog/types"
 import { UserAvatarType } from "types/Common"
 import { Users } from "types/Entities"
@@ -16,6 +17,8 @@ export type ProfilePopupContextValue = {
 	setProfileUser: (user: Users | null) => void
 	gameStats: GameStats | null
 	setGameStats: (stats: GameStats | null) => void
+	unreadCount: number
+	setUnreadCount: (Dispatch<SetStateAction<number>>)
 }
 
 export interface GameStats {

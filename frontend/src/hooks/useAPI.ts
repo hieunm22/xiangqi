@@ -36,6 +36,9 @@ const EP = { // end points
 	forgotPassword: "/auth/forgot-password",
 	resetPassword: "/auth/reset-password",
 
+	// user endpoints
+	searchUsers: "/user/search",
+
 	// room endpoints
 	createRoom: "/room/create-room",
 	fetchRooms: "/room/fetch-rooms",
@@ -249,23 +252,23 @@ export const useAPI = () => {
 							.post()
 							.text(makeExpiredCallback)
 							.catch(handleError)
+							
+	const markPrivateMessageAsRead = async (token: string, receiverId: number) => authFetch(EP.markPrivateMessageAsRead)
+							.auth(`Bearer ${token}`)
+							.post({ receiver_id: receiverId })
+							.json(markPrivateMessageAsReadCallback)
+							.catch(handleError)
+
+	const markRoomMessageAsRead = async (token: string, roomId: number) => authFetch(EP.markRoomMessageAsRead)
+							.auth(`Bearer ${token}`)
+							.post({ room_id: roomId })
+							.json(markRoomMessageAsReadCallback)
+							.catch(handleError)
 
 	const movePiece = async (token: string, body: MovePieceRequest) => authFetch(EP.movePiece)
 							.auth(`Bearer ${token}`)
 							.post(body)
 							.json(movePieceCallback)
-							.catch(handleError)
-
-	const resetPasswordValidate = async (userId: number, token: string) => request
-							.url(`${EP.resetPassword}?id=${userId}&token=${token}`)
-							.get()
-							.json(resetPasswordValidateCallback)
-							.catch(handleError)
-
-	const resetPassword = (form: ResetPasswordBodyType) => requestWithCookie.url(EP.resetPassword)
-							.json(form)
-							.post()
-							.json(resetPasswordCallback)
 							.catch(handleError)
 
 	const refreshToken = (token: string) => requestWithCookie.url(EP.refreshToken)
@@ -286,6 +289,24 @@ export const useAPI = () => {
 							.json(resetGameCallback)
 							.catch(handleError)
 
+	const resetPasswordValidate = async (userId: number, token: string) => request
+							.url(`${EP.resetPassword}?id=${userId}&token=${token}`)
+							.get()
+							.json(resetPasswordValidateCallback)
+							.catch(handleError)
+
+	const resetPassword = (form: ResetPasswordBodyType) => requestWithCookie.url(EP.resetPassword)
+							.json(form)
+							.post()
+							.json(resetPasswordCallback)
+							.catch(handleError)
+
+	const searchUsers = async (token: string, query: string) => authFetch(`${EP.searchUsers}?query=${encodeURIComponent(query)}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(searchUsersCallback)
+							.catch(handleError)
+
 	const sendPrivateMessage = async (token: string, receiverId: number, message: string) => authFetch(EP.sendPrivateMessage)
 							.auth(`Bearer ${token}`)
 							.post({ message, receiver_id: receiverId })
@@ -296,18 +317,6 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.post({ message, room_id: roomId })
 							.json(sendRoomMessageCallback)
-							.catch(handleError)
-							
-	const markPrivateMessageAsRead = async (token: string, receiverId: number) => authFetch(EP.markPrivateMessageAsRead)
-							.auth(`Bearer ${token}`)
-							.post({ receiver_id: receiverId })
-							.json(markPrivateMessageAsReadCallback)
-							.catch(handleError)
-
-	const markRoomMessageAsRead = async (token: string, roomId: number) => authFetch(EP.markRoomMessageAsRead)
-							.auth(`Bearer ${token}`)
-							.post({ room_id: roomId })
-							.json(markRoomMessageAsReadCallback)
 							.catch(handleError)
 
 	const startRoom = async (token: string, roomId: number, botDifficulty?: number) => authFetch(EP.startRoom)
@@ -436,19 +445,23 @@ export const useAPI = () => {
 		return response
 	}
 
-	const sendPrivateMessageCallback = (response: APIResponse<PrivateChatMessage>) => {
-		return response
-	}
-
-	const sendRoomMessageCallback = (response: any) => {
-		return response
-	}
-
 	const markPrivateMessageAsReadCallback = (response: APIResponseEmpty) => {
 		return response
 	}
 
 	const markRoomMessageAsReadCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
+	const searchUsersCallback = (response: any) => {
+		return response
+	}
+
+	const sendPrivateMessageCallback = (response: APIResponse<PrivateChatMessage>) => {
+		return response
+	}
+
+	const sendRoomMessageCallback = (response: any) => {
 		return response
 	}
 
@@ -517,6 +530,7 @@ export const useAPI = () => {
 		resetGame,
 		resetPasswordValidate,
 		resetPassword,
+		searchUsers,
 		sendPrivateMessage,
 		sendRoomMessage,
 		startRoom,

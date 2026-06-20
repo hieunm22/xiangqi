@@ -54,6 +54,39 @@
 		"placeholder": "Nhập thông báo...",
 		"empty": "Chưa có thông báo nào"
 	},
+	"archivement": {
+		"title-01": "Chiếu bí khi đối thủ vẫn còn >= 13 quân",
+		"title-02": "Thắng trận đầu khi chơi game",
+		"title-03": "Đánh cho đối thủ không còn nước đi",
+		"title-04": "Thắng đối thủ cùng hoặc hơn đẳng cấp 10 ván",
+		"title-05": "Cầm hoà đối thủ khi chỉ còn tướng",
+		"title-06": "Thắng 100 trận",
+		"title-07": "Hoà 50 trận",
+		"title-08": "Chiếu bí khi đối thủ khi chỉ còn 1 quân tấn công",
+		"title-09": "Chiếu bí khi đối thủ khi chỉ còn mã",
+		"title-10": "Chiếu bí khi đối thủ khi chỉ còn tốt",
+		"title-11": "Chiếu bí khi đối thủ khi chỉ còn pháo",
+		"title-12": "Thắng đối thủ có đẳng cấp kỳ thủ 50 ván"
+	},
+	"chat": {
+		"conversation": {
+			"you": "Bạn",
+			"new": "Cuộc trò chuyện mới"
+		},
+		"messages": {
+			"unread": "Tin nhắn chưa đọc"
+		}
+	},
+	"search": {
+		"user": {
+			"title": "Cuộc trò chuyện mới",
+			"placeholder": "Tìm kiếm người dùng...",
+			"no-results": "Không tìm thấy người dùng"
+		},
+		"button": {
+			"search": "Tìm kiếm"
+		}
+	},
 	"dashboard": {
 		"page": {
 			"title": "Danh sách phòng"
@@ -143,9 +176,6 @@
 			"view-history": "Lịch sử",
 			"kick": "Kick",
 			"settings": "Cài đặt phòng"
-		},
-		"messages": {
-			"unread": "Tin nhắn chưa đọc"
 		},
 		"settings": {
 			"title": "Cài đặt phòng",

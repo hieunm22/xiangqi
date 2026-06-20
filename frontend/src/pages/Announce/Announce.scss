@@ -4,6 +4,12 @@
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 16px);
+
+	// On mobile, also subtract the fixed AppBar (Toolbar ~56px) so the box fits
+	// the remaining space without forcing a page scroll.
+	@media (max-width: 600px) {
+		height: calc(100vh - 56px - 16px);
+	}
 }
 
 .announce-card {

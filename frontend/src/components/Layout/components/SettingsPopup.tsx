@@ -77,7 +77,7 @@ export const SettingsPopup = () => {
 			maxWidth="xs"
 			disableEnforceFocus
 		>
-			<DialogTitle className="settings-popup-title">
+			<DialogTitle className="popup-title">
 				<TTypography content="settings.header" sx={textCenterStyle} />
 			</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />

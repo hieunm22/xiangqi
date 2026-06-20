@@ -14,6 +14,8 @@ import refreshTokenRoutes from "./routes/auth/refresh-token"
 import registerRoutes from "./routes/auth/register"
 import validateTokenRoutes from "./routes/auth/validate-token"
 
+import searchUserRoutes from "./routes/user/search-user"
+
 import createRoomRoutes from "./routes/room/create-room"
 import fetchRoomsRoutes from "./routes/room/fetch-rooms"
 import joinRoomRoutes from "./routes/room/join-room"
@@ -83,6 +85,8 @@ app.use("/api", makeExpiredRoutes)
 app.use("/api", registerRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
+
+app.use("/api", searchUserRoutes)
 
 app.use("/api", createRoomRoutes)
 app.use("/api", fetchRoomsRoutes)

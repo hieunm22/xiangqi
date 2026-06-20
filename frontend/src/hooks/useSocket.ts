@@ -279,6 +279,28 @@ export function useSocket() {
 		}
 	}, [])
 
+	const registerUser = useCallback((userId: number) => {
+		if (socketRef.current) {
+			socketRef.current.emit("register-user", { userId })
+		} else {
+			console.warn("[Socket.io] Socket not initialized for register-user")
+		}
+	}, [])
+
+	const onPrivateMessageSent = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("private-message-sent", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for private-message-sent listener")
+		}
+	}, [])
+
+	const offPrivateMessageSent = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("private-message-sent", callback)
+		}
+	}, [])
+
 	const onDashboardRoomUsersUpdated = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.on("dashboard-room-users-updated", callback)
@@ -307,6 +329,7 @@ export function useSocket() {
 		offDrawResponse,
 		offGameStarted,
 		offMovePiece,
+		offPrivateMessageSent,
 		offRoomCreated,
 		offRoomDeleted,
 		offRoomMessageSent,
@@ -318,11 +341,13 @@ export function useSocket() {
 		onDashboardRoomUsersUpdated,
 		onGameStarted,
 		onMovePiece,
+		onPrivateMessageSent,
 		onRoomCreated,
 		onRoomDeleted,
 		onRoomMessageSent,
 		onRoomUsersUpdated,
 		onSurrender,
 		onUserKicked,
+		registerUser,
 	}
 }

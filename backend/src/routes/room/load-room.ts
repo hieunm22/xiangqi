@@ -183,6 +183,17 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			return
 		}
 
+		// Get user's join time to filter out messages sent before they joined
+		const roomUser = await prisma.roomUser.findUnique({
+			where: {
+				room_id_user_id: {
+					room_id: roomIdBigInt,
+					user_id: BigInt(userId)
+				}
+			},
+			select: { joined_at: true }
+		})
+
 		let game: {
 			id: string
 			room_id: number
@@ -214,7 +225,10 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 		const chatCollection = await getChatMessageCollection()
 		const unreadCount = await chatCollection.countDocuments({
 			room_id: roomId,
-			read_by: { $ne: userId }
+			$or: [
+				{ read_by: { $nin: [userId] } },
+				{ timestamp: { $gt: roomUser?.joined_at ?? new Date(0) } }
+			]
 		})
 
 		const { room_users } = room

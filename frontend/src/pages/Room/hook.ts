@@ -1119,6 +1119,7 @@ const useRoomHook = () => {
 		open: openRoomChat,
 		roomId: room?.id || 0,
 		roomName: room?.name || "room.chat.title",
+		pveMode: room?.pve_mode || false,
 		unreadCount: unreadChatCount,
 		incomingMessage: incomingChatMessage,
 		openChat: () => {

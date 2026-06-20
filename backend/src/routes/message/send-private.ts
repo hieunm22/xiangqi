@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { getAvatarUrl, getConversationKey } from "common/helper"
 import { getChatMessageCollection } from "common/mongodb"
+import { emitPrivateMessage } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -137,22 +138,29 @@ router.post("/message/send-private", requireAuth(), async (req: AuthenticatedReq
 			select: { id: true, display_name: true, avatar_seq: true }
 		})
 
+		const responseData = {
+			_id: result.insertedId.toString(),
+			message: message.trim(),
+			conversation_key: conversationKey,
+			sender: sender ? {
+				id: Number(sender.id),
+				display_name: sender.display_name,
+				avatar_url: getAvatarUrl(sender.id, sender.avatar_seq)
+			} : null,
+			receiver_id,
+			status: 1,
+			timestamp: new Date().toISOString()
+		}
+
+		// Notify the receiver in real time so their conversation list / unread
+		// badge updates without a reload.
+		emitPrivateMessage(receiver_id, responseData)
+
 		res.status(201).json({
 			success: true,
 			message: "Success",
 			status_code: 201,
-			data: {
-				_id: result.insertedId.toString(),
-				message: message.trim(),
-				sender: sender ? {
-					id: Number(sender.id),
-					display_name: sender.display_name,
-					avatar_url: getAvatarUrl(sender.id, sender.avatar_seq)
-				} : null,
-				receiver_id,
-				status: 1,
-				timestamp: new Date().toISOString()
-			}
+			data: responseData
 		})
 	} catch (error) {
 		console.error("Send private message error:", error)

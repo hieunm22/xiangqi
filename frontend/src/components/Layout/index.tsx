@@ -4,7 +4,6 @@ import classnames from "classnames"
 import {
 	AppBar,
 	Avatar,
-	Badge,
 	Box,
 	Button,
 	CssBaseline,
@@ -29,11 +28,12 @@ import {
 import { PopupState } from "common/enums"
 import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { GameHistoryPopup } from "./components/GameHistoryPopup"
-import { TI, TSpan, TTypography } from "components/TranslationTag"
+import { TI, TTypography } from "components/TranslationTag"
 import { PopupProvider, useAuth } from "hooks/useAppContext"
 import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SettingsPopup } from "./components/SettingsPopup"
+import { SearchUserPopup } from "./components/SearchUserPopup"
 import {
 	decodePayload,
 	getToken,
@@ -73,7 +73,7 @@ export default function Layout() {
 		makeExpired,
 		resetGame
 	} = useAPI()
-	const { state, dispatch } = useToolkit()
+	const { gameState, state, dispatch } = useToolkit()
 	const { showProfilePopup } = useLayoutAuth()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -81,6 +81,12 @@ export default function Layout() {
 
 	const setDarkModeAction = (darkMode: boolean) => dispatch(setDarkMode(darkMode))
 	const handleMobileToggle = () => setMobileOpen(!mobileOpen)
+	
+	const handleMobileDrawerClose = () => {
+		(document.activeElement as HTMLElement)?.blur()
+		setMobileOpen(false)
+	}
+	
 	const handleDrawerToggle = () => setDrawerOpen(!drawerOpen)
 
 	useEffect(() => {
@@ -209,6 +215,7 @@ export default function Layout() {
 
 	const handleLogoutFromMenu = async () => {
 		handleCloseUserMenu()
+		dispatch(setPopup(PopupState.NONE))
 		await logoutClick()
 	}
 
@@ -230,7 +237,7 @@ export default function Layout() {
 		{ text: "menu.guide", icon: "fa-book", click: handleShowGuide },
 		{ text: "menu.announce", icon: "fa-bullhorn", click: handleShowAnnounce },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
+		// ...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -239,7 +246,17 @@ export default function Layout() {
 		"icon-toogle-drawer": true
 	})
 
-	const drawerContent = (
+	const profileProviderValue = {
+		gameStats,
+		profileUser,
+		unreadCount,
+
+		setGameStats,
+		setProfileUser,
+		setUnreadCount
+	}
+
+	const DrawerContent = () => (
 		<>
 			<Toolbar>
 				<TTypography
@@ -265,9 +282,15 @@ export default function Layout() {
 			<Divider sx={{ mt: "auto" }} />
 
 			<List>
+				{isInRoom && state.debugMode && <ListItem disablePadding>
+					<ListItemButton onClick={handleRestart}>
+						<TI className="fas fa-rotate" title="Restart" />
+						{drawerOpen && <TTypography className="fsx-14 ml-8" content="Restart" />}
+					</ListItemButton>
+				</ListItem>}
 				<ListItem disablePadding>
 					<ListItemButton onClick={logoutClick}>
-						<i className="fas fa-right-from-bracket" />
+						<TI className="fas fa-right-from-bracket" title="menu.logout" />
 						{drawerOpen && <TTypography className="fsx-14 ml-8" content="menu.logout" />}
 					</ListItemButton>
 					<i className={toogleDrawerClass} onClick={handleDrawerToggle} />
@@ -289,77 +312,16 @@ export default function Layout() {
 					display: { xs: "none", sm: "block" }
 				}}
 			>
-				<Badge
-					color="error"
-					badgeContent={unreadCount}
-					invisible={unreadCount === 0}
-					overlap="circular"
+				<Button
+					onClick={handleOpenUserMenu}
+					variant="outlined"
+					size="small"
+					className="layout-user-btn"
+					sx={{ backgroundColor: "background.paper" }}
 				>
-					<Button
-						onClick={handleOpenUserMenu}
-						variant="outlined"
-						size="small"
-						sx={{
-							textTransform: "none",
-							display: "flex",
-							gap: 1,
-							borderRadius: 2,
-							backgroundColor: "background.paper",
-							boxShadow: 1,
-							pl: 1,
-							pr: 1.5
-						}}
-					>
-						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
-						<span>{displayName}</span>
-					</Button>
-				</Badge>
-
-				<Menu
-					anchorEl={userMenuAnchor}
-					open={userMenuOpen}
-					onClose={handleCloseUserMenu}
-					anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-					transformOrigin={{ vertical: "top", horizontal: "right" }}
-					slotProps={{
-						paper: {
-							sx: {
-								minWidth: userMenuAnchor?.offsetWidth,
-								width: "max-content",
-								mt: "3px"
-							}
-						},
-						list: { dense: true, sx: { left: 1, py: 0.5 } }
-					}}
-				>
-					<MenuItem onClick={handleGoProfile} className="menu-item-gap">
-						<i className="fas fa-user fsx-14" />
-						{translate("menu.profile")}
-					</MenuItem>
-					<MenuItem onClick={handleGoMessages} className="menu-item-gap">
-						<i className="far fa-comment fsx-14" />
-						<Box className="menu-message">
-							{translate("menu.messages")}
-							{unreadCount > 0 && (
-								<Box className="menu-unread-count">
-									{unreadCount > 99 ? "99+" : unreadCount}
-								</Box>
-							)}
-						</Box>
-					</MenuItem>
-					{state.debugMode && <Divider className="menu-divider" />}
-					{state.debugMode && (
-						<MenuItem onClick={handleMakeExpired} className="menu-item-gap">
-							<i className="fas fa-clock fsx-14" />
-							{translate("menu.expired")}
-						</MenuItem>
-					)}
-					<Divider className="menu-divider" />
-					<MenuItem onClick={handleLogoutFromMenu} className="menu-logout">
-						<i className="fas fa-right-from-bracket" />
-						{translate("menu.logout")}
-					</MenuItem>
-				</Menu>
+					<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+					{displayName}
+				</Button>
 			</Box>
 
 			{isMobile && <AppBar position="fixed" className="layout-mobile-appbar">
@@ -368,24 +330,68 @@ export default function Layout() {
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
-					<Badge
-						color="error"
-						badgeContent={unreadCount}
-						invisible={unreadCount <= 0}
-						overlap="circular"
+					<Button
+						onClick={handleOpenUserMenu}
+						variant="outlined"
+						size="small"
+						className="layout-mobile-user-btn"
 					>
-						<Button
-							onClick={handleOpenUserMenu}
-							variant="outlined"
-							size="small"
-							className="layout-mobile-user-btn"
-						>
-							<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
-							<TSpan content={displayName} />
-						</Button>
-					</Badge>
+						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+						{displayName}
+					</Button>
 				</Toolbar>
 			</AppBar>}
+
+			{/* User menu */}
+			<Menu
+				anchorEl={userMenuAnchor}
+				open={userMenuOpen}
+				onClose={handleCloseUserMenu}
+				anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+				transformOrigin={{ vertical: "top", horizontal: "right" }}
+				slotProps={{
+					paper: {
+						sx: {
+							minWidth: userMenuAnchor?.offsetWidth,
+							width: "max-content",
+							mt: "3px"
+						}
+					},
+					list: { dense: true, sx: { left: 1, py: 0.5 } }
+				}}
+			>
+				<MenuItem onClick={handleGoProfile} className="menu-item-gap">
+					<i className="fas fa-user fsx-14" />
+					{translate("menu.profile")}
+				</MenuItem>
+				<MenuItem
+					onClick={handleGoMessages}
+					className="menu-item-gap"
+					disabled={gameState.popupState === PopupState.SEND_PM}
+				>
+					<i className="far fa-comment fsx-14" />
+					<Box className="menu-message">
+						{translate("menu.messages")}
+						{unreadCount > 0 && (
+							<Box className="menu-unread-count">
+								{unreadCount > 99 ? "99+" : unreadCount}
+							</Box>
+						)}
+					</Box>
+				</MenuItem>
+				{state.debugMode && <Divider className="menu-divider" />}
+				{state.debugMode && (
+					<MenuItem onClick={handleMakeExpired} className="menu-item-gap">
+						<i className="fas fa-clock fsx-14" />
+						{translate("menu.expired")}
+					</MenuItem>
+				)}
+				<Divider className="menu-divider" />
+				<MenuItem onClick={handleLogoutFromMenu} className="menu-logout">
+					<i className="fas fa-right-from-bracket" />
+					{translate("menu.logout")}
+				</MenuItem>
+			</Menu>
 
 			{/* Navigation */}
 			<Box
@@ -398,13 +404,13 @@ export default function Layout() {
 				<Drawer
 					variant="temporary"
 					open={mobileOpen}
-					onClose={handleMobileToggle}
+					onClose={handleMobileDrawerClose}
 					sx={{
 						display: { xs: "block", sm: "none" },
 						"& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerOpen ? fullWidth : miniWidth },
 					}}
 				>
-					{drawerContent}
+					<DrawerContent />
 				</Drawer>
 
 				{/* Desktop drawer - permanent */}
@@ -424,12 +430,12 @@ export default function Layout() {
 						},
 					}}
 				>
-					{drawerContent}
+					<DrawerContent />
 				</Drawer>
 			</Box>
 
 			{/* popups */}
-			<PopupProvider value={{ gameStats, profileUser, setGameStats, setProfileUser }}>
+			<PopupProvider value={profileProviderValue}>
 				<Box
 					component="main"
 					sx={{
@@ -451,6 +457,7 @@ export default function Layout() {
 					<GuidePopup />
 					<GameHistoryPopup />
 					<PrivateChatPopup />
+					<SearchUserPopup />
 				</Box>
 			</PopupProvider>
 		</Box>
