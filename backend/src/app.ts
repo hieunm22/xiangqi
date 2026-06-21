@@ -28,18 +28,21 @@ import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
 import movePieceRoutes from "./routes/game/move-piece"
 import playerHistoryRoutes from "./routes/game/player-history"
-import resetGameRoutes from "./routes/game/reset-game"
 import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
 import undoRoutes from "./routes/game/undo"
 
+import resetGameRoutes from "./routes/tool/reset-game"
 import sequenceRoutes from "./routes/tool/sequence"
 
+import getAnnouncementRoutes from "./routes/message/get-announcement"
 import getPrivateConversationsRoutes from "./routes/message/get-private-conversations"
 import getPrivateMessageRoutes from "./routes/message/get-private"
 import getRoomMessageRoutes from "./routes/message/get-room-message"
+import markAnnouncementAsReadRoutes from "./routes/message/mark-announcement-as-read"
 import markPrivateMessageAsReadRoutes from "./routes/message/mark-private-message-as-read"
 import markRoomMessageAsReadRoutes from "./routes/message/mark-room-as-read"
+import sendAnnouncementRoutes from "./routes/message/send-announcement"
 import sendPrivateMessageRoutes from "./routes/message/send-private"
 import sendRoomMessageRoutes from "./routes/message/send-room-message"
 import unreadCountRoutes from "./routes/message/unread-count"
@@ -100,18 +103,21 @@ app.use("/api", updateRoomRoutes)
 app.use("/api", drawGameRoutes)
 app.use("/api", movePieceRoutes)
 app.use("/api", playerHistoryRoutes)
-app.use("/api", resetGameRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
 app.use("/api", undoRoutes)
 
+app.use("/api", resetGameRoutes)
 app.use("/api", sequenceRoutes)
 
+app.use("/api", getAnnouncementRoutes)
 app.use("/api", getPrivateConversationsRoutes)
 app.use("/api", getPrivateMessageRoutes)
 app.use("/api", getRoomMessageRoutes)
+app.use("/api", markAnnouncementAsReadRoutes)
 app.use("/api", markRoomMessageAsReadRoutes)
 app.use("/api", markPrivateMessageAsReadRoutes)
+app.use("/api", sendAnnouncementRoutes)
 app.use("/api", sendPrivateMessageRoutes)
 app.use("/api", sendRoomMessageRoutes)
 app.use("/api", unreadCountRoutes)

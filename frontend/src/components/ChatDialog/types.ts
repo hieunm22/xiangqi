@@ -38,6 +38,10 @@ export interface PrivateChatMessage extends BaseChatMessage {
 	status: number
 }
 
+export interface AnnouncementMessage extends BaseChatMessage {
+	seen: boolean
+}
+
 export interface ChatDialogDragPosition {
 	startX: number
 	startY: number

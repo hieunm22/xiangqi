@@ -15,6 +15,7 @@ import {
 	UnreadCountResponse,
 	UserProfileWithStats
 } from "components/Layout/types"
+import { AnnouncementMessage } from "components/ChatDialog/types"
 import {
 	GameMovements,
 	MovePieceRequest,
@@ -58,11 +59,14 @@ const EP = { // end points
 	undoGame: "/game/undo",
 
 	// message endpoints
+	getAnnouncement: "/message/get-announcement",
 	getPrivateConversations: "/message/get-private-conversations",
 	getPrivateMessages: "/message/get-private",
 	getRoomMessages: "/message/get-room-message",
+	markAnnouncementAsRead: "/message/mark-announcement-as-read",
 	markPrivateMessageAsRead: "/message/mark-private-message-as-read",
 	markRoomMessageAsRead: "/message/mark-room-as-read",
+	sendAnnouncement: "/message/send-announcement",
 	sendPrivateMessage: "/message/send-private",
 	sendRoomMessage: "/message/send-room-message",
 	unreadCount: "/message/unread-count",
@@ -166,6 +170,12 @@ export const useAPI = () => {
 							.json(forgotPasswordCallback)
 							.catch(handleError)
 
+	const getAnnouncements = async (token: string) => authFetch(EP.getAnnouncement)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getAnnouncementsCallback)
+							.catch(handleError)
+
 	const getGameMovementHistory = async (token: string, gameId: string) => authFetch(`${EP.getGameMovementHistory}?gameId=${gameId}`)
 							.auth(`Bearer ${token}`)
 							.get()
@@ -253,6 +263,12 @@ export const useAPI = () => {
 							.text(makeExpiredCallback)
 							.catch(handleError)
 							
+	const markAnnouncementAsRead = async (token: string) => authFetch(EP.markAnnouncementAsRead)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(markAnnouncementAsReadCallback)
+							.catch(handleError)
+
 	const markPrivateMessageAsRead = async (token: string, receiverId: number) => authFetch(EP.markPrivateMessageAsRead)
 							.auth(`Bearer ${token}`)
 							.post({ receiver_id: receiverId })
@@ -307,6 +323,12 @@ export const useAPI = () => {
 							.json(searchUsersCallback)
 							.catch(handleError)
 
+	const sendAnnouncement = async (token: string, message: string) => authFetch(EP.sendAnnouncement)
+							.auth(`Bearer ${token}`)
+							.post({ message })
+							.json(sendAnnouncementCallback)
+							.catch(handleError)
+
 	const sendPrivateMessage = async (token: string, receiverId: number, message: string) => authFetch(EP.sendPrivateMessage)
 							.auth(`Bearer ${token}`)
 							.post({ message, receiver_id: receiverId })
@@ -357,70 +379,86 @@ export const useAPI = () => {
 		return response
 	}
 
+	const getAnnouncementsCallback = (response: APIResponse<AnnouncementMessage[]>) => {
+		return response
+	}
+	
 	const fetchRoomsCallback = (response: APIResponse<RoomInfoData>) => {
 		return response
 	}
-
+	
 	const forgotPasswordCallback = (response: any) => {
 		return response
 	}
-
+	
 	const getGameHistoryCallback = (response: APIResponse<GameMovements[]>) => {
 		return response
 	}
-
+	
 	const getPlayerHistoryCallback = (response: APIResponse<GameHistoryItem[]>) => {
 		return response
 	}
-
+	
 	const getPrivateConversationsCallback = (response: APIResponse<PrivateConversation[]>) => {
 		return response
 	}
-
+	
 	const getPrivateMessagesCallback = (response: APIResponse<PrivateChatMessage[]>) => {
 		return response
 	}
-
+	
 	const getRoomCallback = (response: APIResponse<RoomInfoData>) => {
 		return response
 	}
-
+	
 	const getRoomMessagesCallback = (response: any) => {
 		return response
 	}
-
+	
 	const getUserCallback = (response: APIResponse<UserProfileWithStats>) => {
 		return response
 	}
-
+	
 	const getUnreadCountCallback = (response: APIResponse<UnreadCountResponse>) => {
 		return response
 	}
-
+	
 	const joinRoomCallback = (response: APIResponse<RoomUser[]>) => {
 		return response
 	}
-
+	
 	const kickUserCallback = (response: any) => {
 		return response
 	}
-
+	
 	const leaveRoomCallback = (response: APIResponseEmpty) => {
 		return response
 	}
-
+	
 	const loginCallback = (response: AuthResponse) => {
 		return response
 	}
-
+	
 	const logoutCallback = (response: APIResponseEmpty) => {
 		return response
 	}
-
+	
 	const makeExpiredCallback = (accessToken: string) => {
 		return accessToken
 	}
+	
+	const markAnnouncementAsReadCallback = (response: APIResponseEmpty) => {
+		return response
+	}
 
+	const markPrivateMessageAsReadCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
+	const markRoomMessageAsReadCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+	
 	const movePieceCallback = (response: APIResponse<GameMovements>) => {
 		return response
 	}
@@ -445,14 +483,6 @@ export const useAPI = () => {
 		return response
 	}
 
-	const markPrivateMessageAsReadCallback = (response: APIResponseEmpty) => {
-		return response
-	}
-
-	const markRoomMessageAsReadCallback = (response: APIResponseEmpty) => {
-		return response
-	}
-
 	const searchUsersCallback = (response: any) => {
 		return response
 	}
@@ -462,6 +492,10 @@ export const useAPI = () => {
 	}
 
 	const sendRoomMessageCallback = (response: any) => {
+		return response
+	}
+
+	const sendAnnouncementCallback = (response: APIResponse<AnnouncementMessage>) => {
 		return response
 	}
 
@@ -508,6 +542,7 @@ export const useAPI = () => {
 		drawGame,
 		fetchRooms,
 		forgotPassword,
+		getAnnouncements,
 		getGameMovementHistory,
 		getPlayerHistory,
 		getPrivateConversations,
@@ -522,6 +557,7 @@ export const useAPI = () => {
 		login,
 		logout,
 		makeExpired,
+		markAnnouncementAsRead,
 		markPrivateMessageAsRead,
 		markRoomMessageAsRead,
 		movePiece,
@@ -531,6 +567,7 @@ export const useAPI = () => {
 		resetPasswordValidate,
 		resetPassword,
 		searchUsers,
+		sendAnnouncement,
 		sendPrivateMessage,
 		sendRoomMessage,
 		startRoom,

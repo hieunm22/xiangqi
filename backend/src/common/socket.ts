@@ -244,6 +244,21 @@ export function emitPrivateMessage(receiverId: number, message: any) {
 }
 
 /**
+ * Broadcast a newly sent announcement to every connected client so their
+ * announcement badge / open announcement screen can update in real time.
+ * Payload carries `userId` (sender) so the sender's own client can ignore it.
+ */
+export function emitAnnouncement(message: any, senderId: number) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit announcement-sent: Socket.io server not initialized`)
+		return
+	}
+
+	io.emit("announcement-sent", { ...message, userId: senderId })
+	console.log(`[Socket.io] [${new Date().toISOString()}] Announcement emitted to all clients`)
+}
+
+/**
  * Emit game surrender event to all clients in a room
  */
 export function emitGameSurrender(roomId: string, data: any) {

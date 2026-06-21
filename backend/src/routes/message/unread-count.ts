@@ -1,4 +1,5 @@
 import { Response, Router } from "express"
+import prisma from "prisma"
 import { getChatMessageCollection } from "common/mongodb"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
@@ -34,9 +35,9 @@ const router = Router()
  *                 data:
  *                   type: object
  *                   properties:
- *                     total:
+ *                     total_pm:
  *                       type: number
- *                       description: Total count of unread messages
+ *                       description: Total count of unread private messages
  *                     conversations:
  *                       type: array
  *                       items:
@@ -48,6 +49,9 @@ const router = Router()
  *                           count:
  *                             type: number
  *                             description: Number of unread messages in this conversation
+ *                     announcements:
+ *                       type: number
+ *                       description: Number of announcements created after the user's last read mark
  *       401:
  *         description: Unauthorized
  *       500:
@@ -91,13 +95,29 @@ router.get("/message/unread-count", requireAuth(), async (req: AuthenticatedRequ
 			count: item.count
 		}))
 
+		// Count announcements created after the user's latest read mark
+		// (high-water mark). No read mark yet => treated as caught up (0).
+		const lastRead = await prisma.userAnnouncementRead.findFirst({
+			where: { user_id: BigInt(currentUserId) },
+			orderBy: { read_announcement_at: "desc" },
+			select: { read_announcement_at: true }
+		})
+		const lastReadAt = lastRead?.read_announcement_at ?? null
+		const announcements = lastReadAt === null
+			? 0
+			: await collection.countDocuments({
+				type: "announcement",
+				timestamp: { $gt: lastReadAt }
+			})
+
 		res.status(200).json({
 			success: true,
 			message: "Success",
 			status_code: 200,
 			data: {
-				total: totalCount,
-				conversations: conversationList
+				total_pm: totalCount,
+				conversations: conversationList,
+				announcements
 			}
 		})
 	} catch (error) {

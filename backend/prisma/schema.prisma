@@ -9,23 +9,37 @@ datasource db {
 }
 
 model User {
-  id                   BigInt     @id @default(autoincrement())
-  user_name            String     @unique @db.VarChar(50)
-  password             String     @db.VarChar(36)
-  email                String     @unique @db.VarChar(255)
-  display_name         String
-  gender               Boolean
-  avatar_seq           Int        @default(0)
-  total_points         Int        @default(200)
-  is_bot               Boolean    @default(false)
-  room_users           RoomUser[]
-  won_games            Game[]     @relation("Game_winner")
-  game_users           GameUser[]
+  id                    BigInt     @id @default(autoincrement())
+  user_name             String     @unique @db.VarChar(50)
+  password              String     @db.VarChar(36)
+  email                 String     @unique @db.VarChar(255)
+  display_name          String
+  gender                Boolean
+  avatar_seq            Int        @default(0)
+  total_points          Int        @default(200)
+  is_bot                Boolean    @default(false)
+  room_users            RoomUser[]
+  won_games             Game[]     @relation("Game_winner")
+  game_users            GameUser[]
   surrendered_histories GameHistory[] @relation("GameHistory_surrender")
-  undone_histories     GameHistory[] @relation("GameHistory_undo")
+  undone_histories      GameHistory[] @relation("GameHistory_undo")
+  announcement_reads    UserAnnouncementRead[]
 
   @@map("users")
   @@schema("auth")
+}
+
+model UserAnnouncementRead {
+  id                   BigInt   @id @default(autoincrement())
+  user_id              BigInt
+  session_id           String   @db.Uuid
+  read_announcement_at DateTime @default(now()) @db.Timestamptz(6)
+  users                User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, session_id])
+  @@index([user_id, read_announcement_at(sort: Desc)])
+  @@map("user_announcement_read")
+  @@schema("game")
 }
 
 model Room {

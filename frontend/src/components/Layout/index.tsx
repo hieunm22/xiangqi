@@ -4,6 +4,7 @@ import classnames from "classnames"
 import {
 	AppBar,
 	Avatar,
+	Badge,
 	Box,
 	Button,
 	CssBaseline,
@@ -40,6 +41,7 @@ import {
 	requireImage
 } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import { setPopup } from "toolkit/slice/game"
@@ -64,6 +66,7 @@ export default function Layout() {
 	const [userDisplayName, setUserDisplayName] = useState("")
 	const [userImage, setUserImage] = useState("")
 	const [unreadCount, setUnreadCount] = useState(0)
+	const [announcementCount, setAnnouncementCount] = useState(0)
 	const navigate = useNavigate()
 	const {
 		getUnreadCount,
@@ -74,6 +77,7 @@ export default function Layout() {
 		resetGame
 	} = useAPI()
 	const { gameState, state, dispatch } = useToolkit()
+	const { offAnnouncementSent, onAnnouncementSent } = useSocket()
 	const { showProfilePopup } = useLayoutAuth()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -81,12 +85,12 @@ export default function Layout() {
 
 	const setDarkModeAction = (darkMode: boolean) => dispatch(setDarkMode(darkMode))
 	const handleMobileToggle = () => setMobileOpen(!mobileOpen)
-	
+
 	const handleMobileDrawerClose = () => {
 		(document.activeElement as HTMLElement)?.blur()
 		setMobileOpen(false)
 	}
-	
+
 	const handleDrawerToggle = () => setDrawerOpen(!drawerOpen)
 
 	useEffect(() => {
@@ -118,7 +122,8 @@ export default function Layout() {
 			try {
 				const response = await getUnreadCount(token)
 				if (response?.success && response.data) {
-					setUnreadCount(response.data.total)
+					setUnreadCount(response.data.total_pm)
+					setAnnouncementCount(response.data.announcements)
 				}
 			} catch (error) {
 				console.error("Failed to get unread count:", error)
@@ -128,6 +133,20 @@ export default function Layout() {
 		getLoginUserInfo()
 		getPrivateMessagesUnread()
 	}, [])
+
+	// Live-update the announcement badge when another client sends one. Ignore
+	// our own announcement, and don't bump the badge while the user is actively
+	// viewing the announcement screen (it marks everything read on open).
+	useEffect(() => {
+		const handleAnnouncement = (data: any) => {
+			if (data?.userId === currentUserId) return
+			if (window.location.pathname === "/announce") return
+			setAnnouncementCount(prev => prev + 1)
+		}
+
+		onAnnouncementSent(handleAnnouncement)
+		return () => offAnnouncementSent(handleAnnouncement)
+	}, [onAnnouncementSent, offAnnouncementSent, currentUserId])
 
 	const { setLogout } = useAuth()
 
@@ -162,6 +181,8 @@ export default function Layout() {
 	const handleShowAnnounce = () => {
 		navigate("/announce")
 		setMobileOpen(false)
+		// Opening the screen marks announcements read, so clear the badge now.
+		setAnnouncementCount(0)
 	}
 
 	const handleRestart = async () => {
@@ -235,7 +256,7 @@ export default function Layout() {
 	const menuItems = [
 		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
 		{ text: "menu.guide", icon: "fa-book", click: handleShowGuide },
-		{ text: "menu.announce", icon: "fa-bullhorn", click: handleShowAnnounce },
+		{ text: "menu.announce", icon: "fa-bullhorn", click: handleShowAnnounce, badge: announcementCount },
 		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
 		// ...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
 	]
@@ -270,30 +291,29 @@ export default function Layout() {
 
 			<List>
 				{menuItems.map(item => (
-					<ListItem key={item.text} disablePadding>
-						<ListItemButton onClick={item.click}>
-							<TI className={`fas ${item.icon} mr-10 fsx-20`} title={item.text} />
-							{drawerOpen && <TTypography content={item.text} className="fsx-14" />}
-						</ListItemButton>
-					</ListItem>
+					<ListItemButton key={item.text} className="menu-item" onClick={item.click}>
+						<Badge badgeContent={item.badge} color="error" max={9} invisible={!item.badge}>
+							<TI className={`fas ${item.icon} icon`} title={item.text} />
+						</Badge>
+						{drawerOpen && <TTypography content={item.text} className="text" />}
+					</ListItemButton>
 				))}
 			</List>
 
 			<Divider sx={{ mt: "auto" }} />
 
 			<List>
-				{isInRoom && state.debugMode && <ListItem disablePadding>
-					<ListItemButton onClick={handleRestart}>
-						<TI className="fas fa-rotate" title="Restart" />
-						{drawerOpen && <TTypography className="fsx-14 ml-8" content="Restart" />}
-					</ListItemButton>
-				</ListItem>}
-				<ListItem disablePadding>
+				{isInRoom && state.debugMode && <ListItem className="menu-item" onClick={handleRestart}>
+						<TI className="fas fa-rotate icon" title="Restart" />
+						{drawerOpen && <TTypography className="text" content="Restart" />}
+					</ListItem>
+				}
+				<ListItem disablePadding className="menu-item">
 					<ListItemButton onClick={logoutClick}>
-						<TI className="fas fa-right-from-bracket" title="menu.logout" />
-						{drawerOpen && <TTypography className="fsx-14 ml-8" content="menu.logout" />}
+						<TI className="fas fa-left-from-bracket icon" title="menu.logout" />
+						{drawerOpen && <TTypography className="text" content="menu.logout" />}
 					</ListItemButton>
-					<i className={toogleDrawerClass} onClick={handleDrawerToggle} />
+					<TI className={toogleDrawerClass} onClick={handleDrawerToggle} />
 				</ListItem>
 			</List>
 		</>
@@ -388,7 +408,7 @@ export default function Layout() {
 				)}
 				<Divider className="menu-divider" />
 				<MenuItem onClick={handleLogoutFromMenu} className="menu-logout">
-					<i className="fas fa-right-from-bracket" />
+					<i className="fas fa-left-from-bracket" />
 					{translate("menu.logout")}
 				</MenuItem>
 			</Menu>

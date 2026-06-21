@@ -176,6 +176,25 @@ router.post("/auth/login", (req, res, next) => {
 		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
 		await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", REFRESH_TOKEN_TTL_SECONDS)
 
+		// On a user's very first login, seed an announcement "read" baseline so a
+		// brand-new user is treated as caught up with existing announcements while
+		// still seeing announcements created afterwards as unread. Non-critical:
+		// never block login if this fails.
+		try {
+			const existingRead = await prisma.userAnnouncementRead.findFirst({
+				where: { user_id: user.id },
+				select: { id: true }
+			})
+
+			if (!existingRead) {
+				await prisma.userAnnouncementRead.create({
+					data: { user_id: user.id, session_id: sessionId }
+				})
+			}
+		} catch (seedError) {
+			console.error("Failed to seed announcement read baseline:", seedError)
+		}
+
 		const cookieOptions = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
 		res.cookie(REFRESH_TOKEN_KEY, refresh_token, cookieOptions)
 

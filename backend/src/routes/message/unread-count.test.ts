@@ -1,18 +1,27 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const countDocumentsMock = vi.fn()
 const aggregateMock = vi.fn()
 const getChatMessageCollectionMock = vi.fn()
+const announcementReadFindFirstMock = vi.fn()
 
 const PATH = "/api/message/unread-count"
 
 vi.mock("../../common/redis", () => ({
 	default: {
 		get: redisGetMock
+	}
+}))
+
+vi.mock("prisma", () => ({
+	default: {
+		userAnnouncementRead: {
+			findFirst: announcementReadFindFirstMock
+		}
 	}
 }))
 
@@ -32,6 +41,11 @@ describe("GET /api/message/unread-count", () => {
 		app = express()
 		app.use(express.json())
 		app.use("/api", unreadCountRoutes)
+	})
+
+	beforeEach(() => {
+		// Default: user has no announcement read mark -> announcements treated as 0.
+		announcementReadFindFirstMock.mockResolvedValue(null)
 	})
 
 	afterEach(() => {
@@ -80,13 +94,51 @@ describe("GET /api/message/unread-count", () => {
 			message: "Success",
 			status_code: 200,
 			data: {
-				total: 0,
-				conversations: []
+				total_pm: 0,
+				conversations: [],
+				announcements: 0
 			}
 		})
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			receiver_id: 1,
 			status: 1
+		})
+	})
+
+	it("returns the count of announcements created after the user's last read mark", async () => {
+		const accessToken = buildAccessToken(1, "session-unread-announce")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+
+		const lastReadAt = new Date("2026-06-19T05:00:00.000Z")
+		announcementReadFindFirstMock.mockResolvedValue({ read_announcement_at: lastReadAt })
+
+		// First countDocuments call = unread PMs, second = new announcements.
+		countDocumentsMock.mockResolvedValueOnce(0).mockResolvedValueOnce(3)
+		aggregateMock.mockReturnValue({
+			toArray: vi.fn().mockResolvedValue([])
+		})
+		getChatMessageCollectionMock.mockResolvedValue({
+			countDocuments: countDocumentsMock,
+			aggregate: aggregateMock
+		})
+
+		const res = await request(app)
+			.get(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toMatchObject({
+			total_pm: 0,
+			announcements: 3
+		})
+		expect(announcementReadFindFirstMock).toHaveBeenCalledWith({
+			where: { user_id: 1n },
+			orderBy: { read_announcement_at: "desc" },
+			select: { read_announcement_at: true }
+		})
+		expect(countDocumentsMock).toHaveBeenCalledWith({
+			type: "announcement",
+			timestamp: { $gt: lastReadAt }
 		})
 	})
 
@@ -116,11 +168,12 @@ describe("GET /api/message/unread-count", () => {
 			message: "Success",
 			status_code: 200,
 			data: {
-				total: 5,
+				total_pm: 5,
 				conversations: [
 					{ conversation_key: "1_2", count: 3 },
 					{ conversation_key: "1_5", count: 2 }
-				]
+				],
+				announcements: 0
 			}
 		})
 	})

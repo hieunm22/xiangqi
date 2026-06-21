@@ -190,6 +190,7 @@ describe("POST /api/message/send-private", () => {
 		})
 		expect(insertOneMock).toHaveBeenCalledWith(
 			expect.objectContaining({
+				type: "private",
 				message: "Hello from user 1",
 				sender_id: 1,
 				receiver_id: 2,

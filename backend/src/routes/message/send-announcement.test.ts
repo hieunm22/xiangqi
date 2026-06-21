@@ -5,13 +5,12 @@ import { ObjectId } from "mongodb"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
-const roomFindUniqueMock = vi.fn()
-const roomUserFindUniqueMock = vi.fn()
 const userFindUniqueMock = vi.fn()
 const insertOneMock = vi.fn()
 const getChatMessageCollectionMock = vi.fn()
+const emitAnnouncementMock = vi.fn()
 
-const PATH = "/api/message/send-room-message"
+const PATH = "/api/message/send-announcement"
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -19,14 +18,12 @@ vi.mock("../../common/redis", () => ({
 	}
 }))
 
+vi.mock("../../common/socket", () => ({
+	emitAnnouncement: emitAnnouncementMock
+}))
+
 vi.mock("prisma", () => ({
 	default: {
-		room: {
-			findUnique: roomFindUniqueMock
-		},
-		roomUser: {
-			findUnique: roomUserFindUniqueMock
-		},
 		user: {
 			findUnique: userFindUniqueMock
 		}
@@ -37,7 +34,7 @@ vi.mock("../../common/mongodb", () => ({
 	getChatMessageCollection: getChatMessageCollectionMock
 }))
 
-describe("POST /api/message/send-room-message", () => {
+describe("POST /api/message/send-announcement", () => {
 	let app: express.Express
 	let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 
@@ -45,10 +42,10 @@ describe("POST /api/message/send-room-message", () => {
 		process.env.JWT_SECRET = "unit-test-secret"
 		process.env.JWT_ISSUER = "unit-test-issuer"
 
-		const { default: sendRoomMessageRoutes } = await import("./send-room-message")
+		const { default: sendAnnouncementRoutes } = await import("./send-announcement")
 		app = express()
 		app.use(express.json())
-		app.use("/api", sendRoomMessageRoutes)
+		app.use("/api", sendAnnouncementRoutes)
 	})
 
 	afterEach(() => {
@@ -64,7 +61,6 @@ describe("POST /api/message/send-room-message", () => {
 
 	it("returns 401 when authorization token is missing", async () => {
 		const res = await request(app).post(PATH).send({
-			room_id: 101,
 			message: "Hello"
 		})
 
@@ -74,38 +70,17 @@ describe("POST /api/message/send-room-message", () => {
 			message: "auth-middleware.messages.token-required",
 			status_code: 401
 		})
-		expect(roomFindUniqueMock).not.toHaveBeenCalled()
-	})
-
-	it("returns 400 when room_id is invalid", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-1")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
-
-		const res = await request(app)
-			.post(PATH)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				room_id: 0,
-				message: "Hello"
-			})
-
-		expect(res.status).toBe(400)
-		expect(res.body).toMatchObject({
-			success: false,
-			message: "Invalid room_id",
-			status_code: 400
-		})
+		expect(getChatMessageCollectionMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 400 when message is invalid", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-2")
+		const accessToken = buildAccessToken(1, "session-send-announcement-1")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
 
 		const res = await request(app)
 			.post(PATH)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({
-				room_id: 101,
 				message: ""
 			})
 
@@ -117,62 +92,13 @@ describe("POST /api/message/send-room-message", () => {
 		})
 	})
 
-	it("returns 404 when room does not exist or is inactive", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-3")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
-		roomFindUniqueMock.mockResolvedValue(null)
-
-		const res = await request(app)
-			.post(PATH)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				room_id: 101,
-				message: "Hello"
-			})
-
-		expect(res.status).toBe(404)
-		expect(res.body).toMatchObject({
-			success: false,
-			message: "Room not found",
-			status_code: 404
-		})
-		expect(roomFindUniqueMock).toHaveBeenCalledWith({
-			where: { id: 101n, is_active: true },
-			select: { id: true }
-		})
-	})
-
-	it("returns 403 when user has not joined the room", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-4")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
-		roomFindUniqueMock.mockResolvedValue({ id: 101n })
-		roomUserFindUniqueMock.mockResolvedValue(null)
-
-		const res = await request(app)
-			.post(PATH)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				room_id: 101,
-				message: "Hello"
-			})
-
-		expect(res.status).toBe(403)
-		expect(res.body).toMatchObject({
-			success: false,
-			message: "Forbidden",
-			status_code: 403
-		})
-	})
-
-	it("returns 201 and inserts room message successfully", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-5")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
-		roomFindUniqueMock.mockResolvedValue({ id: 101n })
-		roomUserFindUniqueMock.mockResolvedValue({ room_id: 101n })
+	it("returns 201 and inserts announcement successfully", async () => {
+		const accessToken = buildAccessToken(82, "session-send-announcement-2")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 82 }))
 		userFindUniqueMock.mockResolvedValue({
-			id: 1n,
+			id: 82n,
 			display_name: "TestUser",
-			avatar_url: "https://example.com/avatar.jpg"
+			avatar_seq: 3
 		})
 
 		const insertedId = new ObjectId()
@@ -183,17 +109,15 @@ describe("POST /api/message/send-room-message", () => {
 			.post(PATH)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({
-				room_id: 101,
-				message: "Hello room"
+				message: "go go go"
 			})
 
 		expect(res.status).toBe(201)
 		expect(insertOneMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				type: "room",
-				room_id: 101,
-				sender_id: 1,
-				message: "Hello room",
+				type: "announcement",
+				sender_id: 82,
+				message: "go go go",
 				timestamp: expect.any(Date)
 			})
 		)
@@ -203,23 +127,25 @@ describe("POST /api/message/send-room-message", () => {
 			status_code: 201,
 			data: {
 				_id: insertedId.toString(),
-				room_id: 101,
 				sender: {
-					id: 1,
+					id: 82,
 					display_name: "TestUser",
 					avatar_url: expect.any(String)
 				},
-				message: "Hello room"
+				message: "go go go"
 			}
 		})
 		expect(typeof res.body.data.timestamp).toBe("string")
+		// Broadcasts the new announcement to all clients, tagged with the sender.
+		expect(emitAnnouncementMock).toHaveBeenCalledWith(
+			expect.objectContaining({ _id: insertedId.toString(), message: "go go go" }),
+			82
+		)
 	})
 
 	it("returns 500 when mongodb insert fails", async () => {
-		const accessToken = buildAccessToken(1, "session-send-room-6")
+		const accessToken = buildAccessToken(1, "session-send-announcement-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
-		roomFindUniqueMock.mockResolvedValue({ id: 101n })
-		roomUserFindUniqueMock.mockResolvedValue({ room_id: 101n })
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		getChatMessageCollectionMock.mockRejectedValue(new Error("mongo down"))
 
@@ -227,7 +153,6 @@ describe("POST /api/message/send-room-message", () => {
 			.post(PATH)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({
-				room_id: 101,
 				message: "Hello"
 			})
 

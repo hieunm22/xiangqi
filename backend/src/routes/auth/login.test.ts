@@ -1,10 +1,12 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { REFRESH_TOKEN_TTL_SECONDS } from "common/constant"
 
 const prismaFindFirstMock = vi.fn()
+const announcementReadFindFirstMock = vi.fn()
+const announcementReadCreateMock = vi.fn()
 const redisSetMock = vi.fn()
 const PATH = "/api/auth/login"
 
@@ -12,6 +14,10 @@ vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findFirst: prismaFindFirstMock
+		},
+		userAnnouncementRead: {
+			findFirst: announcementReadFindFirstMock,
+			create: announcementReadCreateMock
 		}
 	}
 }))
@@ -34,6 +40,12 @@ describe("POST /api/auth/login", () => {
 		const { default: loginRoutes } = await import("./login")
 		app = express()
 		app.use("/api", loginRoutes)
+	})
+
+	beforeEach(() => {
+		// Default: user has no prior announcement-read record, so login seeds one.
+		announcementReadFindFirstMock.mockResolvedValue(null)
+		announcementReadCreateMock.mockResolvedValue({ id: 1n })
 	})
 
 	afterEach(() => {
@@ -126,6 +138,28 @@ describe("POST /api/auth/login", () => {
 			: String(setCookieHeader ?? "")
 		expect(serializedCookies).toContain("refresh-token=")
 		expect(serializedCookies).toContain("HttpOnly")
+
+		// First login seeds an announcement-read baseline for this session.
+		expect(announcementReadFindFirstMock).toHaveBeenCalledWith({
+			where: { user_id: 1 },
+			select: { id: true }
+		})
+		expect(announcementReadCreateMock).toHaveBeenCalledWith({
+			data: { user_id: 1, session_id: payload.jti }
+		})
+	})
+
+	it("does not seed an announcement baseline when the user already has one", async () => {
+		prismaFindFirstMock.mockResolvedValue({ id: 7, user_name: "evan" })
+		announcementReadFindFirstMock.mockResolvedValue({ id: 99n })
+
+		const res = await request(app)
+			.post(PATH)
+			.field("username", "evan")
+			.field("password", "correct-password")
+
+		expect(res.status).toBe(200)
+		expect(announcementReadCreateMock).not.toHaveBeenCalled()
 	})
 
 	it("supports application/x-www-form-urlencoded requests", async () => {

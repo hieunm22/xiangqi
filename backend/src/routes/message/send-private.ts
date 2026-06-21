@@ -125,6 +125,7 @@ router.post("/message/send-private", requireAuth(), async (req: AuthenticatedReq
 		// Insert into MongoDB chat_history collection
 		const collection = await getChatMessageCollection()
 		const result = await collection.insertOne({
+			type: "private",
 			message: message.trim(),
 			sender_id: senderId,
 			receiver_id,

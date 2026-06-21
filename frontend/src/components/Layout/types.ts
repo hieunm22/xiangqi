@@ -49,6 +49,7 @@ interface UnreadCountByConversation {
 }
 
 export interface UnreadCountResponse {
-	total: number
+	total_pm: number
 	conversations: UnreadCountByConversation[]
+	announcements: number
 }
