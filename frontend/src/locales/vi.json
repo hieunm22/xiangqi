@@ -52,7 +52,8 @@
 	"announce": {
 		"title": "Thông báo",
 		"placeholder": "Nhập thông báo...",
-		"empty": "Chưa có thông báo nào"
+		"empty": "Chưa có thông báo nào",
+		"loading-older": "Đang tải thông báo cũ hơn..."
 	},
 	"archivement": {
 		"title-01": "Chiếu bí khi đối thủ vẫn còn >= 13 quân",
@@ -79,7 +80,7 @@
 	},
 	"search": {
 		"user": {
-			"title": "Cuộc trò chuyện mới",
+			"title": "Tìm kiếm",
 			"placeholder": "Tìm kiếm người dùng...",
 			"no-results": "Không tìm thấy người dùng"
 		},
@@ -158,6 +159,8 @@
 		},
 		"actions": {
 			"start-room": "Bắt đầu chơi",
+			"challenge": "Thách đấu",
+			"leave-seat": "Dự khán",
 			"undo": "Hoán tác",
 			"surrender": "Đầu hàng",
 			"draw": "Hòa",
@@ -403,6 +406,22 @@
 			"invalid-status": "Trường 'status' phải là 1 hoặc 2",
 			"room-not-found": "Không tìm thấy phòng",
 			"success": "Đặt trạng thái phòng thành công"
+		}
+	},
+	"room-invite": {
+		"messages": {
+			"title": "Lời mời vào phòng"
+		}
+	},
+	"start-game": {
+		"messages": {
+			"success": "Bắt đầu trò chơi thành công",
+			"internal-server-error": "Lỗi máy chủ nội bộ khi bắt đầu trò chơi",
+			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
+			"invalid-difficulty": "Độ khó của bot phải từ 1 đến 5",
+			"room-not-found": "Không tìm thấy phòng",
+			"forbidden": "Chỉ chủ phòng mới có thể bắt đầu trò chơi",
+			"requester-must-pick-team": "Bạn phải chọn team trước khi bắt đầu trò chơi với bot"
 		}
 	},
 	"update-room": {

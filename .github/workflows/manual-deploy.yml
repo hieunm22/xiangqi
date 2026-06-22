@@ -1,10 +1,20 @@
 name: Manual Deploy
 
-# Manual "deploy button": go to the Actions tab -> "Manual Deploy" -> "Run workflow".
-# GitHub's native branch selector in that dialog lists every branch of the repo,
-# so the selected branch (github.ref_name) is what gets deployed.
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Deploy target
+        type: choice
+        options:
+          - Full
+          - Backend
+          - Frontend
+        default: Full
+      install_deps:
+        description: Install dependencies (yarn install)
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -14,7 +24,8 @@ jobs:
       - name: Checkout selected branch
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH (run predefined script)
+      - name: Full deploy
+        if: ${{ inputs.target == 'Full' }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ vars.SERVER_IP }}
@@ -22,10 +33,41 @@ jobs:
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script_stop: true
-          envs: DEPLOY_BRANCH
+          envs: DEPLOY_BRANCH,INSTALL_DEPS
           script_path: .github/workflows/full-deploy.sh
         env:
           DEPLOY_BRANCH: ${{ github.ref_name }}
+          INSTALL_DEPS: ${{ inputs.install_deps }}
+
+      - name: Backend deploy
+        if: ${{ inputs.target == 'Backend' }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.SERVER_IP }}
+          username: root
+          port: 23
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          envs: DEPLOY_BRANCH,INSTALL_DEPS
+          script_path: .github/workflows/be-deploy.sh
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          INSTALL_DEPS: ${{ inputs.install_deps }}
+
+      - name: Frontend deploy
+        if: ${{ inputs.target == 'Frontend' }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.SERVER_IP }}
+          username: root
+          port: 23
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          envs: DEPLOY_BRANCH,INSTALL_DEPS
+          script_path: .github/workflows/fe-deploy.sh
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          INSTALL_DEPS: ${{ inputs.install_deps }}
 
   notify:
     needs: deploy
@@ -44,7 +86,7 @@ jobs:
             EMOJI="❌"
           fi
 
-          printf -v MESSAGE '%s Manual Deploy (%s) finished at %s: %s\n%s' "$EMOJI" "${{ github.ref_name }}" "$TIMESTAMP" "$STATUS" "$RUN_URL"
+          printf -v MESSAGE '%s Manual Deploy [%s] (%s) finished at %s: %s\n%s' "$EMOJI" "${{ inputs.target }}" "${{ github.ref_name }}" "$TIMESTAMP" "$STATUS" "$RUN_URL"
 
           curl -s \
             -X POST \

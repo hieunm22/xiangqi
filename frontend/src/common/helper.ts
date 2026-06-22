@@ -378,6 +378,15 @@ export function getClaimsFromLocalStorage() {
 	return decodePayload(token)
 }
 
+export function getCurrentUserId(): number | null {
+	const claims = getClaimsFromLocalStorage()
+	if (!claims || !claims.sub) {
+		return null
+	}
+	const id = Number(claims.sub)
+	return Number.isNaN(id) ? null : id
+}
+
 function parseFenBoard(fen: string): Array<PieceCharacter | null> {
 	const rows = fen.trim().split("/")
 	if (rows.length !== BOARD_ROWS) {

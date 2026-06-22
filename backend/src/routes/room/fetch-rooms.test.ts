@@ -87,10 +87,12 @@ describe("GET /api/room/fetch-rooms", () => {
 				status: 1,
 				red_first: true,
 				bet_amount: 50,
+				host_id: BigInt(12),
 				created_at: new Date("2026-05-12T00:00:00.000Z"),
 				updated_at: new Date("2026-05-12T00:00:00.000Z"),
 				room_users: [
 					{
+						team: "red",
 						users: {
 							id: BigInt(11),
 							display_name: "Alice",
@@ -98,6 +100,7 @@ describe("GET /api/room/fetch-rooms", () => {
 						}
 					},
 					{
+						team: "black",
 						users: {
 							id: BigInt(12),
 							display_name: "Bob",
@@ -122,20 +125,24 @@ describe("GET /api/room/fetch-rooms", () => {
 			name: "Table A",
 			status: 1,
 			red_first: true,
-			bet_amount: 50
+			bet_amount: 50,
+			// host is independent of join order (Alice joined first, Bob is host)
+			host_id: 12
 		})
 		expect(res.body.data[0].users).toHaveLength(2)
 		expect(res.body.data[0].users[0]).toMatchObject({
 			id: 11,
 			display_name: "Alice",
 			avatar_seq: 0,
-			avatar_url: "/images/11.jpg"
+			avatar_url: "/images/11.jpg",
+			team: "red"
 		})
 		expect(res.body.data[0].users[1]).toMatchObject({
 			id: 12,
 			display_name: "Bob",
 			avatar_seq: 2,
-			avatar_url: "/images/12_2.jpg"
+			avatar_url: "/images/12_2.jpg",
+			team: "black"
 		})
 
 		expect(roomFindManyMock).toHaveBeenCalledTimes(1)
@@ -147,7 +154,13 @@ describe("GET /api/room/fetch-rooms", () => {
 					id: true,
 					name: true,
 					status: true,
-					room_users: expect.any(Object)
+					host_id: true,
+					room_users: expect.objectContaining({
+						select: expect.objectContaining({
+							team: true,
+							users: expect.any(Object)
+						})
+					})
 				})
 			})
 		)

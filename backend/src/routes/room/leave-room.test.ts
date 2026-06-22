@@ -286,7 +286,63 @@ describe("DELETE /api/room/leave", () => {
 		])
 	})
 
-	it("promotes first spectator to vacated team when a player leaves", async () => {
+	it("reassigns host to earliest remaining real user when the host leaves a PvP room", async () => {
+		const accessToken = buildAccessToken(51, "session-leave-host")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			pve_mode: false,
+			status: 1,
+			bet_amount: 100,
+			host_id: BigInt(51)
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				joined_at: new Date("2026-05-26T00:00:00.000Z"),
+				team: "red",
+				user_id: BigInt(51),
+				users: { id: BigInt(51), display_name: "Host", avatar_seq: 0 }
+			},
+			{
+				joined_at: new Date("2026-05-26T00:00:01.000Z"),
+				team: "black",
+				user_id: BigInt(52),
+				users: { id: BigInt(52), display_name: "Player B", avatar_seq: 1 }
+			}
+		])
+		gameFindFirstMock.mockResolvedValue(null)
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomUserCountMock.mockResolvedValue(1)
+		roomUpdateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.delete(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(200)
+		// Host role transferred to the next earliest remaining real user (52)
+		expect(roomUpdateMock).toHaveBeenCalledWith({
+			where: { id: BigInt(101) },
+			data: { host_id: BigInt(52) }
+		})
+		expect(emitRoomUsersUpdatedMock).toHaveBeenCalledWith(
+			101,
+			[
+				{
+					id: 52,
+					display_name: "Player B",
+					avatar_seq: 1,
+					avatar_url: "/images/52_1.jpg",
+					team: "black",
+					joined_at: new Date("2026-05-26T00:00:01.000Z")
+				}
+			],
+			52
+		)
+	})
+
+	it("does not promote spectator when a player leaves", async () => {
 		const accessToken = buildAccessToken(51, "session-leave-3c")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
 		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false, status: 1, bet_amount: 100 })
@@ -314,12 +370,6 @@ describe("DELETE /api/room/leave", () => {
 		])
 		gameFindFirstMock.mockResolvedValue(null)
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
-		const findFirstSpectatorMock = vi.fn().mockResolvedValue({
-			room_id: BigInt(101),
-			user_id: BigInt(77)
-		})
-		roomUserFindFirstMock.mockImplementation(findFirstSpectatorMock)
-		roomUserUpdateMock.mockResolvedValue({})
 		roomUserCountMock.mockResolvedValue(1)
 
 		const res = await request(app)
@@ -328,31 +378,14 @@ describe("DELETE /api/room/leave", () => {
 			.send({ id: 101 })
 
 		expect(res.status).toBe(200)
-		expect(roomUserFindFirstMock).toHaveBeenCalledWith({
-			where: {
-				room_id: BigInt(101),
-				team: null
-			},
-			orderBy: {
-				joined_at: "asc"
-			}
-		})
-		expect(roomUserUpdateMock).toHaveBeenCalledWith({
-			where: {
-				room_id_user_id: {
-					room_id: BigInt(101),
-					user_id: BigInt(77)
-				}
-			},
-			data: { team: "red" }
-		})
+		expect(roomUserUpdateMock).not.toHaveBeenCalled()
 		expect(emitRoomUsersUpdatedMock).toHaveBeenCalledWith(101, [
 			{
 				id: 77,
 				display_name: "Spectator",
 				avatar_seq: 2,
 				avatar_url: "/images/77_2.jpg",
-				team: "red",
+				team: null,
 				joined_at: new Date("2026-05-26T00:00:01.000Z")
 			}
 		])

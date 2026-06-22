@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react"
 import {
-	Button,
 	Dialog,
 	DialogContent,
 	DialogTitle,
 	Divider,
 	Grid,
-	Typography
 } from "@mui/material"
-import { translate } from "locales/translate"
-import { ComponentWithChild, ConfirmProps as AlertOptions } from "types/Common"
+import { ComponentWithChild, ConfirmProps } from "types/Common"
 import { AlertHandler, AlertQueueItem } from "./types"
+import { TButton, TTypography } from "components/TranslationTag"
+import "./AlertProvider.scss"
 
 let handler: AlertHandler | null = null
 
-export function openAlert(options: AlertOptions) {
+export function openAlert(options: ConfirmProps) {
 	if (!handler) return Promise.resolve()
 	return handler(options)
 }
@@ -23,7 +22,7 @@ export const AlertProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<AlertQueueItem[]>([])
 
 	useEffect(() => {
-		handler = (options: AlertOptions) => {
+		handler = (options: ConfirmProps) => {
 			return new Promise<void>(resolve => {
 				setQueue([{ id: Date.now() + Math.random(), options, resolve }])
 			})
@@ -42,12 +41,6 @@ export const AlertProvider = (props: ComponentWithChild) => {
 		setQueue([])
 	}
 
-	const textCenterStyle = {
-		display: "flex",
-		justifyContent: "center",
-		alignItems: "center"
-	}
-
 	return (
 		<>
 			{props.children}
@@ -55,27 +48,27 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				open={!!current}
 				maxWidth="xs"
 				fullWidth
+				className="alert-dialog"
 				disableEnforceFocus
 			>
 				<DialogTitle className="popup-title">
-					<Typography component="div" sx={textCenterStyle}>
-						{translate(current?.options.title ?? "popup.alert.title")}
-					</Typography>
+					<TTypography
+						component="div"
+						className="popup-title-text"
+						content={current?.options.title ?? "popup.alert.title"}
+					/>
 				</DialogTitle>
-				<Divider sx={{ my: "5px" }} />
+				<Divider className="divider" />
 				<DialogContent>
-					<Typography sx={{ textAlign: "center", mb: 1 }}>
-						{translate(current?.options.message)}
-					</Typography>
-					<Grid container sx={{ justifyContent: "center" }}>
-						<Button
-							className="btn btn-primary mt-20 center"
+					<TTypography className="alert-message" content={current?.options.message} />
+					<Grid container className="button-container">
+						<TButton
+							className="btn btn-primary center"
 							variant="outlined"
 							size="small"
 							onClick={onOk}
-						>
-							{translate("settings.close")}
-						</Button>
+							value="settings.close"
+						/>
 					</Grid>
 				</DialogContent>
 			</Dialog>

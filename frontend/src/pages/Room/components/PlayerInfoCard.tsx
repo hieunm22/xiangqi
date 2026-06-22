@@ -1,33 +1,43 @@
 import classnames from "classnames"
+import { PopupState } from "common/enums"
 import { TI } from "components/TranslationTag"
-import { formatNumber, requireImage } from "common/helper"
+import { formatNumber, getCurrentUserId, requireImage } from "common/helper"
 import useToolkit from "hooks/useToolkit"
-import { PlayerInfoCardProps } from "../types"
 import useLayoutAuth from "pages/Dashboard/hook"
+import { setInviteRoomId, setPopup, setRoomHostId } from "toolkit/slice/game"
+import { PlayerInfoCardProps } from "../types"
 
 export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
 		team,
-		user
+		user,
+		roomId,
 	} = props
 	const { showProfilePopup } = useLayoutAuth()
-	const { state } = useToolkit()
-
-	if (user?.display_name === undefined) {
-		return (
-			<div className="player-info-card loading-slot">
-				<TI className="fas fa-circle-north fa-spin" />
-			</div>
-		)
-	}
+	const { state, gameState, dispatch } = useToolkit()
 
 	const fullAvatarUrl = requireImage(user?.avatar_url || "")
+	const currentUserId = getCurrentUserId()
 
 	if (!user) {
-		const containerClass = classnames("player-info-card empty-slot", `team-${team}`)
+		if (props.roomHostId !== currentUserId) {
+			return (
+				<div className="player-info-card loading-slot">
+					<TI className="fas fa-circle-north fa-spin" />
+				</div>
+			)
+		}
+		const containerClass = classnames("player-info-card empty-slot cursor-pointer", `team-${team}`)
+		const handleEmptySlotClick = () => {
+			if (roomId !== null) {
+				dispatch(setInviteRoomId(roomId))
+			}
+			dispatch(setPopup(gameState.popupState | PopupState.SEARCH_USERS))
+		}
+
 		return (
-			<div className={containerClass}>
+			<div className={containerClass} onClick={handleEmptySlotClick}>
 				<div className="player-avatar empty">
 					<TI className="fas fa-user-plus" />
 				</div>
@@ -42,6 +52,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const handlePlayerNameClick = () => {
 		if (!user) return
 
+		dispatch(setRoomHostId(props.roomHostId))
 		showProfilePopup(user.id)
 	}
 

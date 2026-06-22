@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
 	Avatar,
 	Box,
@@ -12,15 +12,23 @@ import {
 	Tooltip,
 } from "@mui/material"
 import BoardImage from "assets/xiangqi-board.png"
+import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
 import { TButton } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { useJoinRoomDialogContext } from "hooks/useAppContext"
+import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "../hook"
+import { setPopup } from "toolkit/slice/game"
 import { Team } from "types/GameState"
-import { SeatAvatarProps } from "../types"
+import { DashboardRoom, SeatAvatarProps } from "../types"
+
+let inviteHandler: ((room: DashboardRoom) => void) | null = null
+
+export function openJoinRoom(room: DashboardRoom) {
+	inviteHandler && inviteHandler(room)
+}
 
 const SeatAvatar = ({ user, isHost, onUserClick }: SeatAvatarProps) => {
 	const avatarClass = onUserClick ? "dashboard__seat-avatar cursor-pointer" : "dashboard__seat-avatar"
@@ -55,14 +63,33 @@ const SeatAvatar = ({ user, isHost, onUserClick }: SeatAvatarProps) => {
 
 export const JoinRoomDialog = () => {
 	const navigate = useNavigate()
-	const { joinRoom } = useAPI()
-	const { room, closeJoinRoom } = useJoinRoomDialogContext()
-		const { showProfilePopup } = useLayoutAuth()
+	const location = useLocation()
+	const { joinRoom, leaveRoom } = useAPI()
+	const { gameState, dispatch } = useToolkit()
+	const { showProfilePopup } = useLayoutAuth()
+	const [room, setRoom] = useState<DashboardRoom | null>(null)
 	const [isJoining, setIsJoining] = useState(false)
 
-	const players = room?.users.slice(0, 2) ?? []
-	const spectators = room?.users.slice(2) ?? []
+	useEffect(() => {
+		// The dialog can be opened from anywhere
+		inviteHandler = (nextRoom: DashboardRoom) => {
+			setRoom(nextRoom)
+			dispatch(setPopup(PopupState.JOIN_ROOM))
+		}
+		return () => { inviteHandler = null }
+	}, [])
 
+	const isOpen = gameState.popupState === PopupState.JOIN_ROOM
+
+	const onCloseJoinRoom = () => {
+		dispatch(setPopup(PopupState.NONE))
+		setRoom(null)
+	}
+
+	const players = room?.users.filter(u => u.team !== null) ?? []
+	const host = room?.users.find(u => u.id === room?.host_id) ?? null
+	const opponent = players.find(u => u.id !== room?.host_id) ?? null
+	const spectators = room?.users.filter(u => u.team === null && u.id !== room?.host_id) ?? []
 	const joinAndNavigate = async (team?: Team | null) => {
 		if (!room || isJoining) {
 			return
@@ -74,6 +101,16 @@ export const JoinRoomDialog = () => {
 		}
 
 		setIsJoining(true)
+
+		// If the user is currently inside another room, leave it before joining
+		// the new one so they don't keep a seat in two rooms at once.
+		if (location.pathname.startsWith("/room/")) {
+			const currentRoomId = Number(location.pathname.substring("/room/".length))
+			if (Number.isInteger(currentRoomId) && currentRoomId > 0 && currentRoomId !== room.id) {
+				await leaveRoom(token, currentRoomId)
+			}
+		}
+
 		const response = await joinRoom(token, room.id, team)
 		setIsJoining(false)
 
@@ -84,7 +121,7 @@ export const JoinRoomDialog = () => {
 			return
 		}
 
-		closeJoinRoom()
+		onCloseJoinRoom()
 		navigate(`/room/${room.id}`)
 	}
 
@@ -98,13 +135,13 @@ export const JoinRoomDialog = () => {
 
 	const handleDialogClose = (_: React.SyntheticEvent, reason: string) => {
 		if (reason === "escapeKeyDown") {
-			closeJoinRoom()
+			onCloseJoinRoom()
 		}
 	}
 
 	return (
 		<Dialog
-			open={!!room}
+			open={isOpen}
 			fullWidth
 			onClose={handleDialogClose}
 			slotProps={{
@@ -117,13 +154,13 @@ export const JoinRoomDialog = () => {
 				<Stack className="dashboard__join-room-user-stack" >
 					<Stack direction="row" className="dashboard__join-room-player-stack">
 						<SeatAvatar
-							user={players[0]}
-							isHost={Boolean(players[0])}
+							user={host || null}
+							isHost
 							onUserClick={showProfilePopup}
 						/>
 						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
 						<SeatAvatar
-							user={players[1]}
+							user={opponent || null}
 							isHost={false}
 							onUserClick={showProfilePopup}
 						/>
@@ -148,7 +185,7 @@ export const JoinRoomDialog = () => {
 					onClick={handlePlay}
 					value="dashboard.popup.play"
 					disabled={players.length === 2 || isJoining}
-					startIcon={<i className="fas fa-play" />}
+					startIcon={<i className="far fa-play" />}
 				/>
 				<TButton
 					className="dashboard__action-btn"
@@ -163,7 +200,7 @@ export const JoinRoomDialog = () => {
 					className="dashboard__action-btn"
 					color="error"
 					variant="contained"
-					onClick={closeJoinRoom}
+					onClick={onCloseJoinRoom}
 					disabled={isJoining}
 					value="popup.confirm.cancel"
 					startIcon={<i className="fas fa-xmark" />}

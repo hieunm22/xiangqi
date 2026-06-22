@@ -34,6 +34,7 @@ menu.rooms;Rooms;Trò chơi
 announce.title;Announcement;Thông báo
 announce.placeholder;Type an announcement...;Nhập thông báo...
 announce.empty;No announcements yet;Chưa có thông báo nào
+announce.loading-older;Loading older announcements...;Đang tải thông báo cũ hơn...
 archivement.title-01;Checkmate an opponent who still has 13 or more pieces;Chiếu bí khi đối thủ vẫn còn >= 13 quân
 archivement.title-02;Win your first game;Thắng trận đầu khi chơi game
 archivement.title-03;Leave your opponent with no legal moves;Đánh cho đối thủ không còn nước đi
@@ -49,7 +50,7 @@ archivement.title-12;Defeat opponents with master rank in 50 games;Thắng đố
 chat.conversation.you;You;Bạn
 chat.conversation.new;New conversation;Cuộc trò chuyện mới
 chat.messages.unread;Unread messages;Tin nhắn chưa đọc
-search.user.title;New conversation;Cuộc trò chuyện mới
+search.user.title;Search user;Tìm kiếm
 search.user.placeholder;Search user...;Tìm kiếm người dùng...
 search.user.no-results;No users found;Không tìm thấy người dùng
 search.button.search;Search;Tìm kiếm
@@ -219,6 +220,8 @@ set-room-status.messages.invalid-status;Field 'status' must be either 1 or 2;Tr�
 set-room-status.messages.room-not-found;Room not found;Không tìm thấy phòng
 set-room-status.messages.success;Set room status successfully;Đặt trạng thái phòng thành công
 room.actions.start-room;Start room;Bắt đầu chơi
+room.actions.challenge;Challenge;Thách đấu
+room.actions.leave-seat;Leave seat;Dự khán
 room.actions.undo;Undo;Hoán tác
 room.actions.surrender;Surrender;Đầu hàng
 room.actions.draw;Draw;Hòa
@@ -241,6 +244,14 @@ room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
 room.settings.players;Spectators;Người xem
 room.settings.save;Save;Lưu
+room-invite.messages.title;Room Invitation;Lời mời vào phòng
+start-game.messages.success;Game started successfully;Bắt đầu trò chơi thành công
+start-game.messages.internal-server-error;Internal server error while starting game;Lỗi máy chủ nội bộ khi bắt đầu trò chơi
+start-game.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
+start-game.messages.invalid-difficulty;Bot difficulty must be between 1 and 5;Độ khó của bot phải từ 1 đến 5
+start-game.messages.room-not-found;Room not found;Không tìm thấy phòng
+start-game.messages.forbidden;Only the room host can start the game;Chỉ chủ phòng mới có thể bắt đầu trò chơi
+start-game.messages.requester-must-pick-team;You must select a team before starting a game with bot;Bạn phải chọn team trước khi bắt đầu trò chơi với bot
 update-room.messages.success;Room updated successfully;Cập nhật phòng thành công
 update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 update-room.messages.invalid-room-id;Invalid room ID;ID phòng không hợp lệ

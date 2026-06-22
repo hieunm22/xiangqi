@@ -8,4 +8,5 @@ export interface GameState {
 	popupState: number
 	activeUserId: number | null
 	roomHostId: number | null
+	inviteRoomId: number | null
 }

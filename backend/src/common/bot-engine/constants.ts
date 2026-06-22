@@ -1,4 +1,4 @@
-export const BOT_USER_ID = 0n
+export const BOT_USER_ID = 9223372036854n
 
 export const MIN_DIFFICULTY = 1
 export const MAX_DIFFICULTY = 5

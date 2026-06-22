@@ -12,9 +12,9 @@ import { openBotDifficulty } from "components/BotDifficultyProvider"
 import { openConfirm } from "components/ConfirmProvider"
 import { RoomChatMessage } from "components/ChatDialog/types"
 import {
-	decodePayload,
 	diffFenMove,
 	getAvailableMoves,
+	getCurrentUserId,
 	getToken
 } from "common/helper"
 import {
@@ -23,8 +23,8 @@ import {
 	fenToBoard,
 	findCheckingPieces,
 	getCapturedPiecesFromHistory,
-	getPieceFromCharacter,
 	getMoveDirection,
+	getPieceFromCharacter,
 	getTeamFromPieceChar,
 	markerClass,
 	playSound,
@@ -64,6 +64,7 @@ const useRoomHook = () => {
 	useAutoTitle("page.home.title")
 	const { state } = useToolkit()
 	const {
+		changeTeam,
 		drawGame,
 		getGameMovementHistory,
 		getRoomById,
@@ -142,12 +143,7 @@ const useRoomHook = () => {
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
-	const currentUserId = useMemo(() => {
-		const token = getToken()
-		const payload = decodePayload(token)
-		const id = Number(payload?.sub)
-		return Number.isNaN(id) ? null : id
-	}, [])
+	const currentUserId = getCurrentUserId()
 
 	// Team controlled by the logged-in player. Null for spectators
 	const myTeam = useMemo<Team | null>(() => {
@@ -259,6 +255,9 @@ const useRoomHook = () => {
 			}
 		}
 
+		const playerIds = joinedUsers.filter(u => u.team !== null).map(user => user.id)
+		const currentUser = joinedUsers.find(user => user.id === currentUserId)
+
 		const { top, bottom } = resolveSideUsers(joinedUsers, room.red_first)
 		setTopSideUser(top)
 		setBottomSideUser(bottom)
@@ -267,15 +266,31 @@ const useRoomHook = () => {
 			{
 				key: "start-room",
 				icon: "fas fa-swords",
-				label: translate("room.actions.start-room"),
+				label: "room.actions.start-room",
 				onClick: handleStartGame,
-				visible: joinedUsers[0].id === currentUserId && room.status === 1 && joinedUsers.length > 1,
+				visible: room.host_id === currentUserId && room.status === 1 && joinedUsers.length > 1,
 				enabled: joinedUsers.length >= 1 && room !== null && room.status === 1
+			},
+			{
+				key: "challenge",
+				icon: "fas fa-hand-rock",
+				label: "room.actions.challenge",
+				onClick: handleChallenge,
+				visible: currentUser !== undefined && currentUser.team === null,
+				enabled: room.status === 1
+			},
+			{
+				key: "leave-seat",
+				icon: "fas fa-seat",
+				label: "room.actions.leave-seat",
+				onClick: handleLeaveSeat,
+				visible: currentUser !== undefined && currentUser.team !== null && room.host_id !== currentUserId,
+				enabled: room.status === 1
 			},
 			{
 				key: "undo",
 				icon: "far fa-rotate-left",
-				label: translate("room.actions.undo"),
+				label: "room.actions.undo",
 				onClick: handleUndo,
 				visible: false,
 				enabled: false
@@ -283,7 +298,7 @@ const useRoomHook = () => {
 			{
 				key: "draw",
 				icon: "far fa-handshake",
-				label: translate("room.actions.draw"),
+				label: "room.actions.draw",
 				onClick: handleDraw,
 				visible: false,
 				enabled: false
@@ -291,7 +306,7 @@ const useRoomHook = () => {
 			{
 				key: "surrender",
 				icon: "far fa-flag",
-				label: translate("room.actions.surrender"),
+				label: "room.actions.surrender",
 				onClick: handleSurrender,
 				visible: false,
 				enabled: false
@@ -299,7 +314,7 @@ const useRoomHook = () => {
 			{
 				key: "back-home",
 				icon: "fas fa-left-from-bracket",
-				label: translate("room.actions.back-home"),
+				label: "room.actions.back-home",
 				onClick: handleBackToHome,
 				visible: true,
 				enabled: true
@@ -316,9 +331,6 @@ const useRoomHook = () => {
 		const latest = history[history.length - 1]
 		const fen = latest.fen as string
 		const nextBoard = fenToBoard(fen)
-
-		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
 		const isInCurrentRoom = currentUser !== undefined
 		const newIsPlayer = currentUserId !== null && playerIds.includes(currentUserId)
 		setCurrentTurn(latest.team as Team)
@@ -332,14 +344,18 @@ const useRoomHook = () => {
 
 		menus[0].visible = false
 		menus[0].enabled = false
-		menus[1].visible = canSurrender
-		menus[1].enabled = canSurrender && history.length > 2
-		menus[2].visible = canSurrender
-		menus[2].enabled = canSurrender
+		menus[1].enabled = false
+		menus[1].enabled = false
+		menus[2].enabled = false
+		menus[2].enabled = false
 		menus[3].visible = canSurrender
-		menus[3].enabled = canSurrender
-		menus[4].visible = isInCurrentRoom
-		menus[4].enabled = isInCurrentRoom
+		menus[3].enabled = canSurrender && history.length > 2
+		menus[4].visible = canSurrender
+		menus[4].enabled = canSurrender
+		menus[5].visible = canSurrender
+		menus[5].enabled = canSurrender
+		menus[6].visible = isInCurrentRoom
+		menus[6].enabled = isInCurrentRoom
 		setActionMenuItems(menus)
 
 		// For spectators: highlight all moves
@@ -407,12 +423,20 @@ const useRoomHook = () => {
 			return
 		}
 
-		const handleRoomUsersUpdated = (data: { roomId: string | number; users: RoomUser[] }) => {
+		const handleRoomUsersUpdated = (data: {
+			roomId: string | number
+			users: RoomUser[]
+			hostId?: number | null
+		}) => {
 			if (!data || Number(data.roomId) !== roomId || !Array.isArray(data.users)) {
 				return
 			}
 
 			setJoinedUsers(data.users)
+			// The host can change when the current host leaves the room.
+			if (data.hostId !== undefined) {
+				setRoom(prev => prev ? { ...prev, host_id: data.hostId ?? null } : prev)
+			}
 		}
 
 		onRoomUsersUpdated(handleRoomUsersUpdated)
@@ -758,6 +782,42 @@ const useRoomHook = () => {
 		)
 	}
 
+	const handleChallenge = async () => {
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const response = await changeTeam(token, roomId, false)
+		if (!response || !response.success) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: response?.message ?? "challenge.messages.internal-server-error"
+			})
+			return
+		}
+
+		setJoinedUsers(response.data as RoomUser[])
+	}
+
+	const handleLeaveSeat = async () => {
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const response = await changeTeam(token, roomId, true)
+		if (!response || !response.success) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: response?.message ?? "challenge.messages.internal-server-error"
+			})
+			return
+		}
+
+		setJoinedUsers(response.data as RoomUser[])		
+	}
+
 	const handleUndo = async () => {
 		if (!room || !game) {
 			return
@@ -1077,7 +1137,7 @@ const useRoomHook = () => {
 
 		if (getPieceFromCharacter(oldTarget?.piece) === "general") {
 			openAlert({
-				message: translate("game.general.captured"),
+				message: "game.general.captured",
 				title: translate("popup.alert.title")
 			})
 		}
@@ -1132,7 +1192,7 @@ const useRoomHook = () => {
 	const roomSettingsDialogValue: RoomSettingsDialogContextValue = {
 		game,
 		isOpen,
-		isHost: joinedUsers.length > 0 && joinedUsers[0].id === currentUserId,
+		isHost: room?.host_id != null && room.host_id === currentUserId,
 		room,
 		users: joinedUsers,
 

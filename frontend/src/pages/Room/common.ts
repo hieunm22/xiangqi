@@ -272,10 +272,11 @@ export function getMoveDirection(redFirst: boolean, turn: Team): -1 | 1 {
 /** Split the two players into top/bottom seats based on which side moves first. */
 export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): PieceSideUser {
 	const bottomTeam: Team = redFirst ? "red" : "black"
-	const isFirstUserOnBottom = joinedUsers[0].team === bottomTeam
+	const bottomUser = joinedUsers.find(ju => ju.team === bottomTeam) ?? null
+	const topUser = joinedUsers.find(ju => ju.team !== null && ju.team !== bottomTeam) ?? null
 	return {
-		top: isFirstUserOnBottom ? joinedUsers[1] : joinedUsers[0],
-		bottom: isFirstUserOnBottom ? joinedUsers[0] : joinedUsers[1],
+		top: topUser,
+		bottom: bottomUser,
 	}
 }
 

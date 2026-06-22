@@ -1,10 +1,10 @@
 import classnames from "classnames"
 import { Avatar, Stack, Tooltip, useMediaQuery } from "@mui/material"
 import { requireImage } from "common/helper"
-import { UserAvatarType } from "types/Common"
+import { RoomUser } from "pages/Room/types"
 import { UserAvatarGroupProps } from "../types"
 
-interface UserAvatarProps extends UserAvatarType {
+interface UserAvatarProps extends RoomUser {
 	size: number
 	onUserClick?: (id: number) => void
 }

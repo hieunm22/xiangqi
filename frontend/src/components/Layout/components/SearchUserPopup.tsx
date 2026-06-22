@@ -15,44 +15,51 @@ import {
 } from "@mui/material"
 import { PopupState } from "common/enums"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
-import { getToken, requireImage } from "common/helper"
+import { getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { useSocket } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
-import { translate } from "locales/translate"
-import { setPopup, setUserId } from "toolkit/slice/game"
-import { APIResponse } from "types/Common"
-
-interface SearchResult {
-	id: number
-	display_name: string
-	avatar_url: string
-}
+import { setInviteRoomId, setPopup, setUserId } from "toolkit/slice/game"
+import { APIResponse, UserAvatarType } from "types/Common"
 
 export const SearchUserPopup = () => {
 	const { gameState, dispatch } = useToolkit()
 	const { searchUsers } = useAPI()
+	const { emitRoomInvite } = useSocket()
 	const [searchQuery, setSearchQuery] = useState("")
-	const [results, setResults] = useState<SearchResult[]>([])
+	const [results, setResults] = useState<UserAvatarType[]>([])
 	const [loading, setLoading] = useState(false)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	const isOpen = (gameState.popupState & PopupState.SEARCH_USERS) === PopupState.SEARCH_USERS
 
-	const handleClose = () => {
+	const closePopup = () => {
 		dispatch(setPopup(gameState.popupState & ~PopupState.SEARCH_USERS))
+		dispatch(setInviteRoomId(null))
 		setSearchQuery("")
 		setResults([])
 	}
 
-	const handleSelectUser = (user: SearchResult) => {
-		// Set the active user for the conversation
+	const handleSelectUserForChat = (user: UserAvatarType) => {
 		dispatch(setUserId(user.id))
-		// Close search popup and open private chat popup
 		const newPopupState = (gameState.popupState & ~PopupState.SEARCH_USERS) | PopupState.SEND_PM
 		dispatch(setPopup(newPopupState))
 		setSearchQuery("")
 		setResults([])
 	}
+
+	const handleSelectUserForInvite = (user: UserAvatarType) => {
+		if (gameState.inviteRoomId === null) return
+		const claims = getClaimsFromLocalStorage()
+		const inviterId = Number(claims?.sub)
+		if (!inviterId || isNaN(inviterId)) return
+		emitRoomInvite(gameState.inviteRoomId, user.id, inviterId)
+		closePopup()
+	}
+
+	const handleSelectUserFunc = gameState.inviteRoomId !== null
+		? handleSelectUserForInvite
+		: handleSelectUserForChat
 
 	const performSearch = async (query: string) => {
 		if (!query.trim()) {
@@ -65,7 +72,7 @@ export const SearchUserPopup = () => {
 			const token = getToken()
 			if (!token) return
 
-			const response = await searchUsers(token, query) as APIResponse<SearchResult[]>
+			const response = await searchUsers(token, query) as APIResponse<UserAvatarType[]>
 			if (response?.success && response.data) {
 				setResults(response.data)
 			} else {
@@ -111,7 +118,7 @@ export const SearchUserPopup = () => {
 	return (
 		<Dialog
 			open={isOpen}
-			onClose={handleClose}
+			onClose={closePopup}
 			maxWidth="xs"
 			fullWidth
 		>
@@ -138,12 +145,12 @@ export const SearchUserPopup = () => {
 
 				{!loading && results.length > 0 && (
 					<Box sx={{ maxHeight: 200, overflow: "auto", my: 1 }}>
-						<List sx={{ p: 0 }}>
+						<List className="no-padding">
 							{results.map(user => (
 								<ListItem key={user.id} disablePadding>
 									<ListItemButton
 										sx={{ gap: 1 }}
-										onClick={() => handleSelectUser(user)}
+										onClick={() => handleSelectUserFunc(user)}
 									>
 										<Avatar
 											src={requireImage(user.avatar_url)}
@@ -162,16 +169,14 @@ export const SearchUserPopup = () => {
 
 				{!loading && searchQuery.trim() && results.length === 0 && (
 					<Box sx={{ textAlign: "center", my: 2 }}>
-						<Typography variant="body2" color="textSecondary">
-							{translate("search.user.no-results")}
-						</Typography>
+						<TTypography variant="body2" color="textSecondary" content="search.user.no-results" />
 					</Box>
 				)}
 			</DialogContent>
 			<Divider className="menu-divider" />
-			<DialogActions>
-				<TButton variant="contained" size="small" value="search.button.search" />
-				<TButton size="small" onClick={handleClose} value="settings.close" />
+			<DialogActions className="pb-16">
+				<TButton variant="contained" size="medium" value="search.button.search" />
+				<TButton size="medium" onClick={closePopup} value="settings.close" />
 			</DialogActions>
 		</Dialog>
 	)

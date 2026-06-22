@@ -7,7 +7,7 @@ import { CreateRoomRequest } from "pages/Dashboard/types"
 import { AuthResponse, LoginBodyType } from "pages/Login/types"
 import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
-import { APIResponse, APIResponseEmpty } from "types/Common"
+import { APIResponse, APIResponseEmpty, UserAvatarType } from "types/Common"
 import { Team } from "types/GameState"
 import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
 import {
@@ -51,6 +51,7 @@ const EP = { // end points
 	updateRoom: "/room/update",
 
 	// game endpoints
+	changeTeam: "/game/change-team",
 	drawGame: "/game/draw-game",
 	getGameMovementHistory: "/game/movement-history",
 	movePiece: "/game/move-piece",
@@ -142,6 +143,14 @@ export const useAPI = () => {
 			})
 	}
 
+	// ---------- API methods ----------
+
+	const changeTeam = async (token: string, roomId: number, isLeaveToSeat: boolean) => authFetch(EP.changeTeam)
+							.auth(`Bearer ${token}`)
+							.post({ roomId, isLeaveToSeat })
+							.json(changeTeamCallback)
+							.catch(handleError)
+
 	const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(EP.createRoom)
 							.auth(`Bearer ${token}`)
 							.post(body)
@@ -172,6 +181,13 @@ export const useAPI = () => {
 
 	const getAnnouncements = async (token: string) => authFetch(EP.getAnnouncement)
 							.auth(`Bearer ${token}`)
+							.get()
+							.json(getAnnouncementsCallback)
+							.catch(handleError)
+
+	const getAnnouncementsMore = async (token: string, before: string) => authFetch(EP.getAnnouncement)
+							.auth(`Bearer ${token}`)
+							.headers({ "before": before })
 							.get()
 							.json(getAnnouncementsCallback)
 							.catch(handleError)
@@ -371,6 +387,12 @@ export const useAPI = () => {
 							.json(validateTokenCallback)
 							.catch(handleError)
 
+	// ---------- Callbacks ----------
+
+	const changeTeamCallback = (response: APIResponse<RoomUser[]>) => {
+		return response
+	}
+
 	const createRoomCallback = (response: APIResponse<RoomWithUsers>) => {
 		return response
 	}
@@ -483,7 +505,7 @@ export const useAPI = () => {
 		return response
 	}
 
-	const searchUsersCallback = (response: any) => {
+	const searchUsersCallback = (response: APIResponse<UserAvatarType[]>) => {
 		return response
 	}
 
@@ -518,6 +540,8 @@ export const useAPI = () => {
 	const validateTokenCallback = (response: APIResponseEmpty) => {
 		return response
 	}
+
+	// ---------- error handler ----------
 	
 	const handleError = async (reason: any) => {
 		if (reason?.json) {
@@ -538,11 +562,13 @@ export const useAPI = () => {
 	return {
 		authFetch,
 
+		changeTeam,
 		createRoom,
 		drawGame,
 		fetchRooms,
 		forgotPassword,
 		getAnnouncements,
+		getAnnouncementsMore,
 		getGameMovementHistory,
 		getPlayerHistory,
 		getPrivateConversations,

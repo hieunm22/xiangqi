@@ -114,7 +114,7 @@ router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, re
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true }
+			select: { id: true, host_id: true }
 		})
 
 		if (!room) {
@@ -126,14 +126,8 @@ router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
-		// Only the host (first user who joined) can update the room
-		const firstUser = await prisma.roomUser.findFirst({
-			where: { room_id: roomId },
-			orderBy: { joined_at: "asc" },
-			select: { user_id: true }
-		})
-
-		if (!firstUser || firstUser.user_id !== userIdBigInt) {
+		// Only the host can update the room
+		if (room.host_id !== userIdBigInt) {
 			res.status(403).json({
 				success: false,
 				message: "update-room.messages.forbidden",

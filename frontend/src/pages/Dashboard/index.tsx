@@ -9,13 +9,12 @@ import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { CreateRoomDialog } from "./components/CreateRoomDialog"
-import { JoinRoomDialog } from "./components/JoinRoomDialog"
 import { RoomCard } from "./components/RoomCard"
 import { SkeletonRoom } from "./components/SkeletonRoom"
 import { TTypography } from "components/TranslationTag"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { CreateRoomDialogContext, JoinRoomDialogContext } from "hooks/useAppContext"
+import { CreateRoomDialogContext } from "hooks/useAppContext"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useSocket } from "hooks/useSocket"
 import { translate } from "locales/translate"
@@ -40,15 +39,7 @@ const DashboardPage = () => {
 	const [loading, setLoading] = useState(true)
 	const [errorMessage, setErrorMessage] = useState("")
 	const [open, setOpen] = useState(false)
-	const [joinRoomTarget, setJoinRoomTarget] = useState<DashboardRoom | null>(null)
 	const loadingCards = Array.from({ length: 9 }, (_, i) => i)
-
-	const joinRoomDialogValue = {
-		room: joinRoomTarget,
-		openJoinRoom: setJoinRoomTarget,
-		closeJoinRoom: () => setJoinRoomTarget(null)
-	}
-
 
 	useEffect(() => {
 		let ignore = false
@@ -127,6 +118,7 @@ const DashboardPage = () => {
 		const handleDashboardRoomUsersUpdated = (data: {
 			roomId?: string | number
 			users?: DashboardRoom["users"]
+			hostId?: number | null
 		}) => {
 			const targetRoomId = Number(data?.roomId)
 			if (!Number.isInteger(targetRoomId) || targetRoomId <= 0) {
@@ -146,7 +138,8 @@ const DashboardPage = () => {
 
 				return {
 					...room,
-					users: updatedUsers
+					users: updatedUsers,
+					...(data.hostId !== undefined && { host_id: data.hostId ?? null })
 				}
 			}))
 		}
@@ -173,7 +166,6 @@ const DashboardPage = () => {
 
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
-			<JoinRoomDialogContext.Provider value={joinRoomDialogValue}>
 			<Box className="dashboard">
 				<Stack spacing={3}>
 					<TTypography
@@ -222,9 +214,7 @@ const DashboardPage = () => {
 				</Stack>
 
 				<CreateRoomDialog />
-				<JoinRoomDialog />
 			</Box>
-			</JoinRoomDialogContext.Provider>
 		</CreateRoomDialogContext.Provider>
 	)
 }

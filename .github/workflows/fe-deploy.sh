@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Predefined full-deploy script, executed on the server via SSH by the
-# "Manual Deploy" GitHub Actions workflow (.github/workflows/manual-deploy.yml).
+# Frontend deploy script, executed on the server via SSH by the
+# "Deploy Frontend" GitHub Actions workflow (.github/workflows/fe-deploy.yml).
 #
 # DEPLOY_BRANCH  — target branch (passed via envs)
 # INSTALL_DEPS   — "true" to run yarn install before make publish
@@ -15,22 +15,11 @@ BRANCH="${DEPLOY_BRANCH:-master}"
 
 cd ~/projects/xiangqi
 
-echo "=== Full deploy, branch: $BRANCH ==="
+echo "=== Frontend deploy, branch: $BRANCH ==="
 
 git fetch origin
 git checkout "$BRANCH"
 git pull origin "$BRANCH"
-
-echo "--- Deploying backend ---"
-cd backend
-
-if [ "${INSTALL_DEPS:-false}" = "true" ]; then
-  echo "Installing dependencies..."
-  yarn install
-fi
-
-make publish
-cd ..
 
 echo "--- Deploying frontend ---"
 cd frontend
@@ -41,6 +30,5 @@ if [ "${INSTALL_DEPS:-false}" = "true" ]; then
 fi
 
 make publish
-cd ..
 
 echo "=== Deployment completed ==="

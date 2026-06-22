@@ -29,15 +29,15 @@ export interface PlayerInfoCardProps {
 	team: Team
 	active: boolean
 	roomHostId: number | null
+	roomId: number | null
 }
 
 export interface RoomUser {
 	id: number
 	display_name: string
 	avatar_url: string | null
-	team: Team | null
-	total_points: number
-	joined_at: string
+	team?: Team | null
+	total_points?: number
 }
 
 export interface RoomInfo {
@@ -48,6 +48,7 @@ export interface RoomInfo {
 	team: Team | null
 	red_first: boolean
 	pve_mode: boolean
+	host_id: number | null
 }
 
 interface RoomChatInfo {
@@ -122,8 +123,8 @@ export interface RemoteMoveProps extends MoveProps {
 }
 
 export interface PieceSideUser {
-	top: RoomUser
-	bottom: RoomUser
+	top: RoomUser | null
+	bottom: RoomUser | null
 }
 
 export interface GameMenuActionContextValue {

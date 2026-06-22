@@ -116,6 +116,7 @@ describe("GET /api/room/info?id=:id", () => {
 			status: 2,
 			red_first: false,
 			bet_amount: 100,
+			host_id: BigInt(12),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
 			games: [
@@ -169,7 +170,8 @@ describe("GET /api/room/info?id=:id", () => {
 					name: "Final Table",
 					status: 2,
 					red_first: false,
-					bet_amount: 100
+					bet_amount: 100,
+					host_id: 12
 				},
 				chat: {
 					unread_count: 4

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { PopupState } from "common/enums"
 import ChatDialog from "components/ChatDialog"
 import { ConversationDrawer } from "./ConversationDrawer"
-import { getClaimsFromLocalStorage, getToken } from "common/helper"
+import { getCurrentUserId, getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { usePopups } from "hooks/useAppContext"
 import { useSocket } from "hooks/useSocket"
@@ -35,11 +35,7 @@ export const PrivateChatPopup = () => {
 	const chatRef = useRef<ChatDialogHandle>(null)
 
 	const isOpen = (gameState.popupState & PopupState.SEND_PM) === PopupState.SEND_PM
-	const currentUserId = useMemo(() => {
-		const payload = getClaimsFromLocalStorage()
-		const id = Number(payload?.sub)
-		return Number.isNaN(id) ? null : id
-	}, [])
+	const currentUserId = getCurrentUserId()
 
 	useEffect(() => {
 		const loadConversations = async () => {

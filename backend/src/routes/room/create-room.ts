@@ -199,6 +199,7 @@ router.post(
 					red_first: redFirst,
 					pve_mode: pveMode,
 					bet_amount: betAmount,
+					host_id: userIdBigInt,
 					room_users: {
 						create: roomUserSeed
 					}
@@ -210,6 +211,7 @@ router.post(
 					red_first: true,
 					pve_mode: true,
 					bet_amount: true,
+					host_id: true,
 					created_at: true,
 					updated_at: true,
 					room_users: {
@@ -233,7 +235,8 @@ router.post(
 			const { room_users, ...roomData } = room
 			const normalizedRoom = {
 				...roomData,
-				id: Number(room.id)
+				id: Number(room.id),
+				host_id: room.host_id === null ? null : Number(room.host_id)
 			}
 
 			// Format response
@@ -253,6 +256,7 @@ router.post(
 				status: room.status,
 				red_first: room.red_first,
 				bet_amount: room.bet_amount,
+				host_id: room.host_id === null ? null : Number(room.host_id),
 				created_at: room.created_at,
 				updated_at: room.updated_at,
 				users: room_users.map(gu => ({

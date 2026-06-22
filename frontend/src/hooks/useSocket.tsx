@@ -1,8 +1,12 @@
 import {
+	createContext,
 	useCallback,
+	useContext,
 	useEffect,
+	useRef,
 	useState,
-	useRef
+	type RefObject,
+	type ReactNode
 } from "react"
 import { io, Socket } from "socket.io-client"
 
@@ -22,13 +26,28 @@ function resolveSocketBaseUrl() {
 
 const API_BASE_URL = resolveSocketBaseUrl()
 
-export function useSocket() {
+type SocketContextValue = {
+	isConnected: boolean
+	socketRef: RefObject<Socket | null>
+}
+
+const SocketContext = createContext<SocketContextValue | null>(null)
+
+/**
+ * Provides a single shared socket connection to the whole subtree.
+ * Mount it once above every component that calls useSocket(), so all
+ * consumers share one connection instead of each opening its own.
+ */
+export function SocketProvider({ children }: { children: ReactNode }) {
 	const socketRef = useRef<Socket | null>(null)
 	const [isConnected, setIsConnected] = useState(false)
-	
-	useEffect(() => {
-		// Initialize socket connection
-		const socket = io(API_BASE_URL, {
+
+	// Create the socket eagerly during render so socketRef.current is ready
+	// before any child effect runs. Child effects run before the parent's
+	// effect, so initializing inside useEffect would leave consumers seeing
+	// a null socket on first mount and failing to register their listeners.
+	if (!socketRef.current) {
+		socketRef.current = io(API_BASE_URL, {
 			reconnection: true,
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 5000,
@@ -36,6 +55,13 @@ export function useSocket() {
 			transports: ["websocket"],
 			path: "/socket.io",
 		})
+	}
+
+	useEffect(() => {
+		const socket = socketRef.current
+		if (!socket) {
+			return
+		}
 
 		socket.on("connect", () => {
 			const transport = socket.io.engine.transport?.name || "unknown"
@@ -66,12 +92,30 @@ export function useSocket() {
 			console.error(`[Socket.io] [${new Date().toISOString()}] Error: ${error.message}`)
 		})
 
-		socketRef.current = socket
+		if (socket.connected) {
+			setIsConnected(true)
+		}
 
 		return () => {
 			socket.disconnect()
+			socketRef.current = null
 		}
 	}, [])
+
+	return (
+		<SocketContext.Provider value={{ isConnected, socketRef }}>
+			{children}
+		</SocketContext.Provider>
+	)
+}
+
+export function useSocket() {
+	const context = useContext(SocketContext)
+	if (!context) {
+		throw new Error("useSocket must be used within a SocketProvider")
+	}
+
+	const { isConnected, socketRef } = context
 
 	const onMovePiece = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
@@ -329,12 +373,35 @@ export function useSocket() {
 		}
 	}, [])
 
+	const emitRoomInvite = useCallback((roomId: number, inviteeId: number, inviterId: number) => {
+		if (socketRef.current) {
+			socketRef.current.emit("room-invite", { roomId, inviteeId, inviterId })
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-invite emit")
+		}
+	}, [])
+
+	const onRoomInvite = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("room-invite", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for room-invite listener")
+		}
+	}, [])
+
+	const offRoomInvite = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("room-invite", callback)
+		}
+	}, [])
+
 	return {
 		isConnected,
 
 		emitDrawRequest,
 		emitDrawResponse,
 		emitPlayerMove,
+		emitRoomInvite,
 		emitSurrender,
 		joinRoom,
 		leaveRoom,
@@ -347,6 +414,7 @@ export function useSocket() {
 		offPrivateMessageSent,
 		offRoomCreated,
 		offRoomDeleted,
+		offRoomInvite,
 		offRoomMessageSent,
 		offRoomUsersUpdated,
 		offSurrender,
@@ -360,6 +428,7 @@ export function useSocket() {
 		onPrivateMessageSent,
 		onRoomCreated,
 		onRoomDeleted,
+		onRoomInvite,
 		onRoomMessageSent,
 		onRoomUsersUpdated,
 		onSurrender,

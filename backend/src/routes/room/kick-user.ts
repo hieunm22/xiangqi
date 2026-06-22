@@ -111,7 +111,7 @@ router.post("/room/kick", requireAuth(), async (req: AuthenticatedRequest, res: 
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true, status: true }
+			select: { id: true, status: true, host_id: true }
 		})
 
 		if (!room) {
@@ -123,14 +123,8 @@ router.post("/room/kick", requireAuth(), async (req: AuthenticatedRequest, res: 
 			return
 		}
 
-		// Only the host (first user who joined) can kick users
-		const firstUser = await prisma.roomUser.findFirst({
-			where: { room_id: roomId },
-			orderBy: { joined_at: "asc" },
-			select: { user_id: true }
-		})
-
-		if (!firstUser || firstUser.user_id !== userIdBigInt) {
+		// Only the host can kick users
+		if (room.host_id !== userIdBigInt) {
 			res.status(403).json({
 				success: false,
 				message: "kick-user.messages.forbidden",
@@ -176,27 +170,6 @@ router.post("/room/kick", requireAuth(), async (req: AuthenticatedRequest, res: 
 				}
 			}
 		})
-
-		// If the kicked user held a team seat, promote the first spectator into it
-		if (targetUser.team) {
-			const audienceToPromote = await prisma.roomUser.findFirst({
-				where: { room_id: roomId, team: null },
-				orderBy: { joined_at: "asc" },
-				select: { room_id: true, user_id: true }
-			})
-
-			if (audienceToPromote) {
-				await prisma.roomUser.update({
-					where: {
-						room_id_user_id: {
-							room_id: audienceToPromote.room_id,
-							user_id: audienceToPromote.user_id
-						}
-					},
-					data: { team: targetUser.team }
-				})
-			}
-		}
 
 		const roomUsers = await prisma.roomUser.findMany({
 			where: { room_id: roomId },

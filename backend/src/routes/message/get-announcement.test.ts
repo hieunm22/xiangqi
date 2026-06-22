@@ -9,6 +9,7 @@ const userFindUniqueMock = vi.fn()
 const announcementReadFindFirstMock = vi.fn()
 const findMock = vi.fn()
 const sortMock = vi.fn()
+const limitMock = vi.fn()
 const toArrayMock = vi.fn()
 const getChatMessageCollectionMock = vi.fn()
 
@@ -82,11 +83,15 @@ describe("GET /api/message/get-announcement", () => {
 		const newTimestamp = new Date("2026-06-19T06:00:00.000Z")
 		const lastReadAt = new Date("2026-06-19T05:30:00.000Z")
 
-		toArrayMock.mockResolvedValue([
-			{ _id: oldId, sender_id: 82, message: "old", timestamp: oldTimestamp },
-			{ _id: newId, sender_id: 82, message: "new", timestamp: newTimestamp }
-		])
-		sortMock.mockReturnValue({ toArray: toArrayMock })
+		toArrayMock
+			.mockResolvedValueOnce([
+				{ _id: newId, sender_id: 82, message: "new", timestamp: newTimestamp }
+			])
+			.mockResolvedValueOnce([
+				{ _id: oldId, sender_id: 82, message: "old", timestamp: oldTimestamp }
+			])
+		limitMock.mockReturnValue({ toArray: toArrayMock })
+		sortMock.mockReturnValue({ toArray: toArrayMock, limit: limitMock })
 		findMock.mockReturnValue({ sort: sortMock })
 		getChatMessageCollectionMock.mockResolvedValue({ find: findMock })
 
@@ -102,8 +107,11 @@ describe("GET /api/message/get-announcement", () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 
 		expect(res.status).toBe(200)
-		expect(findMock).toHaveBeenCalledWith({ type: "announcement" })
+		expect(findMock).toHaveBeenCalledWith({ type: "announcement", timestamp: { $gt: lastReadAt } })
+		expect(findMock).toHaveBeenCalledWith({ type: "announcement", timestamp: { $lte: lastReadAt } })
 		expect(sortMock).toHaveBeenCalledWith({ timestamp: 1 })
+		expect(sortMock).toHaveBeenCalledWith({ timestamp: -1 })
+		expect(limitMock).toHaveBeenCalledWith(20)
 		expect(res.body.data).toMatchObject([
 			{ _id: oldId.toString(), message: "old", seen: true },
 			{ _id: newId.toString(), message: "new", seen: false }
@@ -119,7 +127,8 @@ describe("GET /api/message/get-announcement", () => {
 		toArrayMock.mockResolvedValue([
 			{ _id: announcementId, sender_id: 82, message: "go go go", timestamp }
 		])
-		sortMock.mockReturnValue({ toArray: toArrayMock })
+		limitMock.mockReturnValue({ toArray: toArrayMock })
+		sortMock.mockReturnValue({ toArray: toArrayMock, limit: limitMock })
 		findMock.mockReturnValue({ sort: sortMock })
 		getChatMessageCollectionMock.mockResolvedValue({ find: findMock })
 
@@ -137,6 +146,44 @@ describe("GET /api/message/get-announcement", () => {
 		expect(res.status).toBe(200)
 		expect(res.body.data).toMatchObject([
 			{ _id: announcementId.toString(), message: "go go go", seen: false }
+		])
+	})
+
+	it("pages older announcements using the before header", async () => {
+		const accessToken = buildAccessToken(1, "session-get-announcement-before")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+
+		const olderId = new ObjectId()
+		const olderTimestamp = new Date("2026-06-19T04:00:00.000Z")
+		const before = new Date("2026-06-19T05:00:00.000Z")
+		const lastReadAt = new Date("2026-06-19T05:30:00.000Z")
+
+		toArrayMock.mockResolvedValue([
+			{ _id: olderId, sender_id: 82, message: "older", timestamp: olderTimestamp }
+		])
+		limitMock.mockReturnValue({ toArray: toArrayMock })
+		sortMock.mockReturnValue({ toArray: toArrayMock, limit: limitMock })
+		findMock.mockReturnValue({ sort: sortMock })
+		getChatMessageCollectionMock.mockResolvedValue({ find: findMock })
+
+		announcementReadFindFirstMock.mockResolvedValue({ read_announcement_at: lastReadAt })
+		userFindUniqueMock.mockResolvedValue({
+			id: 82n,
+			display_name: "TestUser",
+			avatar_seq: 3
+		})
+
+		const res = await request(app)
+			.get(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.set("before", before.toISOString())
+
+		expect(res.status).toBe(200)
+		expect(findMock).toHaveBeenCalledWith({ type: "announcement", timestamp: { $lt: before } })
+		expect(sortMock).toHaveBeenCalledWith({ timestamp: -1 })
+		expect(limitMock).toHaveBeenCalledWith(20)
+		expect(res.body.data).toMatchObject([
+			{ _id: olderId.toString(), message: "older" }
 		])
 	})
 

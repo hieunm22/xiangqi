@@ -1,4 +1,4 @@
-import { UserAvatarType } from "types/Common"
+import { RoomUser } from "pages/Room/types"
 import { Team } from "types/GameState"
 
 export type DashboardFilter = "all" | "available" | "playing"
@@ -8,13 +8,15 @@ export type DashboardRoom = {
 	name: string
 	status: number
 	bet_amount: number
+	red_first: boolean
+	host_id: number | null
 	created_at: string
 	updated_at: string
-	users: UserAvatarType[]
+	users: RoomUser[]
 }
 
 export interface UserAvatarGroupProps {
-	users: UserAvatarType[]
+	users: RoomUser[]
 	type: "primary" | "secondary"
 	maxVisible: number
 	onUserClick?: (id: number) => void
@@ -30,14 +32,8 @@ export interface CreateRoomContextValue {
 	setOpen: (open: boolean) => void
 }
 
-export interface JoinRoomDialogContextValue {
-	room: DashboardRoom | null
-	openJoinRoom: (room: DashboardRoom) => void
-	closeJoinRoom: () => void
-}
-
 export interface SeatAvatarProps {
-	user: UserAvatarType
+	user: RoomUser | null
 	isHost: boolean
 	onUserClick?: (id: number) => void
 }

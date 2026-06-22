@@ -9,7 +9,7 @@ import { FILTER_KEYS, FILTER_STATUS, GRID_SIZE } from "../constants"
 import { TI, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getClaimsFromLocalStorage } from "common/helper"
-import { useJoinRoomDialogContext } from "hooks/useAppContext"
+import { openJoinRoom } from "./JoinRoomDialog"
 import { RoomCardProps } from "../types"
 
 const getStatusKey = (status: number) => {
@@ -39,10 +39,9 @@ const formatBetAmount = (amount?: number) => {
 }
 
 export const RoomCard = ({ room }: RoomCardProps) => {
-	const oldestJoinedUsers = room.users.slice(0, 2)
-	const remainingUsers = room.users.slice(2)
+	const oldestJoinedUsers = room.users.filter(u => u.team !== null)
+	const remainingUsers = room.users.filter(u => u.team === null)
 	const classIconRoomStatus = roomStatusClass(room.status)
-	const { openJoinRoom } = useJoinRoomDialogContext()
 	const navigate = useNavigate()
 
 	const roomCardClass = classnames({

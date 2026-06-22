@@ -3,7 +3,6 @@ import { AuthContextProps } from "components/AuthProvider/types"
 import { ProfilePopupContextValue } from "components/Layout/types"
 import {
 	CreateRoomContextValue,
-	JoinRoomDialogContextValue,
 	PieceSelectionContextValue
 } from "pages/Dashboard/types"
 import {
@@ -28,18 +27,6 @@ export const useCreateRoomDialogContext = () => {
 
 	if (!context) {
 		throw new Error("CreateRoomDialog must be used within CreateRoomDialogContext.Provider")
-	}
-
-	return context
-}
-
-export const JoinRoomDialogContext = createContext<JoinRoomDialogContextValue | null>(null)
-
-export const useJoinRoomDialogContext = () => {
-	const context = useContext(JoinRoomDialogContext)
-
-	if (!context) {
-		throw new Error("JoinRoomDialog must be used within JoinRoomDialogContext.Provider")
 	}
 
 	return context

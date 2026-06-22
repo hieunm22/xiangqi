@@ -32,6 +32,13 @@ vi.mock("common/socket", () => ({
 	emitRoomCreated: emitRoomCreatedMock
 }))
 
+// Pin the bot id so the create-call args (which use the real BOT_USER_ID from
+// create-room.ts) stay consistent with the response-side fixtures below. Must be
+// an inline literal — vi.mock is hoisted above the BOT_USER_ID const.
+vi.mock("common/bot-engine", () => ({
+	BOT_USER_ID: 0n
+}))
+
 describe("POST /api/room/create-room", () => {
 	let app: express.Express
 	let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -129,6 +136,7 @@ describe("POST /api/room/create-room", () => {
 			red_first: false,
 			pve_mode: false,
 			bet_amount: 20,
+			host_id: BigInt(11),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
 			room_users: [
@@ -164,7 +172,8 @@ describe("POST /api/room/create-room", () => {
 					name: "Table Null Team",
 					status: 1,
 					red_first: false,
-					bet_amount: 20
+					bet_amount: 20,
+					host_id: 11
 				}
 			}
 		})
@@ -181,6 +190,7 @@ describe("POST /api/room/create-room", () => {
 					name: "Table Null Team",
 					red_first: false,
 					bet_amount: 20,
+					host_id: BigInt(11),
 					room_users: {
 						create: [
 							expect.objectContaining({
@@ -301,6 +311,7 @@ describe("POST /api/room/create-room", () => {
 			red_first: true,
 			pve_mode: false,
 			bet_amount: 50,
+			host_id: BigInt(11),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
 			room_users: [
@@ -337,7 +348,8 @@ describe("POST /api/room/create-room", () => {
 					status: 1,
 					red_first: true,
 					pve_mode: false,
-					bet_amount: 50
+					bet_amount: 50,
+					host_id: 11
 				}
 			}
 		})
@@ -361,6 +373,7 @@ describe("POST /api/room/create-room", () => {
 					red_first: true,
 					pve_mode: false,
 					bet_amount: 50,
+					host_id: BigInt(11),
 					room_users: {
 						create: [
 							expect.objectContaining({
@@ -386,6 +399,7 @@ describe("POST /api/room/create-room", () => {
 			red_first: false,
 			pve_mode: true,
 			bet_amount: 0,
+			host_id: BigInt(11),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
 			room_users: [
@@ -432,7 +446,8 @@ describe("POST /api/room/create-room", () => {
 					status: 1,
 					red_first: false,
 					pve_mode: true,
-					bet_amount: 0
+					bet_amount: 0,
+					host_id: 11
 				}
 			}
 		})
@@ -456,6 +471,7 @@ describe("POST /api/room/create-room", () => {
 					red_first: false,
 					pve_mode: true,
 					bet_amount: 0,
+					host_id: BigInt(11),
 					room_users: {
 						create: [
 							expect.objectContaining({

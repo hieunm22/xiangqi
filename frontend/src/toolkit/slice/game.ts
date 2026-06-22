@@ -6,6 +6,7 @@ const initialState: GameState = {
 	popupState: PopupState.NONE,
 	activeUserId: null,
 	roomHostId: null,
+	inviteRoomId: null,
 }
 
 const gameSlice = createSlice({
@@ -21,10 +22,14 @@ const gameSlice = createSlice({
 		setRoomHostId: (state, body: PayloadAction<number | null>) => {
 			state.roomHostId = body.payload
 		},
+		setInviteRoomId: (state, body: PayloadAction<number | null>) => {
+			state.inviteRoomId = body.payload
+		},
 	},
 })
 
 export const {
+	setInviteRoomId,
 	setPopup,
 	setRoomHostId,
 	setUserId,

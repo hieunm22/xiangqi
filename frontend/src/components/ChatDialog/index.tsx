@@ -5,7 +5,7 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
-	useMemo,
+	useLayoutEffect,
 	useRef,
 	useState
 } from "react"
@@ -26,7 +26,7 @@ import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
 import {
 	formatTimestampToDateTimeArray,
-	getClaimsFromLocalStorage,
+	getCurrentUserId,
 	getToken,
 } from "common/helper"
 import useToolkit from "hooks/useToolkit"
@@ -60,16 +60,17 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	const [position, setPosition] = useState<MousePosition>({ x: 0, y: 0 })
 	const [menuOpen, setMenuOpen] = useState(false)
 	const dragRef = useRef<ChatDialogDragPosition | null>(null)
+	const messagesEndRef = useRef<HTMLDivElement | null>(null)
+	const firstUnreadRef = useRef<HTMLDivElement | null>(null)
+	// True until the post-load scroll has run for the current conversation, so we
+	// scroll to the first unread (or bottom) once per load and to the bottom after.
+	const didInitialScrollRef = useRef(false)
 	const refId = props.refId // refId can be roomId or userId depending on the chat type
 	const { showProfilePopup } = useLayoutAuth()
 
 	const canSend = messageContent.trim().length > 0
 	const isChatMode = !!refId
-	const currentUserId = useMemo(() => {
-		const payload = getClaimsFromLocalStorage()
-		const id = Number(payload?.sub)
-		return Number.isNaN(id) ? null : id
-	}, [])
+	const currentUserId = getCurrentUserId()
 
 	// Drag-to-move: track the window-level mouse while a drag is active so the
 	// popup keeps following the cursor even if it leaves the title bar.
@@ -140,6 +141,10 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 				return
 			}
 
+			// A fresh conversation load: let the next render scroll to the first
+			// unread message (or the bottom when everything has been read).
+			didInitialScrollRef.current = false
+
 			// Auto-open the drawer when there's no active conversation
 			setMenuOpen(!!props.drawerContent && refId === null)
 
@@ -166,6 +171,25 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 
 		loadMessages()
 	}, [props.open, refId])
+
+	// After messages render: on the initial load of a conversation scroll to the
+	// first unread message (falling back to the bottom when all read); afterwards
+	// (sending / receiving) keep the view pinned to the bottom.
+	useLayoutEffect(() => {
+		if (!messages.length) {
+			return
+		}
+		if (!didInitialScrollRef.current) {
+			didInitialScrollRef.current = true
+			if (firstUnreadRef.current) {
+				firstUnreadRef.current.scrollIntoView({ block: "start" })
+			} else {
+				messagesEndRef.current?.scrollIntoView({ block: "end" })
+			}
+			return
+		}
+		messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" })
+	}, [messages])
 
 	// Expose an imperative append so callers (e.g. RoomChatDialog) can push a
 	// real-time message into the open dialog without owning the message list.
@@ -321,8 +345,9 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 							const senderName = msg.sender?.display_name || "Unknown user"
 							const times = formatTimestampToDateTimeArray(msg.timestamp, state.lang)
 							const timeString = `${times[0] ? times[0] + ", " : ""}${times[1]}`
+							const refObj = msg._id === firstUnreadId ? { ref: firstUnreadRef } : {}
 							return (
-								<Box key={msg._id}>
+								<Box key={msg._id} {...refObj}>
 									{showUnreadDivider && (
 										<Divider textAlign="center" className="chat-unread-divider">
 											<TTypography
@@ -357,6 +382,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 								</Box>
 							)
 						})}
+						<div ref={messagesEndRef} />
 					</Stack>
 				</Box>
 

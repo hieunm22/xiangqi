@@ -12,6 +12,7 @@ const gameHistoryInsertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
+const roomUserFindFirstMock = vi.fn()
 const gameUserCreateMock = vi.fn()
 
 const PATH = "/api/room/start"
@@ -26,6 +27,9 @@ vi.mock("prisma", () => ({
 	default: {
 		room: {
 			findUnique: roomFindUniqueMock
+		},
+		roomUser: {
+			findFirst: roomUserFindFirstMock
 		},
 		$transaction: transactionMock
 	}
@@ -94,11 +98,10 @@ describe("POST /api/room/start", () => {
 		const accessToken = buildAccessToken(61, "session-start-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-1" })
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61) })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
 
 		roomUpdateMock.mockResolvedValue({
 			id: BigInt(101),
@@ -203,11 +206,10 @@ describe("POST /api/room/start", () => {
 		const accessToken = buildAccessToken(61, "session-start-2b")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-2" })
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102), host_id: BigInt(61) })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102) })
 
 		roomUpdateMock.mockResolvedValue({
 			id: BigInt(102),
@@ -275,6 +277,25 @@ describe("POST /api/room/start", () => {
 		})
 	})
 
+	it("returns 403 when user is not the room host", async () => {
+		const accessToken = buildAccessToken(61, "session-start-403")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(99) })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(403)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "start-game.messages.forbidden",
+			status_code: 403
+		})
+		expect(transactionMock).not.toHaveBeenCalled()
+	})
+
 	it("returns 404 when room is not found", async () => {
 		const accessToken = buildAccessToken(61, "session-start-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
@@ -293,7 +314,7 @@ describe("POST /api/room/start", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true }
+			select: { id: true, host_id: true }
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
 	})
@@ -302,7 +323,7 @@ describe("POST /api/room/start", () => {
 		const accessToken = buildAccessToken(61, "session-start-4")
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61) })
 		transactionMock.mockRejectedValue(new Error("db down"))
 
 		const res = await request(app)

@@ -183,16 +183,14 @@ describe("POST /api/room/kick", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true, status: true }
+			select: { id: true, status: true, host_id: true }
 		})
-		expect(roomUserFindFirstMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 403 when requester is not the room host", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-4")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock.mockResolvedValue({ user_id: BigInt(99) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1, host_id: BigInt(99) })
 
 		const res = await request(app)
 			.post(PATH)
@@ -205,19 +203,13 @@ describe("POST /api/room/kick", () => {
 			message: "kick-user.messages.forbidden",
 			status_code: 403
 		})
-		expect(roomUserFindFirstMock).toHaveBeenCalledWith({
-			where: { room_id: BigInt(101) },
-			orderBy: { joined_at: "asc" },
-			select: { user_id: true }
-		})
 		expect(roomUserDeleteMock).not.toHaveBeenCalled()
 	})
 
-	it("returns 403 when no room user is found (edge case)", async () => {
+	it("returns 403 when room has no host (edge case)", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-4b")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock.mockResolvedValue(null)
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1, host_id: null })
 
 		const res = await request(app)
 			.post(PATH)
@@ -235,8 +227,7 @@ describe("POST /api/room/kick", () => {
 	it("returns 400 when room is not in waiting status", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-5")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 2 })
-		roomUserFindFirstMock.mockResolvedValue({ user_id: BigInt(11) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 2, host_id: BigInt(11) })
 
 		const res = await request(app)
 			.post(PATH)
@@ -256,8 +247,7 @@ describe("POST /api/room/kick", () => {
 	it("returns 404 when target user is not in the room", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-6")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock.mockResolvedValue({ user_id: BigInt(11) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1, host_id: BigInt(11) })
 		roomUserFindUniqueMock.mockResolvedValue(null)
 
 		const res = await request(app)
@@ -277,8 +267,7 @@ describe("POST /api/room/kick", () => {
 	it("returns 200 and kicks a spectator (no team) when requester is host", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-7")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValueOnce({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock.mockResolvedValueOnce({ user_id: BigInt(11) })
+		roomFindUniqueMock.mockResolvedValueOnce({ id: BigInt(101), status: 1, host_id: BigInt(11) })
 		roomUserFindUniqueMock.mockResolvedValueOnce({ team: null })
 		roomUserDeleteMock.mockResolvedValueOnce({})
 		roomUserFindManyMock.mockResolvedValueOnce([
@@ -327,44 +316,11 @@ describe("POST /api/room/kick", () => {
 		])
 	})
 
-	it("promotes first audience to vacated team when a player is kicked", async () => {
+	it("does not promote audience when a player with team is kicked", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-8")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock
-			.mockResolvedValueOnce({ user_id: BigInt(11) }) // host check
-			.mockResolvedValueOnce({ room_id: BigInt(101), user_id: BigInt(77) }) // audience to promote
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1, host_id: BigInt(11) })
 		roomUserFindUniqueMock.mockResolvedValue({ team: "black" })
-		roomUserDeleteMock.mockResolvedValue({})
-		roomUserUpdateMock.mockResolvedValue({})
-		roomUserFindManyMock.mockResolvedValue([])
-
-		const res = await request(app)
-			.post(PATH)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ id: 101, userId: 22 })
-
-		expect(res.status).toBe(200)
-		expect(roomUserUpdateMock).toHaveBeenCalledWith({
-			where: {
-				room_id_user_id: {
-					room_id: BigInt(101),
-					user_id: BigInt(77)
-				}
-			},
-			data: { team: "black" }
-		})
-		expect(emitUserKickedMock).toHaveBeenCalledWith(101, 22)
-	})
-
-	it("does not promote anyone when a kicked player's team has no audience", async () => {
-		const accessToken = buildAccessToken(11, "session-kick-8b")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), status: 1 })
-		roomUserFindFirstMock
-			.mockResolvedValueOnce({ user_id: BigInt(11) })
-			.mockResolvedValueOnce(null) // no audience available
-		roomUserFindUniqueMock.mockResolvedValue({ team: "red" })
 		roomUserDeleteMock.mockResolvedValue({})
 		roomUserFindManyMock.mockResolvedValue([])
 
@@ -375,7 +331,10 @@ describe("POST /api/room/kick", () => {
 
 		expect(res.status).toBe(200)
 		expect(roomUserUpdateMock).not.toHaveBeenCalled()
+		expect(emitUserKickedMock).toHaveBeenCalledWith(101, 22)
 	})
+
+
 
 	it("returns 500 when an unexpected error happens", async () => {
 		const accessToken = buildAccessToken(11, "session-kick-9")
@@ -401,8 +360,7 @@ describe("POST /api/room/kick", () => {
 		const accessToken = buildAccessToken(11, "session-kick-10")
 		const largeId = 9007199254740991 // Max safe integer
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(largeId), status: 1 })
-		roomUserFindFirstMock.mockResolvedValue({ user_id: BigInt(11) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(largeId), status: 1, host_id: BigInt(11) })
 		roomUserFindUniqueMock.mockResolvedValue({ team: null })
 		roomUserDeleteMock.mockResolvedValue({})
 		roomUserFindManyMock.mockResolvedValue([])
@@ -415,7 +373,7 @@ describe("POST /api/room/kick", () => {
 		expect(res.status).toBe(200)
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(largeId) },
-			select: { id: true, status: true }
+			select: { id: true, status: true, host_id: true }
 		})
 	})
 })

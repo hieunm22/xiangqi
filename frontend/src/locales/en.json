@@ -52,7 +52,8 @@
 	"announce": {
 		"title": "Announcement",
 		"placeholder": "Type an announcement...",
-		"empty": "No announcements yet"
+		"empty": "No announcements yet",
+		"loading-older": "Loading older announcements..."
 	},
 	"archivement": {
 		"title-01": "Checkmate an opponent who still has 13 or more pieces",
@@ -79,7 +80,7 @@
 	},
 	"search": {
 		"user": {
-			"title": "New conversation",
+			"title": "Search user",
 			"placeholder": "Search user...",
 			"no-results": "No users found"
 		},
@@ -158,6 +159,8 @@
 		},
 		"actions": {
 			"start-room": "Start room",
+			"challenge": "Challenge",
+			"leave-seat": "Leave seat",
 			"undo": "Undo",
 			"surrender": "Surrender",
 			"draw": "Draw",
@@ -403,6 +406,22 @@
 			"invalid-status": "Field 'status' must be either 1 or 2",
 			"room-not-found": "Room not found",
 			"success": "Set room status successfully"
+		}
+	},
+	"room-invite": {
+		"messages": {
+			"title": "Room Invitation"
+		}
+	},
+	"start-game": {
+		"messages": {
+			"success": "Game started successfully",
+			"internal-server-error": "Internal server error while starting game",
+			"invalid-room-id": "Field 'id' is required and must be a positive integer",
+			"invalid-difficulty": "Bot difficulty must be between 1 and 5",
+			"room-not-found": "Room not found",
+			"forbidden": "Only the room host can start the game",
+			"requester-must-pick-team": "You must select a team before starting a game with bot"
 		}
 	},
 	"update-room": {

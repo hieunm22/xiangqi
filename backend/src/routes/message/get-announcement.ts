@@ -17,6 +17,14 @@ const router = Router()
  *     security:
  *       - basicAuth: []
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: before
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: When set, returns the page of announcements strictly older than this timestamp (infinite scroll-up).
  *     responses:
  *       200:
  *         description: Announcements retrieved successfully
@@ -64,12 +72,17 @@ const router = Router()
  *       500:
  *         description: Internal server error
  */
+const READ_PAGE_SIZE = 20
+
 router.get("/message/get-announcement", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
 	const userId = Number(req.auth?.userId)
+	// When provided, page in announcements strictly older than this timestamp
+	// (used by the infinite scroll-up to load history beyond the initial window).
+	const beforeHeader = req.get("before")
+	const before = beforeHeader ? new Date(beforeHeader) : null
 
 	try {
 		const collection = await getChatMessageCollection()
-		const announcements = await collection.find({ type: "announcement" }).sort({ timestamp: 1 }).toArray()
 
 		// High-water mark: the latest time this user accessed the announcements
 		const lastRead = await prisma.userAnnouncementRead.findFirst({
@@ -78,6 +91,34 @@ router.get("/message/get-announcement", requireAuth(), async (req: Authenticated
 			select: { read_announcement_at: true }
 		})
 		const lastReadAt = lastRead?.read_announcement_at ?? null
+
+		let announcements: Document[]
+		if (before && !Number.isNaN(before.getTime())) {
+			// Load older: the next page of announcements before the oldest loaded one.
+			const olderDesc = await collection
+				.find({ type: "announcement", timestamp: { $lt: before } })
+				.sort({ timestamp: -1 })
+				.limit(READ_PAGE_SIZE)
+				.toArray()
+			announcements = olderDesc.reverse()
+		} else {
+			// Initial load: all unread announcements plus the last READ_PAGE_SIZE
+			// already-read ones for context. When nothing has been read yet, every
+			// announcement is unread so the read window is naturally empty.
+			const unread = lastReadAt === null
+				? await collection.find({ type: "announcement" }).sort({ timestamp: 1 }).toArray()
+				: await collection.find({ type: "announcement", timestamp: { $gt: lastReadAt } }).sort({ timestamp: 1 }).toArray()
+
+			const readDesc = lastReadAt === null
+				? []
+				: await collection
+					.find({ type: "announcement", timestamp: { $lte: lastReadAt } })
+					.sort({ timestamp: -1 })
+					.limit(READ_PAGE_SIZE)
+					.toArray()
+
+			announcements = [...readDesc.reverse(), ...unread]
+		}
 
 		const formattedAnnouncements = await Promise.all(
 			announcements.map(async (item: Document) => {

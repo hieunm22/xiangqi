@@ -14,4 +14,5 @@ export const PopupState = {
 	GAME_HISTORY: 16,
 	SEND_PM: 32,
 	SEARCH_USERS: 64,
+	JOIN_ROOM: 128,
 }

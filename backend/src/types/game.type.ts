@@ -1,3 +1,8 @@
+export interface ChangeTeamRequest {
+	roomId: number
+	isLeaveToSeat: boolean
+}
+
 export interface MovePieceRequest {
 	gameId: string
 	newFen: string

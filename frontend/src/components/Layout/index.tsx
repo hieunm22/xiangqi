@@ -35,6 +35,7 @@ import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SettingsPopup } from "./components/SettingsPopup"
 import { SearchUserPopup } from "./components/SearchUserPopup"
+import { JoinRoomDialog, openJoinRoom } from "pages/Dashboard/components/JoinRoomDialog"
 import {
 	decodePayload,
 	getToken,
@@ -50,6 +51,7 @@ import { translate } from "locales/translate"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
 import useLayoutAuth from "pages/Dashboard/hook"
+import { RoomInfoData } from "pages/Room/types"
 import { GameStats, UserProfileWithStats } from "./types"
 import "./Layout.scss"
 
@@ -71,13 +73,20 @@ export default function Layout() {
 	const {
 		getUnreadCount,
 		getUserById,
+		getRoomById,
 		leaveRoom,
 		logout,
 		makeExpired,
 		resetGame
 	} = useAPI()
 	const { gameState, state, dispatch } = useToolkit()
-	const { offAnnouncementSent, onAnnouncementSent } = useSocket()
+	const {
+		offAnnouncementSent,
+		onAnnouncementSent,
+		offRoomInvite,
+		onRoomInvite,
+		registerUser
+	} = useSocket()
 	const { showProfilePopup } = useLayoutAuth()
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -147,6 +156,28 @@ export default function Layout() {
 		onAnnouncementSent(handleAnnouncement)
 		return () => offAnnouncementSent(handleAnnouncement)
 	}, [onAnnouncementSent, offAnnouncementSent, currentUserId])
+
+	// Register the current user's socket so they can receive targeted events
+	// (private messages, room invites) on any page.
+	useEffect(() => {
+		if (!currentUserId) return
+		registerUser(currentUserId)
+	}, [currentUserId, registerUser])
+
+	// Show JoinRoomDialog when another user sends a room invitation.
+	useEffect(() => {
+		const handleRoomInvite = async (data: { roomId: number; inviterDisplayName: string }) => {
+			const token = getToken()
+			if (!token) return
+			const response = await getRoomById(token, data.roomId) as APIResponse<RoomInfoData>
+			if (!response?.success || !response.data) return
+			const { room, users } = response.data
+			openJoinRoom({ ...room, users, created_at: "", updated_at: "" })
+		}
+
+		onRoomInvite(handleRoomInvite)
+		return () => offRoomInvite(handleRoomInvite)
+	}, [onRoomInvite, offRoomInvite])
 
 	const { setLogout } = useAuth()
 
@@ -303,10 +334,12 @@ export default function Layout() {
 			<Divider sx={{ mt: "auto" }} />
 
 			<List>
-				{isInRoom && state.debugMode && <ListItem className="menu-item" onClick={handleRestart}>
+				{isInRoom && state.debugMode && <ListItem disablePadding className="menu-item">
+					<ListItemButton onClick={handleRestart}>
 						<TI className="fas fa-rotate icon" title="Restart" />
 						{drawerOpen && <TTypography className="text" content="Restart" />}
-					</ListItem>
+					</ListItemButton>
+				</ListItem>
 				}
 				<ListItem disablePadding className="menu-item">
 					<ListItemButton onClick={logoutClick}>
@@ -478,6 +511,7 @@ export default function Layout() {
 					<GameHistoryPopup />
 					<PrivateChatPopup />
 					<SearchUserPopup />
+					<JoinRoomDialog />
 				</Box>
 			</PopupProvider>
 		</Box>

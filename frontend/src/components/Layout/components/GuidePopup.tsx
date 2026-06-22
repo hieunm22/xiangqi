@@ -29,7 +29,7 @@ export const GuidePopup = () => {
 		>
 			<DialogTitle className="pt-8 pb-8">{translate("menu.guide")}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
-			<DialogContent sx={{ p: 0 }}>
+			<DialogContent className="no-padding">
 				<Guide />
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />

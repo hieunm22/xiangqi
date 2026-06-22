@@ -2,6 +2,7 @@ import { Menu, MenuItem } from "@mui/material"
 import { Empty } from "components/Common"
 import { TI } from "components/TranslationTag"
 import { GameMenuActionContext } from "hooks/useAppContext"
+import { translate } from "locales/translate"
 import { GameMenuActionContextValue } from "../types"
 
 export const GameMenu = (props: GameMenuActionContextValue) => {
@@ -39,7 +40,7 @@ export const GameMenu = (props: GameMenuActionContextValue) => {
               disabled={!item.enabled}
             >
               <i className={`${item.icon} action-menu-icon`} />
-              {item.label}
+              {translate(item.label)}
             </MenuItem>
           )
         })}

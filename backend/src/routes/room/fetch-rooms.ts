@@ -73,6 +73,9 @@ const router = Router()
  *                               type: integer
  *                             avatar_url:
  *                               type: string
+ *                             team:
+ *                               type: string
+ *                               nullable: true
  *       400:
  *         description: Invalid status query parameter
  *       401:
@@ -111,6 +114,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 				status: true,
 				red_first: true,
 				bet_amount: true,
+				host_id: true,
 				created_at: true,
 				updated_at: true,
 				room_users: {
@@ -118,6 +122,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 						joined_at: "asc"
 					},
 					select: {
+						team: true,
 						users: {
 							select: {
 								id: true,
@@ -135,11 +140,13 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 			return {
 				...rest,
 				id: Number(room.id),
-				users: room_users.map(gu => ({
-					...gu.users,
-					id: Number(gu.users.id),
-					avatar_seq: Number(gu.users.avatar_seq),
-					avatar_url: getAvatarUrl(gu.users.id, gu.users.avatar_seq)
+				host_id: room.host_id === null ? null : Number(room.host_id),
+				users: room_users.map(ru => ({
+					...ru.users,
+					id: Number(ru.users.id),
+					avatar_seq: Number(ru.users.avatar_seq),
+					avatar_url: getAvatarUrl(ru.users.id, ru.users.avatar_seq),
+					team: ru.team
 				}))
 			}
 		})

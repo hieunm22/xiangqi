@@ -246,7 +246,7 @@ describe("PATCH /api/room/update", () => {
 		})
 		expect(prismaRoomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true }
+			select: { id: true, host_id: true }
 		})
 	})
 
@@ -254,10 +254,8 @@ describe("PATCH /api/room/update", () => {
 		const accessToken = buildAccessToken(11, "session-room-10")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(22) // Different user is the host
+			id: BigInt(1),
+			host_id: BigInt(22) // Different user is the host
 		})
 
 		const res = await request(app)
@@ -274,20 +272,15 @@ describe("PATCH /api/room/update", () => {
 			message: "update-room.messages.forbidden",
 			status_code: 403
 		})
-		expect(prismaRoomUserFindFirstMock).toHaveBeenCalledWith({
-			where: { room_id: BigInt(1) },
-			orderBy: { joined_at: "asc" },
-			select: { user_id: true }
-		})
 	})
 
-	it("returns 403 when no room user found (edge case)", async () => {
+	it("returns 403 when room has no host (edge case)", async () => {
 		const accessToken = buildAccessToken(11, "session-room-11")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
+			id: BigInt(1),
+			host_id: null
 		})
-		prismaRoomUserFindFirstMock.mockResolvedValue(null)
 
 		const res = await request(app)
 			.patch(PATH)
@@ -309,10 +302,8 @@ describe("PATCH /api/room/update", () => {
 		const accessToken = buildAccessToken(11, "session-room-12")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11) // Same user is the host
+			id: BigInt(1),
+			host_id: BigInt(11) // Same user is the host
 		})
 		prismaRoomUpdateMock.mockResolvedValue({
 			id: BigInt(1),
@@ -365,10 +356,8 @@ describe("PATCH /api/room/update", () => {
 		const accessToken = buildAccessToken(11, "session-room-13")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11)
+			id: BigInt(1),
+			host_id: BigInt(11)
 		})
 		prismaRoomUpdateMock.mockResolvedValue({
 			id: BigInt(1),
@@ -408,10 +397,8 @@ describe("PATCH /api/room/update", () => {
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11)
+			id: BigInt(1),
+			host_id: BigInt(11)
 		})
 		prismaRoomUpdateMock.mockRejectedValue(new Error("database error"))
 
@@ -462,10 +449,8 @@ describe("PATCH /api/room/update", () => {
 		const largeId = 9007199254740991 // Max safe integer
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(largeId)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11)
+			id: BigInt(largeId),
+			host_id: BigInt(11)
 		})
 		prismaRoomUpdateMock.mockResolvedValue({
 			id: BigInt(largeId),
@@ -493,10 +478,8 @@ describe("PATCH /api/room/update", () => {
 		const specialName = "Room@123#with$Special%Chars"
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11)
+			id: BigInt(1),
+			host_id: BigInt(11)
 		})
 		prismaRoomUpdateMock.mockResolvedValue({
 			id: BigInt(1),
@@ -524,10 +507,8 @@ describe("PATCH /api/room/update", () => {
 		const unicodeName = "Phòng chơi 象棋 🎮"
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		prismaRoomFindUniqueMock.mockResolvedValue({
-			id: BigInt(1)
-		})
-		prismaRoomUserFindFirstMock.mockResolvedValue({
-			user_id: BigInt(11)
+			id: BigInt(1),
+			host_id: BigInt(11)
 		})
 		prismaRoomUpdateMock.mockResolvedValue({
 			id: BigInt(1),

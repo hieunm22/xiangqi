@@ -56,6 +56,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 			<Dialog
 				open={!!current}
 				maxWidth="xs"
+				className="confirm-dialog"
 				fullWidth
 				disableEnforceFocus
 			>
@@ -70,7 +71,7 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 						<i className="fas fa-circle-question mt-4" />
 						<TSpan content={current?.options.message ?? "popup.confirm.message"} />
 					</Typography>
-					<Grid container sx={{ justifyContent: "flex-end", gap: 2 }}>
+					<Grid container className="button-container">
 						<TButton
 							variant="contained"
 							size="small"

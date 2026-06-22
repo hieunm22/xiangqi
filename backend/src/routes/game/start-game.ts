@@ -15,7 +15,7 @@ const router = Router()
  * @swagger
  * /api/room/start:
  *   post:
- *     summary: Start a game in a room
+ *     summary: Start a game in a room (host only)
  *     tags:
  *       - Room
  *     security:
@@ -84,6 +84,8 @@ const router = Router()
  *         description: Invalid request body (invalid room id, invalid difficulty, or requester must pick a team)
  *       401:
  *         description: Unauthorized (missing, invalid, or expired token)
+ *       403:
+ *         description: Forbidden (not the room host)
  *       404:
  *         description: Room not found
  *       500:
@@ -102,16 +104,37 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 	}
 
 	const roomIdBigInt = BigInt(id)
+	const userId = req.auth?.userId
+
+	if (!userId) {
+		res.status(401).json({
+			success: false,
+			message: "auth-middleware.messages.token-required",
+			status_code: 401
+		})
+		return
+	}
 
 	const existingRoom = await prisma.room.findUnique({
 		where: { id: roomIdBigInt },
-		select: { id: true }
+		select: { id: true, host_id: true }
 	})
 	if (!existingRoom) {
 		res.status(404).json({
 			success: false,
 			message: "start-game.messages.room-not-found",
 			status_code: 404
+		})
+		return
+	}
+
+	// Only the host can start the game
+	const userIdBigInt = BigInt(userId)
+	if (existingRoom.host_id !== userIdBigInt) {
+		res.status(403).json({
+			success: false,
+			message: "start-game.messages.forbidden",
+			status_code: 403
 		})
 		return
 	}
@@ -127,20 +150,9 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		return
 	}
 
-	const userId = req.auth?.userId
-	if (requestedDifficulty !== null && !userId) {
-		res.status(401).json({
-			success: false,
-			message: "auth-middleware.messages.token-required",
-			status_code: 401
-		})
-		return
-	}
-
 	try {
 		let botTeam: "red" | "black" | null = null
 		if (requestedDifficulty !== null) {
-			const userIdBigInt = BigInt(userId!)
 			const requester = await prisma.roomUser.findUnique({
 				where: {
 					room_id_user_id: { room_id: roomIdBigInt, user_id: userIdBigInt }
@@ -156,19 +168,6 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				return
 			}
 			botTeam = requester.team === "red" ? "black" : "red"
-		}
-
-		const existingRoom = await prisma.room.findUnique({
-			where: { id: roomIdBigInt },
-			select: { id: true }
-		})
-		if (!existingRoom) {
-			res.status(404).json({
-				success: false,
-				message: "start-game.messages.room-not-found",
-				status_code: 404
-			})
-			return
 		}
 
 		const { game, room } = await prisma.$transaction(async tx => {

@@ -19,6 +19,7 @@ model User {
   total_points          Int        @default(200)
   is_bot                Boolean    @default(false)
   room_users            RoomUser[]
+  hosted_rooms          Room[]     @relation("RoomHost")
   won_games             Game[]     @relation("Game_winner")
   game_users            GameUser[]
   surrendered_histories GameHistory[] @relation("GameHistory_surrender")
@@ -49,9 +50,11 @@ model Room {
   red_first  Boolean    @default(true)
   pve_mode   Boolean    @default(false)
   bet_amount Int        @default(10)
+  host_id    BigInt?
   created_at DateTime   @default(now()) @db.Timestamptz(6)
   updated_at DateTime   @default(now()) @db.Timestamptz(6)
   is_active  Boolean    @default(true)
+  host       User?      @relation("RoomHost", fields: [host_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   room_users RoomUser[]
   games      Game[]
 

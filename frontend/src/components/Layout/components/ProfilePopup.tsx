@@ -23,20 +23,20 @@ import { useAPI } from "hooks/useAPI"
 import { usePopups } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
-import { setPopup, setUserId } from "toolkit/slice/game"
+import { setPopup, setRoomHostId, setUserId } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
 import { UserProfileWithStats } from "../types"
 
 export const ProfilePopup = () => {
 	const { gameState: state, dispatch } = useToolkit()
 	const { getUserById, kickUser } = useAPI()
-	const [isRoomHost, setIsRoomHost] = useState(false)
 	const [isCopied, setIsCopied] = useState(false)
 	const { profileUser: user, gameStats, setGameStats, setProfileUser } = usePopups()
 
 	const handleCloseProfilePopup = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
 		if (reason === "backdropClick") return
 		dispatch(setUserId(null))
+		dispatch(setRoomHostId(null))
 		setProfileUser(null)
 		setGameStats(null)
 		dispatch(setPopup(PopupState.NONE))
@@ -66,12 +66,9 @@ export const ProfilePopup = () => {
 
 	const loadRoomContext = async () => {
 		if (state.popupState !== PopupState.PROFILE) {
-			setIsRoomHost(false)
 			return
 		}
 
-		setIsRoomHost(state.roomHostId === currentUserId)
-		
 		const token = getToken()
 		if (!token) {
 			return
@@ -253,13 +250,13 @@ export const ProfilePopup = () => {
 								startIcon={<i className="far fa-clock" />}
 							/>
 						)}
-						{user && !isOwnProfile && isRoomHost && (
+						{user && !isOwnProfile && state.roomHostId === currentUserId && (
 							<TButton
 								variant="contained"
 								size="small"
 								color="error"
 								// TODO: Only allow kicking when the room is in "waiting" status
-								disabled={!isRoomHost}
+								disabled={state.roomHostId !== currentUserId}
 								onClick={handleKickUser}
 								value="room.actions.kick"
 								startIcon={<i className="far fa-ban" />}

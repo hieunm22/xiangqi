@@ -86,7 +86,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true, pve_mode: true, status: true, bet_amount: true }
+			select: { id: true, pve_mode: true, status: true, bet_amount: true, host_id: true }
 		})
 		if (!room) {
 			res.status(404).json({
@@ -124,6 +124,8 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			return
 		}
 
+		const isHostLeaving = room.host_id === userIdBigInt
+
 		// Spectator (team = null) leaving: just remove and emit updated list
 		if (!currentRoomUser.team) {
 			await prisma.roomUser.deleteMany({
@@ -143,7 +145,12 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 			} else {
 				const remaining = roomUsers.filter(ru => ru.user_id !== userIdBigInt)
 				const formattedUsers = formatRoomUsers(remaining)
-				emitRoomUsersUpdated(id, formattedUsers)
+				if (isHostLeaving) {
+					const newHostId = await reassignHost(roomId, remaining)
+					emitRoomUsersUpdated(id, formattedUsers, newHostId)
+				} else {
+					emitRoomUsersUpdated(id, formattedUsers)
+				}
 			}
 
 			res.status(200).json({
@@ -237,39 +244,15 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 				})
 				emitRoomDeleted(id)
 			} else {
-				// Promote first spectator to vacated team
-				const vacatedTeam = currentRoomUser.team
-				const firstSpectator = await prisma.roomUser.findFirst({
-					where: {
-						room_id: roomId,
-						team: null
-					},
-					orderBy: {
-						joined_at: "asc"
-					}
-				})
-
-				if (firstSpectator) {
-					await prisma.roomUser.update({
-						where: {
-							room_id_user_id: {
-								room_id: roomId,
-								user_id: firstSpectator.user_id
-							}
-						},
-						data: { team: vacatedTeam }
-					})
-					// Update the in-memory roomUsers to reflect the promotion
-					const promotedUser = roomUsers.find(ru => ru.user_id === firstSpectator.user_id)
-					if (promotedUser) {
-						promotedUser.team = vacatedTeam
-					}
-				}
-
 				// Emit updated user list with remaining players/spectators
 				const remaining = roomUsers.filter(ru => ru.user_id !== userIdBigInt)
 				const formattedUsers = formatRoomUsers(remaining)
-				emitRoomUsersUpdated(id, formattedUsers)
+				if (isHostLeaving) {
+					const newHostId = await reassignHost(roomId, remaining)
+					emitRoomUsersUpdated(id, formattedUsers, newHostId)
+				} else {
+					emitRoomUsersUpdated(id, formattedUsers)
+				}
 			}
 		}
 
@@ -287,6 +270,19 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 		})
 	}
 })
+
+// When the host leaves a PvP room that still has members, transfer the host
+// role to the earliest-joined remaining real user (bots can never be host).
+// `remaining` is expected to be ordered by joined_at ascending.
+async function reassignHost(roomId: bigint, remaining: { user_id: bigint }[]): Promise<number | null> {
+	const newHost = remaining.find(ru => ru.user_id !== BOT_USER_ID)
+	const newHostId = newHost ? newHost.user_id : null
+	await prisma.room.update({
+		where: { id: roomId },
+		data: { host_id: newHostId }
+	})
+	return newHostId === null ? null : Number(newHostId)
+}
 
 function formatRoomUsers(roomUsers: any[]) {
 	return roomUsers.map(roomUser => ({

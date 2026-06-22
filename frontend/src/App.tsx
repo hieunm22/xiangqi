@@ -22,6 +22,7 @@ import { ProtectedRoute } from "components/ProtectedRoute"
 import RegisterPage from "pages/Register"
 import ResetPasswordPage from "pages/ResetPassword"
 import RoomPage from "pages/Room"
+import { SocketProvider } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
 import "App.scss"
 import "styles/animation.scss"
@@ -123,7 +124,13 @@ function AppWithTheme() {
 						}
 					/>
 				</Route>
-				<Route element={<Layout />}>
+				<Route
+					element={
+						<SocketProvider>
+							<Layout />
+						</SocketProvider>
+					}
+				>
 					<Route
 						path={HOME_PATH}
 						element={

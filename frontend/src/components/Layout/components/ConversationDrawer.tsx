@@ -1,4 +1,3 @@
-import { useMemo } from "react"
 import classnames from "classnames"
 import {
 	Badge,
@@ -11,10 +10,7 @@ import {
 	Typography
 } from "@mui/material"
 import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
-import {
-	formatTimestampToDateTimeArray,
-	getClaimsFromLocalStorage
-} from "common/helper"
+import { formatTimestampToDateTimeArray, getCurrentUserId } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
 import { ConversationDrawerProps } from "../types"
@@ -22,11 +18,7 @@ import { ConversationDrawerProps } from "../types"
 export const ConversationDrawer = (props: ConversationDrawerProps) => {
 	const { conversations, onSelect } = props
 	const { gameState, state } = useToolkit()
-	const currentUserId = useMemo(() => {
-		const payload = getClaimsFromLocalStorage()
-		const id = Number(payload?.sub)
-		return Number.isNaN(id) ? null : id
-	}, [])
+	const currentUserId = getCurrentUserId()
 
 	const unreadStyle = (unread_count: number) => {
 		return { fontWeight: unread_count > 0 ? "bold" : "normal" } as SxProps<Theme>

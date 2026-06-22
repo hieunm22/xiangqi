@@ -19,7 +19,7 @@ import { useRoomSettingsDialogContext } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
 import { translate } from "locales/translate"
-import { UserAvatarType } from "types/Common"
+import { setRoomHostId } from "toolkit/slice/game"
 
 const RoomSettingsDialog = () => {
 	const {
@@ -33,10 +33,9 @@ const RoomSettingsDialog = () => {
     handleSettingsSaved
   } = useRoomSettingsDialogContext()
 	// Spectators are all users except the first 2 (players)
-	const spectatorsUsers = users?.slice(2) ?? []
-	const spectatorsUsersMap: UserAvatarType[] = spectatorsUsers.map(user => user as UserAvatarType)
+	const spectatorsUsers = users.filter(u => u.team === null)
 	const { updateRoom } = useAPI()
-	const { state } = useToolkit()
+	const { state, dispatch } = useToolkit()
 	const { showProfilePopup } = useLayoutAuth()
 	const [name, setName] = useState(room?.name ?? "")
 	const [nameError, setNameError] = useState(false)
@@ -86,6 +85,13 @@ const RoomSettingsDialog = () => {
 		closeSettings()
 	}
 
+	// Surface the room host to the profile popup so the host gets the kick action
+	// when viewing a spectator's profile.
+	const handleSpectatorClick = (userId: number) => {
+		dispatch(setRoomHostId(room?.host_id ?? null))
+		showProfilePopup(userId)
+	}
+
   if (!room) return <Empty />
 
 	return (
@@ -125,10 +131,10 @@ const RoomSettingsDialog = () => {
 							content="room.settings.players"
 						/>
 						<UserAvatarGroup
-							users={spectatorsUsersMap}
+							users={spectatorsUsers}
 							type="primary"
 							maxVisible={7}
-							onUserClick={showProfilePopup}
+							onUserClick={handleSpectatorClick}
 						/>
 					</Box>
 				)}

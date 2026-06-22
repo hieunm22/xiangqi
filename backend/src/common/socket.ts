@@ -161,6 +161,21 @@ export function initializeSocket(httpServer: HTTPServer) {
 			}
 		})
 
+		socket.on("room-invite", async (data: any) => {
+			if (!data?.inviteeId || !data?.roomId || !data?.inviterId) return
+
+			const inviter = await prisma.user.findUnique({
+				where: { id: BigInt(data.inviterId) },
+				select: { display_name: true }
+			})
+			if (!inviter) return
+
+			emitRoomInvite(Number(data.inviteeId), {
+				roomId: Number(data.roomId),
+				inviterDisplayName: inviter.display_name
+			})
+		})
+
 		socket.on("error", (error) => {
 			console.error(`[Socket.io] [${new Date().toISOString()}] Client error ${socket.id}:`, error)
 		})
@@ -331,21 +346,18 @@ export function emitSurrender(roomId: string | number, gameId: string, surrender
 /**
  * Emit joined users update to all clients in a room
  */
-export function emitRoomUsersUpdated(roomId: string | number, users: any[]) {
+export function emitRoomUsersUpdated(roomId: string | number, users: any[], hostId?: number | null) {
 	if (!io) {
 		console.warn(`[Socket.io] Cannot emit room-users-updated: Socket.io server not initialized`)
 		return
 	}
 
 	const roomChannel = `room-${roomId}`
-	io.to(roomChannel).emit("room-users-updated", {
-		roomId,
-		users
-	})
-	io.emit("dashboard-room-users-updated", {
-		roomId,
-		users
-	})
+	// Only carry `hostId` when the caller knows it changed; clients keep their
+	// current host when the field is absent.
+	const payload = hostId === undefined ? { roomId, users } : { roomId, users, hostId }
+	io.to(roomChannel).emit("room-users-updated", payload)
+	io.emit("dashboard-room-users-updated", payload)
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room users updated emitted to ${roomChannel}`)
 }
 
@@ -395,4 +407,17 @@ export function emitRoomDeleted(roomId: string | number) {
 		roomId
 	})
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room deleted emitted: room ${roomId}`)
+}
+
+/**
+ * Emit a room invitation to a specific user's personal channel
+ */
+export function emitRoomInvite(inviteeId: number, payload: { roomId: number; inviterDisplayName: string }) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit room-invite: Socket.io server not initialized`)
+		return
+	}
+
+	io.to(`user-${inviteeId}`).emit("room-invite", payload)
+	console.log(`[Socket.io] [${new Date().toISOString()}] Room invite emitted to user-${inviteeId}`)
 }

@@ -42,21 +42,14 @@ export default function RoomPage() {
 				<div className="player-section top-player">
 					<PlayerInfoCard
 						user={topSideUser}
-						team={
-							topSideUser?.team === "red" ? "red" :
-								topSideUser?.team === "black" ? "black" :
-									bottomSideUser?.team === "red" ? "black" : "red"
-						}
+						team={topSideUser?.team === "black" ? "black" : "red"}
 						active={currentTurn === topSideUser?.team}
-						roomHostId={roomSettingsDialogValue.users[0]?.id ?? null}
+						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
+						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
 					<CapturedPiecesDisplay
 						capturedPieces={capturedPieces}
-						team={
-							topSideUser?.team === "red" ? "red" :
-								topSideUser?.team === "black" ? "black" :
-									bottomSideUser?.team === "red" ? "black" : "red"
-						}
+						team={topSideUser?.team === "black" ? "black" : "red"}
 					/>
 				</div>
 				<div className="player-section bottom-player">
@@ -68,7 +61,8 @@ export default function RoomPage() {
 						user={bottomSideUser}
 						team={bottomSideUser?.team === "black" ? "black" : "red"}
 						active={currentTurn === bottomSideUser?.team}
-						roomHostId={roomSettingsDialogValue.users[0]?.id ?? null}
+						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
+						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
 				</div>
 			</div>

@@ -24,6 +24,7 @@ import leaveRoomRoutes from "./routes/room/leave-room"
 import loadRoomRoutes from "./routes/room/load-room"
 import updateRoomRoutes from "./routes/room/update-room"
 
+import changeTeamRoutes from "./routes/game/change-team"
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
 import movePieceRoutes from "./routes/game/move-piece"
@@ -100,6 +101,7 @@ app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
 app.use("/api", updateRoomRoutes)
 
+app.use("/api", changeTeamRoutes)
 app.use("/api", drawGameRoutes)
 app.use("/api", movePieceRoutes)
 app.use("/api", playerHistoryRoutes)
