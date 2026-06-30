@@ -24,7 +24,8 @@ const sortMock = vi.fn()
 const findMock = vi.fn()
 const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
-const buildEndGameTransactionMock = vi.fn()
+const runEndGameTransactionMock = vi.fn()
+const syncPlayersPresenceMock = vi.fn()
 
 const PATH = "/api/game/draw-game"
 
@@ -56,7 +57,11 @@ vi.mock("../../common/mongodb", () => ({
 }))
 
 vi.mock("../../common/game/end-game.helper", () => ({
-	buildEndGameTransaction: buildEndGameTransactionMock
+	runEndGameTransaction: runEndGameTransactionMock
+}))
+
+vi.mock("../../common/game/presence-sync", () => ({
+	syncPlayersPresence: syncPlayersPresenceMock
 }))
 
 describe("POST /api/game/draw-game", () => {
@@ -308,11 +313,7 @@ describe("POST /api/game/draw-game", () => {
 			{ _id: { toString: () => "history-1" }, game_id: "game-1", fen: "latest-fen" }
 		])
 		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "history-2" } })
-		buildEndGameTransactionMock.mockResolvedValue([])
-		transactionMock.mockResolvedValue([
-			{ id: "game-1", status: 2, winner_id: null },
-			{ id: BigInt(100), status: 1 }
-		])
+		runEndGameTransactionMock.mockResolvedValue(true)
 		roomFindUniqueMock.mockResolvedValue({ pve_mode: false })
 
 		const res = await request(app)
@@ -330,13 +331,49 @@ describe("POST /api/game/draw-game", () => {
 				time_stamp: expect.any(Number)
 			})
 		)
-		expect(buildEndGameTransactionMock).toHaveBeenCalledWith({
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
 			gameId: "game-1",
 			roomId: BigInt(100),
 			winnerId: null,
 			isBotGame: false,
 			betAmount: 0
 		})
+		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-1", false)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "draw-game.messages.success",
+			status_code: 200
+		})
+	})
+
+	it("returns 200 but skips presence sync when the game was already ended by a concurrent request", async () => {
+		const accessToken = buildAccessToken(11, "session-draw-race")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-1",
+			room_id: BigInt(100),
+			status: 1
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: BigInt(11), team: "red" },
+			{ user_id: BigInt(12), team: "black" }
+		])
+		toArrayMock.mockResolvedValue([
+			{ _id: { toString: () => "history-1" }, game_id: "game-1", fen: "latest-fen" }
+		])
+		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "history-2" } })
+		// Lost the race: another request already flipped the game to finished.
+		runEndGameTransactionMock.mockResolvedValue(false)
+		roomFindUniqueMock.mockResolvedValue({ pve_mode: false })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ gameId: "game-1" })
+
+		expect(res.status).toBe(200)
+		expect(runEndGameTransactionMock).toHaveBeenCalled()
+		expect(syncPlayersPresenceMock).not.toHaveBeenCalled()
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "draw-game.messages.success",

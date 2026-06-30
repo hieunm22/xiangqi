@@ -66,7 +66,7 @@ router.get("/message/unread-count", requireAuth(), async (req: AuthenticatedRequ
 		// Count total unread messages for current user
 		const totalCount = await collection.countDocuments({
 			receiver_id: currentUserId,
-			status: 1
+			seen: false
 		})
 
 		// Get unread count grouped by conversation_key
@@ -75,7 +75,7 @@ router.get("/message/unread-count", requireAuth(), async (req: AuthenticatedRequ
 				{
 					$match: {
 						receiver_id: currentUserId,
-						status: 1
+						seen: false
 					}
 				},
 				{

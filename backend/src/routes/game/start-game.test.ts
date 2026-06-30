@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken"
 import request from "supertest"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { INITIAL_FEN_BLACK_TOP, INITIAL_FEN_BLACK_BOTTOM } from "common/constant"
+import { BOT_USER_ID } from "common/bot-engine"
 
 const redisGetMock = vi.fn()
 const transactionMock = vi.fn()
@@ -13,7 +14,13 @@ const getGameHistoryCollectionMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const roomUserFindFirstMock = vi.fn()
+const roomUserFindUniqueMock = vi.fn()
+const roomUserFindManyTopMock = vi.fn()
 const gameUserCreateMock = vi.fn()
+const userFindUniqueMock = vi.fn()
+const emitGameStartedMock = vi.fn()
+const emitRoomUsersUpdatedMock = vi.fn()
+const playBotMoveMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -29,7 +36,12 @@ vi.mock("prisma", () => ({
 			findUnique: roomFindUniqueMock
 		},
 		roomUser: {
-			findFirst: roomUserFindFirstMock
+			findFirst: roomUserFindFirstMock,
+			findUnique: roomUserFindUniqueMock,
+			findMany: roomUserFindManyTopMock
+		},
+		user: {
+			findUnique: userFindUniqueMock
 		},
 		$transaction: transactionMock
 	}
@@ -37,6 +49,19 @@ vi.mock("prisma", () => ({
 
 vi.mock("../../common/mongodb", () => ({
 	getGameHistoryCollection: getGameHistoryCollectionMock
+}))
+
+vi.mock("../../common/game/presence-sync", () => ({
+	syncPlayersPresence: vi.fn()
+}))
+
+vi.mock("../../common/socket", () => ({
+	emitGameStarted: emitGameStartedMock,
+	emitRoomUsersUpdated: emitRoomUsersUpdatedMock
+}))
+
+vi.mock("../../common/bot-engine/play-bot-move", () => ({
+	playBotMove: playBotMoveMock
 }))
 
 describe("POST /api/room/start", () => {
@@ -98,7 +123,8 @@ describe("POST /api/room/start", () => {
 		const accessToken = buildAccessToken(61, "session-start-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-1" })
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61), bet_amount: 50 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
@@ -202,11 +228,83 @@ describe("POST /api/room/start", () => {
 		})
 	})
 
+	it("seats the bot and broadcasts the is_bot flag when starting a PvE game", async () => {
+		const accessToken = buildAccessToken(61, "session-start-pve")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-pve" })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61), bet_amount: 0 })
+		getGameHistoryCollectionMock.mockResolvedValue({ insertOne: gameHistoryInsertOneMock })
+
+		// Requester is seated on red, so the bot takes black and the human moves first.
+		roomUserFindUniqueMock.mockResolvedValue({ team: "red" })
+
+		const roomUserUpsertMock = vi.fn().mockResolvedValue({})
+		roomUpdateMock.mockResolvedValue({ id: BigInt(101), status: 2, red_first: true })
+		gameCreateMock.mockResolvedValue({
+			id: "pve-game-uuid",
+			status: 1,
+			room_id: BigInt(101),
+			bot_difficulty: 3
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: BigInt(61) },
+			{ user_id: BOT_USER_ID }
+		])
+		gameUserCreateMock.mockResolvedValue({})
+		transactionMock.mockImplementation(async callback =>
+			callback({
+				room: { update: roomUpdateMock },
+				roomUser: { upsert: roomUserUpsertMock, findMany: roomUserFindManyMock },
+				game: { create: gameCreateMock },
+				gameUser: { create: gameUserCreateMock }
+			})
+		)
+
+		// Top-level findMany feeds the room-users broadcast (includes the bot seat).
+		roomUserFindManyTopMock.mockResolvedValue([
+			{
+				user_id: BigInt(61),
+				team: "red",
+				users: { id: BigInt(61), display_name: "Host", avatar_seq: 0, is_bot: false }
+			},
+			{
+				user_id: BOT_USER_ID,
+				team: "black",
+				users: { id: BOT_USER_ID, display_name: "Bot", avatar_seq: 0, is_bot: true }
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101, botDifficulty: 3 })
+
+		expect(res.status).toBe(201)
+		expect(res.body.data.game.bot_difficulty).toBe(3)
+
+		// The bot is seated on the team opposite the requester.
+		expect(roomUserUpsertMock).toHaveBeenCalledWith({
+			where: { room_id_user_id: { room_id: BigInt(101), user_id: BOT_USER_ID } },
+			create: { room_id: BigInt(101), user_id: BOT_USER_ID, team: "black" },
+			update: { team: "black" }
+		})
+
+		// The broadcast carries is_bot so the client can tell the bot from the human.
+		expect(emitRoomUsersUpdatedMock).toHaveBeenCalledWith(101, [
+			expect.objectContaining({ id: 61, display_name: "Host", team: "red", is_bot: false }),
+			expect.objectContaining({ id: Number(BOT_USER_ID), display_name: "Bot", team: "black", is_bot: true })
+		])
+
+		// Human (red) moves first, so the bot does not auto-move on start.
+		expect(playBotMoveMock).not.toHaveBeenCalled()
+	})
+
 	it("stores lowercase fen when red_first is false", async () => {
 		const accessToken = buildAccessToken(61, "session-start-2b")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-2" })
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102), host_id: BigInt(61) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(102), host_id: BigInt(61), bet_amount: 50 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		getGameHistoryCollectionMock.mockResolvedValue({
 			insertOne: gameHistoryInsertOneMock
 		})
@@ -314,7 +412,28 @@ describe("POST /api/room/start", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true, host_id: true }
+			select: { id: true, host_id: true, bet_amount: true }
+		})
+		expect(transactionMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 400 when bet exceeds 80% of the host's balance", async () => {
+		const accessToken = buildAccessToken(61, "session-start-insufficient")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61), bet_amount: 100 })
+		// 100 bet vs 120 balance: 100 > 120 * 0.8 (96) -> blocked.
+		userFindUniqueMock.mockResolvedValue({ total_amount: 120 })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "start-game.messages.insufficient-amount",
+			status_code: 400
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
 	})

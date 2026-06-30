@@ -67,7 +67,7 @@ const router = Router()
  *                       team:
  *                         type: string
  *                         nullable: true
- *                       total_points:
+ *                       total_amount:
  *                         type: integer
  *                       joined_at:
  *                         type: string
@@ -117,7 +117,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		// Check if room exists
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true, pve_mode: true }
+			select: { id: true, pve_mode: true, bet_amount: true }
 		})
 
 		if (!room) {
@@ -130,6 +130,23 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		}
 
 		const userIdBigInt = BigInt(userId)
+
+		// Check balance if joining as player (team is 'red' or 'black', not null)
+		if (team !== null && team !== undefined) {
+			const user = await prisma.user.findUnique({
+				where: { id: userIdBigInt },
+				select: { total_amount: true }
+			})
+
+			if (room.bet_amount * 10 > (user?.total_amount ?? 0) * 8) {
+				res.status(400).json({
+					success: false,
+					message: "join-room.messages.insufficient-amount",
+					status_code: 400
+				})
+				return
+			}
+		}
 		const now = getUTCNow()
 
 		// Remove user from all other rooms to ensure single-room participation
@@ -236,7 +253,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 						id: true,
 						display_name: true,
 						avatar_seq: true,
-						total_points: true
+						total_amount: true,
+						is_bot: true
 					}
 				}
 			},
@@ -251,7 +269,8 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			avatar_seq: Number(roomUser.users.avatar_seq),
 			avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 			team: roomUser.team,
-			total_points: roomUser.users.total_points,
+			total_amount: roomUser.users.total_amount,
+			is_bot: roomUser.users.is_bot,
 			joined_at: roomUser.joined_at
 		}))
 

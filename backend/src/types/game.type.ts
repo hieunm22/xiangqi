@@ -1,3 +1,5 @@
+import { PresenceStatus } from "common/presence"
+
 export interface ChangeTeamRequest {
 	roomId: number
 	isLeaveToSeat: boolean
@@ -44,4 +46,9 @@ export interface EndGameParams {
 	winnerId: bigint | null
 	isBotGame: boolean
 	betAmount: number | null
+}
+
+export interface UserPresenceStatus {
+	userId: number
+	status: PresenceStatus
 }

@@ -10,6 +10,7 @@ const roomUserFindUniqueMock = vi.fn()
 const roomUserUpdateMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const roomUserCreateMock = vi.fn()
+const userFindUniqueMock = vi.fn()
 
 const PATH = "/api/room/join"
 
@@ -23,6 +24,9 @@ vi.mock("prisma", () => ({
 	default: {
 		room: {
 			findUnique: roomFindUniqueMock
+		},
+		user: {
+			findUnique: userFindUniqueMock
 		},
 		roomUser: {
 			deleteMany: roomUserDeleteManyMock,
@@ -145,7 +149,8 @@ describe("POST /api/room/join", () => {
 					users: {
 						id: BigInt(41),
 						display_name: "Alice",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: false
 					}
 				}
 			])
@@ -167,7 +172,8 @@ describe("POST /api/room/join", () => {
 			display_name: "Alice",
 			avatar_seq: 0,
 			avatar_url: "/images/41.jpg",
-			team: "red"
+			team: "red",
+			is_bot: false
 		})
 
 		expect(roomUserUpdateMock).toHaveBeenCalledWith(
@@ -254,7 +260,8 @@ describe("POST /api/room/join", () => {
 					users: {
 						id: BigInt(41),
 						display_name: "Alice",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: false
 					}
 				},
 				{
@@ -377,7 +384,8 @@ describe("POST /api/room/join", () => {
 					users: {
 						id: BigInt(41),
 						display_name: "Alice",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: false
 					}
 				},
 				{
@@ -430,7 +438,8 @@ describe("POST /api/room/join", () => {
 					users: {
 						id: BigInt(41),
 						display_name: "Alice",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: false
 					}
 				},
 				{
@@ -554,6 +563,174 @@ describe("POST /api/room/join", () => {
 			})
 		)
 		expect(roomUserCreateMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 400 when user cannot afford bet joining as player", async () => {
+		const accessToken = buildAccessToken(51, "session-join-insufficient-balance")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
+		// 100 bet vs 120 balance: 100 * 10 > 120 * 8 (1000 > 960) -> blocked
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			pve_mode: false,
+			bet_amount: 100
+		})
+		userFindUniqueMock.mockResolvedValue({ total_amount: 120 })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101, team: "red" })
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "join-room.messages.insufficient-amount",
+			status_code: 400
+		})
+		expect(roomUserCreateMock).not.toHaveBeenCalled()
+		expect(userFindUniqueMock).toHaveBeenCalledWith({
+			where: { id: BigInt(51) },
+			select: { total_amount: true }
+		})
+	})
+
+	it("returns 201 when user can afford bet joining as player", async () => {
+		const accessToken = buildAccessToken(52, "session-join-sufficient-balance")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 52 }))
+		// 100 bet vs 200 balance: 100 * 10 <= 200 * 8 (1000 <= 1600) -> allowed
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(102),
+			pve_mode: false,
+			bet_amount: 100
+		})
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		// Mock existing members (no one in room yet)
+		roomUserFindManyMock.mockResolvedValue([])
+		roomUserCreateMock.mockResolvedValue({
+			room_id: BigInt(102),
+			user_id: BigInt(52),
+			team: "red",
+			joined_at: new Date("2026-06-29T00:00:00Z")
+		})
+		// After creation, fetch all users
+		roomUserFindManyMock.mockResolvedValueOnce([])
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				joined_at: new Date("2026-06-29T00:00:00Z"),
+				team: "red",
+				users: {
+					id: BigInt(52),
+					display_name: "Rich Player",
+					avatar_seq: 1,
+					total_amount: 200
+				}
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 102, team: "red" })
+
+		expect(res.status).toBe(201)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "join-room.messages.success",
+			status_code: 201
+		})
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0]).toMatchObject({
+			id: 52,
+			team: "red",
+			total_amount: 200
+		})
+	})
+
+	it("returns 201 when user at exactly 80% threshold joining as player", async () => {
+		const accessToken = buildAccessToken(53, "session-join-threshold")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 53 }))
+		// 100 bet vs 125 balance: 100 * 10 <= 125 * 8 (1000 <= 1000) -> allowed
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(103),
+			pve_mode: false,
+			bet_amount: 100
+		})
+		userFindUniqueMock.mockResolvedValue({ total_amount: 125 })
+		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		// Mock existing members (no one in room yet)
+		roomUserFindManyMock.mockResolvedValueOnce([])
+		roomUserCreateMock.mockResolvedValue({
+			room_id: BigInt(103),
+			user_id: BigInt(53),
+			team: "black",
+			joined_at: new Date("2026-06-29T00:00:00Z")
+		})
+		// After creation, fetch all users
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				joined_at: new Date("2026-06-29T00:00:00Z"),
+				team: "black",
+				users: {
+					id: BigInt(53),
+					display_name: "Threshold Player",
+					avatar_seq: 2,
+					total_amount: 125
+				}
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 103, team: "black" })
+
+		expect(res.status).toBe(201)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "join-room.messages.success",
+			status_code: 201
+		})
+	})
+
+	it("returns 201 and skips balance check when joining as spectator with low balance", async () => {
+		const accessToken = buildAccessToken(54, "session-join-spectator-balance")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 54 }))
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(104),
+			pve_mode: false,
+			bet_amount: 100
+		})
+		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				joined_at: new Date("2026-06-29T00:00:00Z"),
+				team: null,
+				users: {
+					id: BigInt(54),
+					display_name: "Poor Spectator",
+					avatar_seq: 3,
+					total_amount: 50
+				}
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 104, team: null })
+
+		expect(res.status).toBe(201)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "join-room.messages.success",
+			status_code: 201
+		})
+		// userFindUniqueMock should NOT be called for spectator join
+		expect(userFindUniqueMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 500 when unexpected error happens", async () => {

@@ -92,11 +92,11 @@ INSERT INTO auth.users (id, user_name, password, email, display_name, gender, av
 (88, N'vo.thoai.580508', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vothoai1503@gmail.com', N'Võ Thoại', false, 0),
 (89, N'ngocvan.ld', N'DA7E2532550C01A49F955FDD8F22B7FF', N'ledoanthanhhoa@gmail.com', N'Hoa Ngoc Van', false, 0),
 (90, N'tran.quan.755204', N'DA7E2532550C01A49F955FDD8F22B7FF', N'tranquan.network@gmail.com', N'Hoa Ngoc Van', false, 0);
-UPDATE auth.users SET total_points = 220 WHERE id = 83;
-UPDATE auth.users SET total_points = 180 WHERE id = 8;
-UPDATE auth.users SET total_points = 86940 WHERE id = 9;
-UPDATE auth.users SET total_points = 48392 WHERE id = 19;
-UPDATE auth.users SET total_points = 63820 WHERE id = 82;
+UPDATE auth.users SET total_amount = 220 WHERE id = 83;
+UPDATE auth.users SET total_amount = 180 WHERE id = 8;
+UPDATE auth.users SET total_amount = 86940 WHERE id = 9;
+UPDATE auth.users SET total_amount = 48392 WHERE id = 19;
+UPDATE auth.users SET total_amount = 63820 WHERE id = 82;
 
 SELECT setval(pg_get_serial_sequence('auth.users', 'id'), 90);
 
@@ -142,6 +142,14 @@ INSERT INTO game.game_users (game_id, user_id, point) VALUES
 ('de4671f8-f42c-4cf4-9a3f-426e399459ce', 8, -20),
 ('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 83, -20),
 ('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 8, 20);
+
+INSERT INTO game.user_point_history (user_id, point, type, created_at) VALUES
+(83, 20, 1, '2026-05-01T12:15:10Z'),
+(8, -20, 1, '2026-05-01T12:15:10Z'),
+(83, 20, 1, '2026-05-01T13:15:10Z'),
+(8, -20, 1, '2026-05-01T13:15:10Z'),
+(83, -20, 1, '2026-05-01T14:15:10Z'),
+(8, 20, 1, '2026-05-01T14:15:10Z');
 
 INSERT INTO game.game_history (game_id, fen, team, time_stamp, surrender_id) VALUES
 ('43be0c57-426b-4267-8088-ac38fe450fcc', 'rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S1S/1C5C1/9/RHEAGAEHR', 'black', 1778596990, null),

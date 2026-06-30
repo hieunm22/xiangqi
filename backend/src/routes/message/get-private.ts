@@ -116,7 +116,7 @@ router.get("/message/get-private", requireAuth(), async (req: AuthenticatedReque
 						avatar_url: getAvatarUrl(user.id, user.avatar_seq)
 					} : null,
 					receiver_id: msg.receiver_id,
-					status: msg.status,
+					seen: msg.seen,
 					timestamp: new Date(msg.timestamp).toISOString()
 				}
 			})

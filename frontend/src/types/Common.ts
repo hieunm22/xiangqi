@@ -7,6 +7,8 @@ export interface ReduxStore {
 }
 
 export type EmptyVoid = () => void
+export type NumberVoid = (num: number) => void
+export type StringVoid = (str: string) => void
 
 export type EmptyPromise = () => Promise<void>
 
@@ -60,3 +62,5 @@ export type UserAvatarType = {
 	display_name: string
 	avatar_url: string
 }
+
+export type PresenceStatus = "online" | "busy" | "inactive" | "offline"

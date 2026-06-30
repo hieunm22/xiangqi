@@ -180,7 +180,8 @@ router.post("/room/kick", requireAuth(), async (req: AuthenticatedRequest, res: 
 					select: {
 						id: true,
 						display_name: true,
-						avatar_seq: true
+						avatar_seq: true,
+						is_bot: true
 					}
 				}
 			},
@@ -193,6 +194,7 @@ router.post("/room/kick", requireAuth(), async (req: AuthenticatedRequest, res: 
 			avatar_seq: Number(roomUser.users.avatar_seq),
 			avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 			team: roomUser.team,
+			is_bot: roomUser.users.is_bot,
 			joined_at: roomUser.joined_at
 		}))
 

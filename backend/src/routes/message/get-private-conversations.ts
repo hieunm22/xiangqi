@@ -105,7 +105,7 @@ router.get("/message/get-private-conversations", requireAuth(), async (req: Auth
 									{
 										$and: [
 											{ $eq: ["$receiver_id", currentUserId] },
-											{ $eq: ["$status", 1] }
+											{ $eq: ["$seen", false] }
 										]
 									},
 									1,

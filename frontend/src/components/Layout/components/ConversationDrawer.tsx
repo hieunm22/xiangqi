@@ -54,6 +54,7 @@ export const ConversationDrawer = (props: ConversationDrawerProps) => {
 								id={partner.id}
 								avatar_url={partner.avatar_url}
 								display_name={partner.display_name}
+								showPresence
 								size={36}
 							/>
 						</Badge>

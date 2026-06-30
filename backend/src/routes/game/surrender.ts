@@ -1,7 +1,8 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { buildEndGameTransaction } from "common/game/end-game.helper"
+import { runEndGameTransaction } from "common/game/end-game.helper"
+import { syncPlayersPresence } from "common/game/presence-sync"
 import { getGameHistoryCollection } from "common/mongodb"
 import { getUTCTimestamp } from "common/helper"
 import { SurrenderGameRequest } from "types/game.type"
@@ -185,7 +186,7 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			select: { pve_mode: true, bet_amount: true }
 		})
 
-		const transactionUpdates = await buildEndGameTransaction({
+		const ended = await runEndGameTransaction({
 			gameId: normalizedGameId,
 			roomId: game.room_id,
 			winnerId: winner.user_id,
@@ -193,7 +194,11 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			betAmount: roomWithBet?.bet_amount ?? null
 		})
 
-		await prisma.$transaction(transactionUpdates)
+		// Game over — clear players' "busy" presence back to their live status.
+		// Skip when another request already ended the game to avoid duplicate work.
+		if (ended) {
+			await syncPlayersPresence(normalizedGameId, false)
+		}
 
 		res.status(200).json({
 			success: true,

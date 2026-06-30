@@ -25,22 +25,19 @@ export type BaseChatMessage = {
 	message: string
 	sender: UserAvatarType
 	timestamp: string
+	seen: boolean
 }
 
 export interface RoomChatMessage extends BaseChatMessage {
 	room_id: number
-	read_by: number[] // array of userIds who have read this message
-	seen: boolean // whether current user has seen this message
+	read_by: number[]
 }
 
 export interface PrivateChatMessage extends BaseChatMessage {
 	receiver_id: number
-	status: number
 }
 
-export interface AnnouncementMessage extends BaseChatMessage {
-	seen: boolean
-}
+export interface AnnouncementMessage extends BaseChatMessage { }
 
 export interface ChatDialogDragPosition {
 	startX: number

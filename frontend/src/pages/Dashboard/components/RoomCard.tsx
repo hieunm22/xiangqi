@@ -84,11 +84,19 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 				</Stack>
 
 				<Stack direction="row" className="dashboard__card-meta">
-					<UserAvatarGroup users={oldestJoinedUsers} type="primary" maxVisible={2} />
+					<UserAvatarGroup
+						users={oldestJoinedUsers}
+						type="primary"
+						maxVisible={2}
+					/>
 					<TI className={classIconRoomStatus} title={getStatusKey(room.status)} />
 				</Stack>
 
-				<UserAvatarGroup users={remainingUsers} type="secondary" maxVisible={5} />
+				<UserAvatarGroup
+					users={remainingUsers}
+					type="secondary"
+					maxVisible={5}
+				/>
 			</Stack>
 		</Grid>
 	)

@@ -66,7 +66,7 @@ const router = Router()
  *                       team:
  *                         type: string
  *                         nullable: true
- *                       total_points:
+ *                       total_amount:
  *                         type: integer
  *                       joined_at:
  *                         type: string
@@ -143,7 +143,7 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 						id: true,
 						display_name: true,
 						avatar_seq: true,
-						total_points: true
+						total_amount: true
 					}
 				}
 			}
@@ -236,7 +236,8 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 						id: true,
 						display_name: true,
 						avatar_seq: true,
-						total_points: true
+						total_amount: true,
+						is_bot: true
 					}
 				}
 			}
@@ -248,7 +249,8 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 			avatar_seq: u.users.avatar_seq,
 			avatar_url: getAvatarUrl(u.users.id, u.users.avatar_seq),
 			team: u.team,
-			total_points: u.users.total_points,
+			total_amount: u.users.total_amount,
+			is_bot: u.users.is_bot,
 			joined_at: u.joined_at
 		}))
 

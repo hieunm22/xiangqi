@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
 import {
-	Avatar,
 	Box,
 	CircularProgress,
 	Dialog,
@@ -15,19 +14,28 @@ import {
 } from "@mui/material"
 import { PopupState } from "common/enums"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
-import { getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
+import { formatNumber, getClaimsFromLocalStorage, getToken } from "common/helper"
+import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
 import { useAPI } from "hooks/useAPI"
+import { useProfilePopup } from "hooks/useAppContext"
 import { useSocket } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
 import { setInviteRoomId, setPopup, setUserId } from "toolkit/slice/game"
 import { APIResponse, UserAvatarType } from "types/Common"
+import { Users } from "types/Entities"
+import "../../../pages/Dashboard/Dashboard.scss"
+
+type SearchUserType = UserAvatarType & {
+	total_amount: number
+}
 
 export const SearchUserPopup = () => {
-	const { gameState, dispatch } = useToolkit()
+	const { gameState, state, dispatch } = useToolkit()
+	const { setProfileUser } = useProfilePopup()
 	const { searchUsers } = useAPI()
 	const { emitRoomInvite } = useSocket()
 	const [searchQuery, setSearchQuery] = useState("")
-	const [results, setResults] = useState<UserAvatarType[]>([])
+	const [results, setResults] = useState<SearchUserType[]>([])
 	const [loading, setLoading] = useState(false)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -40,15 +48,16 @@ export const SearchUserPopup = () => {
 		setResults([])
 	}
 
-	const handleSelectUserForChat = (user: UserAvatarType) => {
+	const handleSelectUserForChat = (user: SearchUserType) => {
 		dispatch(setUserId(user.id))
 		const newPopupState = (gameState.popupState & ~PopupState.SEARCH_USERS) | PopupState.SEND_PM
 		dispatch(setPopup(newPopupState))
+		setProfileUser(user)
 		setSearchQuery("")
 		setResults([])
 	}
 
-	const handleSelectUserForInvite = (user: UserAvatarType) => {
+	const handleSelectUserForInvite = (user: SearchUserType) => {
 		if (gameState.inviteRoomId === null) return
 		const claims = getClaimsFromLocalStorage()
 		const inviterId = Number(claims?.sub)
@@ -72,7 +81,9 @@ export const SearchUserPopup = () => {
 			const token = getToken()
 			if (!token) return
 
-			const response = await searchUsers(token, query) as APIResponse<UserAvatarType[]>
+			// exclude users who cannot afford the room's bet
+			// In chat context it stays undefined.
+			const response = await searchUsers(token, query, gameState.inviteRoomId) as APIResponse<SearchUserType[]>
 			if (response?.success && response.data) {
 				setResults(response.data)
 			} else {
@@ -149,16 +160,24 @@ export const SearchUserPopup = () => {
 							{results.map(user => (
 								<ListItem key={user.id} disablePadding>
 									<ListItemButton
-										sx={{ gap: 1 }}
+										className="gap-1"
 										onClick={() => handleSelectUserFunc(user)}
 									>
-										<Avatar
-											src={requireImage(user.avatar_url)}
-											alt={user.display_name}
-											sx={{ width: 32, height: 32 }}
+										<UserAvatar
+											id={user.id}
+											avatar_url={user.avatar_url}
+											display_name={user.display_name}
+											showPresence
+											size={32}
 										/>
 										<Typography variant="body2">
 											{user.display_name}
+										</Typography>
+										<Typography variant="body2" className="user-amount">
+											<span className="mr-5">
+												{formatNumber(user.total_amount, state.lang)}
+											</span>
+											<i className="fas fa-coins bet-icon" />
 										</Typography>
 									</ListItemButton>
 								</ListItem>
@@ -176,7 +195,7 @@ export const SearchUserPopup = () => {
 			<Divider className="menu-divider" />
 			<DialogActions className="pb-16">
 				<TButton variant="contained" size="medium" value="search.button.search" />
-				<TButton size="medium" onClick={closePopup} value="settings.close" />
+				<TButton variant="outlined" size="medium" onClick={closePopup} value="settings.close" />
 			</DialogActions>
 		</Dialog>
 	)

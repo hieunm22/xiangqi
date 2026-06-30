@@ -153,6 +153,7 @@ auth-middleware.messages.token-invalid;Token is invalid;Token không hợp lệ
 auth-middleware.messages.token-required;Token not provided;Token không được cung cấp
 auth-middleware.messages.token-subject-mismatch;Token subject mismatch;Token chủ đề không khớp
 auth-middleware.messages.token-validation-failed;Token validation failed;Xác thực token không thành công
+create-room.messages.insufficient-amount;You do not have enough balance to create a room with this bet;Bạn không còn đủ amount để tạo phòng với mức cược này
 create-room.messages.internal-server-error;Internal server error while creating room;Lỗi máy chủ nội bộ khi tạo phòng
 create-room.messages.invalid-bet-amount;Bet amount is required and must be one of the acceptable values;Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận
 create-room.messages.invalid-redFirst;'redFirst' must be a boolean;'redFirst' phải là giá trị boolean
@@ -226,20 +227,22 @@ room.actions.undo;Undo;Hoán tác
 room.actions.surrender;Surrender;Đầu hàng
 room.actions.draw;Draw;Hòa
 room.actions.back-home;Back to home;Thoát phòng
-room.actions.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
-room.actions.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
-room.actions.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắn muốn hòa không?
-room.actions.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
 room.actions.accept-draw;Accept;Chấp nhận
 room.actions.reject-draw;Reject;Từ chối
-room.actions.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
-room.actions.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
-room.actions.draw-completed;Draw completed;Hòa cờ thành công
-room.actions.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
 room.actions.send-pm;Send PM;Chat
 room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
 room.actions.settings;Room settings;Cài đặt phòng
+room.messages.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
+room.messages.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
+room.messages.draw-completed;Draw completed;Hòa cờ thành công
+room.messages.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
+room.messages.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
+room.messages.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
+room.messages.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắn muốn hòa không?
+room.messages.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
+room.messages.insufficient-amount;You do not have enough balance to join this room;Bạn không đủ tiền để tham gia bàn chơi này
+room.messages.all-seats-occupied;All player seats are occupied;Tất cả ghế chơi đã được chiếm
 room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
 room.settings.players;Spectators;Người xem
@@ -251,6 +254,7 @@ start-game.messages.invalid-room-id;Field 'id' is required and must be a positiv
 start-game.messages.invalid-difficulty;Bot difficulty must be between 1 and 5;Độ khó của bot phải từ 1 đến 5
 start-game.messages.room-not-found;Room not found;Không tìm thấy phòng
 start-game.messages.forbidden;Only the room host can start the game;Chỉ chủ phòng mới có thể bắt đầu trò chơi
+start-game.messages.insufficient-amount;You do not have enough balance to start a game with this bet;Bạn không còn đủ amount để start room
 start-game.messages.requester-must-pick-team;You must select a team before starting a game with bot;Bạn phải chọn team trước khi bắt đầu trò chơi với bot
 update-room.messages.success;Room updated successfully;Cập nhật phòng thành công
 update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ

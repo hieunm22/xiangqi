@@ -18,9 +18,9 @@ import {
 	TTooltip,
 	TTypography,
 } from "components/TranslationTag"
-import { getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
+import { formatNumber, getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { usePopups } from "hooks/useAppContext"
+import { useProfilePopup } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
 import { setPopup, setRoomHostId, setUserId } from "toolkit/slice/game"
@@ -28,10 +28,15 @@ import { APIResponse } from "types/Common"
 import { UserProfileWithStats } from "../types"
 
 export const ProfilePopup = () => {
-	const { gameState: state, dispatch } = useToolkit()
+	const { gameState, state, dispatch } = useToolkit()
 	const { getUserById, kickUser } = useAPI()
 	const [isCopied, setIsCopied] = useState(false)
-	const { profileUser: user, gameStats, setGameStats, setProfileUser } = usePopups()
+	const {
+		profileUser: user,
+		gameStats,
+		setGameStats,
+		setProfileUser
+	} = useProfilePopup()
 
 	const handleCloseProfilePopup = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
 		if (reason === "backdropClick") return
@@ -65,7 +70,7 @@ export const ProfilePopup = () => {
 	const isOwnProfile = user?.id === currentUserId
 
 	const loadRoomContext = async () => {
-		if (state.popupState !== PopupState.PROFILE) {
+		if (gameState.popupState !== PopupState.PROFILE) {
 			return
 		}
 
@@ -74,7 +79,7 @@ export const ProfilePopup = () => {
 			return
 		}
 
-		const response = await getUserById(token, state.activeUserId!) as APIResponse<UserProfileWithStats>
+		const response = await getUserById(token, gameState.activeUserId!) as APIResponse<UserProfileWithStats>
 		if (response) {
 			setProfileUser(response.data.user)
 			setGameStats(response.data.stats)
@@ -83,15 +88,15 @@ export const ProfilePopup = () => {
 
 	useEffect(() => {
 		loadRoomContext()
-	}, [state.popupState, state.roomHostId])
+	}, [gameState.popupState, gameState.roomHostId])
 
 	const handleSendPM = () => {
-		dispatch(setUserId(state.activeUserId))
+		dispatch(setUserId(gameState.activeUserId))
 		dispatch(setPopup(PopupState.SEND_PM))
 	}
 
 	const handleViewHistory = () => {
-		dispatch(setUserId(state.activeUserId))
+		dispatch(setUserId(gameState.activeUserId))
 		dispatch(setPopup(PopupState.GAME_HISTORY))
 	}
 
@@ -125,11 +130,11 @@ export const ProfilePopup = () => {
 		dispatch(setPopup(PopupState.NONE))
 	}
 
-	const isSameUser = user?.id === state.activeUserId
+	const isSameUser = user?.id === gameState.activeUserId
 
 	return (
 		<Dialog
-			open={(state.popupState & PopupState.PROFILE) === PopupState.PROFILE}
+			open={(gameState.popupState & PopupState.PROFILE) === PopupState.PROFILE}
 			onClose={handleCloseProfilePopup}
 			className="profile-dialog"
 			fullWidth
@@ -194,6 +199,12 @@ export const ProfilePopup = () => {
 								title="Copy email"
 							/>
 						</div>
+						<TTooltip title="register.username.label" arrow placement="left">
+							<i className="far fa-coins mr-20" />
+						</TTooltip>
+						{isSameUser
+							? formatNumber(user.total_amount, state.lang)
+							: <Skeleton variant="text" width="75%" height={24} />}
 					</Box>
 				</Box>
 				<Divider className="mt-20 mb-20" sx={{ borderColor: "primary.main" }} />
@@ -250,13 +261,13 @@ export const ProfilePopup = () => {
 								startIcon={<i className="far fa-clock" />}
 							/>
 						)}
-						{user && !isOwnProfile && state.roomHostId === currentUserId && (
+						{user && !isOwnProfile && gameState.roomHostId === currentUserId && (
 							<TButton
 								variant="contained"
 								size="small"
 								color="error"
 								// TODO: Only allow kicking when the room is in "waiting" status
-								disabled={state.roomHostId !== currentUserId}
+								disabled={gameState.roomHostId !== currentUserId}
 								onClick={handleKickUser}
 								value="room.actions.kick"
 								startIcon={<i className="far fa-ban" />}

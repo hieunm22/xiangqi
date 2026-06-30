@@ -5,6 +5,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			common: path.resolve(__dirname, "src/common"),
+			job: path.resolve(__dirname, "src/job"),
 			middleware: path.resolve(__dirname, "src/middleware"),
 			prisma: path.resolve(__dirname, "src/prisma"),
 			routes: path.resolve(__dirname, "src/routes"),

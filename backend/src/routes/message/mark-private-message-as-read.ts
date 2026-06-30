@@ -75,16 +75,16 @@ router.post("/message/mark-private-message-as-read", requireAuth(), async (req: 
 			return
 		}
 
-		// Update all messages from receiver_id to userId (status: 1) to status: 2 (read)
+		// Mark all unread messages from receiver_id to userId (seen: false) as seen.
 		const collection = await getChatMessageCollection()
 		await collection.updateMany(
 			{
 				sender_id: receiver_id,
 				receiver_id: userId,
-				status: 1
+				seen: false
 			},
 			{
-				$set: { status: 2 }
+				$set: { seen: true }
 			}
 		)
 

@@ -430,6 +430,24 @@
 			text-decoration: underline;
 			text-decoration-color: currentColor;
 		}
+
+		// Bot names are not clickable (no profile popup), so drop the affordances.
+		&.no-popup {
+			cursor: default;
+			text-decoration: none;
+			opacity: 1;
+		}
+	}
+
+	& .bot-level {
+		display: flex;
+		gap: 3px;
+
+		& .bot-level-star {
+			font-size: 16px;
+			color: #e5d10f;
+			-webkit-text-stroke: 0.5px #898989;
+		}
 	}
 }
 

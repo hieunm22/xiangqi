@@ -7,8 +7,8 @@ import {
 	GAME_START_SOUND_URL,
 	MOVE_SOUND_URL
 } from "./constant"
+import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
-import { openBotDifficulty } from "components/BotDifficultyProvider"
 import { openConfirm } from "components/ConfirmProvider"
 import { RoomChatMessage } from "components/ChatDialog/types"
 import {
@@ -35,6 +35,7 @@ import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
+import { setPopup } from "toolkit/slice/game"
 import { APIResponse, EmptyVoid, FenMoveDiffResult } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -62,7 +63,7 @@ import {
 
 const useRoomHook = () => {
 	useAutoTitle("page.home.title")
-	const { state } = useToolkit()
+	const { state, dispatch } = useToolkit()
 	const {
 		changeTeam,
 		drawGame,
@@ -168,6 +169,42 @@ const useRoomHook = () => {
 		setCapturedPieces({ red: [], black: [] })
 	}
 
+	// After a game ends, re-check the seated player's balance against the room's bet
+	const enforcePostGameBalance = async () => {
+		const token = getToken()
+		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		// Refetch so the balance reflects the bet that was just settled.
+		const roomInfoResponse: APIResponse<RoomInfoData> = await getRoomById(token, roomId)
+		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
+			return
+		}
+
+		const roomData = roomInfoResponse.data
+		const users = (roomData.users || []) as RoomUser[]
+		setJoinedUsers(users)
+		setRoom(roomData.room)
+
+		const betAmount = roomData.room.bet_amount
+		const me = users.find(user => user.id === currentUserId)
+		// Free rooms never lock anyone out, and spectators have no stake.
+		if (betAmount <= 0 || !me || me.team == null || me.total_amount === undefined) {
+			return
+		}
+
+		// Integer-safe form of `bet_amount > total_amount * 0.8`.
+		if (betAmount * 10 > me.total_amount * 8) {
+			await openAlert({
+				title: "popup.alert.title",
+				message: "room.messages.insufficient-amount"
+			})
+			await leaveRoom(token, roomId)
+			navigate(HOME_PATH)
+		}
+	}
+
 	async function loadCurrentRoom() {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
@@ -262,6 +299,9 @@ const useRoomHook = () => {
 		setTopSideUser(top)
 		setBottomSideUser(bottom)
 
+		const teams = joinedUsers.filter(u => u.team).map(u => u.team)
+		const hasAvailableSeat = new Set(teams).size < 2
+
 		const menus: RoomActionButton[] = [
 			{
 				key: "start-room",
@@ -276,8 +316,8 @@ const useRoomHook = () => {
 				icon: "fas fa-hand-rock",
 				label: "room.actions.challenge",
 				onClick: handleChallenge,
-				visible: currentUser !== undefined && currentUser.team === null,
-				enabled: room.status === 1
+				visible: currentUser?.team === null,
+				enabled: room.status === 1 && currentUser?.team === null && hasAvailableSeat
 			},
 			{
 				key: "leave-seat",
@@ -285,7 +325,7 @@ const useRoomHook = () => {
 				label: "room.actions.leave-seat",
 				onClick: handleLeaveSeat,
 				visible: currentUser !== undefined && currentUser.team !== null && room.host_id !== currentUserId,
-				enabled: room.status === 1
+				enabled: room.status === 1 && currentUser !== undefined && currentUser.team !== null
 			},
 			{
 				key: "undo",
@@ -567,7 +607,7 @@ const useRoomHook = () => {
 			setPendingDrawRequest(data)
 		}
 
-		const handleDrawResponse = (data: {
+		const handleDrawResponse = async (data: {
 			roomId: string | number
 			gameId: string
 			accepted: boolean
@@ -584,14 +624,15 @@ const useRoomHook = () => {
 
 			if (data.accepted) {
 				resetToWaitingRoom()
-				openAlert({
+				await openAlert({
 					title: "popup.alert.title",
-					message: "room.actions.draw-accepted"
+					message: "room.messages.draw-accepted"
 				})
+				await enforcePostGameBalance()
 			} else {
-				openAlert({
+				await openAlert({
 					title: "popup.alert.title",
-					message: "room.actions.draw-rejected"
+					message: "room.messages.draw-rejected"
 				})
 			}
 		}
@@ -630,7 +671,7 @@ const useRoomHook = () => {
 
 			await openAlert({
 				title: "popup.alert.title",
-				message: "room.actions.opponent-surrendered"
+				message: "room.messages.opponent-surrendered"
 			})
 
 			// Clear the board and reset to waiting-room view after alert is dismissed
@@ -638,6 +679,8 @@ const useRoomHook = () => {
 
 			// Auto-hide confetti after alert closes
 			setShowConfetti(false)
+
+			await enforcePostGameBalance()
 		}
 
 		onSurrender(handleSurrender)
@@ -694,9 +737,9 @@ const useRoomHook = () => {
 		const handleDrawRequestConfirm = async () => {
 			const confirmed = await openConfirm({
 				title: "popup.confirm.title",
-				message: "room.actions.confirm-accept-draw",
-				okLabel: "room.actions.accept-draw",
-				cancelLabel: "room.actions.reject-draw"
+				message: "room.messages.confirm-accept-draw",
+				okLabel: "room.messages.accept-draw",
+				cancelLabel: "room.messages.reject-draw"
 			})
 
 			let accepted = confirmed
@@ -714,6 +757,7 @@ const useRoomHook = () => {
 						})
 					} else {
 						resetToWaitingRoom()
+						await enforcePostGameBalance()
 					}
 				}
 			}
@@ -737,17 +781,20 @@ const useRoomHook = () => {
 			return
 		}
 
+		if (room && room.pve_mode) {
+			dispatch(setPopup(PopupState.BOT_DIFFICULTY))
+			return
+		}
+
+		await startGame()
+	}
+
+	const startGame = async (botDifficulty?: number) => {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
 		}
 
-		let botDifficulty: number | undefined
-		if (room && room.pve_mode) {
-			const selected = await openBotDifficulty()
-			if (selected === null) return
-			botDifficulty = selected
-		}
 		const response = await startRoom(token, roomId, botDifficulty)
 		if (!response) {
 			return
@@ -887,7 +934,7 @@ const useRoomHook = () => {
 
 		const confirmed = await openConfirm({
 			title: "popup.confirm.title",
-			message: "room.actions.confirm-draw"
+			message: "room.messages.confirm-draw"
 		})
 		if (!confirmed) {
 			return
@@ -910,8 +957,9 @@ const useRoomHook = () => {
 
 			await openAlert({
 				title: "popup.alert.title",
-				message: "room.actions.draw-accepted"
+				message: "room.messages.draw-accepted"
 			})
+			await enforcePostGameBalance()
 			return
 		}
 
@@ -935,7 +983,7 @@ const useRoomHook = () => {
 
 		const confirmed = await openConfirm({
 			title: "popup.confirm.title",
-			message: "room.actions.confirm-surrender"
+			message: "room.messages.confirm-surrender"
 		})
 		if (!confirmed) {
 			return
@@ -955,6 +1003,7 @@ const useRoomHook = () => {
 		// resetToWaitingRoom clears `game` which the emit reads from.
 		emitSurrender(roomId, game.id, currentUserId ?? 0)
 		resetToWaitingRoom()
+		await enforcePostGameBalance()
 	}
 
 	const handleBackToHome = async () => {
@@ -967,7 +1016,7 @@ const useRoomHook = () => {
 		if (currentUser?.team) {
 			const confirmed = await openConfirm({
 				title: "popup.confirm.title",
-				message: "room.actions.confirm-leave"
+				message: "room.messages.confirm-leave"
 			})
 			if (!confirmed) {
 				return
@@ -1136,10 +1185,11 @@ const useRoomHook = () => {
 		}
 
 		if (getPieceFromCharacter(oldTarget?.piece) === "general") {
-			openAlert({
+			await openAlert({
 				message: "game.general.captured",
 				title: translate("popup.alert.title")
 			})
+			await enforcePostGameBalance()
 		}
 	}
 
@@ -1219,7 +1269,8 @@ const useRoomHook = () => {
 
 		markerClass,
 		onAnimateEnd,
-		onPieceClick
+		onPieceClick,
+		startGame
 	}
 }
 

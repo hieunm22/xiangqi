@@ -5,6 +5,7 @@ import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
 import { getAvatarUrl, getUTCNow, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
+import { syncPlayersPresence } from "common/game/presence-sync"
 import { emitGameStarted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { RoomStatus, StartGameRequest } from "types/room.type"
@@ -117,7 +118,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 
 	const existingRoom = await prisma.room.findUnique({
 		where: { id: roomIdBigInt },
-		select: { id: true, host_id: true }
+		select: { id: true, host_id: true, bet_amount: true }
 	})
 	if (!existingRoom) {
 		res.status(404).json({
@@ -137,6 +138,23 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			status_code: 403
 		})
 		return
+	}
+
+	// Disallow starting when the bet exceeds 80% of the host's balance
+	if (existingRoom.bet_amount > 0) {
+		const host = await prisma.user.findUnique({
+			where: { id: userIdBigInt },
+			select: { total_amount: true }
+		})
+		// Integer-safe form of `bet_amount > total_amount * 0.8`.
+		if (!host || existingRoom.bet_amount * 10 > host.total_amount * 8) {
+			res.status(400).json({
+				success: false,
+				message: "start-game.messages.insufficient-amount",
+				status_code: 400
+			})
+			return
+		}
 	}
 
 	const requestedDifficulty: number | null
@@ -254,7 +272,8 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 						select: {
 							id: true,
 							display_name: true,
-							avatar_seq: true
+							avatar_seq: true,
+							is_bot: true
 						}
 					}
 				}
@@ -265,6 +284,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				display_name: ru.users?.display_name ?? (Number(ru.user_id) === 0 ? "Bot" : "Unknown"),
 				avatar_url: getAvatarUrl(ru.users?.id ?? 0, ru.users?.avatar_seq ?? 0),
 				team: ru.team,
+				is_bot: ru.users?.is_bot ?? false,
 				joined_at: new Date().toISOString()
 			}))
 
@@ -278,6 +298,9 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			status: room.status,
 			bot_difficulty: game.bot_difficulty
 		})
+
+		// Players are now in a started game — turn their presence badge "busy".
+		await syncPlayersPresence(game.id, true)
 
 		// If the bot is on the move first, kick off its opening reply after responding.
 		if (requestedDifficulty !== null && botTeam && firstTeam === botTeam) {

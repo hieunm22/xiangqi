@@ -60,3 +60,26 @@
 		font-size: $length !important;
 	}
 }
+
+@for $i from 1 through 50 {
+	$length: 1rem * $i;
+	.gap-#{$i} {
+		gap: $length !important;
+	}
+	.mx-#{$i} {
+		margin-left: $length !important;
+		margin-right: $length !important;
+	}
+	.my-#{$i} {
+		margin-top: $length !important;
+		margin-bottom: $length !important;
+	}
+	.px-#{$i} {
+		padding-left: $length !important;
+		padding-right: $length !important;
+	}
+	.py-#{$i} {
+		padding-top: $length !important;
+		padding-bottom: $length !important;
+	}
+}

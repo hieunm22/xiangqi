@@ -11,7 +11,7 @@ import {
 import { openAlert } from "components/AlertProvider"
 import { Empty } from "components/Common"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
-import { BotDifficultySlider } from "components/BotDifficultyProvider/components"
+import { BotDifficultySlider } from "components/BotDifficulty/Slider"
 import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"

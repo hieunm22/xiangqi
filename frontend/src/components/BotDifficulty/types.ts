@@ -1,5 +1,7 @@
+import { NumberVoid } from "types/Common"
+
 export interface BotDifficultyProps {
 	level: number
-	setLevel?: (level: number) => void
+	setLevel?: NumberVoid
 	disabled: boolean
 }

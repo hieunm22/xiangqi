@@ -1,6 +1,6 @@
 import { MouseEvent } from "react"
 import { RoomChatMessage } from "components/ChatDialog/types"
-import { EmptyPromise, EmptyVoid } from "types/Common"
+import { EmptyPromise, EmptyVoid, StringVoid } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
@@ -28,6 +28,7 @@ export interface PlayerInfoCardProps {
 	user: RoomUser | null
 	team: Team
 	active: boolean
+	botLevel: number | null
 	roomHostId: number | null
 	roomId: number | null
 }
@@ -37,7 +38,8 @@ export interface RoomUser {
 	display_name: string
 	avatar_url: string | null
 	team?: Team | null
-	total_points?: number
+	total_amount?: number
+	is_bot?: boolean
 }
 
 export interface RoomInfo {
@@ -158,7 +160,7 @@ export interface RoomSettingsDialogContextValue {
 	game: GameInfo | null
 	openSettings: EmptyVoid
 	closeSettings: EmptyVoid
-	handleSettingsSaved: (newName: string) => void
+	handleSettingsSaved: StringVoid
 }
 
 export type SettingsButtonProps = RoomSettingsDialogContextValue

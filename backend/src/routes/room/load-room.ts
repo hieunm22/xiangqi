@@ -76,8 +76,10 @@ const router = Router()
  *                           team:
  *                             type: string
  *                             nullable: true
- *                           total_points:
+ *                           total_amount:
  *                             type: integer
+ *                           is_bot:
+ *                             type: boolean
  *                           joined_at:
  *                             type: string
  *                             format: date-time
@@ -165,7 +167,8 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 								avatar_seq: true,
 								email: true,
 								gender: true,
-								total_points: true
+								total_amount: true,
+								is_bot: true
 							}
 						},
 						team: true
@@ -222,14 +225,12 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			}
 		}
 
-		// Count messages in this room the current user has not read yet
+		// Count messages in this room sent after the user joined that they have not read yet
 		const chatCollection = await getChatMessageCollection()
 		const unreadCount = await chatCollection.countDocuments({
 			room_id: roomId,
-			$or: [
-				{ read_by: { $nin: [userId] } },
-				{ timestamp: { $gt: roomUser?.joined_at ?? new Date(0) } }
-			]
+			read_by: { $nin: [userId] },
+			timestamp: { $gt: roomUser?.joined_at ?? new Date(0) },
 		})
 
 		const { room_users } = room
@@ -240,7 +241,8 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			email: ru.users.email,
 			gender: ru.users.gender,
 			team: ru.team,
-			total_points: ru.users.total_points,
+			total_amount: ru.users.total_amount,
+			is_bot: ru.users.is_bot,
 			joined_at: ru.joined_at,
 			avatar_url: getAvatarUrl(ru.users.id, ru.users.avatar_seq)
 		}))

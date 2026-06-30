@@ -57,7 +57,7 @@ const router = Router()
  *                           type: boolean
  *                         avatar_url:
  *                           type: string
- *                         total_points:
+ *                         total_amount:
  *                           type: integer
  *                     stats:
  *                       type: object
@@ -100,7 +100,7 @@ router.get("/auth/user", requireAuth(), async (req: AuthenticatedRequest, res: R
 				display_name: true,
 				gender: true,
 				avatar_seq: true,
-				total_points: true
+				total_amount: true
 			}
 		})
 

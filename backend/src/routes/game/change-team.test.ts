@@ -156,13 +156,13 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(10),
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
 			},
 			{
 				user_id: BigInt(12),
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(12), display_name: "Other", avatar_seq: 0, total_points: 100 }
+				users: { id: BigInt(12), display_name: "Other", avatar_seq: 0, total_amount: 100 }
 			}
 		])
 
@@ -190,13 +190,13 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(11),
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			},
 			{
 				user_id: BigInt(12),
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(12), display_name: "Other", avatar_seq: 0, total_points: 100 }
+				users: { id: BigInt(12), display_name: "Other", avatar_seq: 0, total_amount: 100 }
 			}
 		])
 
@@ -223,13 +223,13 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(10),
 				team: null,
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
 			},
 			{
 				user_id: BigInt(11),
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			}
 		])
 
@@ -257,19 +257,19 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(10),
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
 			},
 			{
 				user_id: BigInt(11),
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			},
 			{
 				user_id: BigInt(12),
 				team: "black",
 				joined_at: new Date("2026-06-01T00:02:00.000Z"),
-				users: { id: BigInt(12), display_name: "Opponent", avatar_seq: 0, total_points: 180 }
+				users: { id: BigInt(12), display_name: "Opponent", avatar_seq: 0, total_amount: 180 }
 			}
 		])
 
@@ -298,13 +298,13 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(10),
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
 			},
 			{
 				user_id: BigInt(11),
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			}
 		])
 
@@ -315,12 +315,12 @@ describe("POST /api/game/change-team", () => {
 			{
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
 			},
 			{
 				team: "black",
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150, is_bot: false }
 			}
 		])
 
@@ -351,7 +351,8 @@ describe("POST /api/game/change-team", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/10.jpg",
 				team: "red",
-				total_points: 200,
+				total_amount: 200,
+				is_bot: false,
 				joined_at: HOST_JOINED_AT
 			},
 			{
@@ -360,13 +361,14 @@ describe("POST /api/game/change-team", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/11.jpg",
 				team: "black",
-				total_points: 150,
+				total_amount: 150,
+				is_bot: false,
 				joined_at: CALLER_JOINED_AT
 			}
 		])
 		expect(res.body.data).toEqual([
-			expect.objectContaining({ id: 10, team: "red" }),
-			expect.objectContaining({ id: 11, team: "black" })
+			expect.objectContaining({ id: 10, team: "red", is_bot: false }),
+			expect.objectContaining({ id: 11, team: "black", is_bot: false })
 		])
 	})
 
@@ -381,13 +383,13 @@ describe("POST /api/game/change-team", () => {
 				user_id: BigInt(10),
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
 			},
 			{
 				user_id: BigInt(11),
 				team: "black",
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			}
 		])
 
@@ -398,12 +400,12 @@ describe("POST /api/game/change-team", () => {
 			{
 				team: "red",
 				joined_at: HOST_JOINED_AT,
-				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_points: 200 }
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
 			},
 			{
 				team: null,
 				joined_at: CALLER_JOINED_AT,
-				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_points: 150 }
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150, is_bot: false }
 			}
 		])
 
@@ -428,8 +430,8 @@ describe("POST /api/game/change-team", () => {
 			data: { team: null }
 		})
 		expect(res.body.data).toEqual([
-			expect.objectContaining({ id: 10, team: "red" }),
-			expect.objectContaining({ id: 11, team: null })
+			expect.objectContaining({ id: 10, team: "red", is_bot: false }),
+			expect.objectContaining({ id: 11, team: null, is_bot: false })
 		])
 	})
 

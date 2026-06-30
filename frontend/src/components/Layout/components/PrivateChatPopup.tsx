@@ -4,7 +4,7 @@ import ChatDialog from "components/ChatDialog"
 import { ConversationDrawer } from "./ConversationDrawer"
 import { getCurrentUserId, getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
-import { usePopups } from "hooks/useAppContext"
+import { useProfilePopup } from "hooks/useAppContext"
 import { useSocket } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
 import { setPopup, setUserId } from "toolkit/slice/game"
@@ -19,7 +19,7 @@ export const PrivateChatPopup = () => {
 		markPrivateMessageAsRead,
 		sendPrivateMessage,
 	} = useAPI()
-	const { profileUser, setUnreadCount } = usePopups()
+	const { profileUser, setUnreadCount } = useProfilePopup()
 	const { gameState, dispatch } = useToolkit()
 	const {
 		isConnected,
@@ -113,7 +113,8 @@ export const PrivateChatPopup = () => {
 					_id: data._id,
 					message: data.message,
 					sender: data.sender,
-					timestamp: data.timestamp
+					timestamp: data.timestamp,
+					seen: true
 				})
 				const token = getToken()
 				if (token) {

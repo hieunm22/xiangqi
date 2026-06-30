@@ -185,7 +185,7 @@ describe("POST /api/message/send-private", () => {
 				message: "Hello from user 1",
 				sender: expect.objectContaining({ id: 1 }),
 				receiver_id: 2,
-				status: 1
+				seen: false
 			}
 		})
 		expect(insertOneMock).toHaveBeenCalledWith(
@@ -195,7 +195,7 @@ describe("POST /api/message/send-private", () => {
 				sender_id: 1,
 				receiver_id: 2,
 				conversation_key: "1_2",
-				status: 1
+				seen: false
 			})
 		)
 	})

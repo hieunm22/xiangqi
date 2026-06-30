@@ -8,6 +8,9 @@ const prismaDeleteManyMock = vi.fn()
 const redisGetMock = vi.fn()
 const redisExistsMock = vi.fn()
 const redisDelMock = vi.fn()
+const markOfflineMock = vi.fn()
+const emitPresenceChangedMock = vi.fn()
+const getConnectedDeviceCountMock = vi.fn()
 const PATH = "/api/auth/logout"
 
 vi.mock("prisma", () => ({
@@ -24,6 +27,15 @@ vi.mock("../../common/redis", () => ({
 		exists: redisExistsMock,
 		del: redisDelMock
 	}
+}))
+
+vi.mock("../../common/presence", () => ({
+	markOffline: markOfflineMock
+}))
+
+vi.mock("../../common/socket", () => ({
+	emitPresenceChanged: emitPresenceChangedMock,
+	getConnectedDeviceCount: getConnectedDeviceCountMock
 }))
 
 describe("DELETE /api/auth/logout", () => {
@@ -89,6 +101,8 @@ describe("DELETE /api/auth/logout", () => {
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
 		redisExistsMock.mockResolvedValue(1)
 		prismaDeleteManyMock.mockResolvedValue({ count: 1 })
+		markOfflineMock.mockResolvedValue(true)
+		getConnectedDeviceCountMock.mockReturnValue(1)
 
 		const res = await request(app)
 			.delete(PATH)
@@ -100,6 +114,8 @@ describe("DELETE /api/auth/logout", () => {
 			message: "logout.messages.success",
 			status_code: 200
 		})
+		expect(markOfflineMock).toHaveBeenCalledWith(2)
+		expect(emitPresenceChangedMock).toHaveBeenCalledWith(2, "offline")
 		expect(prismaDeleteManyMock).toHaveBeenCalledWith({
 			where: {
 				user_id: 2
@@ -114,6 +130,28 @@ describe("DELETE /api/auth/logout", () => {
 			? res.headers["set-cookie"].join(";")
 			: String(res.headers["set-cookie"] ?? "")
 		expect(serializedCookies).toContain("refresh-token=")
+	})
+
+	it("does not drop presence when another device is still connected", async () => {
+		const accessToken = jwt.sign(
+			{ sub: 2, jti: "session-logout-2b" },
+			process.env.JWT_SECRET as string,
+			{ issuer: process.env.JWT_ISSUER, expiresIn: "1h" }
+		)
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
+		redisExistsMock.mockResolvedValue(1)
+		prismaDeleteManyMock.mockResolvedValue({ count: 1 })
+		// Two devices online for this account.
+		getConnectedDeviceCountMock.mockReturnValue(2)
+
+		const res = await request(app)
+			.delete(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		// The other device's heartbeat keeps the user online — no offline broadcast.
+		expect(markOfflineMock).not.toHaveBeenCalled()
+		expect(emitPresenceChangedMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 200 with inactive message when session does not exist", async () => {

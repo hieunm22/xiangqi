@@ -277,7 +277,8 @@ describe("POST /api/room/kick", () => {
 				users: {
 					id: BigInt(11),
 					display_name: "Host",
-					avatar_seq: 0
+					avatar_seq: 0,
+					is_bot: false
 				}
 			}
 		])
@@ -311,6 +312,7 @@ describe("POST /api/room/kick", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/11.jpg",
 				team: "red",
+				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:00.000Z")
 			}
 		])

@@ -7,6 +7,7 @@
 		"ignoreDeprecations": "6.0",
     "paths": {
       "common/*": ["common/*"],
+      "job/*": ["job/*"],
       "middleware/*": ["middleware/*"],
       "prisma/*": ["prisma/*"],
       "routes/*": ["routes/*"],

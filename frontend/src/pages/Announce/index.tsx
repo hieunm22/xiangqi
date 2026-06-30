@@ -1,5 +1,4 @@
 import {
-	KeyboardEvent,
 	UIEvent,
 	useCallback,
 	useEffect,
@@ -7,27 +6,15 @@ import {
 	useRef,
 	useState
 } from "react"
-import classnames from "classnames"
-import {
-	Box,
-	Divider,
-	Stack,
-	Tooltip,
-	Typography
-} from "@mui/material"
-import { TI, TTextField, TTypography } from "components/TranslationTag"
-import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
-import {
-	formatTimestampToDateTimeArray,
-	getCurrentUserId,
-	getToken
-} from "common/helper"
+import { Box, Divider, Stack } from "@mui/material"
+import { TTypography } from "components/TranslationTag"
+import { MessageInput, MessageList } from "components/MessageThread"
+import { getCurrentUserId, getToken } from "common/helper"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
-import useToolkit from "hooks/useToolkit"
 import { useSocket } from "hooks/useSocket"
 import useLayoutAuth from "pages/Dashboard/hook"
-import { AnnouncementMessage } from "components/ChatDialog/types"
+import { AnnouncementMessage, BaseChatMessage } from "components/ChatDialog/types"
 import "./Announce.scss"
 
 // Keep in sync with the backend READ_PAGE_SIZE in get-announcement.ts: a full
@@ -38,7 +25,6 @@ const SCROLL_TOP_THRESHOLD = 60
 
 export default function AnnouncePage() {
 	useAutoTitle("announce.title")
-	const { state } = useToolkit()
 	const {
 		getAnnouncements,
 		getAnnouncementsMore,
@@ -227,16 +213,10 @@ export default function AnnouncePage() {
 		setSending(false)
 	}
 
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault()
-			handleSend()
-		}
+	const getRowRef = (msg: BaseChatMessage, idx: number) => (el: HTMLDivElement | null) => {
+		if (idx === 0) firstMessageRef.current = el
+		if (msg._id === firstUnreadId) firstUnreadRef.current = el
 	}
-
-	const sendClass = classnames("fas fa-paper-plane announce-send-icon", {
-		disabled: !canSend
-	})
 
 	return (
 		<Box className="announce-page">
@@ -244,11 +224,11 @@ export default function AnnouncePage() {
 				variant="h6"
 				className="announce-title"
 				content="announce.title"
-				/>
+			/>
 			<Divider sx={{ borderColor: "primary.main" }} />
 
 			<Box
-				className="announce-messages-box"
+				className="announce-messages-box custom-scrollbar"
 				ref={containerRef}
 				onScroll={handleScroll}
 			>
@@ -257,7 +237,7 @@ export default function AnnouncePage() {
 						<TTypography variant="body2" color="text.secondary" content="announce.empty" />
 					</Stack>
 				) : (
-					<Stack spacing={1}>
+					<>
 						{loadingOlder && (
 							<TTypography
 								variant="caption"
@@ -266,89 +246,25 @@ export default function AnnouncePage() {
 								content="announce.loading-older"
 							/>
 						)}
-						{messages.map((msg, idx) => {
-							const isSender = msg.sender?.id === currentUserId
-							const senderId = msg.sender?.id ?? null
-							const nextSenderId = messages[idx + 1]?.sender?.id ?? null
-							const isLastMessageInSenderGroup = senderId === null || senderId !== nextSenderId
-							const shouldShowAvatar = !isSender && isLastMessageInSenderGroup
-							const isUnread = !msg.seen
-							const showUnreadDivider = firstUnreadId !== null && msg._id === firstUnreadId
-							const boxContent = classnames("announce-message-row", {
-								end: isSender,
-								start: !isSender
-							})
-							const contentClass = classnames("announce-message-content", {
-								sender: isSender,
-								receiver: !isSender,
-								unread: isUnread
-							})
-							const senderName = msg.sender?.display_name || "Unknown user"
-							const times = formatTimestampToDateTimeArray(msg.timestamp, state.lang)
-							const timeString = `${times[0] ? times[0] + ", " : ""}${times[1]}`
-							const getRefObj = (el: HTMLDivElement | null) => {
-								if (idx === 0) firstMessageRef.current = el
-								if (msg._id === firstUnreadId) firstUnreadRef.current = el
-							}
-
-							return (
-								<Box key={msg._id} ref={getRefObj}>
-									{showUnreadDivider && (
-										<Divider textAlign="center" className="announce-unread-divider">
-											<TTypography
-												variant="caption"
-												className="announce-unread-divider-text"
-												content="chat.messages.unread"
-											/>
-										</Divider>
-									)}
-									<Box className={boxContent}>
-										{!isSender && (
-											<Box className="announce-avatar-container">
-												{shouldShowAvatar && (
-													<UserAvatar
-														id={msg.sender?.id ?? 0}
-														avatar_url={msg.sender?.avatar_url || ""}
-														display_name={senderName}
-														onUserClick={showProfilePopup}
-														size={36}
-													/>
-												)}
-											</Box>
-										)}
-										<Tooltip title={timeString} arrow placement={isSender ? "left" : "right"}>
-											<Typography variant="body2" className={contentClass}>
-												{msg.message}
-											</Typography>
-										</Tooltip>
-									</Box>
-								</Box>
-							)
-						})}
-						<div ref={messagesEndRef} />
-					</Stack>
+						<MessageList
+							messages={messages}
+							firstUnreadId={firstUnreadId}
+							isUnread={msg => !(msg as AnnouncementMessage).seen}
+							onAvatarClick={showProfilePopup}
+							endRef={messagesEndRef}
+							getRowRef={getRowRef}
+						/>
+					</>
 				)}
 			</Box>
 
-			<Box className="announce-input-row">
-				<TTextField
-					value={messageContent}
-					onChange={e => setMessageContent(e.target.value)}
-					onKeyDown={handleKeyDown}
-					placeholder="announce.placeholder"
-					size="small"
-					fullWidth
-					multiline
-					maxRows={3}
-					slotProps={{
-						input: {
-							endAdornment: (
-								<TI className={sendClass} onClick={handleSend} />
-							)
-						}
-					}}
-				/>
-			</Box>
+			<MessageInput
+				value={messageContent}
+				placeholder="announce.placeholder"
+				disabled={!canSend}
+				onChange={setMessageContent}
+				onSend={handleSend}
+			/>
 		</Box>
 	)
 }

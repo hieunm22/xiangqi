@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, useParams } from "react-router-dom"
 import {
 	createTheme,
 	CssBaseline,
@@ -10,7 +10,6 @@ import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
 import AnnouncePage from "pages/Announce"
 import { AuthProvider } from "components/AuthProvider"
-import BotDifficultyProvider from "components/BotDifficultyProvider"
 import ConfirmProvider from "components/ConfirmProvider"
 import Dashboard from "pages/Dashboard"
 import Layout from "components/Layout"
@@ -28,6 +27,17 @@ import "App.scss"
 import "styles/animation.scss"
 import "styles/responsive.scss"
 import "styles/common.scss"
+
+const RoomPageElement = () => {
+	const { id } = useParams()
+	return (
+		<ConfirmProvider>
+			<AlertProvider>
+				<RoomPage key={id} />
+			</AlertProvider>
+		</ConfirmProvider>
+	)
+}
 
 function AppWithTheme() {
 	const darkMode = localStorage.getItem(LS_DARKMODE) || "light"
@@ -72,16 +82,6 @@ function AppWithTheme() {
 		<ConfirmProvider>
 			<AlertProvider>
 				<Dashboard />
-			</AlertProvider>
-		</ConfirmProvider>
-	)
-
-	const RoomPageElement = (
-		<ConfirmProvider>
-			<AlertProvider>
-				<BotDifficultyProvider>
-					<RoomPage />
-				</BotDifficultyProvider>
 			</AlertProvider>
 		</ConfirmProvider>
 	)
@@ -143,7 +143,7 @@ function AppWithTheme() {
 						path="/room/:id"
 						element={
 							<ProtectedRoute>
-								{RoomPageElement}
+								<RoomPageElement />
 							</ProtectedRoute>
 						}
 					/>

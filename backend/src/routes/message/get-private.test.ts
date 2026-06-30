@@ -155,7 +155,7 @@ describe("GET /api/message/get-private", () => {
 				sender_id: 1,
 				receiver_id: 2,
 				timestamp: timestamp1,
-				status: 1
+				seen: false
 			},
 			{
 				_id: messageId2,
@@ -163,7 +163,7 @@ describe("GET /api/message/get-private", () => {
 				sender_id: 2,
 				receiver_id: 1,
 				timestamp: timestamp2,
-				status: 2
+				seen: true
 			},
 			{
 				_id: messageId3,
@@ -171,7 +171,7 @@ describe("GET /api/message/get-private", () => {
 				sender_id: 1,
 				receiver_id: 2,
 				timestamp: timestamp3,
-				status: 1
+				seen: false
 			}
 		])
 		sortMock.mockReturnValue({ toArray: toArrayMock })
@@ -194,7 +194,7 @@ describe("GET /api/message/get-private", () => {
 			message: "Message 1 from user 1",
 			sender: expect.objectContaining({ id: 1 }),
 			receiver_id: 2,
-			status: 1,
+			seen: false,
 			timestamp: timestamp1.toISOString()
 		})
 		expect(res.body.data[1]).toMatchObject({
@@ -202,14 +202,14 @@ describe("GET /api/message/get-private", () => {
 			message: "Message 2 from user 2",
 			sender: expect.objectContaining({ id: 2 }),
 			receiver_id: 1,
-			status: 2
+			seen: true
 		})
 		expect(res.body.data[2]).toMatchObject({
 			_id: messageId3.toString(),
 			message: "Message 3 from user 1",
 			sender: expect.objectContaining({ id: 1 }),
 			receiver_id: 2,
-			status: 1
+			seen: false
 		})
 		// Verify sort was called with timestamp ascending
 		expect(sortMock).toHaveBeenCalledWith({ timestamp: 1 })

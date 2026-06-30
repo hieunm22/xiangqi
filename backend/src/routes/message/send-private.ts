@@ -131,7 +131,7 @@ router.post("/message/send-private", requireAuth(), async (req: AuthenticatedReq
 			receiver_id,
 			conversation_key: conversationKey,
 			timestamp: new Date(),
-			status: 1
+			seen: false
 		})
 
 		const sender = await prisma.user.findUnique({
@@ -149,7 +149,7 @@ router.post("/message/send-private", requireAuth(), async (req: AuthenticatedReq
 				avatar_url: getAvatarUrl(sender.id, sender.avatar_seq)
 			} : null,
 			receiver_id,
-			status: 1,
+			seen: false,
 			timestamp: new Date().toISOString()
 		}
 

@@ -55,6 +55,7 @@ const EP = { // end points
 	drawGame: "/game/draw-game",
 	getGameMovementHistory: "/game/movement-history",
 	movePiece: "/game/move-piece",
+	getOnlineUsers: "/game/online",
 	getPlayerHistory: "/game/player-history",
 	surrenderGame: "/game/surrender",
 	undoGame: "/game/undo",
@@ -198,6 +199,12 @@ export const useAPI = () => {
 							.json(getGameHistoryCallback)
 							.catch(handleError)
 
+	const getOnlineUsers = async (token: string) => authFetch(EP.getOnlineUsers)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getOnlineUsersCallback)
+							.catch(handleError)
+
 	const getPlayerHistory = async (token: string, userId: number) => authFetch(`${EP.getPlayerHistory}?userId=${userId}`)
 							.auth(`Bearer ${token}`)
 							.get()
@@ -333,7 +340,7 @@ export const useAPI = () => {
 							.json(resetPasswordCallback)
 							.catch(handleError)
 
-	const searchUsers = async (token: string, query: string) => authFetch(`${EP.searchUsers}?query=${encodeURIComponent(query)}`)
+	const searchUsers = async (token: string, query: string, roomId: number | null) => authFetch(`${EP.searchUsers}?query=${encodeURIComponent(query)}${roomId ? `&roomId=${roomId}` : ""}`)
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(searchUsersCallback)
@@ -417,6 +424,10 @@ export const useAPI = () => {
 		return response
 	}
 	
+	const getOnlineUsersCallback = (response: APIResponse<{ count: number; users: UserAvatarType[] }>) => {
+		return response
+	}
+
 	const getPlayerHistoryCallback = (response: APIResponse<GameHistoryItem[]>) => {
 		return response
 	}
@@ -570,6 +581,7 @@ export const useAPI = () => {
 		getAnnouncements,
 		getAnnouncementsMore,
 		getGameMovementHistory,
+		getOnlineUsers,
 		getPlayerHistory,
 		getPrivateConversations,
 		getPrivateMessages,

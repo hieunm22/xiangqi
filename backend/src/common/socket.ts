@@ -1,12 +1,35 @@
 import { Server as SocketIOServer, Socket } from "socket.io"
 import { Server as HTTPServer } from "http"
 import prisma from "prisma"
+import { PRESENCE_DISCONNECT_GRACE_MS, PresenceStatus, markInactive, recordHeartbeat } from "common/presence"
 
 let io: SocketIOServer | null = null
 
 // Map userId to all connected socketIds (supports multiple tabs/devices)
 const userIdToSocketIds = new Map<number, Set<string>>()
 const socketIdToUserId = new Map<string, number>()
+
+// Pending "force inactive" timers, keyed by userId, started when a user's last
+// socket disconnects and cancelled if they reconnect within the grace window.
+const presenceInactiveTimers = new Map<number, NodeJS.Timeout>()
+
+// A user is active again (reconnected / heartbeating): cancel any pending
+// disconnect-driven inactive transition.
+function cancelInactiveTimer(userId: number) {
+	const timer = presenceInactiveTimers.get(userId)
+	if (timer) {
+		clearTimeout(timer)
+		presenceInactiveTimers.delete(userId)
+	}
+}
+
+/**
+ * number of sockets the user currently has connected. Used to
+ * avoid marking a user offline on logout while another device is still online.
+ */
+export function getConnectedDeviceCount(userId: number): number {
+	return userIdToSocketIds.get(userId)?.size ?? 0
+}
 
 /**
  * Initialize Socket.io server
@@ -64,6 +87,7 @@ export function initializeSocket(httpServer: HTTPServer) {
 				}
 				socketIds.add(socket.id)
 				socketIdToUserId.set(socket.id, userId)
+				cancelInactiveTimer(userId)
 				console.log(`[Socket.io] [${new Date().toISOString()}] User ${userId} (socket ${socket.id}) joined room: ${roomChannel}`)
 			} else {
 				console.log(`[Socket.io] [${new Date().toISOString()}] Client ${socket.id} joined room: ${roomChannel}`)
@@ -91,7 +115,29 @@ export function initializeSocket(httpServer: HTTPServer) {
 			}
 			socketIds.add(socket.id)
 			socketIdToUserId.set(socket.id, userId)
+			cancelInactiveTimer(userId)
 			console.log(`[Socket.io] [${new Date().toISOString()}] User ${userId} (socket ${socket.id}) registered`)
+		})
+
+		// Presence heartbeat: the client only emits this while it has a visible
+		// tab. Each ping refreshes the user's online timestamp; the first ping
+		// after being offline is broadcast so others can update in real time.
+		socket.on("presence-ping", async (data: any) => {
+			const userId = typeof data === "object" ? Number(data?.userId) : Number(data)
+			if (!Number.isInteger(userId) || userId <= 0) return
+
+			// A heartbeat means the user is active again — cancel any pending
+			// disconnect-driven inactive transition.
+			cancelInactiveTimer(userId)
+
+			try {
+				const becameOnline = await recordHeartbeat(userId)
+				if (becameOnline) {
+					emitPresenceChanged(userId, "online")
+				}
+			} catch (error) {
+				console.error(`[Socket.io] [${new Date().toISOString()}] presence-ping error for user ${userId}:`, error)
+			}
 		})
 
 		socket.on("disconnect", async (reason) => {
@@ -110,6 +156,27 @@ export function initializeSocket(httpServer: HTTPServer) {
 						// out of rooms on transient drops (refresh, brief network loss). Users
 						// must explicitly call /api/room/leave to exit a room.
 						// TODO
+
+						// Last tab/socket closed: after a short grace (to absorb refreshes
+						// and brief drops), force the user to "inactive" so they don't keep
+						// showing as online until their heartbeat ages out.
+						const userId = disconnectedUserId
+						cancelInactiveTimer(userId)
+						const timer = setTimeout(async () => {
+							presenceInactiveTimers.delete(userId)
+							if (userIdToSocketIds.has(userId)) return	// reconnected during grace
+
+							try {
+								const becameInactive = await markInactive(userId)
+								if (becameInactive) {
+									emitPresenceChanged(userId, "inactive")
+								}
+							} catch (error) {
+								console.error(`[Socket.io] [${new Date().toISOString()}] markInactive error for user ${userId}:`, error)
+							}
+						}, PRESENCE_DISCONNECT_GRACE_MS)
+						timer.unref?.()
+						presenceInactiveTimers.set(userId, timer)
 					}
 				}
 			}
@@ -169,6 +236,20 @@ export function initializeSocket(httpServer: HTTPServer) {
 				select: { display_name: true }
 			})
 			if (!inviter) return
+
+			// never invite a user who cannot afford the room's bet
+			const room = await prisma.room.findUnique({
+				where: { id: BigInt(data.roomId) },
+				select: { bet_amount: true }
+			})
+			if (room && room.bet_amount > 0) {
+				const invitee = await prisma.user.findUnique({
+					where: { id: BigInt(data.inviteeId) },
+					select: { total_amount: true }
+				})
+				// Integer-safe form of `bet_amount > total_amount * 0.8`.
+				if (!invitee || room.bet_amount * 10 > invitee.total_amount * 8) return
+			}
 
 			emitRoomInvite(Number(data.inviteeId), {
 				roomId: Number(data.roomId),
@@ -420,4 +501,18 @@ export function emitRoomInvite(inviteeId: number, payload: { roomId: number; inv
 
 	io.to(`user-${inviteeId}`).emit("room-invite", payload)
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room invite emitted to user-${inviteeId}`)
+}
+
+/**
+ * Broadcast a user's presence transition (online / inactive / offline) to every
+ * connected client so presence indicators can update in real time.
+ */
+export function emitPresenceChanged(userId: number, status: PresenceStatus) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit presence-changed: Socket.io server not initialized`)
+		return
+	}
+
+	io.emit("presence-changed", { userId, status })
+	console.log(`[Socket.io] [${new Date().toISOString()}] Presence changed emitted: user ${userId} status=${status}`)
 }

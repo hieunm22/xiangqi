@@ -133,7 +133,8 @@ describe("GET /api/room/info?id=:id", () => {
 					users: {
 						id: BigInt(11),
 						display_name: "Alice",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: false
 					},
 					team: "red"
 				},
@@ -141,7 +142,8 @@ describe("GET /api/room/info?id=:id", () => {
 					users: {
 						id: BigInt(12),
 						display_name: "Bob",
-						avatar_seq: 3
+						avatar_seq: 3,
+						is_bot: false
 					},
 					team: "black"
 				}
@@ -181,23 +183,23 @@ describe("GET /api/room/info?id=:id", () => {
 		})
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			room_id: 101,
-			$or: [
-				{ read_by: { $nin: [31] } },
-				{ timestamp: { $gt: joinedAt } }
-			]
+			timestamp: { $gt: joinedAt },
+			read_by: { $nin: [31] }
 		})
 		expect(res.body.data.users).toHaveLength(2)
 		expect(res.body.data.users[0]).toMatchObject({
 			id: 11,
 			display_name: "Alice",
 			team: "red",
-			avatar_url: "/images/11.jpg"
+			avatar_url: "/images/11.jpg",
+			is_bot: false
 		})
 		expect(res.body.data.users[1]).toMatchObject({
 			id: 12,
 			display_name: "Bob",
 			team: "black",
-			avatar_url: "/images/12_3.jpg"
+			avatar_url: "/images/12_3.jpg",
+			is_bot: false
 		})
 
 		expect(roomFindUniqueMock).toHaveBeenCalledWith(

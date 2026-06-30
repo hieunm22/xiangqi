@@ -18,7 +18,8 @@ const releaseEngineMock = vi.fn()
 const emitRoomUsersUpdatedMock = vi.fn()
 const emitRoomDeletedMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
-const buildEndGameTransactionMock = vi.fn()
+const runEndGameTransactionMock = vi.fn()
+const syncPlayersPresenceMock = vi.fn()
 const transactionMock = vi.fn()
 
 const PATH = "/api/room/leave"
@@ -68,7 +69,11 @@ vi.mock("common/mongodb", () => ({
 }))
 
 vi.mock("common/game/end-game.helper", () => ({
-	buildEndGameTransaction: buildEndGameTransactionMock
+	runEndGameTransaction: runEndGameTransactionMock
+}))
+
+vi.mock("common/game/presence-sync", () => ({
+	syncPlayersPresence: syncPlayersPresenceMock
 }))
 
 describe("DELETE /api/room/leave", () => {
@@ -463,8 +468,7 @@ describe("DELETE /api/room/leave", () => {
 			}),
 			insertOne: vi.fn().mockResolvedValue({})
 		})
-		buildEndGameTransactionMock.mockResolvedValue([])
-		transactionMock.mockResolvedValue({})
+		runEndGameTransactionMock.mockResolvedValue(true)
 		releaseEngineMock.mockResolvedValue(undefined)
 		roomUpdateMock.mockResolvedValue({ id: BigInt(101), is_active: false })
 
@@ -478,13 +482,14 @@ describe("DELETE /api/room/leave", () => {
 			where: { room_id: BigInt(101), status: 1 },
 			select: { id: true }
 		})
-		expect(buildEndGameTransactionMock).toHaveBeenCalledWith({
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
 			gameId: "game-uuid-1",
 			roomId: BigInt(101),
 			winnerId: BigInt(999),
 			isBotGame: true,
 			betAmount: 100
 		})
+		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-uuid-1", false)
 		expect(roomUserDeleteManyMock).toHaveBeenCalledWith({
 			where: { room_id: BigInt(101) }
 		})
@@ -496,9 +501,9 @@ describe("DELETE /api/room/leave", () => {
 		expect(emitRoomDeletedMock).toHaveBeenCalledWith(101)
 	})
 
-	it("on PvE leave: spectator leaving removes only spectator, leaves player and bot", async () => {
-		const accessToken = buildAccessToken(52, "session-leave-pve-spectator")
-		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 52 }))
+	it("on PvE leave: skips presence sync and engine release when the game was already ended by a concurrent request", async () => {
+		const accessToken = buildAccessToken(51, "session-leave-pve-race")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
 		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: true, status: 1, bet_amount: 100 })
 		roomUserFindManyMock.mockResolvedValue([
 			{
@@ -512,12 +517,61 @@ describe("DELETE /api/room/leave", () => {
 				team: "black",
 				user_id: BigInt(999),
 				users: { id: BigInt(999), display_name: "Bot", avatar_seq: 0 }
+			}
+		])
+		gameFindFirstMock.mockResolvedValue({ id: "game-uuid-1" })
+		getGameHistoryCollectionMock.mockResolvedValue({
+			find: vi.fn().mockReturnValue({
+				sort: vi.fn().mockReturnValue({
+					limit: vi.fn().mockReturnValue({
+						toArray: vi.fn().mockResolvedValue([{ fen: "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/RNBAKABNR w - - 0 1" }])
+					})
+				})
+			}),
+			insertOne: vi.fn().mockResolvedValue({})
+		})
+		// Lost the race: another request already flipped the game to finished.
+		runEndGameTransactionMock.mockResolvedValue(false)
+		roomUpdateMock.mockResolvedValue({ id: BigInt(101), is_active: false })
+
+		const res = await request(app)
+			.delete(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(200)
+		expect(runEndGameTransactionMock).toHaveBeenCalled()
+		// Game-over side effects skipped, but the room is still cleaned up.
+		expect(syncPlayersPresenceMock).not.toHaveBeenCalled()
+		expect(releaseEngineMock).not.toHaveBeenCalled()
+		expect(roomUserDeleteManyMock).toHaveBeenCalledWith({
+			where: { room_id: BigInt(101) }
+		})
+		expect(emitRoomDeletedMock).toHaveBeenCalledWith(101)
+	})
+
+	it("on PvE leave: spectator leaving removes only spectator, leaves player and bot", async () => {
+		const accessToken = buildAccessToken(52, "session-leave-pve-spectator")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 52 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: true, status: 1, bet_amount: 100 })
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				joined_at: new Date("2026-05-26T00:00:00.000Z"),
+				team: "red",
+				user_id: BigInt(51),
+				users: { id: BigInt(51), display_name: "Player A", avatar_seq: 0, is_bot: false }
+			},
+			{
+				joined_at: new Date("2026-05-26T00:00:01.000Z"),
+				team: "black",
+				user_id: BigInt(999),
+				users: { id: BigInt(999), display_name: "Bot", avatar_seq: 0, is_bot: true }
 			},
 			{
 				joined_at: new Date("2026-05-26T00:00:02.000Z"),
 				team: null,
 				user_id: BigInt(52),
-				users: { id: BigInt(52), display_name: "Spectator", avatar_seq: 1 }
+				users: { id: BigInt(52), display_name: "Spectator", avatar_seq: 1, is_bot: false }
 			}
 		])
 		roomUserCountMock.mockResolvedValue(2)
@@ -544,6 +598,7 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/51.jpg",
 				team: "red",
+				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:00.000Z")
 			},
 			{
@@ -552,6 +607,7 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/999.jpg",
 				team: "black",
+				is_bot: true,
 				joined_at: new Date("2026-05-26T00:00:01.000Z")
 			}
 		])

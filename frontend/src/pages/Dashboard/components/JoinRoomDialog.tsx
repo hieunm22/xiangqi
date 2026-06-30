@@ -9,15 +9,15 @@ import {
 	DialogTitle,
 	Divider,
 	Stack,
-	Tooltip,
 } from "@mui/material"
 import BoardImage from "assets/xiangqi-board.png"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
-import { TButton } from "components/TranslationTag"
+import { TButton, TTooltip } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { useProfilePopup } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "../hook"
 import { setPopup } from "toolkit/slice/game"
@@ -55,7 +55,7 @@ const SeatAvatar = ({ user, isHost, onUserClick }: SeatAvatarProps) => {
 				? <i className="fas fa-crown dashboard__seat-crown" />
 				: <div className="dashboard__seat-crown-placeholder" />}
 			{user
-				? <Tooltip title={user.display_name} arrow placement="top">{avatar}</Tooltip>
+				? <TTooltip title={user.display_name} arrow placement="top">{avatar}</TTooltip>
 				: avatar}
 		</Box>
 	)
@@ -67,6 +67,7 @@ export const JoinRoomDialog = () => {
 	const { joinRoom, leaveRoom } = useAPI()
 	const { gameState, dispatch } = useToolkit()
 	const { showProfilePopup } = useLayoutAuth()
+	const { profileUser } = useProfilePopup()
 	const [room, setRoom] = useState<DashboardRoom | null>(null)
 	const [isJoining, setIsJoining] = useState(false)
 
@@ -90,6 +91,12 @@ export const JoinRoomDialog = () => {
 	const host = room?.users.find(u => u.id === room?.host_id) ?? null
 	const opponent = players.find(u => u.id !== room?.host_id) ?? null
 	const spectators = room?.users.filter(u => u.team === null && u.id !== room?.host_id) ?? []
+
+	// Check if current user can afford this room's bet (>80% of balance disqualifies them)
+	const canAffordBet = room && profileUser && profileUser.total_amount
+		? (room.bet_amount === 0 || room.bet_amount * 10 <= profileUser.total_amount * 8)
+		: true
+
 	const joinAndNavigate = async (team?: Team | null) => {
 		if (!room || isJoining) {
 			return
@@ -139,6 +146,15 @@ export const JoinRoomDialog = () => {
 		}
 	}
 
+	const tooltipDisabled = () => {
+		if (!canAffordBet) {
+			return "room.messages.insufficient-amount"
+		} else if (players.length === 2) {
+			return "room.messages.all-seats-occupied"
+		}
+		return ""
+	}
+
 	return (
 		<Dialog
 			open={isOpen}
@@ -178,15 +194,23 @@ export const JoinRoomDialog = () => {
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogActions className="dashboard__join-room-actions">
-				<TButton
-					className="dashboard__action-btn"
-					color="success"
-					variant="contained"
-					onClick={handlePlay}
-					value="dashboard.popup.play"
-					disabled={players.length === 2 || isJoining}
-					startIcon={<i className="far fa-play" />}
-				/>
+				<TTooltip
+					title={tooltipDisabled()}
+					arrow
+					placement="top"
+				>
+					<span>
+						<TButton
+							className="dashboard__action-btn"
+							color="success"
+							variant="contained"
+							onClick={handlePlay}
+							value="dashboard.popup.play"
+							disabled={players.length === 2 || isJoining || !canAffordBet}
+							startIcon={<i className="far fa-play" />}
+						/>
+					</span>
+				</TTooltip>
 				<TButton
 					className="dashboard__action-btn"
 					color="primary"

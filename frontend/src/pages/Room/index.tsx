@@ -4,6 +4,7 @@ import { Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
+import BotDifficultyPopup from "components/BotDifficulty"
 import CapturedPiecesDisplay from "./components/CapturedPiecesDisplay"
 import { GameMenu } from "./components/GameMenu"
 import PieceItem from "./components/Piece"
@@ -32,7 +33,8 @@ export default function RoomPage() {
 
 		markerClass,
 		onAnimateEnd,
-		onPieceClick
+		onPieceClick,
+		startGame
 	} = useRoomHook()
 
 	return (
@@ -44,6 +46,7 @@ export default function RoomPage() {
 						user={topSideUser}
 						team={topSideUser?.team === "black" ? "black" : "red"}
 						active={currentTurn === topSideUser?.team}
+						botLevel={topSideUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
@@ -61,6 +64,7 @@ export default function RoomPage() {
 						user={bottomSideUser}
 						team={bottomSideUser?.team === "black" ? "black" : "red"}
 						active={currentTurn === bottomSideUser?.team}
+						botLevel={bottomSideUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
@@ -150,6 +154,7 @@ export default function RoomPage() {
 					<SettingsButton {...roomSettingsDialogValue} />
 				</Stack>
 			</div>
+			<BotDifficultyPopup onConfirm={startGame} />
 		</div>
 	)
 }

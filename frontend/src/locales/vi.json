@@ -165,20 +165,24 @@
 			"surrender": "Đầu hàng",
 			"draw": "Hòa",
 			"back-home": "Thoát phòng",
-			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
-			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
-			"confirm-draw": "Bạn có chắc chắn muốn hòa không?",
-			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"accept-draw": "Chấp nhận",
 			"reject-draw": "Từ chối",
-			"draw-accepted": "Đối phương đã đồng ý hòa",
-			"draw-rejected": "Đối phương từ chối hòa",
-			"draw-completed": "Hòa cờ thành công",
-			"opponent-surrendered": "Đối phương đã đầu hàng! Bạn thắng!",
 			"send-pm": "Chat",
 			"view-history": "Lịch sử",
 			"kick": "Kick",
 			"settings": "Cài đặt phòng"
+		},
+		"messages": {
+			"draw-accepted": "Đối phương đã đồng ý hòa",
+			"draw-rejected": "Đối phương từ chối hòa",
+			"draw-completed": "Hòa cờ thành công",
+			"opponent-surrendered": "Đối phương đã đầu hàng! Bạn thắng!",
+			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
+			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
+			"confirm-draw": "Bạn có chắc chắn muốn hòa không?",
+			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
+			"insufficient-amount": "Bạn không đủ tiền để tham gia bàn chơi này",
+			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm"
 		},
 		"settings": {
 			"title": "Cài đặt phòng",
@@ -330,6 +334,7 @@
 	},
 	"create-room": {
 		"messages": {
+			"insufficient-amount": "Bạn không còn đủ amount để tạo phòng với mức cược này",
 			"internal-server-error": "Lỗi máy chủ nội bộ khi tạo phòng",
 			"invalid-bet-amount": "Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận",
 			"invalid-redFirst": "'redFirst' phải là giá trị boolean",
@@ -421,6 +426,7 @@
 			"invalid-difficulty": "Độ khó của bot phải từ 1 đến 5",
 			"room-not-found": "Không tìm thấy phòng",
 			"forbidden": "Chỉ chủ phòng mới có thể bắt đầu trò chơi",
+			"insufficient-amount": "Bạn không còn đủ amount để start room",
 			"requester-must-pick-team": "Bạn phải chọn team trước khi bắt đầu trò chơi với bot"
 		}
 	},

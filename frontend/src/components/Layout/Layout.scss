@@ -35,6 +35,11 @@
 	}
 }
 
+.menu-text {
+	font-size: 14px;
+	margin-left: 8px;
+}
+
 .menu-item-gap {
 	gap: 8px;
 }
@@ -64,7 +69,7 @@
 		align-items: center;
 		justify-content: center;
 		font-size: 0.75rem;
-		font-weight: bold;									
+		font-weight: bold;
 	}
 }
 
@@ -143,13 +148,13 @@
 
 .profile-avatar-container {
 	flex-shrink: 0;
-	width: 120px;
-	height: 120px;
+	width: 150px;
+	height: 150px;
 }
 
 .profile-avatar {
-	width: 120px;
-	height: 120px;
+	width: 150px;
+	height: 150px;
 	border-radius: 50%;
 	object-fit: cover;
 }
@@ -313,9 +318,67 @@
 	color: #999;
 }
 
+.online-badge {
+	.MuiBadge-badge {
+		background-color: #44b700;
+		color: #44b700;
+		box-shadow: 0 0 0 2px #fff;
+	}
+}
+
+.busy-badge {
+	.MuiBadge-badge {
+		background-color: #f44336;
+		color: #f44336;
+		box-shadow: 0 0 0 2px #fff;
+	}
+}
+
+.inactive-badge {
+	.MuiBadge-badge {
+		background-color: #dde168;
+		color: #dde168;
+		box-shadow: 0 0 0 2px #fff;
+	}
+}
+
 .game-history-footer {
 	padding: 16px;
 	display: flex;
 	justify-content: flex-end;
 	padding: 16px;
+}
+
+.user-amount {
+	justify-content: flex-end;
+	flex-grow: 1;
+	text-align: right;
+	& .bet-icon {
+		color: #e5d10f;
+		-webkit-text-stroke: 1px #898989;
+		font-size: 16px;
+		margin-right: 5px;
+	}
+}
+
+.custom-scrollbar {
+	&::-webkit-scrollbar-track {
+		-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+		box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+		border-radius: 10px;
+		background-color: #F5F5F5;
+	}
+
+	&::-webkit-scrollbar {
+		width: 9px;
+		height: 9px;
+		color: #787878;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		border-radius: 10px;
+		box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+		-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .8);
+		background-color: #CACACA;
+	}
 }

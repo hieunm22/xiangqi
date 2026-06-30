@@ -6,7 +6,9 @@ import {
 	REFRESH_TOKEN_TTL_SECONDS
 } from "common/constant"
 import { getRefreshCookieOptions } from "common/cookie"
+import { markOffline } from "common/presence"
 import redis from "common/redis"
+import { emitPresenceChanged, getConnectedDeviceCount } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -64,6 +66,16 @@ router.delete("/auth/logout", requireAuth(true), async (req: AuthenticatedReques
 		if (sessionExists) {
 			await redis.del(loginSessionKey)
 			await redis.del(refreshTokenKey)
+		}
+
+		// Drop presence immediately when this is their last connected device.
+		// With another device still online, leaving presence
+		// alone lets that device's heartbeat keep the user online
+		if (userId && getConnectedDeviceCount(Number(userId)) <= 1) {
+			const wasOnline = await markOffline(Number(userId))
+			if (wasOnline) {
+				emitPresenceChanged(Number(userId), "offline")
+			}
 		}
 
 		const options = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)

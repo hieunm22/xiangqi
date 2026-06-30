@@ -29,8 +29,8 @@ import {
 import { PopupState } from "common/enums"
 import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { GameHistoryPopup } from "./components/GameHistoryPopup"
-import { TI, TTypography } from "components/TranslationTag"
-import { PopupProvider, useAuth } from "hooks/useAppContext"
+import { TI, TSpan, TTypography } from "components/TranslationTag"
+import { ProfilePopupProvider, useAuth } from "hooks/useAppContext"
 import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SettingsPopup } from "./components/SettingsPopup"
@@ -41,13 +41,14 @@ import {
 	getToken,
 	requireImage
 } from "common/helper"
+import { OnlinePresenceProvider } from "hooks/useOnlinePresence"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
+import { usePresenceHeartbeat } from "hooks/usePresenceHeartbeat"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import { setPopup } from "toolkit/slice/game"
 import { setDarkMode } from "toolkit/slice/home"
-import { translate } from "locales/translate"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
 import useLayoutAuth from "pages/Dashboard/hook"
@@ -56,7 +57,7 @@ import { GameStats, UserProfileWithStats } from "./types"
 import "./Layout.scss"
 
 const fullWidth = 240
-const miniWidth = 60
+const miniWidth = 90
 
 export default function Layout() {
 	const [drawerOpen, setDrawerOpen] = useState(true)
@@ -88,6 +89,9 @@ export default function Layout() {
 		registerUser
 	} = useSocket()
 	const { showProfilePopup } = useLayoutAuth()
+
+	// Keep the current user's presence fresh while they have a visible tab.
+	usePresenceHeartbeat(currentUserId)
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
 	useAutoTitle()
@@ -122,6 +126,7 @@ export default function Layout() {
 
 			setUserImage(avatar)
 			setUserDisplayName(display_name)
+			setProfileUser(user.data.user)
 		}
 
 		const getPrivateMessagesUnread = async () => {
@@ -285,11 +290,33 @@ export default function Layout() {
 	const isInRoom = location.pathname.startsWith("/room/")
 
 	const menuItems = [
-		{ text: "menu.home", icon: "fa-home", click: handleGoHome },
-		{ text: "menu.guide", icon: "fa-book", click: handleShowGuide },
-		{ text: "menu.announce", icon: "fa-bullhorn", click: handleShowAnnounce, badge: announcementCount },
-		{ text: "menu.setting.button", icon: "fa-gear", click: handleShowSettings },
-		// ...(isInRoom ? [{ text: "Restart", icon: "fa-rotate", click: handleRestart }] : []),
+		{
+			text: "menu.home",
+			icon: "fa-home",
+			click: handleGoHome,
+			active: window.location.pathname === HOME_PATH
+				&& ![PopupState.SETTINGS, PopupState.GUIDE].includes(gameState.popupState)
+		},
+		{
+			text: "menu.guide",
+			icon: "fa-book",
+			click: handleShowGuide,
+			active: gameState.popupState === PopupState.GUIDE
+		},
+		{
+			text: "menu.announce",
+			icon: "fa-bullhorn",
+			click: handleShowAnnounce,
+			active: window.location.pathname === "/announce"
+				&& ![PopupState.SETTINGS, PopupState.GUIDE].includes(gameState.popupState),
+			badge: announcementCount
+		},
+		{
+			text: "menu.setting.button",
+			icon: "fa-gear",
+			click: handleShowSettings,
+			active: gameState.popupState === PopupState.SETTINGS
+		},
 	]
 
 	const toogleDrawerClass = classnames("fas", {
@@ -322,8 +349,18 @@ export default function Layout() {
 
 			<List>
 				{menuItems.map(item => (
-					<ListItemButton key={item.text} className="menu-item" onClick={item.click}>
-						<Badge badgeContent={item.badge} color="error" max={9} invisible={!item.badge}>
+					<ListItemButton
+						selected={item.active}
+						key={item.text}
+						className="menu-item"
+						onClick={item.click}
+					>
+						<Badge
+							badgeContent={item.badge}
+							color="error"
+							max={9}
+							invisible={!item.badge}
+						>
 							<TI className={`fas ${item.icon} icon`} title={item.text} />
 						</Badge>
 						{drawerOpen && <TTypography content={item.text} className="text" />}
@@ -372,7 +409,14 @@ export default function Layout() {
 					className="layout-user-btn"
 					sx={{ backgroundColor: "background.paper" }}
 				>
-					<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+					<Badge
+						badgeContent={unreadCount}
+						color="error"
+						max={9}
+						invisible={unreadCount === 0}
+					>
+						<Avatar src={userImage} alt={displayName} className="user-avatar-small" />
+					</Badge>
 					{displayName}
 				</Button>
 			</Box>
@@ -415,40 +459,42 @@ export default function Layout() {
 			>
 				<MenuItem onClick={handleGoProfile} className="menu-item-gap">
 					<i className="fas fa-user fsx-14" />
-					{translate("menu.profile")}
+					<TSpan className="menu-text" content="menu.profile" />
 				</MenuItem>
 				<MenuItem
 					onClick={handleGoMessages}
 					className="menu-item-gap"
 					disabled={gameState.popupState === PopupState.SEND_PM}
 				>
-					<i className="far fa-comment fsx-14" />
+					<Badge
+						badgeContent={unreadCount}
+						color="error"
+						max={9}
+						invisible={unreadCount === 0}
+					>
+						<i className="far fa-comment fsx-14" />
+					</Badge>
 					<Box className="menu-message">
-						{translate("menu.messages")}
-						{unreadCount > 0 && (
-							<Box className="menu-unread-count">
-								{unreadCount > 99 ? "99+" : unreadCount}
-							</Box>
-						)}
+						<TSpan className="menu-text" content="menu.messages" />
 					</Box>
 				</MenuItem>
 				{state.debugMode && <Divider className="menu-divider" />}
 				{state.debugMode && (
 					<MenuItem onClick={handleMakeExpired} className="menu-item-gap">
 						<i className="fas fa-clock fsx-14" />
-						{translate("menu.expired")}
+						<TSpan className="menu-text" content="menu.expired" />
 					</MenuItem>
 				)}
 				<Divider className="menu-divider" />
 				<MenuItem onClick={handleLogoutFromMenu} className="menu-logout">
 					<i className="fas fa-left-from-bracket" />
-					{translate("menu.logout")}
+					<TSpan className="menu-text" content="menu.logout" />
 				</MenuItem>
 			</Menu>
 
 			{/* Navigation */}
 			<Box
-				component="nav"
+				component="div"
 				sx={{
 					width: { sm: drawerOpen ? fullWidth : miniWidth },
 					flexShrink: { sm: 0 }
@@ -488,32 +534,28 @@ export default function Layout() {
 			</Box>
 
 			{/* popups */}
-			<PopupProvider value={profileProviderValue}>
-				<Box
-					component="main"
-					sx={{
-						flexGrow: 1,
-						width: {
-							xs: `100%`,
-							sm: `calc(100% - ${fullWidth}px)`,
-							md: `calc(100% - ${fullWidth}px)`,
-							lg: `calc(100% - ${fullWidth}px)`,
-						},
-						p: 1,
-					}}
-				>
-					{isMobile && <Toolbar />}
-					<Outlet />
+			<ProfilePopupProvider value={profileProviderValue}>
+				<OnlinePresenceProvider>
+					<Box
+						component="div"
+						sx={{
+							width: `100%`,
+							p: 1,
+						}}
+					>
+						{isMobile && <Toolbar />}
+						<Outlet />
 
-					<SettingsPopup />
-					<ProfilePopup />
-					<GuidePopup />
-					<GameHistoryPopup />
-					<PrivateChatPopup />
-					<SearchUserPopup />
-					<JoinRoomDialog />
-				</Box>
-			</PopupProvider>
+						<SettingsPopup />
+						<ProfilePopup />
+						<GuidePopup />
+						<GameHistoryPopup />
+						<PrivateChatPopup />
+						<SearchUserPopup />
+						<JoinRoomDialog />
+					</Box>
+				</OnlinePresenceProvider>
+			</ProfilePopupProvider>
 		</Box>
 	)
 }

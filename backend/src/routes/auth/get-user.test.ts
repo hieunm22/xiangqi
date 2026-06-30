@@ -122,7 +122,7 @@ describe("GET /api/auth/user?id=:id", () => {
 					display_name: true,
 					gender: true,
 					avatar_seq: true,
-					total_points: true
+					total_amount: true
 				})
 			})
 		)
@@ -139,7 +139,7 @@ describe("GET /api/auth/user?id=:id", () => {
 			display_name: "Alice",
 			gender: true,
 			avatar_seq: 2,
-			total_points: 250
+			total_amount: 250
 		})
 
 		gameUserFindManyMock.mockResolvedValue([
@@ -166,7 +166,7 @@ describe("GET /api/auth/user?id=:id", () => {
 					display_name: "Alice",
 					gender: true,
 					avatar_url: "/images/101_2.jpg",
-					total_points: 250
+					total_amount: 250
 				},
 				stats: {
 					win: 2,
@@ -212,7 +212,7 @@ describe("GET /api/auth/user?id=:id", () => {
 			display_name: "Bob",
 			gender: false,
 			avatar_seq: 1,
-			total_points: 0
+			total_amount: 0
 		})
 
 		gameUserFindManyMock.mockResolvedValue([])
@@ -233,7 +233,7 @@ describe("GET /api/auth/user?id=:id", () => {
 					display_name: "Bob",
 					gender: false,
 					avatar_url: "/images/102_1.jpg",
-					total_points: 0
+					total_amount: 0
 				},
 				stats: {
 					win: 0,

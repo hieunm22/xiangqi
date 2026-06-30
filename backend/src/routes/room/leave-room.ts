@@ -1,7 +1,8 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID, engineManager } from "common/bot-engine"
-import { buildEndGameTransaction } from "common/game/end-game.helper"
+import { runEndGameTransaction } from "common/game/end-game.helper"
+import { syncPlayersPresence } from "common/game/presence-sync"
 import { getAvatarUrl, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitRoomDeleted, emitRoomUsersUpdated } from "common/socket"
@@ -107,7 +108,8 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 					select: {
 						id: true,
 						display_name: true,
-						avatar_seq: true
+						avatar_seq: true,
+						is_bot: true
 					}
 				}
 			},
@@ -198,7 +200,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 					})
 				}
 
-				const transactionUpdates = await buildEndGameTransaction({
+				const ended = await runEndGameTransaction({
 					gameId: activeGame.id,
 					roomId,
 					winnerId,
@@ -206,11 +208,15 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 					betAmount: room.bet_amount
 				})
 
-				await prisma.$transaction(transactionUpdates)
+				// Skip game-over side effects when another request already ended the game.
+				if (ended) {
+					// Game ended because a player left — clear "busy" for the participants.
+					await syncPlayersPresence(activeGame.id, false)
 
-				engineManager.releaseEngine(activeGame.id).catch(err => {
-					console.error(`[leave-room] failed to release engine for game ${activeGame.id}:`, err)
-				})
+					engineManager.releaseEngine(activeGame.id).catch(err => {
+						console.error(`[leave-room] failed to release engine for game ${activeGame.id}:`, err)
+					})
+				}
 			}
 		}
 
@@ -291,6 +297,7 @@ function formatRoomUsers(roomUsers: any[]) {
 		avatar_seq: Number(roomUser.users.avatar_seq),
 		avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 		team: roomUser.team,
+		is_bot: roomUser.users.is_bot,
 		joined_at: roomUser.joined_at
 	}))
 }

@@ -2,6 +2,7 @@ import { getGameHistoryCollection } from "../mongodb"
 import prisma from "prisma"
 import { getUTCNow, getUTCTimestamp } from "../helper"
 import { emitMovePiece, emitSurrender } from "../socket"
+import { syncPlayersPresence } from "../game/presence-sync"
 import { BOT_USER_ID, requestBotMove } from "./index"
 
 export interface PlayBotMoveParams {
@@ -94,6 +95,9 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 					})
 				])
 			}
+
+			// Bot lost — game over, clear the human player's "busy" presence.
+			await syncPlayersPresence(gameId, false)
 
 			emitSurrender(roomId.toString(), gameId, Number(BOT_USER_ID))
 		} catch (err) {

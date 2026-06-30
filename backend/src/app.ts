@@ -27,12 +27,14 @@ import updateRoomRoutes from "./routes/room/update-room"
 import changeTeamRoutes from "./routes/game/change-team"
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
+import getOnlineRoutes from "./routes/game/get-online"
 import movePieceRoutes from "./routes/game/move-piece"
 import playerHistoryRoutes from "./routes/game/player-history"
 import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
 import undoRoutes from "./routes/game/undo"
 
+import recalculatePointsRoutes from "./routes/tool/recalculate-points"
 import resetGameRoutes from "./routes/tool/reset-game"
 import sequenceRoutes from "./routes/tool/sequence"
 
@@ -103,12 +105,14 @@ app.use("/api", updateRoomRoutes)
 
 app.use("/api", changeTeamRoutes)
 app.use("/api", drawGameRoutes)
+app.use("/api", getOnlineRoutes)
 app.use("/api", movePieceRoutes)
 app.use("/api", playerHistoryRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
 app.use("/api", undoRoutes)
 
+app.use("/api", recalculatePointsRoutes)
 app.use("/api", resetGameRoutes)
 app.use("/api", sequenceRoutes)
 

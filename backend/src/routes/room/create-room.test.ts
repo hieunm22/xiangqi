@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 const redisGetMock = vi.fn()
 const roomUserDeleteManyMock = vi.fn()
 const roomCreateMock = vi.fn()
+const userFindUniqueMock = vi.fn()
 const emitRoomCreatedMock = vi.fn()
 
 const BOT_USER_ID = 0n
@@ -24,6 +25,9 @@ vi.mock("prisma", () => ({
 		},
 		room: {
 			create: roomCreateMock
+		},
+		user: {
+			findUnique: userFindUniqueMock
 		}
 	}
 }))
@@ -129,6 +133,7 @@ describe("POST /api/room/create-room", () => {
 		const accessToken = buildAccessToken(11, "session-room-3-null")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		roomCreateMock.mockResolvedValue({
 			id: BigInt(102),
 			name: "Table Null Team",
@@ -300,10 +305,36 @@ describe("POST /api/room/create-room", () => {
 		})
 	})
 
+	it("returns 400 when betAmount exceeds 80% of the creator's balance", async () => {
+		const accessToken = buildAccessToken(11, "session-room-5d")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		// 100 bet vs 120 balance: 100 > 120 * 0.8 (96) -> blocked.
+		userFindUniqueMock.mockResolvedValue({ total_amount: 120 })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "Table 1",
+				teamName: "red",
+				redFirst: true,
+				betAmount: 100
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "create-room.messages.insufficient-amount",
+			status_code: 400
+		})
+		expect(roomCreateMock).not.toHaveBeenCalled()
+	})
+
 	it("returns 201 and creates room successfully", async () => {
 		const accessToken = buildAccessToken(11, "session-room-6")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		roomCreateMock.mockResolvedValue({
 			id: BigInt(101),
 			name: "Table 1",
@@ -407,7 +438,8 @@ describe("POST /api/room/create-room", () => {
 					users: {
 						id: BigInt(11),
 						display_name: "Alice",
-						avatar_seq: 1
+						avatar_seq: 1,
+						is_bot: false
 					},
 					team: "black"
 				},
@@ -415,7 +447,8 @@ describe("POST /api/room/create-room", () => {
 					users: {
 						id: BOT_USER_ID,
 						display_name: "Bot",
-						avatar_seq: 0
+						avatar_seq: 0,
+						is_bot: true
 					},
 					team: "red"
 				}
@@ -456,12 +489,14 @@ describe("POST /api/room/create-room", () => {
 			id: "11",
 			display_name: "Alice",
 			team: "black",
-			avatar_url: "/images/11_1.jpg"
+			avatar_url: "/images/11_1.jpg",
+			is_bot: false
 		})
 		expect(res.body.data.users[1]).toMatchObject({
 			id: "0",
 			display_name: "Bot",
-			team: "red"
+			team: "red",
+			is_bot: true
 		})
 
 		expect(roomCreateMock).toHaveBeenCalledWith(
@@ -599,6 +634,7 @@ describe("POST /api/room/create-room", () => {
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		roomCreateMock.mockRejectedValue(new Error("db down"))
 
 		const res = await request(app)

@@ -190,4 +190,3 @@ A: You probably edited JSON directly. Revert with `git checkout frontend/src/loc
 
 **Q: I got a Python error**
 A: Make sure you're in the `/tools` directory when running Python scripts, and project root when running bash scripts.
-

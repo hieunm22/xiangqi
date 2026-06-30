@@ -15,4 +15,5 @@ export const PopupState = {
 	SEND_PM: 32,
 	SEARCH_USERS: 64,
 	JOIN_ROOM: 128,
+	BOT_DIFFICULTY: 256,
 }

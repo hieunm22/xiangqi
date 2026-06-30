@@ -16,7 +16,7 @@ model User {
   display_name          String
   gender                Boolean
   avatar_seq            Int        @default(0)
-  total_points          Int        @default(200)
+  total_amount          Int        @default(200)
   is_bot                Boolean    @default(false)
   room_users            RoomUser[]
   hosted_rooms          Room[]     @relation("RoomHost")
@@ -25,6 +25,7 @@ model User {
   surrendered_histories GameHistory[] @relation("GameHistory_surrender")
   undone_histories      GameHistory[] @relation("GameHistory_undo")
   announcement_reads    UserAnnouncementRead[]
+  user_point_histories  UserPointHistory[]
 
   @@map("users")
   @@schema("auth")
@@ -119,6 +120,18 @@ model GameUser {
 
   @@id([game_id, user_id])
   @@map("game_users")
+  @@schema("game")
+}
+
+model UserPointHistory {
+  id         BigInt     @id @default(autoincrement())
+  user_id    BigInt
+  point      Int
+  type       Int
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  users      User       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("user_point_history")
   @@schema("game")
 }
 

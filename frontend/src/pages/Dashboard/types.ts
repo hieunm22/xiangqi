@@ -1,4 +1,5 @@
 import { RoomUser } from "pages/Room/types"
+import { NumberVoid } from "types/Common"
 import { Team } from "types/GameState"
 
 export type DashboardFilter = "all" | "available" | "playing"
@@ -19,7 +20,8 @@ export interface UserAvatarGroupProps {
 	users: RoomUser[]
 	type: "primary" | "secondary"
 	maxVisible: number
-	onUserClick?: (id: number) => void
+	showPresence?: boolean
+	onUserClick?: NumberVoid
 }
 
 export interface PieceSelectionContextValue {
@@ -35,7 +37,7 @@ export interface CreateRoomContextValue {
 export interface SeatAvatarProps {
 	user: RoomUser | null
 	isHost: boolean
-	onUserClick?: (id: number) => void
+	onUserClick?: NumberVoid
 }
 
 export interface PieceButtonProps {

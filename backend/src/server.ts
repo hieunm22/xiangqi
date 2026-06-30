@@ -1,14 +1,22 @@
 import "./env"
 import { createServer } from "http"
 import app from "./app"
-import { initializeSocket } from "./common/socket"
 import { ensureChatMessageIndexes } from "./common/mongodb"
+import { startPresenceSweeper } from "./common/presence"
+import { emitPresenceChanged, initializeSocket } from "./common/socket"
+import { startPointsReconciler } from "./job/reconcile-points"
 
 const PORT = Number(process.env.PORT) || 8000
 
 // Create HTTP server and attach Socket.io
 const httpServer = createServer(app)
 initializeSocket(httpServer)
+
+// Broadcast presence transitions (online -> busy -> inactive -> offline) as heartbeats age.
+startPresenceSweeper(emitPresenceChanged)
+
+// Weekly job that reconciles cached total_amount against the GameUser ledger.
+startPointsReconciler()
 
 // Initialize MongoDB indexes
 ensureChatMessageIndexes().catch(error => {

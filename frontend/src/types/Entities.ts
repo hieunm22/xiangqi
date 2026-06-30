@@ -6,7 +6,7 @@ export interface Users {
 	gender: boolean
 	avatar_seq: number
 	avatar_url: string
-	total_points: number
+	total_amount: number
 }
 
 export interface GameInfo {

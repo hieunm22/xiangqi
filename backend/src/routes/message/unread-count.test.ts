@@ -101,7 +101,7 @@ describe("GET /api/message/unread-count", () => {
 		})
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			receiver_id: 1,
-			status: 1
+			seen: false
 		})
 	})
 
@@ -178,7 +178,7 @@ describe("GET /api/message/unread-count", () => {
 		})
 	})
 
-	it("counts only messages with status: 1 (unread) grouped by conversation_key", async () => {
+	it("counts only messages with seen: false (unread) grouped by conversation_key", async () => {
 		const accessToken = buildAccessToken(3, "session-unread-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 3 }))
 
@@ -198,17 +198,17 @@ describe("GET /api/message/unread-count", () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 
 		expect(res.status).toBe(200)
-		// Verify the query filters by receiver_id and status: 1
+		// Verify the query filters by receiver_id and seen: false
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			receiver_id: 3,
-			status: 1
+			seen: false
 		})
 		// Verify aggregate groups by conversation_key
 		const aggregateCall = aggregateMock.mock.calls[0][0]
 		expect(aggregateCall[0]).toMatchObject({
 			$match: {
 				receiver_id: 3,
-				status: 1
+				seen: false
 			}
 		})
 		const groupStage = aggregateCall.find((stage: any) => stage.$group)

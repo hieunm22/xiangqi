@@ -171,6 +171,23 @@ router.post(
 		try {
 			const userIdBigInt = BigInt(userId!)
 
+			// Disallow betting more than 80% of the creator's balance
+			if (betAmount > 0) {
+				const user = await prisma.user.findUnique({
+					where: { id: userIdBigInt },
+					select: { total_amount: true }
+				})
+				// Integer-safe form of `betAmount > total_amount * 0.8`.
+				if (!user || betAmount * 10 > user.total_amount * 8) {
+					res.status(400).json({
+						success: false,
+						message: "create-room.messages.insufficient-amount",
+						status_code: 400
+					})
+					return
+				}
+			}
+
 			// Remove existing room_users records for this user
 			await prisma.roomUser.deleteMany({
 				where: {
@@ -223,7 +240,8 @@ router.post(
 								select: {
 									id: true,
 									display_name: true,
-									avatar_seq: true
+									avatar_seq: true,
+									is_bot: true
 								}
 							},
 							team: true

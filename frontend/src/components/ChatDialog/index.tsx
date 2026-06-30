@@ -1,6 +1,5 @@
 import {
 	forwardRef,
-	KeyboardEvent,
 	MouseEvent as ReactMouseEvent,
 	useCallback,
 	useEffect,
@@ -16,24 +15,16 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
-	Stack,
-	TextField,
-	Tooltip,
-	Typography
 } from "@mui/material"
 import { PopupState } from "common/enums"
-import { TI, TSpan, TTypography } from "components/TranslationTag"
-import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
-import {
-	formatTimestampToDateTimeArray,
-	getCurrentUserId,
-	getToken,
-} from "common/helper"
+import { TI, TSpan } from "components/TranslationTag"
+import { MessageInput, MessageList } from "components/MessageThread"
+import { getToken } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
-import { translate } from "locales/translate"
 import { setPopup } from "toolkit/slice/game"
 import {
+	BaseChatMessage,
 	ChatDialogDragPosition,
 	ChatDialogHandle,
 	ChatDialogProps,
@@ -46,7 +37,7 @@ import "./ChatDialog.scss"
 type ChatMessage = RoomChatMessage | PrivateChatMessage
 
 const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) => {
-	const { gameState, state, dispatch } = useToolkit()
+	const { gameState, dispatch } = useToolkit()
 	const {
 		getMessages,
 		markAsRead,
@@ -70,7 +61,6 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 
 	const canSend = messageContent.trim().length > 0
 	const isChatMode = !!refId
-	const currentUserId = getCurrentUserId()
 
 	// Drag-to-move: track the window-level mouse while a drag is active so the
 	// popup keeps following the cursor even if it leaves the title bar.
@@ -117,15 +107,6 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		props.onClose()
 	}
 
-	const findIndexCallback = (msg: ChatMessage) => {
-		if (props.dialogType === "private")
-			return (msg as PrivateChatMessage).status === 1
-		else if (props.dialogType === "room") {
-			return (msg as RoomChatMessage).seen
-		}
-		return false
-	}
-
 	// Reset the popup back to the centered position each time it opens.
 	useEffect(() => {
 		if (props.open) {
@@ -156,8 +137,8 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 			const response = await getMessages(token, refId)
 			if (response?.success && response.data) {
 				const nextMessages = response.data as ChatMessage[]
-				// Find first unread message (status = 1 means unread)
-				const unreadIndex = nextMessages.findIndex(findIndexCallback)
+				// Find first unread message (seen === false means unread)
+				const unreadIndex = nextMessages.findIndex(m => !m.seen)
 
 				setMessages(nextMessages)
 				setFirstUnreadId(unreadIndex >= 0 ? nextMessages[unreadIndex]._id : null)
@@ -225,7 +206,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		if (response?.success && response.data) {
 			const nextMessage = {
 				...response.data,
-				status: response.data.status || 1
+				seen: response.data.seen ?? false
 			}
 			setMessages([...messages, nextMessage])
 			setFirstUnreadId(null)
@@ -234,11 +215,10 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		setSending(false)
 	}
 
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault()
-			handleSend()
-		}
+	const getIsUnread = (msg: BaseChatMessage, isSender: boolean) => !isSender && !msg.seen
+
+	const getRowRef = (msg: BaseChatMessage) => {
+		return msg._id === firstUnreadId ? firstUnreadRef : undefined
 	}
 
 	const onShowProfile = (userId: number) => {
@@ -249,10 +229,6 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	const onNewConversation = () => {
 		dispatch(setPopup(gameState.popupState | PopupState.SEARCH_USERS))
 	}
-
-	const sendClass = classnames("fas fa-paper-plane end-icon", {
-		disabled: !canSend || sending
-	})
 
 	const hasDrawer = !!props.drawerContent
 	const innnerOverlayClass = classnames("chat-inner-drawer-overlay", { open: menuOpen })
@@ -321,91 +297,25 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 					</Box>
 				)}
 				<Box className="chat-messages-box">
-					<Stack spacing={1}>
-						{messages.map((msg, idx) => {
-							const isSender = msg.sender?.id === currentUserId
-							const senderId = msg.sender?.id ?? null
-							const nextSenderId = messages[idx + 1]?.sender?.id ?? null
-							const isLastMessageInSenderGroup = senderId === null || senderId !== nextSenderId
-							const shouldShowAvatar = !isSender && isLastMessageInSenderGroup
-							const isUnread = !isSender && (
-								(msg as PrivateChatMessage).status === 1
-								|| (msg as RoomChatMessage).seen === true
-							)
-							const showUnreadDivider = firstUnreadId !== null && msg._id === firstUnreadId && isUnread
-							const boxContent = classnames("flex", {
-								"end": isSender,
-								"start": !isSender
-							})
-							const contentClass = classnames("chat-message-content", {
-								sender: isSender,
-								receiver: !isSender,
-								unread: isUnread
-							})
-							const senderName = msg.sender?.display_name || "Unknown user"
-							const times = formatTimestampToDateTimeArray(msg.timestamp, state.lang)
-							const timeString = `${times[0] ? times[0] + ", " : ""}${times[1]}`
-							const refObj = msg._id === firstUnreadId ? { ref: firstUnreadRef } : {}
-							return (
-								<Box key={msg._id} {...refObj}>
-									{showUnreadDivider && (
-										<Divider textAlign="center" className="chat-unread-divider">
-											<TTypography
-												variant="caption"
-												className="chat-unread-divider-text"
-												content="chat.messages.unread"
-											/>
-										</Divider>
-									)}
-									<Box className={boxContent}>
-										{!isSender && (
-											<Box className="chat-avatar-container">
-												{shouldShowAvatar && (
-													<Tooltip title={senderName} arrow placement="top">
-														<UserAvatar
-															id={msg.sender?.id}
-															avatar_url={msg.sender?.avatar_url || ""}
-															display_name={senderName}
-															onUserClick={onShowProfile}
-															size={36}
-														/>
-													</Tooltip>
-												)}
-											</Box>
-										)}
-										<Tooltip title={timeString} arrow placement={isSender ? "left" : "right"}>
-											<Typography variant="body2" className={contentClass}>
-												{msg.message}
-											</Typography>
-										</Tooltip>
-									</Box>
-								</Box>
-							)
-						})}
-						<div ref={messagesEndRef} />
-					</Stack>
-				</Box>
-
-				<Box className="chat-input-row">
-					<TextField
-						value={messageContent}
-						onChange={e => setMessageContent(e.target.value)}
-						onKeyDown={handleKeyDown}
-						placeholder={translate("room.actions.send-pm")}
-						size="small"
-						autoFocus
-						fullWidth
-						multiline
-						maxRows={3}
-						slotProps={{
-							input: {
-								endAdornment: (
-									<TI className={sendClass} onClick={handleSend} />
-								)
-							}
-						}}
+					<MessageList
+						messages={messages}
+						firstUnreadId={firstUnreadId}
+						isUnread={getIsUnread}
+						onAvatarClick={onShowProfile}
+						showPresence
+						endRef={messagesEndRef}
+						getRowRef={getRowRef}
 					/>
 				</Box>
+
+				<MessageInput
+					value={messageContent}
+					placeholder="room.actions.send-pm"
+					disabled={!canSend || sending}
+					autoFocus
+					onChange={setMessageContent}
+					onSend={handleSend}
+				/>
 			</DialogContent>
 		</Dialog>
 	)

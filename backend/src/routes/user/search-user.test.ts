@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const userFindManyMock = vi.fn()
+const roomFindUniqueMock = vi.fn()
 
 const PATH = "/api/user/search"
 
@@ -18,6 +19,9 @@ vi.mock("prisma", () => ({
 	default: {
 		user: {
 			findMany: userFindManyMock
+		},
+		room: {
+			findUnique: roomFindUniqueMock
 		}
 	}
 }))
@@ -132,7 +136,8 @@ describe("GET /api/user/search?query=:query", () => {
 				select: {
 					id: true,
 					display_name: true,
-					avatar_seq: true
+					avatar_seq: true,
+					total_amount: true
 				}
 			})
 		)
@@ -256,7 +261,8 @@ describe("GET /api/user/search?query=:query", () => {
 				select: {
 					id: true,
 					display_name: true,
-					avatar_seq: true
+					avatar_seq: true,
+					total_amount: true
 				}
 			})
 		)
@@ -321,6 +327,67 @@ describe("GET /api/user/search?query=:query", () => {
 		expect(res.body.data).toHaveLength(1)
 		expect(res.body.data[0].id).toBe(101)
 		expect(res.body.data[0].display_name).toBe("Hieu Vu")
+	})
+
+	it("excludes users who cannot afford the room's bet when roomId is provided (invite context)", async () => {
+		const accessToken = buildAccessToken(1, "session-user-invite-1")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+		roomFindUniqueMock.mockResolvedValue({ bet_amount: 100 })
+
+		userFindManyMock.mockResolvedValue([
+			// 100 > 200 * 0.8 (160)? No -> affordable, included.
+			{ id: BigInt(101), display_name: "Rich Alice", avatar_seq: 1, total_amount: 200 },
+			// 100 > 120 * 0.8 (96)? Yes -> too poor, excluded.
+			{ id: BigInt(102), display_name: "Poor Alice", avatar_seq: 2, total_amount: 120 }
+		])
+
+		const res = await request(app)
+			.get(`${PATH}?query=alice&roomId=55`)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0].id).toBe(101)
+		expect(roomFindUniqueMock).toHaveBeenCalledWith({
+			where: { id: BigInt(55) },
+			select: { bet_amount: true }
+		})
+	})
+
+	it("does not filter by balance for chat search (no roomId)", async () => {
+		const accessToken = buildAccessToken(1, "session-user-invite-2")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+
+		userFindManyMock.mockResolvedValue([
+			{ id: BigInt(101), display_name: "Rich Alice", avatar_seq: 1, total_amount: 200 },
+			{ id: BigInt(102), display_name: "Poor Alice", avatar_seq: 2, total_amount: 1 }
+		])
+
+		const res = await request(app)
+			.get(`${PATH}?query=alice`)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(2)
+		expect(roomFindUniqueMock).not.toHaveBeenCalled()
+	})
+
+	it("does not filter by balance when the room is free (bet_amount 0)", async () => {
+		const accessToken = buildAccessToken(1, "session-user-invite-3")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+		roomFindUniqueMock.mockResolvedValue({ bet_amount: 0 })
+
+		userFindManyMock.mockResolvedValue([
+			{ id: BigInt(101), display_name: "Rich Alice", avatar_seq: 1, total_amount: 200 },
+			{ id: BigInt(102), display_name: "Poor Alice", avatar_seq: 2, total_amount: 1 }
+		])
+
+		const res = await request(app)
+			.get(`${PATH}?query=alice&roomId=55`)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(2)
 	})
 
 	it("returns 500 when unexpected error happens", async () => {

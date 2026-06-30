@@ -159,6 +159,29 @@ export function useSocket() {
 		}
 	}, [])
 
+	// Presence heartbeat — only emitted by the client while it has a visible tab.
+	const emitPresencePing = useCallback((userId: number) => {
+		if (socketRef.current) {
+			socketRef.current.emit("presence-ping", { userId })
+		} else {
+			console.warn("[Socket.io] Socket not initialized for presence-ping emit")
+		}
+	}, [])
+
+	const onPresenceChanged = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("presence-changed", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for presence-changed listener")
+		}
+	}, [])
+
+	const offPresenceChanged = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("presence-changed", callback)
+		}
+	}, [])
+
 	// ------------------------------------------------------------------------
 
 	const emitDrawRequest = useCallback((roomId: string | number, gameId: string, requestUserId: number) => {
@@ -401,6 +424,7 @@ export function useSocket() {
 		emitDrawRequest,
 		emitDrawResponse,
 		emitPlayerMove,
+		emitPresencePing,
 		emitRoomInvite,
 		emitSurrender,
 		joinRoom,
@@ -411,6 +435,7 @@ export function useSocket() {
 		offDrawResponse,
 		offGameStarted,
 		offMovePiece,
+		offPresenceChanged,
 		offPrivateMessageSent,
 		offRoomCreated,
 		offRoomDeleted,
@@ -425,6 +450,7 @@ export function useSocket() {
 		onDashboardRoomUsersUpdated,
 		onGameStarted,
 		onMovePiece,
+		onPresenceChanged,
 		onPrivateMessageSent,
 		onRoomCreated,
 		onRoomDeleted,

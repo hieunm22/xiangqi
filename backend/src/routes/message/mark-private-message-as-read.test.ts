@@ -150,20 +150,20 @@ describe("POST /api/message/mark-private-message-as-read", () => {
 			status_code: 200
 		})
 		// Verify that updateMany was called with correct query to mark messages as read
-		// Query: messages FROM receiver_id (2) TO current user (1) with status 1
+		// Query: messages FROM receiver_id (2) TO current user (1) that are unseen
 		expect(updateManyMock).toHaveBeenCalledWith(
 			{
 				sender_id: 2,
 				receiver_id: 1,
-				status: 1
+				seen: false
 			},
 			{
-				$set: { status: 2 }
+				$set: { seen: true }
 			}
 		)
 	})
 
-	it("marks only unread messages (status: 1) as read (status: 2)", async () => {
+	it("marks only unread messages (seen: false) as seen (seen: true)", async () => {
 		const accessToken = buildAccessToken(3, "session-mark-5")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 3 }))
 		userFindUniqueMock.mockResolvedValue({ id: 5, display_name: "User 5" })
@@ -179,15 +179,15 @@ describe("POST /api/message/mark-private-message-as-read", () => {
 			})
 
 		expect(res.status).toBe(200)
-		// Verify the query only targets status: 1 messages (unread)
+		// Verify the query only targets unseen messages (unread)
 		expect(updateManyMock).toHaveBeenCalledWith(
 			{
 				sender_id: 5,
 				receiver_id: 3,
-				status: 1
+				seen: false
 			},
 			{
-				$set: { status: 2 }
+				$set: { seen: true }
 			}
 		)
 	})
