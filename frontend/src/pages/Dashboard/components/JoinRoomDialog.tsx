@@ -155,11 +155,18 @@ export const JoinRoomDialog = () => {
 		return ""
 	}
 
+	const handleAvatarClick = (userId: number) => {
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
+		showProfilePopup(userId)
+	}
+
 	return (
 		<Dialog
 			open={isOpen}
 			fullWidth
 			onClose={handleDialogClose}
+			disableEnforceFocus
 			slotProps={{
 				backdrop: { sx: { pointerEvents: "none" } }
 			}}
@@ -172,13 +179,13 @@ export const JoinRoomDialog = () => {
 						<SeatAvatar
 							user={host || null}
 							isHost
-							onUserClick={showProfilePopup}
-						/>
-						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
-						<SeatAvatar
-							user={opponent || null}
-							isHost={false}
-							onUserClick={showProfilePopup}
+						onUserClick={handleAvatarClick}
+					/>
+					<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
+					<SeatAvatar
+						user={opponent || null}
+						isHost={false}
+							onUserClick={handleAvatarClick}
 						/>
 					</Stack>
 
@@ -187,7 +194,7 @@ export const JoinRoomDialog = () => {
 							users={spectators}
 							type="primary"
 							maxVisible={6}
-							onUserClick={showProfilePopup}
+							onUserClick={handleAvatarClick}
 						/>)
 					}
 				</Stack>

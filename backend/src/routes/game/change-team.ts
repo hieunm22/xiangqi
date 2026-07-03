@@ -72,7 +72,7 @@ const router = Router()
  *                         type: string
  *                         format: date-time
  *       400:
- *         description: Invalid request (invalid room id, room not in waiting state, caller is host, host has no team, or both team seats are already taken)
+ *         description: Invalid request (invalid room id, room not in waiting state, caller is host, host has no team, insufficient balance, or both team seats are already taken)
  *       401:
  *         description: Unauthorized (missing, invalid, or expired token)
  *       403:
@@ -110,7 +110,7 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomIdBigInt },
-			select: { id: true, status: true, host_id: true }
+			select: { id: true, status: true, host_id: true, bet_amount: true, pve_mode: true }
 		})
 
 		if (!room) {
@@ -192,6 +192,23 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 					status_code: 400
 				})
 				return
+			}
+
+			// Check balance if joining as player in PvP mode
+			if (!room.pve_mode) {
+				const user = await prisma.user.findUnique({
+					where: { id: userIdBigInt },
+					select: { total_amount: true }
+				})
+
+				if (room.bet_amount * 10 > (user?.total_amount ?? 0) * 8) {
+					res.status(400).json({
+						success: false,
+						message: "challenge.messages.insufficient-amount",
+						status_code: 400
+					})
+					return
+				}
 			}
 
 			const oppositeTeam: "red" | "black" = host.team === "red" ? "black" : "red"

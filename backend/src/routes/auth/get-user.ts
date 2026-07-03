@@ -64,13 +64,13 @@ const router = Router()
  *                       properties:
  *                         win:
  *                           type: integer
- *                           description: Number of games won (point > 0)
+ *                           description: Number of games won (amount > 0)
  *                         draw:
  *                           type: integer
- *                           description: Number of games drawn (point = 0)
+ *                           description: Number of games drawn (amount = 0)
  *                         lose:
  *                           type: integer
- *                           description: Number of games lost (point < 0)
+ *                           description: Number of games lost (amount < 0)
  *       400:
  *         description: Invalid user ID
  *       404:
@@ -119,9 +119,9 @@ router.get("/auth/user", requireAuth(), async (req: AuthenticatedRequest, res: R
 		})
 
 		const stats = {
-			win: gameUsers.filter((gu) => gu.point !== null && gu.point > 0).length,
-			draw: gameUsers.filter((gu) => gu.point !== null && gu.point === 0).length,
-			lose: gameUsers.filter((gu) => gu.point !== null && gu.point < 0).length
+			win: gameUsers.filter((gu) => gu.amount !== null && gu.amount > 0).length,
+			draw: gameUsers.filter((gu) => gu.amount !== null && gu.amount === 0).length,
+			lose: gameUsers.filter((gu) => gu.amount !== null && gu.amount < 0).length
 		}
 
 		const avatarUrl = getAvatarUrl(user.id, user.avatar_seq)

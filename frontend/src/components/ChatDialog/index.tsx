@@ -22,7 +22,7 @@ import { MessageInput, MessageList } from "components/MessageThread"
 import { getToken } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
-import { setPopup } from "toolkit/slice/game"
+import { setPopup, setUserId } from "toolkit/slice/game"
 import {
 	BaseChatMessage,
 	ChatDialogDragPosition,
@@ -111,8 +111,10 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	useEffect(() => {
 		if (props.open) {
 			setPosition({ x: 0, y: 0 })
+		} else if (gameState.activeUserId) {
+			showProfilePopup(gameState.activeUserId)
 		}
-	}, [props.open])
+	}, [props.open, gameState.activeUserId])
 
 	// Load messages when the dialog opens or when the active conversation
 	// (refId) changes — e.g. picking a different conversation in the drawer.
@@ -222,8 +224,14 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	}
 
 	const onShowProfile = (userId: number) => {
+		// Blur all inputs and textareas in the chat dialog to prevent focus conflicts
+		const inputs = document.querySelectorAll(".chat-dialog input, .chat-dialog textarea")
+		inputs.forEach(input => {
+			(input as HTMLElement).blur()
+		})
+		
 		handleClose(null, "escapeKeyDown")
-		showProfilePopup(userId)
+		dispatch(setUserId(userId))
 	}
 
 	const onNewConversation = () => {
@@ -242,6 +250,8 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 			maxWidth="sm"
 			fullWidth
 			disableEnforceFocus
+			disableAutoFocus
+			autoFocus={false}
 			hideBackdrop
 			disableScrollLock
 			// Let clicks pass through to the board behind the popup; only the

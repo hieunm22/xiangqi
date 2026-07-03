@@ -1,7 +1,7 @@
-INSERT INTO auth.users (id, user_name, password, email, display_name, gender, avatar_seq, is_bot) OVERRIDING SYSTEM VALUE VALUES
+INSERT INTO user.users (id, user_name, password, email, display_name, gender, avatar_seq, is_bot) OVERRIDING SYSTEM VALUE VALUES
 (18446744073709551615, 'bot', 'DA7E2532550C01A49F955FDD8F22B7FF', 'bot@xiangqi.local', 'Bot', true, 0, true);
 
-INSERT INTO auth.users (id, user_name, password, email, display_name, gender, avatar_seq) OVERRIDING SYSTEM VALUE VALUES
+INSERT INTO user.users (id, user_name, password, email, display_name, gender, avatar_seq) OVERRIDING SYSTEM VALUE VALUES
 (1, 'ming.hieu.1312', 'DA7E2532550C01A49F955FDD8F22B7FF', 'hieuami@gmail.com', 'Ming Hieu', true, 5),
 (2, 'thuyhoa.pham.313', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thuyhoapham91@gmail.com', 'Thuy Hoa Pham', false, 0),
 (3, 'vutran1087', 'DA7E2532550C01A49F955FDD8F22B7FF', 'elderaine@gmail.com', 'Vũ Trần', true, 0),
@@ -62,7 +62,7 @@ INSERT INTO auth.users (id, user_name, password, email, display_name, gender, av
 (58, 'chungdv01', 'DA7E2532550C01A49F955FDD8F22B7FF', 'chungbkhn87@gmail.com', 'Chung Duong Van', true, 0),
 (59, 'labatvi', 'DA7E2532550C01A49F955FDD8F22B7FF', 'tranhoanglinh@gmail.com', 'Trần Linh', true, 0),
 (60, 'ta.mien.33', 'DA7E2532550C01A49F955FDD8F22B7FF', 'mientt2bk@gmail.com', 'Ta Mien', false, 0),
-(61, 'nguyen.chi.thanh.65467', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thanhnc@onenet.vn', 'Nguyễn Chí Thành', false, 0),
+(61, 'nguyen.chi.thanh.65467', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thanhnc@onenet.vn', 'Nguyễn Chí Thành', true, 0),
 (62, 'tntmoi26487', 'DA7E2532550C01A49F955FDD8F22B7FF', 'tntmoi26487@gmail.com', 'Tri Nitro Toluen', true, 0),
 (63, 'thien.bao.184', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thaott2k51@gmail.com', 'Tran HuuThao', true, 0),
 (64, 'kmthanh', 'DA7E2532550C01A49F955FDD8F22B7FF', 'thanhkhongminh@gmail.com', 'Thanh KM', true, 0),
@@ -87,18 +87,18 @@ INSERT INTO auth.users (id, user_name, password, email, display_name, gender, av
 (83, 'nmaicutes1', 'DA7E2532550C01A49F955FDD8F22B7FF', 'nmai36833@gmail.com', 'Ngoc Mai', false, 0),
 (84, 'lehongly', 'DA7E2532550C01A49F955FDD8F22B7FF', 'lehongly2101@gmail.com', 'Lê Hồng Ly', false, 0),
 (85, N'ynhi1003', N'DA7E2532550C01A49F955FDD8F22B7FF', N'nguyenyennhit2007@gmail.com', N'Nguyễn Yến Nhi', false, 0),
-(86, N'ngo.hung.thinh.2025', N'DA7E2532550C01A49F955FDD8F22B7FF', N'ngohungthinh86@gmail.com', N'Ngô Hùng Thịnh', false, 0),
-(87, N'viet.johan', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vietjohan1983@gmail.com', N'Nguyễn Tường Việt', false, 0),
-(88, N'vo.thoai.580508', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vothoai1503@gmail.com', N'Võ Thoại', false, 0),
+(86, N'ngo.hung.thinh.2025', N'DA7E2532550C01A49F955FDD8F22B7FF', N'ngohungthinh86@gmail.com', N'Ngô Hùng Thịnh', true, 0),
+(87, N'viet.johan', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vietjohan1983@gmail.com', N'Nguyễn Tường Việt', true, 0),
+(88, N'vo.thoai.580508', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vothoai1503@gmail.com', N'Võ Thoại', true, 0),
 (89, N'ngocvan.ld', N'DA7E2532550C01A49F955FDD8F22B7FF', N'ledoanthanhhoa@gmail.com', N'Hoa Ngoc Van', false, 0),
-(90, N'tran.quan.755204', N'DA7E2532550C01A49F955FDD8F22B7FF', N'tranquan.network@gmail.com', N'Hoa Ngoc Van', false, 0);
-UPDATE auth.users SET total_amount = 220 WHERE id = 83;
-UPDATE auth.users SET total_amount = 180 WHERE id = 8;
-UPDATE auth.users SET total_amount = 86940 WHERE id = 9;
-UPDATE auth.users SET total_amount = 48392 WHERE id = 19;
-UPDATE auth.users SET total_amount = 63820 WHERE id = 82;
+(90, N'tran.quan.755204', N'DA7E2532550C01A49F955FDD8F22B7FF', N'tranquan.network@gmail.com', N'Hoa Ngoc Van', true, 0);
+UPDATE user.users SET total_amount = 220 WHERE id = 83;
+UPDATE user.users SET total_amount = 180 WHERE id = 8;
+UPDATE user.users SET total_amount = 86940 WHERE id = 9;
+UPDATE user.users SET total_amount = 48392 WHERE id = 19;
+UPDATE user.users SET total_amount = 63820 WHERE id = 82;
 
-SELECT setval(pg_get_serial_sequence('auth.users', 'id'), 90);
+SELECT setval(pg_get_serial_sequence('user.users', 'id'), 90);
 
 INSERT INTO game.rooms (id, name, status, red_first, bet_amount, host_id, created_at, updated_at) OVERRIDING SYSTEM VALUE VALUES
 (1, 'chờ', 1, true, 10000, 9, '2026-05-01T10:00:00Z', '2026-05-01T10:00:00Z'),

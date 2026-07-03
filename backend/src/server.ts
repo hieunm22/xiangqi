@@ -4,7 +4,7 @@ import app from "./app"
 import { ensureChatMessageIndexes } from "./common/mongodb"
 import { startPresenceSweeper } from "./common/presence"
 import { emitPresenceChanged, initializeSocket } from "./common/socket"
-import { startPointsReconciler } from "./job/reconcile-points"
+import { startAmountReconciler } from "./job/reconcile-amount"
 
 const PORT = Number(process.env.PORT) || 8000
 
@@ -16,7 +16,7 @@ initializeSocket(httpServer)
 startPresenceSweeper(emitPresenceChanged)
 
 // Weekly job that reconciles cached total_amount against the GameUser ledger.
-startPointsReconciler()
+startAmountReconciler()
 
 // Initialize MongoDB indexes
 ensureChatMessageIndexes().catch(error => {

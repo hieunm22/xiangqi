@@ -8,10 +8,12 @@ import {
 } from "@mui/material"
 import { HOME_PATH, LOGIN_PATH, LS_DARKMODE } from "common/constant"
 import AlertProvider from "components/AlertProvider"
+import SnackbarProvider from "components/SnackbarProvider"
 import AnnouncePage from "pages/Announce"
 import { AuthProvider } from "components/AuthProvider"
 import ConfirmProvider from "components/ConfirmProvider"
 import Dashboard from "pages/Dashboard"
+import ExtraMoneyPage from "pages/ExtraMoney"
 import Layout from "components/Layout"
 import LayoutUnAuth from "components/LayoutUnAuth"
 import LoginPage from "pages/Login"
@@ -31,11 +33,13 @@ import "styles/common.scss"
 const RoomPageElement = () => {
 	const { id } = useParams()
 	return (
-		<ConfirmProvider>
-			<AlertProvider>
-				<RoomPage key={id} />
-			</AlertProvider>
-		</ConfirmProvider>
+		<SnackbarProvider>
+			<ConfirmProvider>
+				<AlertProvider>
+					<RoomPage key={id} />
+				</AlertProvider>
+			</ConfirmProvider>
+		</SnackbarProvider>
 	)
 }
 
@@ -152,6 +156,14 @@ function AppWithTheme() {
 						element={
 							<ProtectedRoute>
 								<AnnouncePage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/extra-money"
+						element={
+							<ProtectedRoute>
+								<ExtraMoneyPage />
 							</ProtectedRoute>
 						}
 					/>

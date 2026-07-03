@@ -162,7 +162,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(88),
 					display_name: "Room owner",
-					avatar_seq: 0
+					avatar_seq: 0,
+					total_amount: undefined,
+					is_bot: false
 				}
 			}
 		])
@@ -194,7 +196,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(88),
 					display_name: "Room owner",
-					avatar_seq: 0
+					avatar_seq: 0,
+					total_amount: undefined,
+					is_bot: false
 				}
 			},
 			{
@@ -204,7 +208,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(51),
 					display_name: "Spectator",
-					avatar_seq: 1
+					avatar_seq: 1,
+					total_amount: undefined,
+					is_bot: false
 				}
 			}
 		])
@@ -231,6 +237,8 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/88.jpg",
 				team: "red",
+				total_amount: undefined,
+				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:00.000Z")
 			}
 		])
@@ -248,7 +256,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(51),
 					display_name: "Player A",
-					avatar_seq: 0
+					avatar_seq: 0,
+					total_amount: undefined,
+					is_bot: false
 				}
 			},
 			{
@@ -258,7 +268,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(52),
 					display_name: "Player B",
-					avatar_seq: 1
+					avatar_seq: 1,
+					total_amount: undefined,
+					is_bot: false
 				}
 			}
 		])
@@ -286,6 +298,8 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 1,
 				avatar_url: "/images/52_1.jpg",
 				team: "black",
+				total_amount: undefined,
+				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:01.000Z")
 			}
 		])
@@ -306,13 +320,13 @@ describe("DELETE /api/room/leave", () => {
 				joined_at: new Date("2026-05-26T00:00:00.000Z"),
 				team: "red",
 				user_id: BigInt(51),
-				users: { id: BigInt(51), display_name: "Host", avatar_seq: 0 }
+				users: { id: BigInt(51), display_name: "Host", avatar_seq: 0, total_amount: undefined, is_bot: false }
 			},
 			{
 				joined_at: new Date("2026-05-26T00:00:01.000Z"),
 				team: "black",
 				user_id: BigInt(52),
-				users: { id: BigInt(52), display_name: "Player B", avatar_seq: 1 }
+				users: { id: BigInt(52), display_name: "Player B", avatar_seq: 1, total_amount: undefined, is_bot: false }
 			}
 		])
 		gameFindFirstMock.mockResolvedValue(null)
@@ -340,6 +354,8 @@ describe("DELETE /api/room/leave", () => {
 					avatar_seq: 1,
 					avatar_url: "/images/52_1.jpg",
 					team: "black",
+					total_amount: undefined,
+					is_bot: false,
 					joined_at: new Date("2026-05-26T00:00:01.000Z")
 				}
 			],
@@ -359,7 +375,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(51),
 					display_name: "Player A",
-					avatar_seq: 0
+					avatar_seq: 0,
+					total_amount: undefined,
+					is_bot: false
 				}
 			},
 			{
@@ -369,7 +387,9 @@ describe("DELETE /api/room/leave", () => {
 				users: {
 					id: BigInt(77),
 					display_name: "Spectator",
-					avatar_seq: 2
+					avatar_seq: 2,
+					total_amount: undefined,
+					is_bot: false
 				}
 			}
 		])
@@ -391,6 +411,8 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 2,
 				avatar_url: "/images/77_2.jpg",
 				team: null,
+				total_amount: undefined,
+				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:01.000Z")
 			}
 		])
@@ -598,6 +620,7 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/51.jpg",
 				team: "red",
+				total_amount: undefined,
 				is_bot: false,
 				joined_at: new Date("2026-05-26T00:00:00.000Z")
 			},
@@ -607,6 +630,7 @@ describe("DELETE /api/room/leave", () => {
 				avatar_seq: 0,
 				avatar_url: "/images/999.jpg",
 				team: "black",
+				total_amount: undefined,
 				is_bot: true,
 				joined_at: new Date("2026-05-26T00:00:01.000Z")
 			}

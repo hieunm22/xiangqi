@@ -1,8 +1,14 @@
 .dashboard {
 	padding: 24px 16px;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+	min-height: 100vh;
 
-	@media (min-width: 900px) {
-		padding: 24px 32px;
+	&__title {
+		font-weight: 700 !important;
+		-webkit-text-stroke: 1px gray;
+		color: white;
 	}
 
 	&__filter-btn {
@@ -60,6 +66,8 @@
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
+		background-color: white;
+		color: black;
 
 		&:hover {
 			opacity: 0.5;

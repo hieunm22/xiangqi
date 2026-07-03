@@ -63,7 +63,8 @@ router.post("/message/mark-private-message-as-read", requireAuth(), async (req: 
 	try {
 		// Verify receiver exists
 		const receiver = await prisma.user.findUnique({
-			where: { id: BigInt(receiver_id) }
+			where: { id: BigInt(receiver_id) },
+			select: { id: true }
 		})
 
 		if (!receiver) {
@@ -75,13 +76,13 @@ router.post("/message/mark-private-message-as-read", requireAuth(), async (req: 
 			return
 		}
 
-		// Mark all unread messages from receiver_id to userId (seen: false) as seen.
+		// Mark all unread messages from receiver_id to userId (seen: false or missing) as seen.
 		const collection = await getChatMessageCollection()
 		await collection.updateMany(
 			{
 				sender_id: receiver_id,
 				receiver_id: userId,
-				seen: false
+				seen: { $ne: true }
 			},
 			{
 				$set: { seen: true }

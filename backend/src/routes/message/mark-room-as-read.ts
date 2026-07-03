@@ -79,7 +79,7 @@ router.post("/message/mark-room-as-read", requireAuth(), async (req: Authenticat
 					user_id: BigInt(userId)
 				}
 			},
-			select: { room_id: true }
+			select: { room_id: true, joined_at: true }
 		})
 
 		if (!roomUser) {
@@ -94,7 +94,10 @@ router.post("/message/mark-room-as-read", requireAuth(), async (req: Authenticat
 		// Update all messages in room: add userId to read_by if not exist
 		const collection = await getChatMessageCollection()
 		await collection.updateMany(
-			{ room_id },
+			{
+				room_id,
+				timestamp: { $gt: roomUser.joined_at }
+			},
 			{
 				$addToSet: { read_by: userId }
 			}

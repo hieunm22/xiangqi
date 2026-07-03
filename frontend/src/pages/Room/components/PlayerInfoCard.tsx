@@ -56,6 +56,8 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const handlePlayerNameClick = () => {
 		if (!user) return
 
+		// const activeElement = document.activeElement as HTMLElement | null
+		// activeElement?.blur()
 		dispatch(setRoomHostId(props.roomHostId))
 		showProfilePopup(user.id)
 	}

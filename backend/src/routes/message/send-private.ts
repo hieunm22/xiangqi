@@ -107,7 +107,8 @@ router.post("/message/send-private", requireAuth(), async (req: AuthenticatedReq
 	try {
 		// Verify receiver exists
 		const receiver = await prisma.user.findUnique({
-			where: { id: BigInt(receiver_id) }
+			where: { id: BigInt(receiver_id) },
+			select: { id: true }
 		})
 
 		if (!receiver) {

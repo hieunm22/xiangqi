@@ -83,3 +83,9 @@
 		padding-bottom: $length !important;
 	}
 }
+
+.data-content {
+	&::after {
+		content: attr(data-content);
+	}
+}

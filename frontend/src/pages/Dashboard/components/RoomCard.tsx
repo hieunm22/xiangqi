@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
@@ -39,10 +40,36 @@ const formatBetAmount = (amount?: number) => {
 }
 
 export const RoomCard = ({ room }: RoomCardProps) => {
+	const containerRef = useRef<HTMLDivElement>(null)
+	const [maxVisible, setMaxVisible] = useState(4)
+
+	useEffect(() => {
+		const container = containerRef.current
+		if (!container) return
+
+		const calculateMaxVisible = () => {
+			const availableWidth = (container.firstElementChild as HTMLElement).offsetWidth
+
+			// Avatar: 28px, overlap: -10px
+			// Formula: 28 + (N-1) * 18 <= availableWidth
+			// N <= (availableWidth - 28) / 18 + 1
+			const maxCount = Math.floor((availableWidth - 28) / 18)
+			const maxSecondary = Math.max(2, maxCount - 1)
+
+			setMaxVisible(maxSecondary)
+		}
+
+		calculateMaxVisible()
+
+		const observer = new ResizeObserver(calculateMaxVisible)
+		observer.observe(container)
+		return () => observer.disconnect()
+	}, [])
+
+	const navigate = useNavigate()
 	const oldestJoinedUsers = room.users.filter(u => u.team !== null)
 	const remainingUsers = room.users.filter(u => u.team === null)
 	const classIconRoomStatus = roomStatusClass(room.status)
-	const navigate = useNavigate()
 
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
@@ -66,6 +93,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 			key={room.id}
 			className={roomCardClass}
 			size={GRID_SIZE}
+			ref={containerRef}
 			onClick={handleOpenJoinRoom}
 		>
 			<Stack spacing={1.5}>
@@ -95,7 +123,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 				<UserAvatarGroup
 					users={remainingUsers}
 					type="secondary"
-					maxVisible={5}
+					maxVisible={maxVisible}
 				/>
 			</Stack>
 		</Grid>

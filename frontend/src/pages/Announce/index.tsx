@@ -60,6 +60,12 @@ export default function AnnouncePage() {
 	const canSend = messageContent.trim().length > 0 && !sending
 	const currentUserId = getCurrentUserId()
 
+	const handleAvatarClick = (userId: number) => {
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
+		showProfilePopup(userId)
+	}
+
 	// Load announcements on mount: render them, flag the first unread, then mark
 	// the feed as read so the next visit treats everything as seen.
 	useEffect(() => {
@@ -250,7 +256,7 @@ export default function AnnouncePage() {
 							messages={messages}
 							firstUnreadId={firstUnreadId}
 							isUnread={msg => !(msg as AnnouncementMessage).seen}
-							onAvatarClick={showProfilePopup}
+							onAvatarClick={handleAvatarClick}
 							endRef={messagesEndRef}
 							getRowRef={getRowRef}
 						/>

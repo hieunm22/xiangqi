@@ -109,6 +109,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 						id: true,
 						display_name: true,
 						avatar_seq: true,
+						total_amount: true,
 						is_bot: true
 					}
 				}
@@ -297,6 +298,7 @@ function formatRoomUsers(roomUsers: any[]) {
 		avatar_seq: Number(roomUser.users.avatar_seq),
 		avatar_url: getAvatarUrl(roomUser.users.id, roomUser.users.avatar_seq),
 		team: roomUser.team,
+		total_amount: roomUser.users.total_amount,
 		is_bot: roomUser.users.is_bot,
 		joined_at: roomUser.joined_at
 	}))

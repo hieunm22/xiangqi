@@ -32,7 +32,6 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           envs: DEPLOY_BRANCH,INSTALL_DEPS
           script_path: .github/workflows/full-deploy.sh
         env:
@@ -47,7 +46,6 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           envs: DEPLOY_BRANCH,INSTALL_DEPS
           script_path: .github/workflows/be-deploy.sh
         env:
@@ -62,7 +60,6 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           envs: DEPLOY_BRANCH,INSTALL_DEPS
           script_path: .github/workflows/fe-deploy.sh
         env:

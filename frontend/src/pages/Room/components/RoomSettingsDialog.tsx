@@ -88,6 +88,8 @@ const RoomSettingsDialog = () => {
 	// Surface the room host to the profile popup so the host gets the kick action
 	// when viewing a spectator's profile.
 	const handleSpectatorClick = (userId: number) => {
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
 		dispatch(setRoomHostId(room?.host_id ?? null))
 		showProfilePopup(userId)
 	}
@@ -98,6 +100,7 @@ const RoomSettingsDialog = () => {
 		<Dialog
 			open={isOpen}
 			onClose={handleDialogClose}
+			disableEnforceFocus
 			sx={{ "& .MuiDialog-paper": { width: "calc(100% - 32px)", margin: 0 } }}
 		>
 			<DialogTitle>{translate("room.settings.title")}</DialogTitle>

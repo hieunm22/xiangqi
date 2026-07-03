@@ -1,7 +1,9 @@
 import React from "react"
 import classnames from "classnames"
-import { Stack } from "@mui/material"
+import { Box, Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
+import landscapeBg from "../../assets/landscape.PNG?url"
+import portraitBg from "../../assets/portrait.jpg?url"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
 import BotDifficultyPopup from "components/BotDifficulty"
@@ -18,18 +20,19 @@ export default function RoomPage() {
 	const {
 		availableMoves,
 		board,
-		bottomSideUser,
 		capturedPieces,
 		checkingPieces,
 		currentTurn,
+		displayTopUser,
+		displayBottomUser,
 		gameMenuActionContextValue,
+		isBoardRotated,
 		myTeam,
 		previousMove,
 		roomChatDialogContextValue,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,
-		topSideUser,
 
 		markerClass,
 		onAnimateEnd,
@@ -38,33 +41,41 @@ export default function RoomPage() {
 	} = useRoomHook()
 
 	return (
-		<div className="room-container">
+		<Box
+			className="room-container"
+			sx={{
+				backgroundImage: `url(${landscapeBg})`,
+				"@media (max-width: 450px)": {
+					backgroundImage: `url(${portraitBg})`
+				}
+			}}
+		>
 			{showConfetti && <ConfettiBoom mode="boom" particleCount={50} />}
 			<div className="player-info-row view">
 				<div className="player-section top-player">
 					<PlayerInfoCard
-						user={topSideUser}
-						team={topSideUser?.team === "black" ? "black" : "red"}
-						active={currentTurn === topSideUser?.team}
-						botLevel={topSideUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
+						user={displayTopUser}
+						team={displayTopUser?.team === "black" ? "black" : "red"}
+						active={currentTurn === displayTopUser?.team}
+						botLevel={displayTopUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
 					<CapturedPiecesDisplay
 						capturedPieces={capturedPieces}
-						team={topSideUser?.team === "black" ? "black" : "red"}
+						team={displayTopUser?.team === "black" ? "black" : "red"}
 					/>
 				</div>
 				<div className="player-section bottom-player">
 					<CapturedPiecesDisplay
 						capturedPieces={capturedPieces}
-						team={bottomSideUser?.team === "black" ? "black" : "red"}
+						team={displayBottomUser?.team === "black" ? "black" : "red"}
 					/>
 					<PlayerInfoCard
-						user={bottomSideUser}
-						team={bottomSideUser?.team === "black" ? "black" : "red"}
-						active={currentTurn === bottomSideUser?.team}
-						botLevel={bottomSideUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
+						user={displayBottomUser}
+						team={displayBottomUser?.team === "black" ? "black" : "red"}
+						active={currentTurn === displayBottomUser?.team}
+						botLevel={displayBottomUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
 					/>
@@ -101,8 +112,11 @@ export default function RoomPage() {
 
 					{board
 						.map((cell, id) => {
-							const col = id % BOARD_COLUMNS
-							const row = ~~(id / BOARD_COLUMNS)
+							const realCol = id % BOARD_COLUMNS
+							const realRow = ~~(id / BOARD_COLUMNS)
+							// Flip the view 180° while keeping the real index for all game logic.
+							const col = isBoardRotated ? BOARD_COLUMNS - 1 - realCol : realCol
+							const row = isBoardRotated ? BOARD_ROWS - 1 - realRow : realRow
 							const isPreviousMove = (previousMove !== null
 								&& (id === previousMove.from || id === previousMove.to))
 								|| checkingPieces.includes(id)
@@ -138,6 +152,7 @@ export default function RoomPage() {
 									$turn={currentTurn}
 									$myTeam={myTeam}
 									$previousMove={isPreviousMove}
+									$rotated={isBoardRotated}
 									$click={onPieceClick(cell.id)}
 									$animateEnd={onAnimateEnd}
 								>
@@ -155,6 +170,6 @@ export default function RoomPage() {
 				</Stack>
 			</div>
 			<BotDifficultyPopup onConfirm={startGame} />
-		</div>
+		</Box>
 	)
 }

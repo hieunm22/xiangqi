@@ -2,7 +2,7 @@ import prisma from "prisma"
 import { getUTCNow } from "../helper"
 import { EndGameParams } from "types/game.type"
 
-// Atomically end a game and settle points.
+// Atomically end a game and settle amounts.
 export async function runEndGameTransaction(params: EndGameParams): Promise<boolean> {
 	const { gameId, roomId, winnerId, isBotGame, betAmount } = params
 
@@ -17,7 +17,7 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 			}
 		})
 
-		// Another request already ended this game — skip all point mutations.
+		// Another request already ended this game — skip all amount mutations.
 		if (claimed.count === 0) {
 			return false
 		}
@@ -34,12 +34,12 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 		if (winnerId === null) {
 			await tx.gameUser.updateMany({
 				where: { game_id: gameId },
-				data: { point: isBotGame ? null : 0 }
+				data: { amount: isBotGame ? null : 0 }
 			})
 		}
-		// Calculate points for PvP games only
+		// Calculate amounts for PvP games only
 		else if (!isBotGame && betAmount && betAmount > 0) {
-			// Winner: set (not increment) the per-game point so it stays idempotent.
+			// Winner: set (not increment) the per-game amount so it stays idempotent.
 			await tx.gameUser.upsert({
 				where: {
 					game_id_user_id: {
@@ -47,15 +47,15 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 						user_id: winnerId
 					}
 				},
-				update: { point: betAmount },
+				update: { amount: betAmount },
 				create: {
 					game_id: gameId,
 					user_id: winnerId,
-					point: betAmount
+					amount: betAmount
 				}
 			})
 
-			// Update winner's point in auth.users table
+			// Update winner's amount in auth.users table
 			await tx.user.update({
 				where: { id: winnerId },
 				data: {
@@ -81,10 +81,10 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 						game_id: gameId,
 						user_id: { in: loserIds }
 					},
-					data: { point: -betAmount }
+					data: { amount: -betAmount }
 				})
 
-				// Update losers' points in auth.users table
+				// Update losers' amounts in auth.users table
 				await tx.user.updateMany({
 					where: { id: { in: loserIds } },
 					data: {

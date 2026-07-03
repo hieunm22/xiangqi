@@ -5,8 +5,6 @@
 		--river-gap: 20px;
 		--board-padding: 15px;
 		--piece-font-size: 18px;
-		--line-color: #5b2f12;
-		--wood: #deb46f;
 	}
 }
 
@@ -17,8 +15,6 @@
 		--river-gap: 20px;
 		--board-padding: 15px;
 		--piece-font-size: 18px;
-		--line-color: #5b2f12;
-		--wood: #deb46f;
 	}
 }
 
@@ -29,12 +25,15 @@
 		--river-gap: 20px;
 		--board-padding: 18px;
 		--piece-font-size: 20px;
-		--line-color: #5b2f12;
-		--wood: #deb46f;
 	}
 }
 
 @media screen and (max-width: 450px) {
+	.dashboard {
+		height: calc(100vh - 56px);
+		min-height: calc(100vh - 56px);
+	}
+
 	.room-container {
 		flex-direction: column;
 	}
@@ -42,7 +41,7 @@
 	.xiangqi-board {
 		order: -1;
 	}
-	
+
 	.profile-user-info {
 		flex-direction: column;
 		margin-left: 0;
@@ -73,7 +72,7 @@
 	.piece-table {
 		width: 100% !important;
 	}
-	
+
 	.top-player {
 		align-items: flex-start;
 
@@ -92,5 +91,29 @@
 			flex-direction: row;
 			direction: rtl;
 		}
+	}
+
+	.extra-money-page {
+		height: calc(100vh - 56px);
+	}
+}
+
+@media screen and (min-height: 900px) and (min-width: 1440px) {
+	:root {
+		--cell-size: 63px;
+		--piece-size: 45px;
+		--river-gap: 20px;
+		--board-padding: 36px;
+		--piece-font-size: 32px;
+	}
+}
+
+@media screen and (min-height: 1080px) and (min-width: 1920px) {
+	:root {
+		--cell-size: 81px;
+		--piece-size: 63px;
+		--river-gap: 60px;
+		--board-padding: 48px;
+		--piece-font-size: 42px;
 	}
 }

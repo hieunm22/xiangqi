@@ -9,8 +9,9 @@ import {
 } from "./constant"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
-import { openConfirm } from "components/ConfirmProvider"
 import { RoomChatMessage } from "components/ChatDialog/types"
+import { openConfirm } from "components/ConfirmProvider"
+import { openSnackbar } from "components/SnackbarProvider"
 import {
 	diffFenMove,
 	getAvailableMoves,
@@ -108,6 +109,9 @@ const useRoomHook = () => {
 	const [game, setGame] = useState<GameInfo | null>(null)
 	const [history, setHistory] = useState<HistoryData[]>([])
 	const [isOpen, setIsOpen] = useState(false)
+	// Flip the board view 180° (change the viewing side)
+	// while game state and all move logic keep using the real cell index
+	const [isBoardRotated, setIsBoardRotated] = useState(false)
 	const [openRoomChat, setOpenRoomChat] = useState(false)
 	const [unreadChatCount, setUnreadChatCount] = useState(0)
 	const [incomingChatMessage, setIncomingChatMessage] = useState<RoomChatMessage | null>(null)
@@ -139,6 +143,7 @@ const useRoomHook = () => {
 	const remoteMoveRef = useRef<RemoteMoveProps | null>(null)
 	// Mirror the chat-open state into a ref so the room-message-sent listener can
 	// decide whether to bump the unread badge without re-subscribing on toggle.
+	const previousJoinedUsersRef = useRef<RoomUser[]>([])
 	const openRoomChatRef = useRef(openRoomChat)
 	openRoomChatRef.current = openRoomChat
 	const { id } = useParams()
@@ -219,6 +224,7 @@ const useRoomHook = () => {
 		}
 		const roomData = roomInfoResponse.data
 		const roomUsers = (roomData.users || []) as RoomUser[]
+		previousJoinedUsersRef.current = roomUsers
 
 		const isUserAlreadyInRoom = roomUsers.some(user => user.id === currentUserId)
 
@@ -302,10 +308,15 @@ const useRoomHook = () => {
 		const teams = joinedUsers.filter(u => u.team).map(u => u.team)
 		const hasAvailableSeat = new Set(teams).size < 2
 
+		// Check if current user can afford this room's bet for challenge
+		const canAffordBet = room && currentUser && currentUser.total_amount && room.pve_mode === false
+			? (room.bet_amount === 0 || room.bet_amount * 10 <= currentUser.total_amount * 8)
+			: true
+
 		const menus: RoomActionButton[] = [
 			{
 				key: "start-room",
-				icon: "fas fa-swords",
+				icon: "fad fa-swords",
 				label: "room.actions.start-room",
 				onClick: handleStartGame,
 				visible: room.host_id === currentUserId && room.status === 1 && joinedUsers.length > 1,
@@ -313,15 +324,15 @@ const useRoomHook = () => {
 			},
 			{
 				key: "challenge",
-				icon: "fas fa-hand-rock",
+				icon: "fad fa-hand-rock",
 				label: "room.actions.challenge",
 				onClick: handleChallenge,
 				visible: currentUser?.team === null,
-				enabled: room.status === 1 && currentUser?.team === null && hasAvailableSeat
+				enabled: room.status === 1 && currentUser?.team === null && hasAvailableSeat && canAffordBet
 			},
 			{
 				key: "leave-seat",
-				icon: "fas fa-seat",
+				icon: "fad fa-seat",
 				label: "room.actions.leave-seat",
 				onClick: handleLeaveSeat,
 				visible: currentUser !== undefined && currentUser.team !== null && room.host_id !== currentUserId,
@@ -329,7 +340,7 @@ const useRoomHook = () => {
 			},
 			{
 				key: "undo",
-				icon: "far fa-rotate-left",
+				icon: "fad fa-rotate-left",
 				label: "room.actions.undo",
 				onClick: handleUndo,
 				visible: false,
@@ -337,7 +348,7 @@ const useRoomHook = () => {
 			},
 			{
 				key: "draw",
-				icon: "far fa-handshake",
+				icon: "fad fa-handshake",
 				label: "room.actions.draw",
 				onClick: handleDraw,
 				visible: false,
@@ -345,7 +356,7 @@ const useRoomHook = () => {
 			},
 			{
 				key: "surrender",
-				icon: "far fa-flag",
+				icon: "fad fa-flag",
 				label: "room.actions.surrender",
 				onClick: handleSurrender,
 				visible: false,
@@ -353,12 +364,20 @@ const useRoomHook = () => {
 			},
 			{
 				key: "back-home",
-				icon: "fas fa-left-from-bracket",
+				icon: "fad fa-left-from-bracket",
 				label: "room.actions.back-home",
 				onClick: handleBackToHome,
 				visible: true,
 				enabled: true
-			}
+			},
+			{
+				key: "rotate-board",
+				icon: "fad fa-arrows-rotate",
+				label: "room.actions.flip-board",
+				onClick: handleRotateBoard,
+				visible: true,
+				enabled: true
+			},
 		]
 
 		if (history.length === 0) {
@@ -472,6 +491,39 @@ const useRoomHook = () => {
 				return
 			}
 
+			// Detect new users joining and users leaving
+			if (previousJoinedUsersRef.current.length > 0) {
+				const previousUserIds = new Set(previousJoinedUsersRef.current.map(u => u.id))
+				const currentUserIds = new Set(data.users.map(u => u.id))
+
+				// Detect new users
+				const newUsers = data.users.filter(u => !previousUserIds.has(u.id))
+				newUsers.forEach(newUser => {
+					if (newUser.id !== currentUserId) {
+						openSnackbar({
+							avatar: newUser.avatar_url,
+							message: translate("room.notifications.joined").format(newUser.display_name),
+							severity: "success",
+							duration: 3000
+						})
+					}
+				})
+
+				// Detect users leaving
+				const previousUsers = previousJoinedUsersRef.current.filter(u => !currentUserIds.has(u.id))
+				previousUsers.forEach(leftUser => {
+					if (leftUser.id !== currentUserId) {
+						openSnackbar({
+							avatar: leftUser.avatar_url,
+							message: translate("room.notifications.left").format(leftUser.display_name),
+							severity: "success",
+							duration: 3000
+						})
+					}
+				})
+			}
+
+			previousJoinedUsersRef.current = data.users
 			setJoinedUsers(data.users)
 			// The host can change when the current host leaves the room.
 			if (data.hostId !== undefined) {
@@ -1033,6 +1085,10 @@ const useRoomHook = () => {
 		navigate(LOGIN_PATH)
 	}
 
+	const handleRotateBoard = () => {
+		setIsBoardRotated(prev => !prev)
+	}
+
 	const onPieceClick = (id: number) => () => {
 		// Prevent piece selection while a move is pending
 		if (isMovePending) return
@@ -1250,22 +1306,28 @@ const useRoomHook = () => {
 		handleSettingsSaved,
 		openSettings: showHideSettings(true)
 	}
+	
+	// When the board view is flipped, keep each player's info card next to their
+	// side of the board by swapping the top/bottom cards. UI-only, like the board flip.
+	const displayTopUser = isBoardRotated ? bottomSideUser : topSideUser
+	const displayBottomUser = isBoardRotated ? topSideUser : bottomSideUser
 
 	return {
 		availableMoves,
 		board,
-		bottomSideUser,
 		capturedPieces,
 		checkingPieces,
 		currentTurn,
+		displayTopUser,
+		displayBottomUser,
 		gameMenuActionContextValue,
+		isBoardRotated,
 		myTeam,
 		previousMove,
 		roomChatDialogContextValue,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,
-		topSideUser,
 
 		markerClass,
 		onAnimateEnd,

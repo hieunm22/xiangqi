@@ -5,6 +5,8 @@ import {
 	Grid,
 	Stack
 } from "@mui/material"
+import landscapeBg from "../../assets/landscape.PNG?url"
+import portraitBg from "../../assets/portrait.jpg?url"
 import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { CreateRoomCard } from "./components/CreateRoomCard"
@@ -166,11 +168,19 @@ const DashboardPage = () => {
 
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
-			<Box className="dashboard">
+			<Box
+				className="dashboard"
+				sx={{
+					backgroundImage: `url(${landscapeBg})`,
+					"@media (max-width: 450px)": {
+						backgroundImage: `url(${portraitBg})`
+					}
+				}}
+			>
 				<Stack spacing={3}>
 					<TTypography
 						variant="h5"
-						sx={{ fontWeight: 700 }}
+						className="dashboard__title"
 						gutterBottom
 						content="dashboard.page.title"
 					/>

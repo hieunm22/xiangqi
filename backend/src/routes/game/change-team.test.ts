@@ -7,6 +7,7 @@ const redisGetMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const roomUserUpdateMock = vi.fn()
+const userFindUniqueMock = vi.fn()
 const emitRoomUsersUpdatedMock = vi.fn()
 
 const PATH = "/api/game/change-team"
@@ -25,6 +26,9 @@ vi.mock("prisma", () => ({
 		roomUser: {
 			findMany: roomUserFindManyMock,
 			update: roomUserUpdateMock
+		},
+		user: {
+			findUnique: userFindUniqueMock
 		}
 	}
 }))
@@ -247,6 +251,143 @@ describe("POST /api/game/change-team", () => {
 		expect(roomUserUpdateMock).not.toHaveBeenCalled()
 	})
 
+	it("returns 400 when user cannot afford bet while challenging", async () => {
+		const accessToken = buildAccessToken(11, "session-challenge-6b")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		// room has bet_amount=100, pve_mode=false (PvP)
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10), bet_amount: 100, pve_mode: false })
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				user_id: BigInt(10),
+				team: "red",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
+			},
+			{
+				user_id: BigInt(11),
+				team: null,
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 120 }
+			}
+		])
+		// Caller has 120, bet=100 → 100*10 > 120*8 (1000 > 960) → cannot afford
+		userFindUniqueMock.mockResolvedValue({ total_amount: 120 })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ roomId: 100, isLeaveToSeat: false })
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "challenge.messages.insufficient-amount",
+			status_code: 400
+		})
+		expect(roomUserUpdateMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 200 when user can afford bet at exactly 80% threshold", async () => {
+		const accessToken = buildAccessToken(11, "session-challenge-6c")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		// room has bet_amount=100, balance=125 → 100*10 <= 125*8 (1000 <= 1000) → at threshold
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10), bet_amount: 100, pve_mode: false })
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				user_id: BigInt(10),
+				team: "red",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
+			},
+			{
+				user_id: BigInt(11),
+				team: null,
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 125 }
+			}
+		])
+
+		userFindUniqueMock.mockResolvedValueOnce({ total_amount: 125 })
+		roomUserUpdateMock.mockResolvedValueOnce({})
+
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				team: "red",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
+			},
+			{
+				team: "black",
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 125, is_bot: false }
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ roomId: 100, isLeaveToSeat: false })
+
+		expect(res.status).toBe(200)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "challenge.messages.success",
+			status_code: 200
+		})
+		expect(roomUserUpdateMock).toHaveBeenCalled()
+	})
+
+	it("returns 200 and skips balance check when joining in PvE mode", async () => {
+		const accessToken = buildAccessToken(11, "session-challenge-6d")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		// room has bet_amount=100, pve_mode=true → balance check should be skipped even though balance=50
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10), bet_amount: 100, pve_mode: true })
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				user_id: BigInt(10),
+				team: "red",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
+			},
+			{
+				user_id: BigInt(11),
+				team: null,
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 50 }
+			}
+		])
+
+		roomUserUpdateMock.mockResolvedValueOnce({})
+
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				team: "red",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
+			},
+			{
+				team: "black",
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 50, is_bot: false }
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ roomId: 100, isLeaveToSeat: false })
+
+		expect(res.status).toBe(200)
+		expect(res.body).toMatchObject({
+			success: true,
+			message: "challenge.messages.success",
+			status_code: 200
+		})
+		// userFindUniqueMock should not be called for balance check in PvE mode
+		expect(userFindUniqueMock).not.toHaveBeenCalled()
+		expect(roomUserUpdateMock).toHaveBeenCalled()
+	})
+
 	it("returns 400 when both team seats are already taken", async () => {
 		const accessToken = buildAccessToken(11, "session-challenge-7")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
@@ -290,7 +431,7 @@ describe("POST /api/game/change-team", () => {
 	it("returns 200 and updates caller to opposite team of host", async () => {
 		const accessToken = buildAccessToken(11, "session-challenge-8")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
-		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10) })
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10), bet_amount: 50, pve_mode: false })
 
 		// First findMany: validation pass — host=10 (red), caller=11 (no team)
 		roomUserFindManyMock.mockResolvedValueOnce([
@@ -307,6 +448,9 @@ describe("POST /api/game/change-team", () => {
 				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
 			}
 		])
+
+		// Balance check: bet_amount=50, user balance=150 → 50*10 <= 150*8 (500 <= 1200) → can afford
+		userFindUniqueMock.mockResolvedValueOnce({ total_amount: 150 })
 
 		roomUserUpdateMock.mockResolvedValueOnce({})
 

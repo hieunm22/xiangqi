@@ -1,5 +1,4 @@
 import { Response, Router } from "express"
-import prisma from "prisma"
 import {
 	LOGIN_SESSION_KEY,
 	REFRESH_TOKEN_KEY,
@@ -50,15 +49,6 @@ router.delete("/auth/logout", requireAuth(true), async (req: AuthenticatedReques
 	const sessionId = req.auth?.sessionId
 
 	try {
-		// delete user from all rooms they are participating in
-		if (userId) {
-			await prisma.roomUser.deleteMany({
-				where: {
-					user_id: Number(userId)
-				}
-			})
-		}
-
 		const loginSessionKey = `${LOGIN_SESSION_KEY}:${userId}:${sessionId}`
 		const refreshTokenKey = `${REFRESH_TOKEN_KEY}:${userId}:${sessionId}`
 		const sessionExists = await redis.exists(loginSessionKey)

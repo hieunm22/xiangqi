@@ -124,6 +124,9 @@ router.get("/message/get-room-message", requireAuth(), async (req: Authenticated
 
 		const formattedMessages = await Promise.all(
 			messages.map(async (msg: Document) => {
+				const messageTimestamp = new Date(msg.timestamp)
+				const isAfterJoin = messageTimestamp > roomUser.joined_at
+				const hasRead = (msg.read_by || []).includes(userId)
 				const user = await prisma.user.findUnique({
 					where: { id: BigInt(msg.sender_id) },
 					select: { id: true, display_name: true, avatar_seq: true }
@@ -139,8 +142,9 @@ router.get("/message/get-room-message", requireAuth(), async (req: Authenticated
 					} : null,
 					message: msg.message,
 					read_by: msg.read_by || [],
-					seen: (msg.read_by || []).includes(userId) && roomUser.joined_at < new Date(msg.timestamp),
-					timestamp: new Date(msg.timestamp).toISOString()
+					// Messages sent before the user joined are treated as already seen.
+					seen: !isAfterJoin || hasRead,
+					timestamp: messageTimestamp.toISOString()
 				}
 			})
 		)

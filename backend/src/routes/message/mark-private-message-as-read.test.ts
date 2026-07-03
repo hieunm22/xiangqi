@@ -124,7 +124,8 @@ describe("POST /api/message/mark-private-message-as-read", () => {
 			status_code: 400
 		})
 		expect(userFindUniqueMock).toHaveBeenCalledWith({
-			where: { id: 999n }
+			where: { id: 999n },
+			select: { id: true }
 		})
 	})
 
@@ -155,7 +156,7 @@ describe("POST /api/message/mark-private-message-as-read", () => {
 			{
 				sender_id: 2,
 				receiver_id: 1,
-				seen: false
+				seen: { $ne: true }
 			},
 			{
 				$set: { seen: true }
@@ -184,7 +185,7 @@ describe("POST /api/message/mark-private-message-as-read", () => {
 			{
 				sender_id: 5,
 				receiver_id: 3,
-				seen: false
+				seen: { $ne: true }
 			},
 			{
 				$set: { seen: true }

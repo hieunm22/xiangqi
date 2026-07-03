@@ -24,7 +24,8 @@ import {
 	HOME_PATH,
 	LOGIN_PATH,
 	LS_DARKMODE,
-	LS_TOKEN_KEY
+	LS_TOKEN_KEY,
+	LUCKY_WHEEL_SLOT_HOURS
 } from "common/constant"
 import { PopupState } from "common/enums"
 import { PrivateChatPopup } from "./components/PrivateChatPopup"
@@ -38,6 +39,7 @@ import { SearchUserPopup } from "./components/SearchUserPopup"
 import { JoinRoomDialog, openJoinRoom } from "pages/Dashboard/components/JoinRoomDialog"
 import {
 	decodePayload,
+	getTimeToNextSlot,
 	getToken,
 	requireImage
 } from "common/helper"
@@ -70,12 +72,13 @@ export default function Layout() {
 	const [userImage, setUserImage] = useState("")
 	const [unreadCount, setUnreadCount] = useState(0)
 	const [announcementCount, setAnnouncementCount] = useState(0)
+	const [luckyPending, setLuckyPending] = useState(false)
 	const navigate = useNavigate()
 	const {
+		getLuckySpins,
+		getRoomById,
 		getUnreadCount,
 		getUserById,
-		getRoomById,
-		leaveRoom,
 		logout,
 		makeExpired,
 		resetGame
@@ -146,6 +149,32 @@ export default function Layout() {
 
 		getLoginUserInfo()
 		getPrivateMessagesUnread()
+	}, [])
+
+	// Show a badge on the wheel menu when a slot bonus (+3 spins per 0/6/12/18h
+	// GMT boundary) is waiting to be claimed. Re-check at the next boundary so the
+	// badge appears even if the app stays open across it.
+	useEffect(() => {
+		let timer: ReturnType<typeof setTimeout>
+
+		const fetchLuckyStatus = async () => {
+			const token = getToken()
+			if (!token) return
+
+			try {
+				const response = await getLuckySpins(token)
+				if (response?.success && response.data) {
+					setLuckyPending(Boolean(response.data.pending))
+				}
+			} catch (error) {
+				console.error("Failed to get lucky spins status:", error)
+			}
+
+			timer = setTimeout(fetchLuckyStatus, getTimeToNextSlot(LUCKY_WHEEL_SLOT_HOURS))
+		}
+
+		fetchLuckyStatus()
+		return () => clearTimeout(timer)
 	}, [])
 
 	// Live-update the announcement badge when another client sends one. Ignore
@@ -221,6 +250,14 @@ export default function Layout() {
 		setAnnouncementCount(0)
 	}
 
+	const handleWheelClick = () => {
+		(document.activeElement as HTMLElement)?.blur()
+		navigate("/extra-money")
+		setMobileOpen(false)
+		// The wheel page claims the pending spins on open, so clear the badge now.
+		setLuckyPending(false)
+	}
+
 	const handleRestart = async () => {
 		const token = getToken()
 		if (!token) return
@@ -277,25 +314,22 @@ export default function Layout() {
 	}
 
 	const handleGoHome = async () => {
-		if (location.pathname.startsWith("/room/")) {
-			const token = getToken()
-			const id = Number(location.pathname.substring("/room/".length))
-			if (Number.isInteger(id) && id > 0) {
-				await leaveRoom(token, id)
-			}
-		}
 		navigate(HOME_PATH)
 	}
 
 	const isInRoom = location.pathname.startsWith("/room/")
 
+	const menuInDrawer = [
+		PopupState.SETTINGS,
+		PopupState.GUIDE
+	]
 	const menuItems = [
 		{
 			text: "menu.home",
 			icon: "fa-home",
 			click: handleGoHome,
 			active: window.location.pathname === HOME_PATH
-				&& ![PopupState.SETTINGS, PopupState.GUIDE].includes(gameState.popupState)
+				&& !menuInDrawer.includes(gameState.popupState)
 		},
 		{
 			text: "menu.guide",
@@ -308,8 +342,16 @@ export default function Layout() {
 			icon: "fa-bullhorn",
 			click: handleShowAnnounce,
 			active: window.location.pathname === "/announce"
-				&& ![PopupState.SETTINGS, PopupState.GUIDE].includes(gameState.popupState),
+				&& !menuInDrawer.includes(gameState.popupState),
 			badge: announcementCount
+		},
+		{
+			text: "menu.extra",
+			icon: "fa-sack-dollar",
+			click: handleWheelClick,
+			active: window.location.pathname === "/extra-money"
+				&& !menuInDrawer.includes(gameState.popupState),
+			dot: luckyPending
 		},
 		{
 			text: "menu.setting.button",
@@ -357,11 +399,12 @@ export default function Layout() {
 					>
 						<Badge
 							badgeContent={item.badge}
+							variant={item.dot ? "dot" : "standard"}
 							color="error"
 							max={9}
-							invisible={!item.badge}
+							invisible={item.dot ? false : !item.badge}
 						>
-							<TI className={`fas ${item.icon} icon`} title={item.text} />
+							<TI className={`fad ${item.icon} icon`} title={item.text} />
 						</Badge>
 						{drawerOpen && <TTypography content={item.text} className="text" />}
 					</ListItemButton>
@@ -446,6 +489,7 @@ export default function Layout() {
 				onClose={handleCloseUserMenu}
 				anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 				transformOrigin={{ vertical: "top", horizontal: "right" }}
+				disableRestoreFocus
 				slotProps={{
 					paper: {
 						sx: {
@@ -538,10 +582,7 @@ export default function Layout() {
 				<OnlinePresenceProvider>
 					<Box
 						component="div"
-						sx={{
-							width: `100%`,
-							p: 1,
-						}}
+						sx={{ width: `100%`, p: 0 }}
 					>
 						{isMobile && <Toolbar />}
 						<Outlet />

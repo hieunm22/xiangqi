@@ -18,6 +18,12 @@ import {
 import { FenMoveDiffResult } from "types/Common"
 import { NullableCellProps, PieceCharacter } from "types/GameState"
 
+String.prototype.format = function(...args: any) {
+	return this.toString().replace(/{(\d+)}/g, (match, index) => {
+		return typeof args[index] !== "undefined" ? args[index] : match
+	})
+}
+
 const processSoldierMove = (
 	state: any,
 	forwardStep: number,
@@ -541,4 +547,13 @@ export function formatTimestampToDateTimeArray(timestamp: string, language: stri
 	}
 
 	return [dateString, timeString]
+}
+
+// Milliseconds left until the next UTC boundary of the given slot size (hours).
+export function getTimeToNextSlot(slotHours: number): number {
+	const now = new Date()
+	const nextBoundary = new Date(now)
+	const nextBoundaryHour = (Math.floor(now.getUTCHours() / slotHours) + 1) * slotHours
+	nextBoundary.setUTCHours(nextBoundaryHour, 0, 0, 0)
+	return nextBoundary.getTime() - now.getTime()
 }

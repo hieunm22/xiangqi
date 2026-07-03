@@ -12,10 +12,18 @@ import { Team } from "types/GameState"
 import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
 import {
 	GameHistoryItem,
+	UpdateUserInfoPayload,
+	UpdateUserInfoResponse,
 	UnreadCountResponse,
 	UserProfileWithStats
 } from "components/Layout/types"
 import { AnnouncementMessage } from "components/ChatDialog/types"
+import {
+	BonusCoins,
+	DailyBonus,
+	LuckySpins,
+	SelectedTab
+} from "pages/ExtraMoney/types"
 import {
 	GameMovements,
 	MovePieceRequest,
@@ -38,7 +46,16 @@ const EP = { // end points
 	resetPassword: "/auth/reset-password",
 
 	// user endpoints
+	bonusCoins: "/user/bonus-coins",
+	claimBonusCoin: "/user/bonus-coins-claim",
+	dailyBonus: "/user/daily-bonus",
+	claimDailyBonus: "/user/daily-bonus-claim",
+	getLuckySpins: "/user/lucky-spins",
+	claimLuckySpins: "/user/lucky-spins-claim",
+	spinLuckyWheel: "/user/lucky-spin",
 	searchUsers: "/user/search",
+	selectedTab: "/user/selected-tab",
+	updateUserInfo: "/user/update-info",
 
 	// room endpoints
 	createRoom: "/room/create-room",
@@ -152,6 +169,24 @@ export const useAPI = () => {
 							.json(changeTeamCallback)
 							.catch(handleError)
 
+	const claimBonusCoin = async (token: string) => authFetch(EP.claimBonusCoin)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(claimBonusCoinCallback)
+							.catch(handleError)
+
+	const claimDailyBonus = async (token: string) => authFetch(EP.claimDailyBonus)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(claimDailyBonusCallback)
+							.catch(handleError)
+
+	const claimLuckySpins = async (token: string) => authFetch(EP.claimLuckySpins)
+							.auth(`Bearer ${token}`)
+							.post()
+							.json(claimLuckySpinsCallback)
+							.catch(handleError)
+
 	const createRoom = async (token: string, body: CreateRoomRequest) => authFetch(EP.createRoom)
 							.auth(`Bearer ${token}`)
 							.post(body)
@@ -193,10 +228,28 @@ export const useAPI = () => {
 							.json(getAnnouncementsCallback)
 							.catch(handleError)
 
+	const getBonusCoins = async (token: string) => authFetch(EP.bonusCoins)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getBonusCoinsCallback)
+							.catch(handleError)
+
+	const getDailyBonus = async (token: string) => authFetch(EP.dailyBonus)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getDailyBonusCallback)
+							.catch(handleError)
+
 	const getGameMovementHistory = async (token: string, gameId: string) => authFetch(`${EP.getGameMovementHistory}?gameId=${gameId}`)
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getGameHistoryCallback)
+							.catch(handleError)
+
+	const getLuckySpins = async (token: string) => authFetch(EP.getLuckySpins)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getLuckySpinsCallback)
 							.catch(handleError)
 
 	const getOnlineUsers = async (token: string) => authFetch(EP.getOnlineUsers)
@@ -233,6 +286,12 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getRoomMessagesCallback)
+							.catch(handleError)
+
+	const getSelectedTab = async (token: string) => authFetch(EP.selectedTab)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getSelectedTabCallback)
 							.catch(handleError)
 
 	const getUnreadCount = async (token: string) => authFetch(EP.unreadCount)
@@ -364,6 +423,12 @@ export const useAPI = () => {
 							.json(sendRoomMessageCallback)
 							.catch(handleError)
 
+	const spinLuckyWheel = async (token: string, amount: number) => authFetch(EP.spinLuckyWheel)
+							.auth(`Bearer ${token}`)
+							.post({ amount })
+							.json(spinLuckyWheelCallback)
+							.catch(handleError)
+
 	const startRoom = async (token: string, roomId: number, botDifficulty?: number) => authFetch(EP.startRoom)
 							.auth(`Bearer ${token}`)
 							.post(botDifficulty !== undefined ? { id: roomId, botDifficulty } : { id: roomId })
@@ -388,6 +453,27 @@ export const useAPI = () => {
 							.json(updateRoomCallback)
 							.catch(handleError)
 
+	const updateSelectedTab = async (token: string, tab: number) => authFetch(EP.selectedTab)
+							.auth(`Bearer ${token}`)
+							.patch({ tab })
+							.json(updateSelectedTabCallback)
+							.catch(handleError)
+
+	const updateUserInfo = async (token: string, payload: Partial<UpdateUserInfoPayload>) => authFetch(EP.updateUserInfo)
+							.auth(`Bearer ${token}`)
+							.patch(payload)
+							.json(updateUserInfoCallback)
+							.catch(handleError)
+
+	const updateUserAvatar = async (token: string, avatar: File) => requestWithCookie
+							.url(EP.updateUserInfo)
+							.auth(`Bearer ${token}`)
+							.addon(FormDataAddon)
+							.formData({ avatar })
+							.patch()
+							.json(updateUserInfoCallback)
+							.catch(handleError)
+
 	const validateToken = (token: string) => authFetch(EP.validateToken)
 							.auth(`Bearer ${token}`)
 							.post()
@@ -400,6 +486,18 @@ export const useAPI = () => {
 		return response
 	}
 
+	const claimBonusCoinCallback = (response: APIResponse<BonusCoins>) => {
+		return response
+	}
+
+	const claimDailyBonusCallback = (response: APIResponse<DailyBonus>) => {
+		return response
+	}
+
+	const claimLuckySpinsCallback = (response: APIResponse<LuckySpins>) => {
+		return response
+	}
+
 	const createRoomCallback = (response: APIResponse<RoomWithUsers>) => {
 		return response
 	}
@@ -409,6 +507,14 @@ export const useAPI = () => {
 	}
 
 	const getAnnouncementsCallback = (response: APIResponse<AnnouncementMessage[]>) => {
+		return response
+	}
+
+	const getBonusCoinsCallback = (response: APIResponse<BonusCoins>) => {
+		return response
+	}
+
+	const getDailyBonusCallback = (response: APIResponse<DailyBonus>) => {
 		return response
 	}
 	
@@ -424,6 +530,10 @@ export const useAPI = () => {
 		return response
 	}
 	
+	const getLuckySpinsCallback = (response: APIResponse<LuckySpins>) => {
+		return response
+	}
+
 	const getOnlineUsersCallback = (response: APIResponse<{ count: number; users: UserAvatarType[] }>) => {
 		return response
 	}
@@ -447,7 +557,11 @@ export const useAPI = () => {
 	const getRoomMessagesCallback = (response: any) => {
 		return response
 	}
-	
+
+	const getSelectedTabCallback = (response: APIResponse<SelectedTab>) => {
+		return response
+	}
+
 	const getUserCallback = (response: APIResponse<UserProfileWithStats>) => {
 		return response
 	}
@@ -455,7 +569,7 @@ export const useAPI = () => {
 	const getUnreadCountCallback = (response: APIResponse<UnreadCountResponse>) => {
 		return response
 	}
-	
+
 	const joinRoomCallback = (response: APIResponse<RoomUser[]>) => {
 		return response
 	}
@@ -532,6 +646,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const spinLuckyWheelCallback = (response: APIResponse<LuckySpins>) => {
+		return response
+	}
+
 	const startRoomCallback = (response: APIResponse<Pick<RoomInfoData, "room" | "game">>) => {
 		return response
 	}
@@ -545,6 +663,14 @@ export const useAPI = () => {
 	}
 
 	const updateRoomCallback = (response: APIResponse<RoomInfo>) => {
+		return response
+	}
+
+	const updateSelectedTabCallback = (response: APIResponse<SelectedTab>) => {
+		return response
+	}
+
+	const updateUserInfoCallback = (response: APIResponse<UpdateUserInfoResponse>) => {
 		return response
 	}
 
@@ -574,19 +700,26 @@ export const useAPI = () => {
 		authFetch,
 
 		changeTeam,
+		claimBonusCoin,
+		claimDailyBonus,
+		claimLuckySpins,
 		createRoom,
 		drawGame,
 		fetchRooms,
 		forgotPassword,
 		getAnnouncements,
 		getAnnouncementsMore,
+		getBonusCoins,
+		getDailyBonus,
 		getGameMovementHistory,
+		getLuckySpins,
 		getOnlineUsers,
 		getPlayerHistory,
 		getPrivateConversations,
 		getPrivateMessages,
 		getRoomMessages,
 		getRoomById,
+		getSelectedTab,
 		getUnreadCount,
 		getUserById,
 		joinRoom,
@@ -608,10 +741,14 @@ export const useAPI = () => {
 		sendAnnouncement,
 		sendPrivateMessage,
 		sendRoomMessage,
+		spinLuckyWheel,
 		startRoom,
 		surrenderGame,
 		undoGame,
 		updateRoom,
+		updateSelectedTab,
+		updateUserAvatar,
+		updateUserInfo,
 		validateToken
 	}
 }

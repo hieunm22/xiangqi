@@ -24,10 +24,10 @@ menu.profile;Profile;Trang cá nhân
 menu.messages;Message;Tin nhắn
 menu.guide;Guide;Luật chơi
 menu.announce;Announcement;Thông báo
+menu.extra;Daily tasks;Tác vụ thường nhật
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
-menu.profile;Profile;Trang cá nhân
 menu.expired;Set expired;Hết hạn token
 menu.logout;Logout;Đăng xuất
 menu.rooms;Rooms;Trò chơi
@@ -227,6 +227,7 @@ room.actions.undo;Undo;Hoán tác
 room.actions.surrender;Surrender;Đầu hàng
 room.actions.draw;Draw;Hòa
 room.actions.back-home;Back to home;Thoát phòng
+room.actions.flip-board;Flip board;Đảo chiều bàn cờ
 room.actions.accept-draw;Accept;Chấp nhận
 room.actions.reject-draw;Reject;Từ chối
 room.actions.send-pm;Send PM;Chat
@@ -243,6 +244,8 @@ room.messages.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắ
 room.messages.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
 room.messages.insufficient-amount;You do not have enough balance to join this room;Bạn không đủ tiền để tham gia bàn chơi này
 room.messages.all-seats-occupied;All player seats are occupied;Tất cả ghế chơi đã được chiếm
+room.notifications.joined;{0} joined the room;{0} đã vào phòng
+room.notifications.left;{0} left the room;{0} đã rời phòng
 room.settings.title;Room Settings;Cài đặt phòng
 room.settings.room-name;Room name;Tên phòng
 room.settings.players;Spectators;Người xem
@@ -338,6 +341,30 @@ guide.result.paragraph2;If a player runs out of time for a single move (for exam
 guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
 guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
+extra-money.lucky-wheel.title;Lucky Wheel;Vòng quay may mắn
+extra-money.lucky-wheel.description;Spin the wheel to earn money! Click the spin button in the middle of the wheel to try your luck.;Quay vòng để kiếm tiền! Bấm nút Quay ở giữa vòng quay để thử vận may của bạn.
+extra-money.lucky-wheel.spin-button;Spin;Quay
+extra-money.lucky-wheel.reward-placeholder;Click Spin to get started;Nhấp Quay để bắt đầu
+extra-money.title;Daily tasks;Tác vụ thường nhật
+extra-money.tab.lucky-wheel;Lucky Wheel;Vòng Quay May Mắn
+extra-money.tab.bonus-coin;Bonus Coin;Xu Thưởng
+extra-money.tab.daily-bonus;Daily Bonus;Thưởng hàng ngày
+extra-money.bonus-coin.subtitle;Watch a short video to earn free coin;Xem video ngắn để nhận xu miễn phí
+extra-money.bonus-coin.next-in;Next in:;Lượt kế tiếp:
+extra-money.bonus-coin.coin-unit;coin;xu
+extra-money.bonus-coin.watch-video;Watch video;Xem video
+extra-money.daily-bonus.subtitle;Login 7 days in a row to earn 4000 coin;Đăng nhập 7 ngày liên tiếp để nhận 4000 xu
+extra-money.daily-bonus.day;Day;Ngày
+profile.button.save;Save;Lưu
+profile.button.cancel;Cancel;Huỷ
+;;
+;;
+;;
+;;
+;;
+;;
+;;
+;;
 ;;
 ;;
 ;;

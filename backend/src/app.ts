@@ -14,7 +14,12 @@ import refreshTokenRoutes from "./routes/auth/refresh-token"
 import registerRoutes from "./routes/auth/register"
 import validateTokenRoutes from "./routes/auth/validate-token"
 
+import bonusCoinsRoutes from "./routes/user/bonus-coins"
+import dailyBonusRoutes from "./routes/user/daily-bonus"
+import luckySpinsRoutes from "./routes/user/lucky-spins"
 import searchUserRoutes from "./routes/user/search-user"
+import selectedTabRoutes from "./routes/user/selected-tab"
+import updateUserInfoRoutes from "./routes/user/update-user-info"
 
 import createRoomRoutes from "./routes/room/create-room"
 import fetchRoomsRoutes from "./routes/room/fetch-rooms"
@@ -34,7 +39,7 @@ import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
 import undoRoutes from "./routes/game/undo"
 
-import recalculatePointsRoutes from "./routes/tool/recalculate-points"
+import recalculateAmountRoutes from "./routes/tool/recalculate-amount"
 import resetGameRoutes from "./routes/tool/reset-game"
 import sequenceRoutes from "./routes/tool/sequence"
 
@@ -92,7 +97,12 @@ app.use("/api", registerRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
 
+app.use("/api", bonusCoinsRoutes)
+app.use("/api", dailyBonusRoutes)
+app.use("/api", luckySpinsRoutes)
 app.use("/api", searchUserRoutes)
+app.use("/api", selectedTabRoutes)
+app.use("/api", updateUserInfoRoutes)
 
 app.use("/api", createRoomRoutes)
 app.use("/api", fetchRoomsRoutes)
@@ -112,7 +122,7 @@ app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
 app.use("/api", undoRoutes)
 
-app.use("/api", recalculatePointsRoutes)
+app.use("/api", recalculateAmountRoutes)
 app.use("/api", resetGameRoutes)
 app.use("/api", sequenceRoutes)
 

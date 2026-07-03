@@ -41,6 +41,7 @@
 		"messages": "Message",
 		"guide": "Guide",
 		"announce": "Announcement",
+		"extra": "Daily tasks",
 		"setting": {
 			"button": "Settings"
 		},
@@ -165,6 +166,7 @@
 			"surrender": "Surrender",
 			"draw": "Draw",
 			"back-home": "Back to home",
+			"flip-board": "Flip board",
 			"accept-draw": "Accept",
 			"reject-draw": "Reject",
 			"send-pm": "Send PM",
@@ -183,6 +185,10 @@
 			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
 			"insufficient-amount": "You do not have enough balance to join this room",
 			"all-seats-occupied": "All player seats are occupied"
+		},
+		"notifications": {
+			"joined": "{0} joined the room",
+			"left": "{0} left the room"
 		},
 		"settings": {
 			"title": "Room Settings",
@@ -568,6 +574,36 @@
 			"paragraph3": "If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.",
 			"paragraph4": "If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.",
 			"paragraph5": "Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>."
+		}
+	},
+	"extra-money": {
+		"lucky-wheel": {
+			"title": "Lucky Wheel",
+			"description": "Spin the wheel to earn money! Click the spin button in the middle of the wheel to try your luck.",
+			"spin-button": "Spin",
+			"reward-placeholder": "Click Spin to get started"
+		},
+		"title": "Daily tasks",
+		"tab": {
+			"lucky-wheel": "Lucky Wheel",
+			"bonus-coin": "Bonus Coin",
+			"daily-bonus": "Daily Bonus"
+		},
+		"bonus-coin": {
+			"subtitle": "Watch a short video to earn free coin",
+			"next-in": "Next in:",
+			"coin-unit": "coin",
+			"watch-video": "Watch video"
+		},
+		"daily-bonus": {
+			"subtitle": "Login 7 days in a row to earn 4000 coin",
+			"day": "Day"
+		}
+	},
+	"profile": {
+		"button": {
+			"save": "Save",
+			"cancel": "Cancel"
 		}
 	}
 }

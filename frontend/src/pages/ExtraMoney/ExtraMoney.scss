@@ -1,0 +1,339 @@
+.extra-money-page {
+	display: flex;
+	flex-direction: column;
+	padding: 16px;
+	height: 100vh;
+
+	.page-title {
+		font-weight: 600;
+		margin-bottom: 8px;
+	}
+
+	.extra-money-tabs {
+		margin-top: 8px;
+
+		.MuiTab-root {
+			border-radius: 8px 8px 0 0;
+			transition: background-color 0.2s ease, box-shadow 0.2s ease;
+
+			&:hover {
+				background-color: rgba(172, 172, 172, 0.1);
+				box-shadow: inset 0 -2px 0 rgba(172, 172, 172, 0.6);
+			}
+
+			&.Mui-selected {
+				background-color: rgba(172, 172, 172, 0.18);
+			}
+		}
+	}
+
+	.tab-content {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		margin-top: 16px;
+	}
+}
+
+.lucky-wheel-tab {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+
+	.page-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		flex: 1;
+	}
+}
+
+.bonus-coin-tab {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+	gap: 24px;
+	padding: 8px 0;
+
+	.bonus-subtitle {
+		font-weight: 700;
+		color: #6b4423;
+	}
+
+	.bonus-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr) 1.25fr;
+		grid-template-rows: repeat(2, 1fr);
+		gap: 12px;
+		width: 100%;
+		max-width: 640px;
+	}
+
+	.bonus-cell {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 16px 8px;
+		min-height: 120px;
+		border-radius: 12px;
+		overflow: hidden;
+		background-color: #fffbe9;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+		.bonus-icon {
+			font-size: 40px;
+			line-height: 1;
+			--fa-primary-color: #f0c040;
+			--fa-secondary-color: #c8901a;
+			--fa-secondary-opacity: 0.85;
+		}
+
+		.collected {
+			color: green;
+		}
+
+		.bonus-amount {
+			font-weight: 800;
+			font-size: 18px;
+			color: #b5530f;
+		}
+
+		.bonus-label {
+			font-weight: 800;
+			font-size: 18px;
+			color: #8a8a8a;
+		}
+	}
+
+	// Already claimed rewards: greyed out with a subtle inset border.
+	.bonus-cell--collected {
+		background-color: #d9d6d0;
+		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+		color: green;
+
+		.bonus-icon {
+			opacity: 0.8;
+			--fa-primary-color: #d8c98f;
+			--fa-secondary-color: #a89a6a;
+		}
+	}
+
+	// Next reward to claim: animated gold sunburst highlight.
+	.bonus-cell--current {
+		background-color: #eaa32e;
+		border: 2px solid #a0491a;
+		box-shadow: inset 0 0 16px rgba(150, 80, 20, 0.35);
+
+		// Rotating rays behind the content.
+		&::before {
+			content: "";
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 300%;
+			padding-bottom: 300%;
+			transform: translate(-50%, -50%);
+			background-image: repeating-conic-gradient(
+				from 0deg,
+				rgba(0, 255, 64, 0.95) 0deg 9deg,
+				rgba(230, 160, 45, 0.95) 9deg 18deg
+			);
+			animation: bonus-sunburst-spin 14s linear infinite;
+			opacity: 0.1;
+			z-index: 0;
+		}
+
+		.bonus-amount,
+		.bonus-label {
+			position: relative;
+			z-index: 1;
+		}
+
+		.bonus-icon {
+			position: relative;
+			z-index: 1;
+			animation: bonus-coin-pulse 1.6s ease-in-out infinite;
+		}
+
+		.bonus-amount {
+			color: #7a3400;
+			text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.bonus-cell--current {
+			&::before {
+				animation: none;
+			}
+
+			.bonus-icon {
+				animation: none;
+			}
+		}
+	}
+
+	.bonus-cell--treasure {
+		grid-column: 4;
+		grid-row: 1 / span 2;
+
+		.bonus-icon {
+			font-size: 64px;
+		}
+
+		.bonus-amount,
+		.bonus-label {
+			font-size: 22px;
+		}
+	}
+
+	.watch-video-btn {
+		padding: 8px 32px;
+		font-weight: 800;
+		font-size: 18px;
+		text-transform: uppercase;
+		color: #fff;
+		background: linear-gradient(180deg, #e8992e 0%, #c9701a 100%);
+		box-shadow: 0 4px 0 #9c530f, 0 6px 12px rgba(0, 0, 0, 0.2);
+
+		&:hover {
+			background: linear-gradient(180deg, #f0a63e 0%, #d67a1f 100%);
+			box-shadow: 0 4px 0 #9c530f, 0 6px 12px rgba(0, 0, 0, 0.25);
+		}
+	}
+
+	.bonus-next {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		font-weight: 700;
+		color: #6b4423;
+
+		.bonus-next-time {
+			font-size: 1.25rem;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+		}
+	}
+}
+
+// Daily bonus reuses the bonus-coin layout with red gift boxes and a day label.
+.daily-bonus-tab {
+	// The extra "Day N" row makes the loaded content taller than the default
+	// 120px floor; raise it so both the loaded and skeleton cells settle at the
+	// same height (skeleton content stays well under this).
+	.bonus-cell {
+		min-height: 148px;
+	}
+
+	.bonus-day {
+		font-weight: 700;
+		font-size: 15px;
+		color: #a05a2c;
+	}
+
+	.bonus-icon {
+		--fa-primary-color: #d9412f;
+		--fa-secondary-color: #ffffff;
+		--fa-secondary-opacity: 1;
+	}
+
+	// Claimed days: keep the gift red over the grey cell, grey out the label.
+	.bonus-cell--collected {
+		.bonus-icon {
+			opacity: 0.85;
+			--fa-primary-color: #c46a5f;
+			--fa-secondary-color: #ffffff;
+		}
+
+		.bonus-day {
+			color: #8a8a8a;
+		}
+	}
+
+	.bonus-cell--treasure .bonus-day {
+		font-size: 18px;
+	}
+}
+
+.lucky-wheel-container {
+	position: relative;
+	width: 320px;
+	height: 320px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	.lucky-wheel {
+		width: 300px;
+		height: 300px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+
+		.wheel-svg {
+			filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+		}
+	}
+
+	.wheel-pointer {
+		position: absolute;
+		top: 8px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 0;
+		height: 0;
+		border-left: 12px solid transparent;
+		border-right: 12px solid transparent;
+		border-top: 20px solid #08b628;
+		z-index: 10;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+	}
+
+	.wheel-hub {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 80px;
+		height: 80px;
+		border-radius: 50%;
+		background-color: #e4c45c;
+		box-shadow: inset 0 0 0 10px #c9a961;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 5;
+		pointer-events: all;
+		font-size: 24px;
+		font-weight: bold;
+		line-height: 1;
+
+		&.spinable {
+			cursor: pointer;
+			color: #c92a2a;
+		}
+
+		&.not-spinable {
+			cursor: not-allowed;
+			color: #999999;
+		}
+	}
+}
+
+.reward-display {
+	min-height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px;
+	border-radius: 4px;
+	background-color: rgba(0, 0, 0, 0.05);
+	width: 100%;
+}

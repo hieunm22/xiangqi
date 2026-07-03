@@ -1,9 +1,16 @@
-export interface ReconcileOptions {
-	autofix: boolean
-	userIds: bigint[]
+export interface UserIdSelection {
+	// Specific ids plus expanded closed ranges (e.g. "1, 4-6" -> [1, 4, 5, 6]).
+	ids: bigint[]
+	from?: bigint
 }
 
-export interface PointMismatch {
+export interface ReconcileOptions {
+	autofix: boolean
+	// Omit to reconcile every real user.
+	selection?: UserIdSelection
+}
+
+export interface AmountMismatch {
 	userId: string
 	stored: number
 	correct: number
@@ -12,6 +19,6 @@ export interface PointMismatch {
 
 export interface ReconcileResult {
 	checked: number
-	mismatches: PointMismatch[]
+	mismatches: AmountMismatch[]
 	fixed: number
 }

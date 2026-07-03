@@ -34,8 +34,9 @@ const getMoveTransform = (props: PieceItemProps) => {
 	const computedStyle = getComputedStyle(document.documentElement)
 	const cellSize = computedStyle.getPropertyValue("--cell-size").trim()
 	const cellSizeNum = parseInt(cellSize, 10)
-	const deltaX = (toCol - fromCol) * cellSizeNum
-	const deltaY = (toRow - fromRow) * cellSizeNum
+	const sign = props.$rotated ? -1 : 1
+	const deltaX = (toCol - fromCol) * cellSizeNum * sign
+	const deltaY = (toRow - fromRow) * cellSizeNum * sign
 
 	return `translate(${deltaX}px, ${deltaY}px)`
 }
@@ -60,6 +61,7 @@ const PieceItem = (props: PieceItemProps) => {
 		$selectedId,
 		$myTeam,
 		$previousMove,
+		$rotated,
 
 		$animateEnd,
 		$click,
@@ -83,6 +85,7 @@ const PieceItem = (props: PieceItemProps) => {
 			$selectedId={$selectedId}
 			$turn={$turn}
 			$myTeam={$myTeam}
+			$rotated={$rotated}
 			onClick={$click}
 			onTransitionEnd={$animateEnd}
 		>

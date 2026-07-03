@@ -38,6 +38,7 @@
 
 .room-container {
 	width: 100%;
+	height: calc(100vh - 56px);
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -45,6 +46,9 @@
 	gap: 12px;
 	padding: 12px;
 	margin: 0 auto;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
 }
 
 .xiangqi-board {
@@ -328,17 +332,17 @@
 
 .player-info-card {
 	width: calc((var(--board-width) + 2 * var(--board-padding) - 12px) / 2);
-	min-height: 72px;
+	min-height: 50px;
 	display: flex;
 	gap: 12px;
 	padding: 10px;
+	position: relative;
 	border-radius: 10px;
-	border: 2px solid transparent;
-	background: linear-gradient(135deg, rgba(255, 245, 219, 0.9), rgba(232, 197, 132, 0.9));
+	border: 2px solid darkgreen;
+	background: linear-gradient(135deg, rgba(255, 245, 219, 1), rgba(232, 197, 132, 1));
 	box-shadow: 0 6px 12px rgba(52, 24, 8, 0.16);
 	box-sizing: border-box;
 	transition: box-shadow 180ms ease, transform 180ms ease;
-	opacity: 0.3;
 
 	&.team-red {
 		color: red;
@@ -353,8 +357,18 @@
 	}
 
 	&.active-turn {
-		box-shadow: 0 0 0 2px transparent, 0 8px 14px rgba(52, 24, 8, 0.24);
-		opacity: 1;
+		box-shadow: 0 0 0 3px rgba(255, 209, 74, 0.55), 0 10px 18px rgba(52, 24, 8, 0.28);
+		animation: player-card-turn-pulse 1000ms ease-in-out infinite;
+
+		&::after {
+			content: "";
+			position: absolute;
+			inset: -3px;
+			border-radius: 12px;
+			border: 2px solid rgba(255, 209, 74, 0.7);
+			pointer-events: none;
+			animation: player-card-turn-ring 1000ms ease-out infinite;
+		}
 	}
 
 	&.loading-slot {
@@ -380,12 +394,13 @@
 
 	& .player-avatar {
 		width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    display: flex;
-    vertical-align: top;
-    align-self: start;
-    overflow: hidden;
+		height: 50px;
+		border-radius: 10px;
+		display: flex;
+		vertical-align: top;
+		align-self: start;
+		overflow: hidden;
+		flex-shrink: 0;
 
 		&.empty {
 			width: 100%;
@@ -413,6 +428,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 5px;
+		flex: 1;
+		min-width: 0;
 	}
 
 	& .player-name {
@@ -451,6 +468,16 @@
 	}
 }
 
+@keyframes player-card-turn-pulse {
+	0%, 100% {
+		box-shadow: 0 0 0 3px rgba(208, 10, 10, 0.7), 0 8px 14px rgba(52, 24, 8, 0.24);
+	}
+
+	50% {
+		box-shadow: 0 0 0 5px rgba(255, 209, 74, 0.7), 0 12px 20px rgba(52, 24, 8, 0.34);
+	}
+}
+
 .room-bet-amount {
 	margin-top: 12px;
 	margin-bottom: 12px;
@@ -465,7 +492,7 @@
 .user-points {
 	color: #e5d10f;
 	-webkit-text-stroke: 1px #898989;
-	font-size: 24px;
+	font-size: 20px;
 	margin-right: 5px;
 }
 

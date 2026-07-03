@@ -237,4 +237,68 @@ describe("GET /api/message/get-room-message", () => {
 			status_code: 500
 		})
 	})
+
+	it("treats messages sent before joined_at as seen", async () => {
+		const accessToken = buildAccessToken(1, "session-get-room-6")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+		roomFindUniqueMock.mockResolvedValue({ id: 101n })
+		const joinedAt = new Date("2026-06-15T10:00:00Z")
+		roomUserFindUniqueMock.mockResolvedValue({ room_id: 101n, joined_at: joinedAt })
+
+		userFindUniqueMock
+			.mockResolvedValueOnce({
+				id: 2n,
+				display_name: "User2",
+				avatar_seq: 2
+			})
+			.mockResolvedValueOnce({
+				id: 2n,
+				display_name: "User2",
+				avatar_seq: 2
+			})
+
+		const beforeJoinId = new ObjectId()
+		const afterJoinId = new ObjectId()
+		const beforeJoinTimestamp = new Date("2026-06-15T09:59:59.000Z")
+		const afterJoinTimestamp = new Date("2026-06-15T10:00:01.000Z")
+
+		toArrayMock.mockResolvedValue([
+			{
+				_id: beforeJoinId,
+				room_id: 101,
+				sender_id: 2,
+				message: "Old message",
+				read_by: [],
+				timestamp: beforeJoinTimestamp
+			},
+			{
+				_id: afterJoinId,
+				room_id: 101,
+				sender_id: 2,
+				message: "New message",
+				read_by: [],
+				timestamp: afterJoinTimestamp
+			}
+		])
+		sortMock.mockReturnValue({ toArray: toArrayMock })
+		findMock.mockReturnValue({ sort: sortMock })
+		getChatMessageCollectionMock.mockResolvedValue({ find: findMock })
+
+		const res = await request(app)
+			.get(`${PATH}?roomId=101`)
+			.set("Authorization", `Bearer ${accessToken}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(2)
+		expect(res.body.data[0]).toMatchObject({
+			_id: beforeJoinId.toString(),
+			seen: true,
+			timestamp: beforeJoinTimestamp.toISOString()
+		})
+		expect(res.body.data[1]).toMatchObject({
+			_id: afterJoinId.toString(),
+			seen: false,
+			timestamp: afterJoinTimestamp.toISOString()
+		})
+	})
 })

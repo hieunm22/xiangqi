@@ -17,7 +17,6 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           script: |
             set -euo pipefail
 

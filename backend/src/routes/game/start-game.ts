@@ -273,6 +273,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 							id: true,
 							display_name: true,
 							avatar_seq: true,
+							total_amount: true,
 							is_bot: true
 						}
 					}
@@ -284,6 +285,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				display_name: ru.users?.display_name ?? (Number(ru.user_id) === 0 ? "Bot" : "Unknown"),
 				avatar_url: getAvatarUrl(ru.users?.id ?? 0, ru.users?.avatar_seq ?? 0),
 				team: ru.team,
+				total_amount: ru.users?.total_amount,
 				is_bot: ru.users?.is_bot ?? false,
 				joined_at: new Date().toISOString()
 			}))

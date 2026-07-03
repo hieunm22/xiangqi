@@ -1,0 +1,60 @@
+import { useEffect, useState } from "react"
+import { Avatar, Box, Snackbar } from "@mui/material"
+import { requireImage } from "common/helper"
+import { ComponentWithChild } from "types/Common"
+import { SnackbarHandler, SnackbarOptions, SnackbarQueueItem } from "./types"
+import "./SnackBarProvider.scss"
+
+let handler: SnackbarHandler | null = null
+
+export function openSnackbar(options: SnackbarOptions) {
+	if (!handler) return
+	handler(options)
+}
+
+export const SnackbarProvider = (props: ComponentWithChild) => {
+	const [queue, setQueue] = useState<SnackbarQueueItem[]>([])
+
+	useEffect(() => {
+		handler = (options: SnackbarOptions) => {
+			setQueue(prev => [
+				...prev,
+				{
+					id: Date.now() + Math.random(),
+					options
+				}
+			])
+		}
+
+		return () => {
+			handler = null
+		}
+	}, [])
+
+	const current = queue[0] ?? null
+
+	const handleClose = () => {
+		setQueue(prev => prev.slice(1))
+	}
+
+	return (
+		<>
+			{props.children}
+			<Snackbar
+				open={!!current}
+				autoHideDuration={current?.options.duration ?? 3000}
+				onClose={handleClose}
+				anchorOrigin={{ vertical: "top", horizontal: "right" }}
+			>
+				<Box
+					className="snackbar-content"
+				>
+					<Avatar className="snackbar-avatar" src={requireImage(current?.options.avatar || "")} />
+					<span className="snackbar-message">{current?.options.message}</span>
+				</Box>
+			</Snackbar>
+		</>
+	)
+}
+
+export default SnackbarProvider

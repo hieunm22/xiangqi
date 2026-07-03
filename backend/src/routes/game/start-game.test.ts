@@ -265,12 +265,12 @@ describe("POST /api/room/start", () => {
 			{
 				user_id: BigInt(61),
 				team: "red",
-				users: { id: BigInt(61), display_name: "Host", avatar_seq: 0, is_bot: false }
+				users: { id: BigInt(61), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
 			},
 			{
 				user_id: BOT_USER_ID,
 				team: "black",
-				users: { id: BOT_USER_ID, display_name: "Bot", avatar_seq: 0, is_bot: true }
+				users: { id: BOT_USER_ID, display_name: "Bot", avatar_seq: 0, total_amount: null, is_bot: true }
 			}
 		])
 
@@ -289,10 +289,11 @@ describe("POST /api/room/start", () => {
 			update: { team: "black" }
 		})
 
-		// The broadcast carries is_bot so the client can tell the bot from the human.
+		// The broadcast carries is_bot so the client can tell the bot from the human,
+		// and total_amount so the human's balance renders on the player info card.
 		expect(emitRoomUsersUpdatedMock).toHaveBeenCalledWith(101, [
-			expect.objectContaining({ id: 61, display_name: "Host", team: "red", is_bot: false }),
-			expect.objectContaining({ id: Number(BOT_USER_ID), display_name: "Bot", team: "black", is_bot: true })
+			expect.objectContaining({ id: 61, display_name: "Host", team: "red", total_amount: 200, is_bot: false }),
+			expect.objectContaining({ id: Number(BOT_USER_ID), display_name: "Bot", team: "black", total_amount: null, is_bot: true })
 		])
 
 		// Human (red) moves first, so the bot does not auto-move on start.

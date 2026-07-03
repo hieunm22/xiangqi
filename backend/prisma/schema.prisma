@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["auth", "game"]
+  schemas  = ["user", "game"]
 }
 
 model User {
@@ -17,6 +17,15 @@ model User {
   gender                Boolean
   avatar_seq            Int        @default(0)
   total_amount          Int        @default(200)
+
+  lucky_spins           Int        @default(0)
+  lucky_claimed_at      DateTime?  @db.Timestamptz(6)
+  bonus_claimed_count   Int        @default(0)
+  bonus_claimed_at      DateTime?  @db.Timestamptz(6)
+  daily_claimed_count   Int        @default(0)
+  daily_claimed_at      DateTime?  @db.Timestamptz(6)
+  selected_tab          Int        @default(0)
+
   is_bot                Boolean    @default(false)
   room_users            RoomUser[]
   hosted_rooms          Room[]     @relation("RoomHost")
@@ -25,10 +34,10 @@ model User {
   surrendered_histories GameHistory[] @relation("GameHistory_surrender")
   undone_histories      GameHistory[] @relation("GameHistory_undo")
   announcement_reads    UserAnnouncementRead[]
-  user_point_histories  UserPointHistory[]
+  user_amount_histories UserAmountHistory[]
 
   @@map("users")
-  @@schema("auth")
+  @@schema("user")
 }
 
 model UserAnnouncementRead {
@@ -114,7 +123,7 @@ model GameHistory {
 model GameUser {
   game_id   String   @db.Uuid
   user_id   BigInt
-  point     Int?
+  amount    Int?
   games     Game     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -123,15 +132,15 @@ model GameUser {
   @@schema("game")
 }
 
-model UserPointHistory {
+model UserAmountHistory {
   id         BigInt     @id @default(autoincrement())
   user_id    BigInt
-  point      Int
+  amount     Int
   type       Int
   created_at DateTime   @default(now()) @db.Timestamptz(6)
   users      User       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@map("user_point_history")
+  @@map("user_amount_history")
   @@schema("game")
 }
 

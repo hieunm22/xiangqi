@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { ChangeEvent, useEffect, useRef, useState } from "react"
 import {
 	Box,
 	Dialog,
@@ -11,10 +11,10 @@ import {
 } from "@mui/material"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
+import { EditableProfileField } from "./EditableProfileField"
 import {
 	TButton,
 	TI,
-	TSpan,
 	TTooltip,
 	TTypography,
 } from "components/TranslationTag"
@@ -25,18 +25,25 @@ import useToolkit from "hooks/useToolkit"
 import { translate } from "locales/translate"
 import { setPopup, setRoomHostId, setUserId } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
-import { UserProfileWithStats } from "../types"
+import { UpdateUserInfoResponse, UserProfileWithStats } from "../types"
 
 export const ProfilePopup = () => {
 	const { gameState, state, dispatch } = useToolkit()
-	const { getUserById, kickUser } = useAPI()
+	const { getUserById, kickUser, updateUserAvatar } = useAPI()
+	const avatarInputRef = useRef<HTMLInputElement>(null)
+	const selectedAvatarFileRef = useRef<File | null>(null)
 	const [isCopied, setIsCopied] = useState(false)
+	const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+	const [hasPendingAvatarPreview, setHasPendingAvatarPreview] = useState(false)
+	const [isApplyingAvatarPreview, setIsApplyingAvatarPreview] = useState(false)
 	const {
 		profileUser: user,
 		gameStats,
 		setGameStats,
 		setProfileUser
 	} = useProfilePopup()
+
+	const displayedAvatar = avatarPreviewUrl || requireImage(user ? user.avatar_url : "")
 
 	const handleCloseProfilePopup = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
 		if (reason === "backdropClick") return
@@ -90,6 +97,103 @@ export const ProfilePopup = () => {
 		loadRoomContext()
 	}, [gameState.popupState, gameState.roomHostId])
 
+	useEffect(() => {
+		setAvatarPreviewUrl(null)
+		setHasPendingAvatarPreview(false)
+		setIsApplyingAvatarPreview(false)
+		selectedAvatarFileRef.current = null
+	}, [user?.id, user?.avatar_url])
+
+	const triggerAvatarFileDialog = () => {
+		avatarInputRef.current?.click()
+	}
+
+	const handleAvatarFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0]
+		if (!file) {
+			return
+		}
+
+		selectedAvatarFileRef.current = file
+
+		const previewUrl = URL.createObjectURL(file)
+		setAvatarPreviewUrl(previous => {
+			if (previous) {
+				URL.revokeObjectURL(previous)
+			}
+			return previewUrl
+		})
+		setHasPendingAvatarPreview(true)
+
+		// Allow selecting the same file again in the next attempt.
+		event.target.value = ""
+	}
+
+	const cancelAvatarPreview = () => {
+		selectedAvatarFileRef.current = null
+
+		if (!avatarPreviewUrl) {
+			setHasPendingAvatarPreview(false)
+			return
+		}
+
+		URL.revokeObjectURL(avatarPreviewUrl)
+		setAvatarPreviewUrl(null)
+		setHasPendingAvatarPreview(false)
+	}
+
+	const applyAvatarPreview = async () => {
+		if (!avatarPreviewUrl || !hasPendingAvatarPreview || !user) {
+			return
+		}
+
+		const selectedFile = selectedAvatarFileRef.current
+		if (!selectedFile) {
+			return
+		}
+
+		setIsApplyingAvatarPreview(true)
+		try {
+			const token = getToken()
+			if (!token) {
+				await openAlert({
+					title: "popup.alert.title",
+					message: "Unauthorized"
+				})
+				return
+			}
+
+			const response = await updateUserAvatar(token, selectedFile) as APIResponse<Partial<UpdateUserInfoResponse>>
+			if (!response?.success) {
+				await openAlert({
+					title: "popup.alert.title",
+					message: response?.message ?? "Failed to update avatar"
+				})
+				return
+			}
+
+			setProfileUser({
+				...user,
+				avatar_seq: response.data.avatar_seq ?? user.avatar_seq,
+				avatar_url: response.data.avatar_url ?? user.avatar_url,
+			})
+
+			selectedAvatarFileRef.current = null
+			setHasPendingAvatarPreview(false)
+			setAvatarPreviewUrl(null)
+		} finally {
+			setIsApplyingAvatarPreview(false)
+		}
+	}
+
+	useEffect(() => {
+		return () => {
+			if (avatarPreviewUrl) {
+				URL.revokeObjectURL(avatarPreviewUrl)
+			}
+		}
+	}, [avatarPreviewUrl])
+
 	const handleSendPM = () => {
 		dispatch(setUserId(gameState.activeUserId))
 		dispatch(setPopup(PopupState.SEND_PM))
@@ -140,6 +244,7 @@ export const ProfilePopup = () => {
 			fullWidth
 			disableEnforceFocus
 			disableAutoFocus
+			autoFocus={false}
 		>
 			<DialogTitle className="pt-8 pb-8">{translate("menu.profile")}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
@@ -156,17 +261,57 @@ export const ProfilePopup = () => {
 						{!isSameUser ? (
 							<Skeleton variant="circular" width="120px" height="120px" sx={{ margin: "0 auto" }} />
 						) : (
-							<img
-								src={requireImage(user?.avatar_url || "")}
-								alt={user?.display_name}
-								className="profile-avatar"
-							/>
+							<>
+								<div className="profile-avatar-hover-zone">
+									<img
+										src={displayedAvatar}
+										alt={user?.display_name}
+										className="profile-avatar"
+									/>
+									{isOwnProfile && (
+										<>
+											<input
+												ref={avatarInputRef}
+												type="file"
+												accept="image/*"
+												onChange={handleAvatarFileChange}
+												className="avatar-file-input"
+											/>
+											<button type="button" className="avatar-change-button" onClick={triggerAvatarFileDialog}>
+												<i className="fal fa-camera" />
+											</button>
+										</>
+									)}
+								</div>
+								{isOwnProfile && hasPendingAvatarPreview && (
+									<div className="avatar-preview-actions">
+										<button
+											type="button"
+											className="avatar-preview-action apply"
+											disabled={isApplyingAvatarPreview}
+											onClick={applyAvatarPreview}
+										>
+											{isApplyingAvatarPreview
+												? <i className="fas fa-spinner fa-pulse" />
+												: <TI className="fas fa-check" title="profile.button.save" />}
+										</button>
+										<button
+											type="button"
+											className="avatar-preview-action cancel"
+											disabled={isApplyingAvatarPreview}
+											onClick={cancelAvatarPreview}
+										>
+											<TI className="fas fa-times" title="profile.button.cancel" />
+										</button>
+									</div>
+								)}
+							</>
 						)}
 					</Box>
 
 					<Box className="profile-user-info">
 						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="far fa-user mr-20" />
+							<i className="fad fa-user mr-20" />
 						</TTooltip>
 						{isSameUser
 							? (<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
@@ -174,33 +319,44 @@ export const ProfilePopup = () => {
 							</a>)
 							: <Skeleton variant="text" width="75%" height={24} />}
 						<TTooltip title="register.display-name.label" arrow placement="left">
-							<i className="far fa-tag" />
+							<i className="fad fa-tag" />
 						</TTooltip>
 						{isSameUser
-							? <span>{user.display_name}</span>
+							? (
+								<EditableProfileField
+									className="info-with-pen"
+									editable={isOwnProfile}
+									field="display_name"
+									value={user.display_name}
+									type="text"
+								/>
+							)
 							: <Skeleton variant="text" width="65%" height={24} />}
-						<TTooltip title="register.gender.label" arrow placement="left">
-							<i className="far fa-venus-mars" />
+						<TTooltip title="register.email.label" arrow placement="left">
+							<i className="fad fa-envelope" />
 						</TTooltip>
 						{isSameUser
-							? <TSpan content={user.gender ? "register.gender.male" : "register.gender.female"} />
-							: <Skeleton variant="text" width="30%" height={24} />}
-						<TTooltip title="register.email.label" arrow placement="left">
-							<i className="far fa-envelope" />
-						</TTooltip>
-						<div className="email-with-copy">
-							{isSameUser
-								? <a href={`mailto:${user.email}`}>{user.email}</a>
-								: <Skeleton variant="text" width="90%" height={24} />}
-							<TI
-								className={isCopied ? "fas fa-circle-check copied-icon" : "far fa-copy cursor-pointer"}
-								onClick={handleCopyEmail}
-								onAnimationEnd={onAnimationEnd}
-								title="Copy email"
-							/>
-						</div>
+							? (
+								<EditableProfileField
+									className="email-with-copy"
+									editable={isOwnProfile}
+									extraActions={
+										<TI
+											className={isCopied ? "fas fa-circle-check copied-icon" : "fad fa-copy cursor-pointer"}
+											onClick={handleCopyEmail}
+											onAnimationEnd={onAnimationEnd}
+											title="Copy email"
+										/>
+									}
+									field="email"
+									renderDisplay={value => <a href={`mailto:${value}`}>{value}</a>}
+									type="email"
+									value={user.email}
+								/>
+							)
+							: <Skeleton variant="text" width="90%" height={24} />}
 						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="far fa-coins mr-20" />
+							<i className="fad fa-coins mr-20" />
 						</TTooltip>
 						{isSameUser
 							? formatNumber(user.total_amount, state.lang)
@@ -248,7 +404,7 @@ export const ProfilePopup = () => {
 								color="info"
 								onClick={handleSendPM}
 								value="room.actions.send-pm"
-								startIcon={<i className="far fa-comment" />}
+								startIcon={<i className="fad fa-comment" />}
 							/>
 						)}
 						{user && (
@@ -258,7 +414,7 @@ export const ProfilePopup = () => {
 								color="success"
 								onClick={handleViewHistory}
 								value="room.actions.view-history"
-								startIcon={<i className="far fa-clock" />}
+								startIcon={<i className="fad fa-clock" />}
 							/>
 						)}
 						{user && !isOwnProfile && gameState.roomHostId === currentUserId && (
@@ -270,7 +426,7 @@ export const ProfilePopup = () => {
 								disabled={gameState.roomHostId !== currentUserId}
 								onClick={handleKickUser}
 								value="room.actions.kick"
-								startIcon={<i className="far fa-ban" />}
+								startIcon={<i className="fad fa-ban" />}
 							/>
 						)}
 					</>
@@ -280,7 +436,7 @@ export const ProfilePopup = () => {
 					size="small"
 					onClick={e => handleCloseProfilePopup(e, "escapeKeyDown")}
 					value="settings.close"
-					startIcon={<i className="far fa-xmark" />}
+					startIcon={<i className="fad fa-xmark" />}
 				/>
 			</Grid>
 		</Dialog>

@@ -4,7 +4,6 @@ import request from "supertest"
 import cookieParser from "cookie-parser"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
-const prismaDeleteManyMock = vi.fn()
 const redisGetMock = vi.fn()
 const redisExistsMock = vi.fn()
 const redisDelMock = vi.fn()
@@ -12,14 +11,6 @@ const markOfflineMock = vi.fn()
 const emitPresenceChangedMock = vi.fn()
 const getConnectedDeviceCountMock = vi.fn()
 const PATH = "/api/auth/logout"
-
-vi.mock("prisma", () => ({
-	default: {
-		roomUser: {
-			deleteMany: prismaDeleteManyMock
-		}
-	}
-}))
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -68,7 +59,6 @@ describe("DELETE /api/auth/logout", () => {
 			message: "auth-middleware.messages.token-required",
 			status_code: 401
 		})
-		expect(prismaDeleteManyMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 401 when session is not found in cache", async () => {
@@ -89,7 +79,6 @@ describe("DELETE /api/auth/logout", () => {
 			message: "auth-middleware.messages.session-not-found",
 			status_code: 401
 		})
-		expect(prismaDeleteManyMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 200 and clears session keys when session is active", async () => {
@@ -100,7 +89,6 @@ describe("DELETE /api/auth/logout", () => {
 		)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
 		redisExistsMock.mockResolvedValue(1)
-		prismaDeleteManyMock.mockResolvedValue({ count: 1 })
 		markOfflineMock.mockResolvedValue(true)
 		getConnectedDeviceCountMock.mockReturnValue(1)
 
@@ -116,11 +104,6 @@ describe("DELETE /api/auth/logout", () => {
 		})
 		expect(markOfflineMock).toHaveBeenCalledWith(2)
 		expect(emitPresenceChangedMock).toHaveBeenCalledWith(2, "offline")
-		expect(prismaDeleteManyMock).toHaveBeenCalledWith({
-			where: {
-				user_id: 2
-			}
-		})
 		expect(redisExistsMock).toHaveBeenCalledWith("login-session:2:session-logout-2")
 		expect(redisDelMock).toHaveBeenCalledTimes(2)
 		expect(redisDelMock).toHaveBeenNthCalledWith(1, "login-session:2:session-logout-2")
@@ -140,7 +123,6 @@ describe("DELETE /api/auth/logout", () => {
 		)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
 		redisExistsMock.mockResolvedValue(1)
-		prismaDeleteManyMock.mockResolvedValue({ count: 1 })
 		// Two devices online for this account.
 		getConnectedDeviceCountMock.mockReturnValue(2)
 
@@ -162,7 +144,6 @@ describe("DELETE /api/auth/logout", () => {
 		)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 3 }))
 		redisExistsMock.mockResolvedValue(0)
-		prismaDeleteManyMock.mockResolvedValue({ count: 0 })
 
 		const res = await request(app)
 			.delete(PATH)
@@ -185,7 +166,7 @@ describe("DELETE /api/auth/logout", () => {
 		)
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 4 }))
-		prismaDeleteManyMock.mockRejectedValue(new Error("db down"))
+		redisExistsMock.mockRejectedValue(new Error("redis down"))
 
 		const res = await request(app)
 			.delete(PATH)

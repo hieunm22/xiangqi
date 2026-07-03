@@ -152,7 +152,8 @@ describe("POST /api/message/send-private", () => {
 			status_code: 400
 		})
 		expect(userFindUniqueMock).toHaveBeenCalledWith({
-			where: { id: 999n }
+			where: { id: 999n },
+			select: { id: true }
 		})
 	})
 

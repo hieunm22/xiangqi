@@ -1,16 +1,17 @@
 import { Request, Response, Router } from "express"
-import { reconcilePoints } from "job/reconcile-points"
+import { parseUserIdSpec, reconcileAmount } from "job/reconcile-amount"
+import { UserIdSelection } from "types/job.type"
 
 const router = Router()
 
 /**
  * @swagger
- * /api/tool/recalculate-points:
+ * /api/tool/recalculate-amount:
  *   post:
- *     summary: Recalculate cached total_amount from the GameUser ledger
+ *     summary: Recalculate cached total_amount from the amount ledgers
  *     description: >
- *       Recomputes total_amount = 200 + SUM(GameUser.point) and override any
- *       mismatch.
+ *       Recomputes total_amount = 200 + SUM(GameUser.amount) +
+ *       SUM(UserAmountHistory.amount) and overrides any mismatch.
  *     tags:
  *       - Tool
  *     requestBody:
@@ -21,12 +22,10 @@ const router = Router()
  *             type: object
  *             properties:
  *               userIds:
- *                 type: array
- *                 items:
- *                   type: integer
- *                   format: int64
- *                 description: List of user IDs to reconcile; omit to reconcile all users
- *                 example: [1, 2, 3]
+ *                 type: string
+ *                 description: >
+ *                   Printer-page-range style selection of user IDs
+ *                 example: "1, 4-6"
  *     responses:
  *       200:
  *         description: Recalculation completed
@@ -40,7 +39,7 @@ const router = Router()
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: recalculate-points.messages.success
+ *                   example: recalculate-amount.messages.success
  *                 status_code:
  *                   type: integer
  *                   example: 200
@@ -57,52 +56,42 @@ const router = Router()
  *                         type: object
  *       400:
  *         description: Invalid user ids
+ *       404:
+ *         description: Malformed userIds spec
  *       500:
  *         description: Internal server error
  */
-router.post("/tool/recalculate-points", async (req: Request, res: Response) => {
+router.post("/tool/recalculate-amount", async (req: Request, res: Response) => {
 	try {
 		const userIdsRaw = req.body?.userIds
-		let userIds: bigint[] | undefined
+		let selection: UserIdSelection | undefined
 
 		if (userIdsRaw !== undefined && userIdsRaw !== null) {
-			if (!Array.isArray(userIdsRaw)) {
+			const parsed = typeof userIdsRaw === "string" ? parseUserIdSpec(userIdsRaw) : null
+			if (parsed === null) {
 				res.status(400).json({
 					success: false,
-					message: "recalculate-points.messages.invalid-user-id",
+					message: "recalculate-amount.messages.invalid-format",
 					status_code: 400
 				})
 				return
 			}
-
-			userIds = []
-			for (const id of userIdsRaw) {
-				const parsed = typeof id === "number" ? id : parseInt(id, 10)
-				if (!Number.isInteger(parsed) || parsed <= 0) {
-					res.status(400).json({
-						success: false,
-						message: "recalculate-points.messages.invalid-user-id",
-						status_code: 400
-					})
-					return
-				}
-				userIds.push(BigInt(parsed))
-			}
+			selection = parsed
 		}
 
-		const result = await reconcilePoints({ autofix: true, userIds })
+		const result = await reconcileAmount({ autofix: true, selection })
 
 		res.status(200).json({
 			success: true,
-			message: "recalculate-points.messages.success",
+			message: "recalculate-amount.messages.success",
 			status_code: 200,
 			data: result
 		})
 	} catch (err) {
-		console.error("Recalculate points error:", err)
+		console.error("Recalculate amount error:", err)
 		res.status(500).json({
 			success: false,
-			message: "recalculate-points.messages.internal-server-error",
+			message: "recalculate-amount.messages.internal-server-error",
 			status_code: 500
 		})
 	}

@@ -41,6 +41,7 @@
 		"messages": "Tin nhắn",
 		"guide": "Luật chơi",
 		"announce": "Thông báo",
+		"extra": "Tác vụ thường nhật",
 		"setting": {
 			"button": "Cài đặt"
 		},
@@ -165,6 +166,7 @@
 			"surrender": "Đầu hàng",
 			"draw": "Hòa",
 			"back-home": "Thoát phòng",
+			"flip-board": "Đảo chiều bàn cờ",
 			"accept-draw": "Chấp nhận",
 			"reject-draw": "Từ chối",
 			"send-pm": "Chat",
@@ -183,6 +185,10 @@
 			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"insufficient-amount": "Bạn không đủ tiền để tham gia bàn chơi này",
 			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm"
+		},
+		"notifications": {
+			"joined": "{0} đã vào phòng",
+			"left": "{0} đã rời phòng"
 		},
 		"settings": {
 			"title": "Cài đặt phòng",
@@ -568,6 +574,36 @@
 			"paragraph3": "Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.",
 			"paragraph4": "Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.",
 			"paragraph5": "Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>."
+		}
+	},
+	"extra-money": {
+		"lucky-wheel": {
+			"title": "Vòng quay may mắn",
+			"description": "Quay vòng để kiếm tiền! Bấm nút Quay ở giữa vòng quay để thử vận may của bạn.",
+			"spin-button": "Quay",
+			"reward-placeholder": "Nhấp Quay để bắt đầu"
+		},
+		"title": "Tác vụ thường nhật",
+		"tab": {
+			"lucky-wheel": "Vòng Quay May Mắn",
+			"bonus-coin": "Xu Thưởng",
+			"daily-bonus": "Thưởng hàng ngày"
+		},
+		"bonus-coin": {
+			"subtitle": "Xem video ngắn để nhận xu miễn phí",
+			"next-in": "Lượt kế tiếp:",
+			"coin-unit": "xu",
+			"watch-video": "Xem video"
+		},
+		"daily-bonus": {
+			"subtitle": "Đăng nhập 7 ngày liên tiếp để nhận 4000 xu",
+			"day": "Ngày"
+		}
+	},
+	"profile": {
+		"button": {
+			"save": "Lưu",
+			"cancel": "Huỷ"
 		}
 	}
 }

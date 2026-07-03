@@ -52,7 +52,7 @@ export const SearchUserPopup = () => {
 		dispatch(setUserId(user.id))
 		const newPopupState = (gameState.popupState & ~PopupState.SEARCH_USERS) | PopupState.SEND_PM
 		dispatch(setPopup(newPopupState))
-		setProfileUser(user)
+		setProfileUser(user as Users)
 		setSearchQuery("")
 		setResults([])
 	}
