@@ -86,7 +86,7 @@ describe("runEndGameTransaction", () => {
 		expect(gameUserUpsertMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { game_id_user_id: { game_id: "game-1", user_id: BigInt(11) } },
-				update: { point: 50 }
+				update: { amount: 50 }
 			})
 		)
 		expect(userUpdateMock).toHaveBeenCalledWith({
@@ -95,7 +95,7 @@ describe("runEndGameTransaction", () => {
 		})
 		expect(gameUserUpdateManyMock).toHaveBeenCalledWith({
 			where: { game_id: "game-1", user_id: { in: [BigInt(12)] } },
-			data: { point: -50 }
+			data: { amount: -50 }
 		})
 		expect(userUpdateManyMock).toHaveBeenCalledWith({
 			where: { id: { in: [BigInt(12)] } },
@@ -132,7 +132,7 @@ describe("runEndGameTransaction", () => {
 		expect(result).toBe(true)
 		expect(gameUserUpdateManyMock).toHaveBeenCalledWith({
 			where: { game_id: "game-1" },
-			data: { point: 0 }
+			data: { amount: 0 }
 		})
 		expect(userUpdateMock).not.toHaveBeenCalled()
 		expect(userUpdateManyMock).not.toHaveBeenCalled()
@@ -151,7 +151,7 @@ describe("runEndGameTransaction", () => {
 
 		expect(gameUserUpdateManyMock).toHaveBeenCalledWith({
 			where: { game_id: "game-1" },
-			data: { point: null }
+			data: { amount: null }
 		})
 	})
 

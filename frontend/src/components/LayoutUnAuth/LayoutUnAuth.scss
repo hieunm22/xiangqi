@@ -1,8 +1,16 @@
+.layout-unauth {
+	min-height: 100vh;
+	width: 100%;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+}
+
 .ios-switch {
 	width: 48px !important;
 	height: 24px !important;
 	padding: 0 !important;
-	margin-left: 20px;
+
 	& .MuiSwitch-switchBase {
 		padding: 1px;
 		margin: 0;
@@ -36,15 +44,8 @@
 
 .setting-row {
 	margin-bottom: 10px;
-}
-
-.icon-toogle-drawer {
-	font-size: 14px;
-	cursor: pointer;
-	margin-right: 10px;
-	&:hover {
-		opacity: 0.6;
-	}
+	align-items: center;
+	gap: 16px !important;
 }
 
 .unauth-setting-btn {

@@ -10,23 +10,17 @@ import {
 	Stack
 } from "@mui/material"
 import { LOGIN_PATH } from "common/constant"
+import { isPasswordPolicyMet } from "common/password"
 import { GENDER_OPTIONS, VALIDATION_RULES } from "./constants"
 import Alert from "components/AlertWithIcon"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
-import { TI, TSpan, TTextField, TTypography } from "components/TranslationTag"
+import { PasswordPolicyChecklist } from "components/PasswordPolicyChecklist"
+import { TI, TTextField, TTypography } from "components/TranslationTag"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { translate } from "locales/translate"
 import { RegisterBodyType } from "./types"
 import "./Register.scss"
-
-const getPasswordPolicyStatus = (value: string) => ({
-	hasLowercase: VALIDATION_RULES.password.lowercase.test(value),
-	hasUppercase: VALIDATION_RULES.password.uppercase.test(value),
-	hasMinLength: value.length >= VALIDATION_RULES.password.minLength,
-	hasNumeric: VALIDATION_RULES.password.numeric.test(value),
-	hasSpecial: VALIDATION_RULES.password.special.test(value)
-})
 
 export default function RegisterPage() {
 	useAutoTitle(translate("register.page.title"))
@@ -54,14 +48,6 @@ export default function RegisterPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
 	const navigate = useNavigate()
-	const passwordPolicyStatus = getPasswordPolicyStatus(formData.password)
-	const passwordPolicyItems = [
-		{ key: "common.password.policy-1", matched: passwordPolicyStatus.hasLowercase },
-		{ key: "common.password.policy-2", matched: passwordPolicyStatus.hasUppercase },
-		{ key: "common.password.policy-3", matched: passwordPolicyStatus.hasNumeric },
-		{ key: "common.password.policy-4", matched: passwordPolicyStatus.hasSpecial },
-		{ key: "common.password.policy-5", matched: passwordPolicyStatus.hasMinLength },
-	]
 
 	const validateFieldWithPattern = (fieldName: keyof typeof formData, value: string): boolean => {
 		if (!value.trim()) {
@@ -81,8 +67,7 @@ export default function RegisterPage() {
 			setErrors(prev => ({ ...prev, password: translate("common.input.is-required") }))
 			return false
 		}
-		const policyStatus = getPasswordPolicyStatus(value)
-		if (!Object.values(policyStatus).every(Boolean)) {
+		if (!isPasswordPolicyMet(value)) {
 			setErrors(prev => ({ ...prev, password: translate(VALIDATION_RULES.password.message) }))
 			return false
 		}
@@ -229,23 +214,7 @@ export default function RegisterPage() {
 		"fa-eye-slash": showConfirmPassword
 	})
 
-	const passwordMatchPolicyClass = (matched: boolean) => classnames("fas password-policy-icon", {
-		"fa-times": !matched,
-		"fa-check": matched
-	})
-
-	const passwordPolicyLineClass = (matched: boolean) => classnames("password-policy-line", { matched })
-
-	const passwordPolicyHelperText = (
-		<Stack component="span" spacing={0.5} className="password-policy-helper">
-			{passwordPolicyItems.map(item => (
-				<span key={item.key} className={passwordPolicyLineClass(item.matched)}>
-					<i className={passwordMatchPolicyClass(item.matched)} />
-					<TSpan content={item.key} />
-				</span>
-			))}
-		</Stack>
-	)
+	const passwordPolicyHelperText = <PasswordPolicyChecklist value={formData.password} />
 
 	return (
 		<Box

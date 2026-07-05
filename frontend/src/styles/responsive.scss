@@ -28,10 +28,15 @@
 	}
 }
 
-@media screen and (max-width: 450px) {
+// all mobile devices with portrait orientation
+@media screen and (max-width: 450px) and (orientation: portrait) {
 	.dashboard {
 		height: calc(100vh - 56px);
 		min-height: calc(100vh - 56px);
+
+		&__title {
+			font-size: 2rem;
+		}
 	}
 
 	.room-container {

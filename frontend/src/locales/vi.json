@@ -39,9 +39,10 @@
 		"app-name": "Cờ tướng",
 		"profile": "Trang cá nhân",
 		"messages": "Tin nhắn",
+		"change-password": "Đổi mật khẩu",
 		"guide": "Luật chơi",
 		"announce": "Thông báo",
-		"extra": "Tác vụ thường nhật",
+		"extra": "Kiếm tiền",
 		"setting": {
 			"button": "Cài đặt"
 		},
@@ -125,6 +126,14 @@
 		"language": "Ngôn ngữ",
 		"dark-mode": "Chế độ tối",
 		"debug-mode": "Chế độ test",
+		"connected-accounts": {
+			"label": "Tài khoản liên kết",
+			"link-facebook": "Liên kết Facebook",
+			"unlink-facebook": "Huỷ liên kết Facebook",
+			"link-success": "Đã liên kết Facebook",
+			"unlink-success": "Đã huỷ liên kết Facebook",
+			"link-error": "Không cập nhật được liên kết Facebook"
+		},
 		"close": "Đóng",
 		"change-password": "Đổi mật khẩu"
 	},
@@ -184,6 +193,7 @@
 			"confirm-draw": "Bạn có chắc chắn muốn hòa không?",
 			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"insufficient-amount": "Bạn không đủ tiền để tham gia bàn chơi này",
+			"will-leave-current-room": "Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại",
 			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm"
 		},
 		"notifications": {
@@ -206,7 +216,8 @@
 			"error1": "Đăng nhập không thành công. Hãy kiểm tra lại",
 			"forgot-password": "Quên mật khẩu",
 			"register": "Đăng ký",
-			"submit": "Đăng nhập"
+			"submit": "Đăng nhập",
+			"or": "hoặc"
 		},
 		"username": {
 			"label": "Tên người dùng",
@@ -218,6 +229,12 @@
 			"error1": "Mật khẩu bắt buộc nhập",
 			"show": "Hiện mật khẩu",
 			"hide": "Ẩn mật khẩu"
+		},
+		"google": {
+			"load-error": "Không tải được đăng nhập Google"
+		},
+		"facebook": {
+			"button": "Đăng nhập với Facebook"
 		},
 		"messages": {
 			"incorrect-login": "Tên người dùng hoặc mật khẩu không hợp lệ",
@@ -394,6 +411,35 @@
 			"invalid-room-id": "ID phòng phải là số nguyên dương",
 			"room-not-found": "Không tìm thấy phòng",
 			"success": "Tải phòng thành công"
+		}
+	},
+	"google-login": {
+		"messages": {
+			"email-not-verified": "Email Google của bạn chưa được xác minh",
+			"failed": "Đăng nhập không thành công",
+			"internal-server-error": "Lỗi máy chủ nội bộ",
+			"invalid-token": "Thông tin đăng nhập Google không hợp lệ",
+			"missing-credential": "Thiếu thông tin đăng nhập Google"
+		}
+	},
+	"facebook-login": {
+		"messages": {
+			"missing-token": "Thiếu thông tin đăng nhập Facebook",
+			"invalid-token": "Thông tin đăng nhập Facebook không hợp lệ",
+			"not-linked": "Tài khoản Facebook này chưa được liên kết. Hãy đăng nhập cách khác rồi liên kết trong Cài đặt",
+			"internal-server-error": "Lỗi máy chủ nội bộ"
+		}
+	},
+	"facebook-link": {
+		"messages": {
+			"missing-token": "Thiếu thông tin đăng nhập Facebook",
+			"invalid-token": "Thông tin đăng nhập Facebook không hợp lệ",
+			"linked": "Đã liên kết Facebook",
+			"already-linked": "Tài khoản Facebook này đã được liên kết với bạn",
+			"linked-to-other": "Tài khoản Facebook này đã được liên kết với tài khoản khác",
+			"already-has-facebook": "Bạn đã liên kết một tài khoản Facebook khác",
+			"unlinked": "Đã huỷ liên kết Facebook",
+			"internal-server-error": "Lỗi máy chủ nội bộ"
 		}
 	},
 	"logout": {
@@ -583,7 +629,7 @@
 			"spin-button": "Quay",
 			"reward-placeholder": "Nhấp Quay để bắt đầu"
 		},
-		"title": "Tác vụ thường nhật",
+		"title": "Kiếm tiền",
 		"tab": {
 			"lucky-wheel": "Vòng Quay May Mắn",
 			"bonus-coin": "Xu Thưởng",
@@ -598,12 +644,48 @@
 		"daily-bonus": {
 			"subtitle": "Đăng nhập 7 ngày liên tiếp để nhận 4000 xu",
 			"day": "Ngày"
+		},
+		"reward-ad": {
+			"loading": "Đang tải quảng cáo...",
+			"error": "Không tải được quảng cáo. Vui lòng thử lại.",
+			"retry": "Thử lại",
+			"close": "Đóng"
 		}
 	},
 	"profile": {
 		"button": {
 			"save": "Lưu",
 			"cancel": "Huỷ"
+		}
+	},
+	"change-password": {
+		"title": "Đổi mật khẩu",
+		"current": {
+			"label": "Mật khẩu hiện tại",
+			"placeholder": "Nhập mật khẩu hiện tại"
+		},
+		"new": {
+			"label": "Mật khẩu mới",
+			"placeholder": "Nhập mật khẩu mới"
+		},
+		"confirm": {
+			"label": "Xác nhận mật khẩu mới",
+			"placeholder": "Nhập lại mật khẩu mới",
+			"mismatch": "Mật khẩu xác nhận không khớp"
+		},
+		"show": "Hiện mật khẩu",
+		"hide": "Ẩn mật khẩu",
+		"submit": "Đổi mật khẩu",
+		"submitting": "Đang đổi...",
+		"messages": {
+			"success": "Đổi mật khẩu thành công",
+			"missing-fields": "Vui lòng nhập đầy đủ thông tin",
+			"weak-password": "Mật khẩu mới không đạt yêu cầu",
+			"same-as-current": "Mật khẩu mới phải khác mật khẩu hiện tại",
+			"incorrect-current-password": "Mật khẩu hiện tại không đúng",
+			"user-not-found": "Không tìm thấy người dùng",
+			"unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+			"internal-server-error": "Đã có lỗi xảy ra. Vui lòng thử lại."
 		}
 	}
 }

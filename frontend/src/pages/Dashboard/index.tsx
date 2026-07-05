@@ -1,32 +1,33 @@
 import { useEffect, useState } from "react"
 import {
 	Box,
-	Button,
 	Grid,
 	Stack
 } from "@mui/material"
-import landscapeBg from "../../assets/landscape.PNG?url"
-import portraitBg from "../../assets/portrait.jpg?url"
 import Alert from "components/AlertWithIcon"
 import { FILTER_KEYS, FILTER_STATUS } from "./constants"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { CreateRoomDialog } from "./components/CreateRoomDialog"
 import { RoomCard } from "./components/RoomCard"
 import { SkeletonRoom } from "./components/SkeletonRoom"
-import { TTypography } from "components/TranslationTag"
+import { TButton, TSpan } from "components/TranslationTag"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { CreateRoomDialogContext } from "hooks/useAppContext"
+import { useProfilePopup } from "hooks/useAppContext"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useSocket } from "hooks/useSocket"
 import { translate } from "locales/translate"
 import { APIResponse } from "types/Common"
 import { DashboardFilter, DashboardRoom } from "./types"
 import "./Dashboard.scss"
+import useToolkit from "hooks/useToolkit"
+import { setCurrentRoomId } from "toolkit/slice/game"
 
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
 	const { fetchRooms } = useAPI()
+	const { profileUser } = useProfilePopup()
 	const {
 		isConnected,
 		offRoomCreated,
@@ -42,6 +43,22 @@ const DashboardPage = () => {
 	const [errorMessage, setErrorMessage] = useState("")
 	const [open, setOpen] = useState(false)
 	const loadingCards = Array.from({ length: 9 }, (_, i) => i)
+	const { dispatch } = useToolkit()
+
+	// Detect if current user is in any room
+	useEffect(() => {
+		if (!profileUser?.id) {
+			dispatch(setCurrentRoomId(null))
+			return
+		}
+
+		const currentRoom = rooms.find(room =>
+			room.users.some(user => user.id === profileUser.id)
+		)
+		const userRoomId = currentRoom ? currentRoom.id : null
+
+		dispatch(setCurrentRoomId(userRoomId))
+	}, [rooms])
 
 	useEffect(() => {
 		let ignore = false
@@ -168,35 +185,21 @@ const DashboardPage = () => {
 
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
-			<Box
-				className="dashboard"
-				sx={{
-					backgroundImage: `url(${landscapeBg})`,
-					"@media (max-width: 450px)": {
-						backgroundImage: `url(${portraitBg})`
-					}
-				}}
-			>
+			<Box className="dashboard">
 				<Stack spacing={3}>
-					<TTypography
-						variant="h5"
-						className="dashboard__title"
-						gutterBottom
-						content="dashboard.page.title"
-					/>
+					<TSpan className="dashboard__title" content="dashboard.page.title" />
 
 					<Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
 						{(["all", "available", "playing"] as DashboardFilter[]).map(filter => (
-							<Button
+							<TButton
 								key={filter}
 								onClick={() => setActiveFilter(filter)}
 								variant={filter === activeFilter ? "contained" : "outlined"}
 								size="medium"
 								className="dashboard__filter-btn"
 								sx={{ boxShadow: filter === activeFilter ? 0 : 2 }}
-							>
-								{translate(FILTER_KEYS[filter])}
-							</Button>
+								value={FILTER_KEYS[filter]}
+							/>
 						)
 						)}
 					</Stack>

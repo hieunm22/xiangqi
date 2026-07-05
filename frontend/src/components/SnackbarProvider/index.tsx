@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react"
-import { Avatar, Box, Snackbar } from "@mui/material"
+import { Avatar, Box, Snackbar, useMediaQuery } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 import { requireImage } from "common/helper"
 import { ComponentWithChild } from "types/Common"
-import { SnackbarHandler, SnackbarOptions, SnackbarQueueItem } from "./types"
+import {
+	SnackbarHandler,
+	SnackbarOptions,
+	SnackbarQueueItem
+} from "./types"
 import "./SnackBarProvider.scss"
 
 let handler: SnackbarHandler | null = null
@@ -13,7 +18,10 @@ export function openSnackbar(options: SnackbarOptions) {
 }
 
 export const SnackbarProvider = (props: ComponentWithChild) => {
+	const theme = useTheme()
 	const [queue, setQueue] = useState<SnackbarQueueItem[]>([])
+	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+	const horizontal = isMobile ? "center" : "right"
 
 	useEffect(() => {
 		handler = (options: SnackbarOptions) => {
@@ -44,7 +52,7 @@ export const SnackbarProvider = (props: ComponentWithChild) => {
 				open={!!current}
 				autoHideDuration={current?.options.duration ?? 3000}
 				onClose={handleClose}
-				anchorOrigin={{ vertical: "top", horizontal: "right" }}
+				anchorOrigin={{ vertical: "top", horizontal }}
 			>
 				<Box
 					className="snackbar-content"

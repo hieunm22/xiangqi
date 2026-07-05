@@ -143,11 +143,11 @@ describe("GET /api/auth/user?id=:id", () => {
 		})
 
 		gameUserFindManyMock.mockResolvedValue([
-			{ game_id: "game-1", user_id: 101, point: 10 }, // win
-			{ game_id: "game-2", user_id: 101, point: 5 }, // win
-			{ game_id: "game-3", user_id: 101, point: 0 }, // draw
-			{ game_id: "game-4", user_id: 101, point: -5 }, // lose
-			{ game_id: "game-5", user_id: 101, point: -10 } // lose
+			{ game_id: "game-1", user_id: 101, amount: 10 }, // win
+			{ game_id: "game-2", user_id: 101, amount: 5 }, // win
+			{ game_id: "game-3", user_id: 101, amount: 0 }, // draw
+			{ game_id: "game-4", user_id: 101, amount: -5 }, // lose
+			{ game_id: "game-5", user_id: 101, amount: -10 } // lose
 		])
 
 		const res = await request(app)

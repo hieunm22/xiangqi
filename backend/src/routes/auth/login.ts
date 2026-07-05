@@ -1,27 +1,12 @@
 import { Request, Response, Router, urlencoded } from "express"
 import crypto from "crypto"
 import multer from "multer"
-import jwt from "jsonwebtoken"
 import prisma from "prisma"
-import {
-	ACCESS_TOKEN_EXPIRES_IN,
-	LOGIN_SESSION_KEY,
-	REFRESH_TOKEN_KEY,
-	REFRESH_TOKEN_TTL_SECONDS
-} from "common/constant"
-import redis from "common/redis"
-import { getRefreshCookieOptions } from "common/cookie"
-import {
-  LoginRequest,
-  LoginSuccessResponse,
-  LoginSession
-} from "types/auth.type"
+import { establishUserSession } from "./_session"
+import { LoginRequest, LoginSuccessResponse } from "types/auth.type"
 
 const router = Router()
 const upload = multer()
-
-const JWT_SECRET = process.env.JWT_SECRET!
-const JWT_ISSUER = process.env.JWT_ISSUER?.trim() || "localhost:8000"
 
 /**
  * @swagger
@@ -148,64 +133,13 @@ router.post("/auth/login", (req, res, next) => {
 			return
 		}
 
-		const sessionId = crypto.randomUUID()
-		const payload = {
-			sub: Number(user.id),
-			jti: sessionId,
-			timezoneOffset: Number(timezoneOffset ?? 0)
-		}
-
-		const access_token = jwt.sign(payload, JWT_SECRET, {
-			expiresIn: ACCESS_TOKEN_EXPIRES_IN,
-			issuer: JWT_ISSUER
-		})
-
-		// Keep login session valid for the full refresh window.
-		const sessionValue = JSON.stringify({
+		const response = await establishUserSession(res, {
 			userId: Number(user.id),
-			deviceName: deviceName?.trim() || "",
-			clientId: sessionId,
-			createdAt: new Date().toISOString(),
-			isValid: true
-		} as LoginSession)
-		await redis.set(`${LOGIN_SESSION_KEY}:${user.id}:${sessionId}`, sessionValue, "EX", REFRESH_TOKEN_TTL_SECONDS)
-
-		// refresh_token should be a guid id
-		const refresh_token = crypto.randomUUID()
-
-		// Store refresh token in Redis with key refresh-token:<user-id>:<session-id>, expiration 30 days
-		await redis.set(`${REFRESH_TOKEN_KEY}:${user.id}:${sessionId}`, refresh_token, "EX", REFRESH_TOKEN_TTL_SECONDS)
-
-		// On a user's very first login, seed an announcement "read" baseline so a
-		// brand-new user is treated as caught up with existing announcements while
-		// still seeing announcements created afterwards as unread. Non-critical:
-		// never block login if this fails.
-		try {
-			const existingRead = await prisma.userAnnouncementRead.findFirst({
-				where: { user_id: user.id },
-				select: { id: true }
-			})
-
-			if (!existingRead) {
-				await prisma.userAnnouncementRead.create({
-					data: { user_id: user.id, session_id: sessionId }
-				})
-			}
-		} catch (seedError) {
-			console.error("Failed to seed announcement read baseline:", seedError)
-		}
-
-		const cookieOptions = getRefreshCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000)
-		res.cookie(REFRESH_TOKEN_KEY, refresh_token, cookieOptions)
-
-		res.status(200).json({
-			success: true,
-			message: "login.messages.success",
-			status_code: 200,
-			access_token,
-			refresh_token,
-      token_type: "Bearer"
+			timezoneOffset: Number(timezoneOffset ?? 0),
+			deviceName
 		})
+
+		res.status(200).json(response)
 	} catch (err) {
 		console.error("Login error:", err)
 		res.status(500).json({

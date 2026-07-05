@@ -2,11 +2,14 @@ import { useEffect, useState } from "react"
 import classnames from "classnames"
 import { Box, CircularProgress } from "@mui/material"
 import { LS_LANGUAGE } from "common/constant"
+import RewardAdDialog from "components/RewardAdDialog"
 import { TButton, TTypography } from "components/TranslationTag"
 import RewardGridSkeleton from "./RewardGridSkeleton"
 import { formatNumber, getTimeToNextSlot, getToken } from "common/helper"
-import { useAPI } from "hooks/useAPI"
 import { formatCountdown, getCellStatus } from "../rewardHelpers"
+import { useAPI } from "hooks/useAPI"
+import { useRewardAd } from "../useRewardAd"
+import { BonusCoins } from "../types"
 
 const BONUS_REWARDS = [800, 900, 1000, 1100, 1200, 1300]
 const TREASURE_REWARD = 2000
@@ -22,8 +25,21 @@ export default function BonusCoinTab() {
 	// Number of treasures already claimed this slot; also the index of the next
 	// claimable treasure. Loaded from and advanced by the backend.
 	const [claimed, setClaimed] = useState(0)
-	const [isClaiming, setIsClaiming] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
+
+	const {
+		adOpen,
+		isClaiming,
+
+		claimReward,
+		closeAd,
+		openAd
+	} = useRewardAd<BonusCoins>({
+		canWatch: claimed < TOTAL_TREASURES,
+		claim: claimBonusCoin,
+		onClaimed: (data) => setClaimed(data.claimed),
+		errorLabel: "Failed to claim bonus coin:"
+	})
 
 	// Load the persisted progress for the current slot on entry.
 	useEffect(() => {
@@ -55,27 +71,6 @@ export default function BonusCoinTab() {
 		const timer = setInterval(() => setTimeLeft(getTimeToNextSlot(SLOT_HOURS)), 1000)
 		return () => clearInterval(timer)
 	}, [])
-
-	const handleWatchVideo = async () => {
-		if (isClaiming || claimed >= TOTAL_TREASURES) return
-
-		// TODO: play the actual reward video before claiming. For now the click
-		// claims the next treasure directly.
-		const token = getToken()
-		if (!token) return
-
-		setIsClaiming(true)
-		try {
-			const response = await claimBonusCoin(token)
-			if (response?.success && response.data) {
-				setClaimed(response.data.claimed)
-			}
-		} catch (error) {
-			console.error("Failed to claim bonus coin:", error)
-		} finally {
-			setIsClaiming(false)
-		}
-	}
 
 	const renderCell = (index: number, amount: number, isTreasure: boolean) => {
 		const status = getCellStatus(index, claimed)
@@ -121,10 +116,10 @@ export default function BonusCoinTab() {
 					<TButton
 						className="watch-video-btn"
 						variant="contained"
-						disabled={isClaiming}
+						disabled={isClaiming || adOpen}
 						startIcon={isClaiming ? <CircularProgress size={20} color="inherit" /> : <i className="fas fa-circle-play" />}
 						value="extra-money.bonus-coin.watch-video"
-						onClick={handleWatchVideo}
+						onClick={openAd}
 					/>
 				)
 				: (
@@ -137,6 +132,12 @@ export default function BonusCoinTab() {
 						<span className="bonus-next-time">{formatCountdown(timeLeft)}</span>
 					</Box>
 				))}
+
+			<RewardAdDialog
+				open={adOpen}
+				onClose={closeAd}
+				onReward={claimReward}
+			/>
 		</Box>
 	)
 }

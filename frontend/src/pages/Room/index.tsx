@@ -1,9 +1,7 @@
-import React from "react"
+import React, { useEffect } from "react"
 import classnames from "classnames"
 import { Box, Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
-import landscapeBg from "../../assets/landscape.PNG?url"
-import portraitBg from "../../assets/portrait.jpg?url"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
 import { markerPositions, pieceSymbolByType } from "./constant"
 import BotDifficultyPopup from "components/BotDifficulty"
@@ -13,6 +11,8 @@ import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import { RoomChatButton } from "./components/RoomChatButton"
 import SettingsButton from "./components/SettingsButton"
+import useToolkit from "hooks/useToolkit"
+import { setIsInGame } from "toolkit/slice/game"
 import useRoomHook from "./hook"
 import "./Room.scss"
 
@@ -40,23 +40,29 @@ export default function RoomPage() {
 		startGame
 	} = useRoomHook()
 
+	const isInGame = roomSettingsDialogValue.room?.status === 2 && (roomSettingsDialogValue.game?.id ?? null) != null
+
+	const { dispatch } = useToolkit()
+
+	// Expose the in-game state globally so the app shell (e.g. the user menu) can
+	// react to it. Reset on unmount so leaving the room clears the flag.
+	useEffect(() => {
+		dispatch(setIsInGame(isInGame))
+	}, [dispatch, isInGame])
+
+	useEffect(() => () => {
+		dispatch(setIsInGame(false))
+	}, [dispatch])
+
 	return (
-		<Box
-			className="room-container"
-			sx={{
-				backgroundImage: `url(${landscapeBg})`,
-				"@media (max-width: 450px)": {
-					backgroundImage: `url(${portraitBg})`
-				}
-			}}
-		>
+		<Box className="room-container">
 			{showConfetti && <ConfettiBoom mode="boom" particleCount={50} />}
 			<div className="player-info-row view">
 				<div className="player-section top-player">
 					<PlayerInfoCard
 						user={displayTopUser}
 						team={displayTopUser?.team === "black" ? "black" : "red"}
-						active={currentTurn === displayTopUser?.team}
+						active={isInGame && currentTurn === displayTopUser?.team}
 						botLevel={displayTopUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
@@ -74,7 +80,7 @@ export default function RoomPage() {
 					<PlayerInfoCard
 						user={displayBottomUser}
 						team={displayBottomUser?.team === "black" ? "black" : "red"}
-						active={currentTurn === displayBottomUser?.team}
+						active={isInGame && currentTurn === displayBottomUser?.team}
 						botLevel={displayBottomUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}

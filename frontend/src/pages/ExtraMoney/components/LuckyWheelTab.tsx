@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import classnames from "classnames"
 import { Box, Stack } from "@mui/material"
+import { LUCKY_WHEEL_SLOT_HOURS } from "common/constant"
 import { TTypography } from "components/TranslationTag"
-import { getToken } from "common/helper"
+import { getTimeToNextSlot, getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
+import { formatCountdown } from "../rewardHelpers"
 
 const REWARDS = [50, 300, 75, 750, 2000, 200, 1000, 1500, 150, 250, 300, 100]
 
@@ -14,12 +16,19 @@ export default function LuckyWheelTab() {
 	const [spinDuration, setSpinDuration] = useState(0)
 	const [lastNewRotation, setLastNewRotation] = useState(0)
 	const [spinsRemaining, setSpinsRemaining] = useState(0)
+	const [timeLeft, setTimeLeft] = useState(() => getTimeToNextSlot(LUCKY_WHEEL_SLOT_HOURS))
 	const wheelRef = useRef<HTMLDivElement>(null)
 
 	// Randomize starting position when page opens
 	useEffect(() => {
 		const randomOffset = Math.floor(Math.random() * 12)
 		setRotation(randomOffset * 30)
+	}, [])
+
+	// Tick the countdown to the next 6h wheel refresh every second.
+	useEffect(() => {
+		const timer = setInterval(() => setTimeLeft(getTimeToNextSlot(LUCKY_WHEEL_SLOT_HOURS)), 1000)
+		return () => clearInterval(timer)
 	}, [])
 
 	// Claim the current slot bonus on entry and load the persisted remaining spins
@@ -55,8 +64,6 @@ export default function LuckyWheelTab() {
 			// Fix negative modulo: ensure segmentIndex is always positive (0-11)
 			const segmentIndex = (Math.round((270 - normalizedRotation) / 30) % 12 + 12) % 12
 			const spinReward = REWARDS[segmentIndex]
-
-			console.log("Spin completed! Reward:", spinReward)
 
 			// Consume one spin and credit its reward in a single atomic call.
 			const token = getToken()
@@ -196,10 +203,18 @@ export default function LuckyWheelTab() {
 			<Stack spacing={2} sx={{ mt: 4, alignItems: "center", width: "100%" }}>
 				<TTypography
 					variant="body2"
-					color="textSecondary"
+					className="lucky-wheel-desc"
 					align="center"
 					content="extra-money.lucky-wheel.description"
 				/>
+				<Box className="bonus-next">
+					<TTypography
+						component="span"
+						variant="h6"
+						content="extra-money.bonus-coin.next-in"
+					/>
+					<span className="bonus-next-time">{formatCountdown(timeLeft)}</span>
+				</Box>
 			</Stack>
 		</Box>
 	)

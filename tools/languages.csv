@@ -22,9 +22,10 @@ page.about.title;About;Thông tin
 menu.app-name;Xiangqi;Cờ tướng
 menu.profile;Profile;Trang cá nhân
 menu.messages;Message;Tin nhắn
+menu.change-password;Change password;Đổi mật khẩu
 menu.guide;Guide;Luật chơi
 menu.announce;Announcement;Thông báo
-menu.extra;Daily tasks;Tác vụ thường nhật
+menu.extra;Daily tasks;Kiếm tiền
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
@@ -75,6 +76,12 @@ settings.header;Settings;Cài đặt
 settings.language;Language;Ngôn ngữ
 settings.dark-mode;Dark mode;Chế độ tối
 settings.debug-mode;Debug mode;Chế độ test
+settings.connected-accounts.label;Connected accounts;Tài khoản liên kết
+settings.connected-accounts.link-facebook;Link Facebook;Liên kết Facebook
+settings.connected-accounts.unlink-facebook;Unlink Facebook;Huỷ liên kết Facebook
+settings.connected-accounts.link-success;Facebook linked successfully;Đã liên kết Facebook
+settings.connected-accounts.unlink-success;Facebook unlinked;Đã huỷ liên kết Facebook
+settings.connected-accounts.link-error;Could not update Facebook link;Không cập nhật được liên kết Facebook
 settings.close;Close;Đóng
 settings.change-password;Change password;Đổi mật khẩu
 popup.alert.title;Warning;Cảnh báo
@@ -103,6 +110,13 @@ login.form.error1;Login failed. Please check your credentials ;Đăng nhập kh�
 login.form.forgot-password;Forgot password;Quên mật khẩu
 login.form.register;Register;Đăng ký
 login.form.submit;Login;Đăng nhập
+login.form.or;or;hoặc
+login.google.load-error;Could not load Google Sign-In;Không tải được đăng nhập Google
+login.facebook.button;Sign-in with Facebook;Đăng nhập với Facebook
+login.messages.incorrect-login;Invalid username or password;Tên người dùng hoặc mật khẩu không hợp lệ
+login.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+login.messages.missing-credentials;Username and password are required;Tên người dùng và mật khẩu là bắt buộc
+login.messages.success;Login successful;Đăng nhập thành công
 notfound.title;Page Not Found;Trang không tìm thấy
 notfound.description;The page you are looking for does not exist or has been moved.;Trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.
 notfound.home;Go to Home;Về trang chủ
@@ -193,10 +207,23 @@ load-room.messages.internal-server-error;Internal server error;Lỗi máy chủ 
 load-room.messages.invalid-room-id;Room ID must be a positive integer;ID phòng phải là số nguyên dương
 load-room.messages.room-not-found;Room not found;Không tìm thấy phòng
 load-room.messages.success;Load room successfully;Tải phòng thành công
-login.messages.incorrect-login;Invalid username or password;Tên người dùng hoặc mật khẩu không hợp lệ
-login.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
-login.messages.missing-credentials;Username and password are required;Tên người dùng và mật khẩu là bắt buộc
-login.messages.success;Login successful;Đăng nhập thành công
+google-login.messages.email-not-verified;Your Google email is not verified;Email Google của bạn chưa được xác minh
+google-login.messages.failed;Login failed;Đăng nhập không thành công
+google-login.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+google-login.messages.invalid-token;Invalid Google credential;Thông tin đăng nhập Google không hợp lệ
+google-login.messages.missing-credential;Google credential is required;Thiếu thông tin đăng nhập Google
+facebook-login.messages.missing-token;Facebook token is required;Thiếu thông tin đăng nhập Facebook
+facebook-login.messages.invalid-token;Invalid Facebook token;Thông tin đăng nhập Facebook không hợp lệ
+facebook-login.messages.not-linked;This Facebook account is not linked. Log in another way and link it in Settings;Tài khoản Facebook này chưa được liên kết. Hãy đăng nhập cách khác rồi liên kết trong Cài đặt
+facebook-login.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
+facebook-link.messages.missing-token;Facebook token is required;Thiếu thông tin đăng nhập Facebook
+facebook-link.messages.invalid-token;Invalid Facebook token;Thông tin đăng nhập Facebook không hợp lệ
+facebook-link.messages.linked;Facebook linked successfully;Đã liên kết Facebook
+facebook-link.messages.already-linked;This Facebook account is already linked to your account;Tài khoản Facebook này đã được liên kết với bạn
+facebook-link.messages.linked-to-other;This Facebook account is already linked to another account;Tài khoản Facebook này đã được liên kết với tài khoản khác
+facebook-link.messages.already-has-facebook;You already linked a different Facebook account;Bạn đã liên kết một tài khoản Facebook khác
+facebook-link.messages.unlinked;Facebook unlinked;Đã huỷ liên kết Facebook
+facebook-link.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 logout.messages.already-inactive;Session already inactive;Phiên đã ngưng hoạt động
 logout.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 logout.messages.success;Logout successful;Đăng xuất thành công
@@ -243,6 +270,7 @@ room.messages.confirm-surrender;Are you sure you want to surrender?;Bạn có ch
 room.messages.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắn muốn hòa không?
 room.messages.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
 room.messages.insufficient-amount;You do not have enough balance to join this room;Bạn không đủ tiền để tham gia bàn chơi này
+room.messages.will-leave-current-room;You are currently in another room. Joining this room will remove you from the current room;Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại
 room.messages.all-seats-occupied;All player seats are occupied;Tất cả ghế chơi đã được chiếm
 room.notifications.joined;{0} joined the room;{0} đã vào phòng
 room.notifications.left;{0} left the room;{0} đã rời phòng
@@ -345,7 +373,7 @@ extra-money.lucky-wheel.title;Lucky Wheel;Vòng quay may mắn
 extra-money.lucky-wheel.description;Spin the wheel to earn money! Click the spin button in the middle of the wheel to try your luck.;Quay vòng để kiếm tiền! Bấm nút Quay ở giữa vòng quay để thử vận may của bạn.
 extra-money.lucky-wheel.spin-button;Spin;Quay
 extra-money.lucky-wheel.reward-placeholder;Click Spin to get started;Nhấp Quay để bắt đầu
-extra-money.title;Daily tasks;Tác vụ thường nhật
+extra-money.title;Daily tasks;Kiếm tiền
 extra-money.tab.lucky-wheel;Lucky Wheel;Vòng Quay May Mắn
 extra-money.tab.bonus-coin;Bonus Coin;Xu Thưởng
 extra-money.tab.daily-bonus;Daily Bonus;Thưởng hàng ngày
@@ -355,8 +383,32 @@ extra-money.bonus-coin.coin-unit;coin;xu
 extra-money.bonus-coin.watch-video;Watch video;Xem video
 extra-money.daily-bonus.subtitle;Login 7 days in a row to earn 4000 coin;Đăng nhập 7 ngày liên tiếp để nhận 4000 xu
 extra-money.daily-bonus.day;Day;Ngày
+extra-money.reward-ad.loading;Loading ad...;Đang tải quảng cáo...
+extra-money.reward-ad.error;Could not load the ad. Please try again.;Không tải được quảng cáo. Vui lòng thử lại.
+extra-money.reward-ad.retry;Try again;Thử lại
+extra-money.reward-ad.close;Close;Đóng
 profile.button.save;Save;Lưu
 profile.button.cancel;Cancel;Huỷ
+change-password.title;Change password;Đổi mật khẩu
+change-password.current.label;Current password;Mật khẩu hiện tại
+change-password.current.placeholder;Enter current password;Nhập mật khẩu hiện tại
+change-password.new.label;New password;Mật khẩu mới
+change-password.new.placeholder;Enter new password;Nhập mật khẩu mới
+change-password.confirm.label;Confirm new password;Xác nhận mật khẩu mới
+change-password.confirm.placeholder;Re-enter new password;Nhập lại mật khẩu mới
+change-password.confirm.mismatch;Passwords do not match;Mật khẩu xác nhận không khớp
+change-password.show;Show password;Hiện mật khẩu
+change-password.hide;Hide password;Ẩn mật khẩu
+change-password.submit;Change password;Đổi mật khẩu
+change-password.submitting;Changing...;Đang đổi...
+change-password.messages.success;Password changed successfully;Đổi mật khẩu thành công
+change-password.messages.missing-fields;Please fill in all fields;Vui lòng nhập đầy đủ thông tin
+change-password.messages.weak-password;New password does not meet the requirements;Mật khẩu mới không đạt yêu cầu
+change-password.messages.same-as-current;New password must be different from the current one;Mật khẩu mới phải khác mật khẩu hiện tại
+change-password.messages.incorrect-current-password;Current password is incorrect;Mật khẩu hiện tại không đúng
+change-password.messages.user-not-found;User not found;Không tìm thấy người dùng
+change-password.messages.unauthorized;Session expired. Please sign in again.;Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
+change-password.messages.internal-server-error;Something went wrong. Please try again.;Đã có lỗi xảy ra. Vui lòng thử lại.
 ;;
 ;;
 ;;

@@ -65,6 +65,11 @@ export interface UnreadCountResponse {
 	announcements: number
 }
 
+export type ChangePasswordBodyType = {
+	currentPassword: string
+	newPassword: string
+}
+
 export type EditableProfileFieldProps = {
 	className?: string
 	editable: boolean

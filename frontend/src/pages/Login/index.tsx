@@ -4,6 +4,7 @@ import {
 	Box,
 	Button,
 	CircularProgress,
+	Divider,
 	Link,
 	Paper,
 	Stack
@@ -11,11 +12,13 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 import { HOME_PATH, LS_TOKEN_KEY } from "common/constant"
 import Alert from "components/AlertWithIcon"
-import { TI, TTextField, TTypography } from "components/TranslationTag"
-import { translate } from "locales/translate"
-import useAutoTitle from "hooks/useAutoTitle"
+import { TButton, TI, TTextField, TTypography } from "components/TranslationTag"
 import { useAPI } from "hooks/useAPI"
+import useAutoTitle from "hooks/useAutoTitle"
 import { useAuth } from "hooks/useAppContext"
+import { useFacebookAuth } from "hooks/useFacebookAuth"
+import { useGoogleAuth } from "hooks/useGoogleAuth"
+import { translate } from "locales/translate"
 import { AuthResponse } from "./types"
 import "./Login.scss"
 
@@ -29,7 +32,7 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
-	const { login } = useAPI()
+	const { facebookLogin, googleLogin, login } = useAPI()
 	const navigate = useNavigate()
 	const { refreshAuth } = useAuth()
 
@@ -55,6 +58,17 @@ export default function LoginPage() {
 		}
 	}
 
+	const applyAuthResponse = async (response: AuthResponse) => {
+		if (!response.success) {
+			throw new Error(translate(response.message || "login.form.error1"))
+		}
+
+		setMessage(translate(response.message || "login.form.success"))
+		localStorage.setItem(LS_TOKEN_KEY, response.access_token)
+		await refreshAuth()
+		navigate(HOME_PATH)
+	}
+
 	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		setError(null)
@@ -78,16 +92,68 @@ export default function LoginPage() {
 				deviceName: navigator.userAgent,
 				timezoneOffset: new Date().getTimezoneOffset() / -60
 			})
-			if (!response.success) {
-				throw new Error(translate(response.message || "login.form.error1"))
-			}
-
-			setMessage(translate(response.message || "login.form.success"))
-			localStorage.setItem(LS_TOKEN_KEY, response.access_token)
-			await refreshAuth()
-			navigate(HOME_PATH)
+			await applyAuthResponse(response)
 		} catch (submitError) {
 			setLoading(false)
+			const submitMessage = submitError instanceof Error
+				? translate(submitError.message)
+				: translate("login.form.unexpected-error")
+			setError(submitMessage)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const handleGoogleCredential = async (credential: string) => {
+		setError(null)
+		setMessage(null)
+		setLoading(true)
+
+		try {
+			const response: AuthResponse = await googleLogin({
+				credential,
+				deviceName: navigator.userAgent,
+				timezoneOffset: new Date().getTimezoneOffset() / -60
+			})
+			await applyAuthResponse(response)
+		} catch (submitError) {
+			const submitMessage = submitError instanceof Error
+				? translate(submitError.message)
+				: translate("login.form.unexpected-error")
+			setError(submitMessage)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const { buttonRef: googleButtonRef, isConfigured: isGoogleConfigured } = useGoogleAuth({
+		onCredential: handleGoogleCredential,
+		onError: () => setError(translate("login.google.load-error"))
+	})
+
+	const { login: facebookSdkLogin, isConfigured: isFacebookConfigured } = useFacebookAuth()
+
+	const handleFacebookLogin = async () => {
+		setError(null)
+		setMessage(null)
+
+		let accessToken: string
+		try {
+			accessToken = await facebookSdkLogin()
+		} catch {
+			// User closed the Facebook popup or the SDK failed to load — stay put.
+			return
+		}
+
+		setLoading(true)
+		try {
+			const response: AuthResponse = await facebookLogin({
+				accessToken,
+				deviceName: navigator.userAgent,
+				timezoneOffset: new Date().getTimezoneOffset() / -60
+			})
+			await applyAuthResponse(response)
+		} catch (submitError) {
 			const submitMessage = submitError instanceof Error
 				? translate(submitError.message)
 				: translate("login.form.unexpected-error")
@@ -182,6 +248,27 @@ export default function LoginPage() {
 					<Button type="submit" variant="contained" disabled={loading} fullWidth size="large">
 						{loading ? <CircularProgress size={22} color="inherit" /> : translate("login.form.submit")}
 					</Button>
+
+					{(isGoogleConfigured || isFacebookConfigured) && (
+						<Divider sx={{ color: "text.secondary", fontSize: 13 }}>
+							{translate("login.form.or")}
+						</Divider>
+					)}
+					{isGoogleConfigured && (
+						<Box ref={googleButtonRef} className="google-signin-wrapper" />
+					)}
+					{isFacebookConfigured && (
+						<TButton
+							variant="contained"
+							fullWidth
+							size="large"
+							disabled={loading}
+							onClick={handleFacebookLogin}
+							startIcon={<i className="fab fa-facebook-f" />}
+							className="facebook-signin-btn"
+							value="login.facebook.button"
+						/>
+					)}
 				</Stack>
 			</Paper>
 		</Box>

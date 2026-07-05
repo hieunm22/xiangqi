@@ -6,3 +6,23 @@
 	margin-right: 10px;
 	cursor: pointer;
 }
+
+.google-signin-wrapper {
+	width: 100%;
+	min-width: 0;
+	display: flex;
+	justify-content: center;
+
+	& > div,
+	& iframe {
+		width: 100% !important;
+	}
+}
+
+.facebook-signin-btn {
+	background-color: #1877f2 !important;
+
+	&:hover {
+		background-color: #166fe5 !important;
+	}
+}

@@ -16,4 +16,5 @@ export const PopupState = {
 	SEARCH_USERS: 64,
 	JOIN_ROOM: 128,
 	BOT_DIFFICULTY: 256,
+	CHANGE_PASSWORD: 512,
 }

@@ -4,14 +4,19 @@ import swaggerSpec from "./swagger"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
-import getUsersRoutes from "./routes/auth/get-user"
+import changePasswordRoutes from "./routes/auth/change-password"
+import facebookLinkRoutes from "./routes/auth/facebook-link"
+import facebookLoginRoutes from "./routes/auth/facebook"
 import forgotPasswordRoutes from "./routes/auth/forgot-password"
-import resetPasswordRoutes from "./routes/auth/reset-password"
+import getUsersRoutes from "./routes/auth/get-user"
+import googleLoginRoutes from "./routes/auth/google"
+import linkedProvidersRoutes from "./routes/auth/linked-providers"
 import loginRoutes from "./routes/auth/login"
 import logoutRoutes from "./routes/auth/logout"
 import makeExpiredRoutes from "./routes/auth/make-expired"
 import refreshTokenRoutes from "./routes/auth/refresh-token"
 import registerRoutes from "./routes/auth/register"
+import resetPasswordRoutes from "./routes/auth/reset-password"
 import validateTokenRoutes from "./routes/auth/validate-token"
 
 import bonusCoinsRoutes from "./routes/user/bonus-coins"
@@ -87,13 +92,18 @@ app.get("/", (_req: Request, res: Response) => {
 	res.redirect("/docs")
 })
 
-app.use("/api", getUsersRoutes)
+app.use("/api", changePasswordRoutes)
+app.use("/api", facebookLinkRoutes)
+app.use("/api", facebookLoginRoutes)
 app.use("/api", forgotPasswordRoutes)
-app.use("/api", resetPasswordRoutes)
+app.use("/api", getUsersRoutes)
+app.use("/api", googleLoginRoutes)
+app.use("/api", linkedProvidersRoutes)
 app.use("/api", loginRoutes)
 app.use("/api", logoutRoutes)
 app.use("/api", makeExpiredRoutes)
 app.use("/api", registerRoutes)
+app.use("/api", resetPasswordRoutes)
 app.use("/api", validateTokenRoutes)
 app.use("/api", refreshTokenRoutes)
 

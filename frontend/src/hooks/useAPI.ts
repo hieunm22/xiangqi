@@ -4,13 +4,19 @@ import FormDataAddon from "wretch/addons/formData"
 import { LOGIN_PATH, LS_TOKEN_KEY } from "common/constant"
 import { getLanguage, getToken } from "common/helper"
 import { CreateRoomRequest } from "pages/Dashboard/types"
-import { AuthResponse, LoginBodyType } from "pages/Login/types"
+import {
+	AuthResponse,
+	FacebookLoginBodyType,
+	GoogleLoginBodyType,
+	LoginBodyType
+} from "pages/Login/types"
 import { ForgotPasswordBodyType } from "pages/LostPassword/types"
 import { ResetPasswordBodyType } from "pages/ResetPassword/types"
 import { APIResponse, APIResponseEmpty, UserAvatarType } from "types/Common"
 import { Team } from "types/GameState"
 import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
 import {
+	ChangePasswordBodyType,
 	GameHistoryItem,
 	UpdateUserInfoPayload,
 	UpdateUserInfoResponse,
@@ -35,8 +41,13 @@ import {
 
 const EP = { // end points
 	// auth endpoints
+	changePassword: "/auth/change-password",
+	facebookLink: "/auth/facebook-link",
+	facebookLogin: "/auth/facebook",
 	getUser: "/auth/user",
 	getUserInfo: "/auth/user-info",
+	googleLogin: "/auth/google",
+	linkedProviders: "/auth/linked-providers",
 	login: "/auth/login",
 	logout: "/auth/logout",
 	refreshToken: "/auth/refresh-token",
@@ -163,6 +174,12 @@ export const useAPI = () => {
 
 	// ---------- API methods ----------
 
+	const changePassword = async (token: string, form: ChangePasswordBodyType) => authFetch(EP.changePassword)
+							.auth(`Bearer ${token}`)
+							.post(form)
+							.json(changePasswordCallback)
+							.catch(handleError)
+
 	const changeTeam = async (token: string, roomId: number, isLeaveToSeat: boolean) => authFetch(EP.changeTeam)
 							.auth(`Bearer ${token}`)
 							.post({ roomId, isLeaveToSeat })
@@ -197,6 +214,24 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.post({ gameId })
 							.json(drawGameCallback)
+							.catch(handleError)
+
+	const facebookLink = async (token: string, fbAccessToken: string) => authFetch(EP.facebookLink)
+							.auth(`Bearer ${token}`)
+							.post({ accessToken: fbAccessToken })
+							.json(facebookLinkCallback)
+							.catch(handleError)
+
+	const facebookLogin = (form: FacebookLoginBodyType) => requestWithCookie.url(EP.facebookLogin)
+							.json(form)
+							.post()
+							.json(facebookLoginCallback)
+							.catch(handleError)
+
+	const facebookUnlink = async (token: string) => authFetch(EP.facebookLink)
+							.auth(`Bearer ${token}`)
+							.delete()
+							.json(facebookUnlinkCallback)
 							.catch(handleError)
 
 	const fetchRooms = async (token: string, status?: number) => {
@@ -244,6 +279,12 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getGameHistoryCallback)
+							.catch(handleError)
+
+	const getLinkedProviders = async (token: string) => authFetch(EP.linkedProviders)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getLinkedProvidersCallback)
 							.catch(handleError)
 
 	const getLuckySpins = async (token: string) => authFetch(EP.getLuckySpins)
@@ -304,6 +345,12 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getUserCallback)
+							.catch(handleError)
+
+	const googleLogin = (form: GoogleLoginBodyType) => requestWithCookie.url(EP.googleLogin)
+							.json(form)
+							.post()
+							.json(googleLoginCallback)
 							.catch(handleError)
 
 	const joinRoom = async (token: string, roomId: number, team?: Team | null) => authFetch(EP.joinRoom)
@@ -482,6 +529,10 @@ export const useAPI = () => {
 
 	// ---------- Callbacks ----------
 
+	const changePasswordCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
 	const changeTeamCallback = (response: APIResponse<RoomUser[]>) => {
 		return response
 	}
@@ -506,7 +557,23 @@ export const useAPI = () => {
 		return response
 	}
 
+	const facebookLinkCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
+	const facebookLoginCallback = (response: AuthResponse) => {
+		return response
+	}
+
+	const facebookUnlinkCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
 	const getAnnouncementsCallback = (response: APIResponse<AnnouncementMessage[]>) => {
+		return response
+	}
+
+	const getLinkedProvidersCallback = (response: APIResponse<{ providers: string[] }>) => {
 		return response
 	}
 
@@ -570,6 +637,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const googleLoginCallback = (response: AuthResponse) => {
+		return response
+	}
+
 	const joinRoomCallback = (response: APIResponse<RoomUser[]>) => {
 		return response
 	}
@@ -581,7 +652,7 @@ export const useAPI = () => {
 	const leaveRoomCallback = (response: APIResponseEmpty) => {
 		return response
 	}
-	
+
 	const loginCallback = (response: AuthResponse) => {
 		return response
 	}
@@ -699,12 +770,16 @@ export const useAPI = () => {
 	return {
 		authFetch,
 
+		changePassword,
 		changeTeam,
 		claimBonusCoin,
 		claimDailyBonus,
 		claimLuckySpins,
 		createRoom,
 		drawGame,
+		facebookLink,
+		facebookLogin,
+		facebookUnlink,
 		fetchRooms,
 		forgotPassword,
 		getAnnouncements,
@@ -712,6 +787,7 @@ export const useAPI = () => {
 		getBonusCoins,
 		getDailyBonus,
 		getGameMovementHistory,
+		getLinkedProviders,
 		getLuckySpins,
 		getOnlineUsers,
 		getPlayerHistory,
@@ -722,6 +798,7 @@ export const useAPI = () => {
 		getSelectedTab,
 		getUnreadCount,
 		getUserById,
+		googleLogin,
 		joinRoom,
 		kickUser,
 		leaveRoom,

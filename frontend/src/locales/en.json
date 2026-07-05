@@ -39,6 +39,7 @@
 		"app-name": "Xiangqi",
 		"profile": "Profile",
 		"messages": "Message",
+		"change-password": "Change password",
 		"guide": "Guide",
 		"announce": "Announcement",
 		"extra": "Daily tasks",
@@ -125,6 +126,14 @@
 		"language": "Language",
 		"dark-mode": "Dark mode",
 		"debug-mode": "Debug mode",
+		"connected-accounts": {
+			"label": "Connected accounts",
+			"link-facebook": "Link Facebook",
+			"unlink-facebook": "Unlink Facebook",
+			"link-success": "Facebook linked successfully",
+			"unlink-success": "Facebook unlinked",
+			"link-error": "Could not update Facebook link"
+		},
 		"close": "Close",
 		"change-password": "Change password"
 	},
@@ -184,6 +193,7 @@
 			"confirm-draw": "Are you sure you want to draw?",
 			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
 			"insufficient-amount": "You do not have enough balance to join this room",
+			"will-leave-current-room": "You are currently in another room. Joining this room will remove you from the current room",
 			"all-seats-occupied": "All player seats are occupied"
 		},
 		"notifications": {
@@ -206,7 +216,8 @@
 			"error1": "Login failed. Please check your credentials ",
 			"forgot-password": "Forgot password",
 			"register": "Register",
-			"submit": "Login"
+			"submit": "Login",
+			"or": "or"
 		},
 		"username": {
 			"label": "User name",
@@ -218,6 +229,12 @@
 			"error1": "Password is required",
 			"show": "Show password",
 			"hide": "Hide password"
+		},
+		"google": {
+			"load-error": "Could not load Google Sign-In"
+		},
+		"facebook": {
+			"button": "Sign-in with Facebook"
 		},
 		"messages": {
 			"incorrect-login": "Invalid username or password",
@@ -394,6 +411,35 @@
 			"invalid-room-id": "Room ID must be a positive integer",
 			"room-not-found": "Room not found",
 			"success": "Load room successfully"
+		}
+	},
+	"google-login": {
+		"messages": {
+			"email-not-verified": "Your Google email is not verified",
+			"failed": "Login failed",
+			"internal-server-error": "Internal server error",
+			"invalid-token": "Invalid Google credential",
+			"missing-credential": "Google credential is required"
+		}
+	},
+	"facebook-login": {
+		"messages": {
+			"missing-token": "Facebook token is required",
+			"invalid-token": "Invalid Facebook token",
+			"not-linked": "This Facebook account is not linked. Log in another way and link it in Settings",
+			"internal-server-error": "Internal server error"
+		}
+	},
+	"facebook-link": {
+		"messages": {
+			"missing-token": "Facebook token is required",
+			"invalid-token": "Invalid Facebook token",
+			"linked": "Facebook linked successfully",
+			"already-linked": "This Facebook account is already linked to your account",
+			"linked-to-other": "This Facebook account is already linked to another account",
+			"already-has-facebook": "You already linked a different Facebook account",
+			"unlinked": "Facebook unlinked",
+			"internal-server-error": "Internal server error"
 		}
 	},
 	"logout": {
@@ -598,12 +644,48 @@
 		"daily-bonus": {
 			"subtitle": "Login 7 days in a row to earn 4000 coin",
 			"day": "Day"
+		},
+		"reward-ad": {
+			"loading": "Loading ad...",
+			"error": "Could not load the ad. Please try again.",
+			"retry": "Try again",
+			"close": "Close"
 		}
 	},
 	"profile": {
 		"button": {
 			"save": "Save",
 			"cancel": "Cancel"
+		}
+	},
+	"change-password": {
+		"title": "Change password",
+		"current": {
+			"label": "Current password",
+			"placeholder": "Enter current password"
+		},
+		"new": {
+			"label": "New password",
+			"placeholder": "Enter new password"
+		},
+		"confirm": {
+			"label": "Confirm new password",
+			"placeholder": "Re-enter new password",
+			"mismatch": "Passwords do not match"
+		},
+		"show": "Show password",
+		"hide": "Hide password",
+		"submit": "Change password",
+		"submitting": "Changing...",
+		"messages": {
+			"success": "Password changed successfully",
+			"missing-fields": "Please fill in all fields",
+			"weak-password": "New password does not meet the requirements",
+			"same-as-current": "New password must be different from the current one",
+			"incorrect-current-password": "Current password is incorrect",
+			"user-not-found": "User not found",
+			"unauthorized": "Session expired. Please sign in again.",
+			"internal-server-error": "Something went wrong. Please try again."
 		}
 	}
 }

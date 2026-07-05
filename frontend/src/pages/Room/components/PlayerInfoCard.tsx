@@ -27,8 +27,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	if (!user) {
 		if (props.roomHostId !== currentUserId) {
 			return (
-				<div className="player-info-card loading-slot">
-					<TI className="fas fa-circle-north fa-spin" />
+				<div className="player-info-card">
 				</div>
 			)
 		}

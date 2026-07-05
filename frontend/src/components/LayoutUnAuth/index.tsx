@@ -11,12 +11,14 @@ import {
 	Grid,
 	Switch
 } from "@mui/material"
-import i18n from "locales/i18n"
+import landscapeBg from "assets/landscape.PNG?url"
+import portraitBg from "assets/portrait.jpg?url"
 import { COUNTRIES_OPTIONS, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
 import { TTypography } from "components/TranslationTag"
 import useToolkit from "hooks/useToolkit"
-import { setDarkMode } from "toolkit/slice/home"
+import i18n from "locales/i18n"
 import { translate } from "locales/translate"
+import { setDarkMode } from "toolkit/slice/home"
 import "./LayoutUnAuth.scss"
 
 export default function LayoutUnAuth() {
@@ -65,7 +67,15 @@ export default function LayoutUnAuth() {
 	}
 
 	return (
-		<Box sx={{ display: "flex" }}>
+		<Box
+			className="layout-unauth"
+			sx={{
+				backgroundImage: `url(${landscapeBg})`,
+				"@media (max-width: 450px)": {
+					backgroundImage: `url(${portraitBg})`
+				}
+			}}
+		>
 			<CssBaseline />
 			<Outlet />
 			<Button
@@ -87,10 +97,10 @@ export default function LayoutUnAuth() {
 				<DialogTitle className="setting-title">
 					<TTypography content="settings.header" sx={textCenterStyle} />
 				</DialogTitle>
-				<Divider sx={{ my: "5px" }} />
+				<Divider className="divider" />
 				<DialogContent className="dialog-content">
-					<Grid container sx={{ alignItems: "center", gap: 2 }} className="setting-row">
-						<TTypography sx={{ minWidth: "100px" }} content="settings.language" />
+					<Grid container className="setting-row">
+						<TTypography sx={{ width: 100 }} content="settings.language" />
 						<Grid container sx={{ gap: 1 }}>
 							{COUNTRIES_OPTIONS.map(option => (
 								<Button
@@ -113,7 +123,7 @@ export default function LayoutUnAuth() {
 						</Grid>
 					</Grid>
 					<Grid container className="setting-row">
-						<TTypography content="settings.dark-mode" />
+						<TTypography content="settings.dark-mode" sx={{ width: 100 }} />
 						<Switch
 							className="ios-switch"
 							checked={state.darkMode}

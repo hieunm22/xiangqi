@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import {
 	Avatar,
 	Box,
@@ -13,7 +13,7 @@ import {
 import BoardImage from "assets/xiangqi-board.png"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
-import { TButton, TTooltip } from "components/TranslationTag"
+import { TButton, TTooltip, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getToken, requireImage } from "common/helper"
 import { useAPI } from "hooks/useAPI"
@@ -63,11 +63,11 @@ const SeatAvatar = ({ user, isHost, onUserClick }: SeatAvatarProps) => {
 
 export const JoinRoomDialog = () => {
 	const navigate = useNavigate()
-	const location = useLocation()
 	const { joinRoom, leaveRoom } = useAPI()
 	const { gameState, dispatch } = useToolkit()
 	const { showProfilePopup } = useLayoutAuth()
 	const { profileUser } = useProfilePopup()
+	const { currentRoomId } = gameState
 	const [room, setRoom] = useState<DashboardRoom | null>(null)
 	const [isJoining, setIsJoining] = useState(false)
 
@@ -109,13 +109,9 @@ export const JoinRoomDialog = () => {
 
 		setIsJoining(true)
 
-		// If the user is currently inside another room, leave it before joining
-		// the new one so they don't keep a seat in two rooms at once.
-		if (location.pathname.startsWith("/room/")) {
-			const currentRoomId = Number(location.pathname.substring("/room/".length))
-			if (Number.isInteger(currentRoomId) && currentRoomId > 0 && currentRoomId !== room.id) {
-				await leaveRoom(token, currentRoomId)
-			}
+		// If the user is currently inside another room, leave it before joining the new one
+		if (currentRoomId && currentRoomId > 0 && currentRoomId !== room.id) {
+			await leaveRoom(token, currentRoomId)
 		}
 
 		const response = await joinRoom(token, room.id, team)
@@ -146,13 +142,21 @@ export const JoinRoomDialog = () => {
 		}
 	}
 
-	const tooltipDisabled = () => {
-		if (!canAffordBet) {
-			return "room.messages.insufficient-amount"
-		} else if (players.length === 2) {
-			return "room.messages.all-seats-occupied"
+	// Check if user is currently in a different room
+	const isInDifferentRoom = !!(currentRoomId && currentRoomId > 0 && room?.id && currentRoomId !== room.id)
+
+	const getHelpTexts = () => {
+		const errors: string[] = []
+		if (isInDifferentRoom) {
+			errors.push("room.messages.will-leave-current-room")
 		}
-		return ""
+		if (!canAffordBet) {
+			errors.push("room.messages.insufficient-amount")
+		}
+		if (players.length === 2) {
+			errors.push("room.messages.all-seats-occupied")
+		}
+		return errors
 	}
 
 	const handleAvatarClick = (userId: number) => {
@@ -179,12 +183,12 @@ export const JoinRoomDialog = () => {
 						<SeatAvatar
 							user={host || null}
 							isHost
-						onUserClick={handleAvatarClick}
-					/>
-					<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
-					<SeatAvatar
-						user={opponent || null}
-						isHost={false}
+							onUserClick={handleAvatarClick}
+						/>
+						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
+						<SeatAvatar
+							user={opponent || null}
+							isHost={false}
 							onUserClick={handleAvatarClick}
 						/>
 					</Stack>
@@ -201,23 +205,15 @@ export const JoinRoomDialog = () => {
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogActions className="dashboard__join-room-actions">
-				<TTooltip
-					title={tooltipDisabled()}
-					arrow
-					placement="top"
-				>
-					<span>
-						<TButton
-							className="dashboard__action-btn"
-							color="success"
-							variant="contained"
-							onClick={handlePlay}
-							value="dashboard.popup.play"
-							disabled={players.length === 2 || isJoining || !canAffordBet}
-							startIcon={<i className="far fa-play" />}
-						/>
-					</span>
-				</TTooltip>
+				<TButton
+					className="dashboard__action-btn"
+					color="success"
+					variant="contained"
+					onClick={handlePlay}
+					value="dashboard.popup.play"
+					disabled={players.length === 2 || isJoining || !canAffordBet}
+					startIcon={<i className="far fa-play" />}
+				/>
 				<TButton
 					className="dashboard__action-btn"
 					color="primary"
@@ -237,6 +233,13 @@ export const JoinRoomDialog = () => {
 					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</DialogActions>
+			{getHelpTexts().length > 0 && <Box className="dashboard__join-room-help-box">
+				<Stack spacing={0.5}>
+					{getHelpTexts().map((helpText, index) => (
+						<TTypography key={index} content={helpText} />
+					))}
+				</Stack>
+			</Box>}
 		</Dialog>
 	)
 }

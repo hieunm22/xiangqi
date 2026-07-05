@@ -20,6 +20,8 @@ import {
 	useMediaQuery,
 	useTheme
 } from "@mui/material"
+import landscapeBg from "assets/landscape.PNG?url"
+import portraitBg from "assets/portrait.jpg?url"
 import {
 	HOME_PATH,
 	LOGIN_PATH,
@@ -32,10 +34,11 @@ import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { GameHistoryPopup } from "./components/GameHistoryPopup"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { ProfilePopupProvider, useAuth } from "hooks/useAppContext"
+import { ChangePasswordDialog } from "./components/ChangePasswordDialog"
 import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
-import { SettingsPopup } from "./components/SettingsPopup"
 import { SearchUserPopup } from "./components/SearchUserPopup"
+import { SettingsPopup } from "./components/SettingsPopup"
 import { JoinRoomDialog, openJoinRoom } from "pages/Dashboard/components/JoinRoomDialog"
 import {
 	decodePayload,
@@ -46,14 +49,14 @@ import {
 import { OnlinePresenceProvider } from "hooks/useOnlinePresence"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
-import { usePresenceHeartbeat } from "hooks/usePresenceHeartbeat"
 import useAutoTitle from "hooks/useAutoTitle"
+import { usePresenceHeartbeat } from "hooks/usePresenceHeartbeat"
 import useToolkit from "hooks/useToolkit"
+import useLayoutAuth from "pages/Dashboard/hook"
 import { setPopup } from "toolkit/slice/game"
 import { setDarkMode } from "toolkit/slice/home"
 import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
-import useLayoutAuth from "pages/Dashboard/hook"
 import { RoomInfoData } from "pages/Room/types"
 import { GameStats, UserProfileWithStats } from "./types"
 import "./Layout.scss"
@@ -280,15 +283,20 @@ export default function Layout() {
 
 	const handleGoProfile = () => {
 		if (!currentUserId) return
-		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
 
 		showProfilePopup(currentUserId)
 	}
 
+	const handleChangePassword = () => {
+		const activeElement = document.activeElement as HTMLElement | null
+		activeElement?.blur()
+
+		dispatch(setPopup(PopupState.CHANGE_PASSWORD))
+	}
+
 	const handleGoMessages = () => {
-		handleCloseUserMenu()
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
 
@@ -300,7 +308,6 @@ export default function Layout() {
 	const handleMakeExpired = async () => {
 		const token = getToken()
 		if (!token) return
-		handleCloseUserMenu()
 		const expiredToken = await makeExpired(token)
 		if (typeof expiredToken === "string" && expiredToken) {
 			localStorage.setItem(LS_TOKEN_KEY, expiredToken)
@@ -308,7 +315,6 @@ export default function Layout() {
 	}
 
 	const handleLogoutFromMenu = async () => {
-		handleCloseUserMenu()
 		dispatch(setPopup(PopupState.NONE))
 		await logoutClick()
 	}
@@ -487,6 +493,7 @@ export default function Layout() {
 				anchorEl={userMenuAnchor}
 				open={userMenuOpen}
 				onClose={handleCloseUserMenu}
+				onClick={handleCloseUserMenu}
 				anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 				transformOrigin={{ vertical: "top", horizontal: "right" }}
 				disableRestoreFocus
@@ -522,6 +529,13 @@ export default function Layout() {
 						<TSpan className="menu-text" content="menu.messages" />
 					</Box>
 				</MenuItem>
+				<Divider className="menu-divider" />
+				{!gameState.isInGame && (
+					<MenuItem onClick={handleChangePassword} className="menu-item-gap">
+						<i className="fas fa-key fsx-14" />
+						<TSpan className="menu-text" content="menu.change-password" />
+					</MenuItem>
+				)}
 				{state.debugMode && <Divider className="menu-divider" />}
 				{state.debugMode && (
 					<MenuItem onClick={handleMakeExpired} className="menu-item-gap">
@@ -582,13 +596,22 @@ export default function Layout() {
 				<OnlinePresenceProvider>
 					<Box
 						component="div"
-						sx={{ width: `100%`, p: 0 }}
+						className="layout-page-shell"
+						sx={{
+							width: "100%",
+							p: 0,
+							backgroundImage: `url(${landscapeBg})`,
+							"@media (max-width: 450px)": {
+								backgroundImage: `url(${portraitBg})`
+							}
+						}}
 					>
 						{isMobile && <Toolbar />}
 						<Outlet />
 
 						<SettingsPopup />
 						<ProfilePopup />
+						<ChangePasswordDialog />
 						<GuidePopup />
 						<GameHistoryPopup />
 						<PrivateChatPopup />

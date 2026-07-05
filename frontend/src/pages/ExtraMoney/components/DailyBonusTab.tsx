@@ -2,12 +2,15 @@ import { useEffect, useState } from "react"
 import classnames from "classnames"
 import { Box, CircularProgress } from "@mui/material"
 import { LS_LANGUAGE } from "common/constant"
+import RewardAdDialog from "components/RewardAdDialog"
 import { TButton, TTypography } from "components/TranslationTag"
 import RewardGridSkeleton from "./RewardGridSkeleton"
 import { formatNumber, getTimeToNextSlot, getToken } from "common/helper"
-import { translate } from "locales/translate"
-import { useAPI } from "hooks/useAPI"
 import { formatCountdown, getCellStatus } from "../rewardHelpers"
+import { useAPI } from "hooks/useAPI"
+import { useRewardAd } from "../useRewardAd"
+import { translate } from "locales/translate"
+import { DailyBonus } from "../types"
 
 const DAILY_REWARDS = [1000, 1200, 1400, 1600, 1800, 2000]
 const FINAL_REWARD = 4000
@@ -23,8 +26,18 @@ export default function DailyBonusTab() {
 	const [claimed, setClaimed] = useState(0)
 	// Whether today's chest can still be claimed (one per 24h GMT day).
 	const [canClaim, setCanClaim] = useState(false)
-	const [isClaiming, setIsClaiming] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
+
+	const { adOpen, isClaiming, openAd, closeAd, claimReward } = useRewardAd<DailyBonus>({
+		canWatch: canClaim,
+		claim: claimDailyBonus,
+		onClaimed: (data) => {
+			setClaimed(data.claimed)
+			// Only one chest per day: today's is now spent.
+			setCanClaim(false)
+		},
+		errorLabel: "Failed to claim daily bonus:"
+	})
 
 	// Load the persisted streak on entry.
 	useEffect(() => {
@@ -56,29 +69,6 @@ export default function DailyBonusTab() {
 		const timer = setInterval(() => setTimeLeft(getTimeToNextSlot(DAY_HOURS)), 1000)
 		return () => clearInterval(timer)
 	}, [])
-
-	const handleWatchVideo = async () => {
-		if (isClaiming || !canClaim) return
-
-		// TODO: play the actual reward video before claiming. For now the click
-		// claims today's chest directly.
-		const token = getToken()
-		if (!token) return
-
-		setIsClaiming(true)
-		try {
-			const response = await claimDailyBonus(token)
-			if (response?.success && response.data) {
-				setClaimed(response.data.claimed)
-				// Only one chest per day: today's is now spent.
-				setCanClaim(false)
-			}
-		} catch (error) {
-			console.error("Failed to claim daily bonus:", error)
-		} finally {
-			setIsClaiming(false)
-		}
-	}
 
 	const renderCell = (index: number, amount: number, isFinal: boolean) => {
 		const status = getCellStatus(index, claimed, canClaim)
@@ -129,10 +119,10 @@ export default function DailyBonusTab() {
 					<TButton
 						className="watch-video-btn"
 						variant="contained"
-						disabled={isClaiming}
+						disabled={isClaiming || adOpen}
 						startIcon={isClaiming ? <CircularProgress size={20} color="inherit" /> : <i className="fas fa-circle-play" />}
 						value="extra-money.bonus-coin.watch-video"
-						onClick={handleWatchVideo}
+						onClick={openAd}
 					/>
 				)
 				: (
@@ -145,6 +135,12 @@ export default function DailyBonusTab() {
 						<span className="bonus-next-time">{formatCountdown(timeLeft)}</span>
 					</Box>
 				))}
+
+			<RewardAdDialog
+				open={adOpen}
+				onClose={closeAd}
+				onReward={claimReward}
+			/>
 		</Box>
 	)
 }

@@ -17,12 +17,13 @@
 			transition: background-color 0.2s ease, box-shadow 0.2s ease;
 
 			&:hover {
-				background-color: rgba(172, 172, 172, 0.1);
-				box-shadow: inset 0 -2px 0 rgba(172, 172, 172, 0.6);
+				background-color: rgba(172, 172, 172, 0.7);
+				box-shadow: inset 0 -2px 0 darkgray;
+				color: #fff;
 			}
 
 			&.Mui-selected {
-				background-color: rgba(172, 172, 172, 0.18);
+				background-color: rgba(172, 172, 172);
 			}
 		}
 	}
@@ -46,6 +47,18 @@
 		align-items: center;
 		justify-content: center;
 		flex: 1;
+	}
+
+	// Cream chip behind the description so it stays readable on the page background
+	.lucky-wheel-desc {
+		display: inline-block;
+		color: #5a2800;
+		font-weight: 600;
+		padding: 6px 14px;
+		border-radius: 8px;
+		background-color: rgba(255, 249, 240, 0.92);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+		border: solid 2px black;
 	}
 }
 
@@ -207,18 +220,31 @@
 		}
 	}
 
-	.bonus-next {
-		display: flex;
-		align-items: baseline;
-		gap: 8px;
-		font-weight: 700;
-		color: #6b4423;
+}
 
-		.bonus-next-time {
-			font-size: 1.25rem;
-			font-weight: 700;
-			letter-spacing: 0.5px;
-		}
+// Shared "next reward in" countdown, used by the bonus-coin, daily-bonus and
+// lucky-wheel tabs. The time is shown as a gold chip (the "current" highlight
+// color) so it stays readable on every tab background.
+.bonus-next {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 800;
+	color: #5a2800;
+	padding: 6px 8px 6px 16px;
+	border-radius: 999px;
+	background-color: rgba(255, 249, 240, 0.92);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+
+	.bonus-next-time {
+		font-size: 1.15rem;
+		font-weight: 800;
+		letter-spacing: 0.5px;
+		padding: 4px 14px;
+		border-radius: 999px;
+		background-color: #eaa32e;
+		color: #5a2800;
+		box-shadow: inset 0 0 0 1px rgba(160, 73, 26, 0.45);
 	}
 }
 

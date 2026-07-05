@@ -1,8 +1,8 @@
 export interface LoginRequest {
 	username: string
 	password: string
-	timezoneOffset?: number
-	deviceName?: string
+	timezoneOffset: number
+	deviceName: string
 }
 
 export interface LoginSuccessResponse {
@@ -12,6 +12,22 @@ export interface LoginSuccessResponse {
 	access_token: string
 	refresh_token: string
 	token_type: string
+}
+
+export interface GoogleLoginRequest {
+	credential: string
+	timezoneOffset: number
+	deviceName: string
+}
+
+export interface FacebookLoginRequest {
+	accessToken: string
+	timezoneOffset: number
+	deviceName: string
+}
+
+export interface FacebookLinkRequest {
+	accessToken: string
 }
 
 export interface LoginSession {
@@ -53,4 +69,9 @@ export type CreatedUserRow = {
 export type ResetPasswordRequest = {
 	userId: number
 	password: string
+}
+
+export type ChangePasswordRequest = {
+	currentPassword: string
+	newPassword: string
 }

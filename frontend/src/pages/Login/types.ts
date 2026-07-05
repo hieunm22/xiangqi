@@ -5,6 +5,18 @@ export interface LoginBodyType {
 	timezoneOffset: number
 }
 
+export interface GoogleLoginBodyType {
+	credential: string
+	deviceName: string
+	timezoneOffset: number
+}
+
+export interface FacebookLoginBodyType {
+	accessToken: string
+	deviceName: string
+	timezoneOffset: number
+}
+
 export interface AuthResponse {
 	success: boolean
 	message: string
