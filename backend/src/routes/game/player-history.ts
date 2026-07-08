@@ -56,7 +56,7 @@ const router = Router()
  *                               type: string
  *                             avatar_url:
  *                               type: string
- *                       point:
+ *                       amount:
  *                         type: integer
  *       400:
  *         description: Invalid request
@@ -84,11 +84,11 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 		const gameUsers = await prisma.gameUser.findMany({
 			where: {
 				user_id: userId,
-				point: { not: null }
+				amount: { not: null }
 			},
 			select: {
 				game_id: true,
-				point: true
+				amount: true
 			}
 		})
 
@@ -146,7 +146,8 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 			select: {
 				game_id: true,
 				user_id: true,
-				point: true,
+				amount: true,
+				team: true,
 				games: {
 					select: {
 						ends_at: true
@@ -173,7 +174,7 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 						ends_at: gameUser.games.ends_at
 					},
 					users: [],
-					point: 0
+					amount: 0
 				})
 			}
 
@@ -182,12 +183,13 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 			gameHistory.users.push({
 				id: Number(gameUser.users.id),
 				display_name: gameUser.users.display_name,
-				avatar_url: avatarUrl
+				avatar_url: avatarUrl,
+				team: gameUser.team ?? null
 			})
 
-			// Use point from current user's game_user record
+			// Use amount from current user's game_user record
 			if (gameUser.user_id === userId) {
-				gameHistory.point = gameUser.point
+				gameHistory.amount = gameUser.amount
 			}
 		}
 

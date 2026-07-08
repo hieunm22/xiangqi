@@ -1,5 +1,4 @@
 import { MouseEvent } from "react"
-import { RoomChatMessage } from "components/ChatDialog/types"
 import { EmptyPromise, EmptyVoid, StringVoid } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -8,6 +7,7 @@ import {
 	PieceCharacter,
 	Team
 } from "types/GameState"
+import { RoomChatMessage } from "components/ChatDialog/types"
 
 export interface PieceItemProps {
 	$cell: CellProps
@@ -38,9 +38,15 @@ export interface RoomUser {
 	id: number
 	display_name: string
 	avatar_url: string | null
-	team?: Team | null
-	total_amount?: number
-	is_bot?: boolean
+	back_ready: boolean | null
+	team: Team | null
+	total_amount: number
+	is_bot: boolean
+}
+
+export interface BackToRoomRequest {
+	roomId: number
+	gameId: string
 }
 
 export interface RoomInfo {
@@ -88,6 +94,21 @@ export interface MovePieceRequest {
 	capturePiece: PieceCharacter | null
 }
 
+export interface VerifyStateRequest {
+	gameId: string
+	newFen: string
+	checkedTeam: Team
+}
+
+export interface VerifyStateResponseData {
+	gameEnded: boolean
+	inCheck: boolean
+	legalMovesCount: number
+	status: "ongoing" | "check" | "checkmate" | "stalemate"
+	checkedTeam: Team
+	winnerId: number | null
+}
+
 export interface HistoryData {
 	_id: string
 	game_id: string
@@ -95,7 +116,7 @@ export interface HistoryData {
 	team: Team | null
 	time_stamp: number
 	undo?: number
-	capture?: string | null
+	capture?: string
 	captured?: CapturedPieces | null
 	userId?: number
 }
@@ -168,7 +189,7 @@ export type SettingsButtonProps = RoomSettingsDialogContextValue
 
 export interface StartGameBody {
 	roomId: string | number
-	gameId?: string
-	status?: number
-	bot_difficulty?: number | null
+	gameId: string
+	status: number
+	bot_difficulty: number | null
 }

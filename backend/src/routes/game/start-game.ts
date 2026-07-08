@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
+import { clearPostGameLock, isPostGameStartBlocked } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { syncPlayersPresence } from "common/game/presence-sync"
@@ -105,6 +106,15 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 	}
 
 	const roomIdBigInt = BigInt(id)
+	if (isPostGameStartBlocked(id)) {
+		res.status(409).json({
+			success: false,
+			message: "start-game.messages.waiting-players-back",
+			status_code: 409
+		})
+		return
+	}
+
 	const userId = req.auth?.userId
 
 	if (!userId) {
@@ -215,22 +225,27 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			})
 
 			// Add game_users records for the 2 active players (with assigned teams)
+			// Persist each player's color so a finished game can be replayed later
+			// (room_users.team is mutable and not a per-game snapshot).
 			const roomPlayers = await tx.roomUser.findMany({
 				where: { room_id: roomIdBigInt, team: { not: null } },
-				select: { user_id: true }
+				select: { user_id: true, team: true }
 			})
 
 			for (const player of roomPlayers) {
 				await tx.gameUser.create({
 					data: {
 						game_id: createdGame.id,
-						user_id: player.user_id
+						user_id: player.user_id,
+						team: player.team
 					}
 				})
 			}
 
 			return { game: createdGame, room: updatedRoom }
 		})
+
+		clearPostGameLock(Number(room.id))
 
 		const collection = await getGameHistoryCollection()
 		const initialFen = room.red_first ? INITIAL_FEN_BLACK_TOP : INITIAL_FEN_BLACK_BOTTOM

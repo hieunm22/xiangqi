@@ -291,3 +291,26 @@ export function applyMove(board: NullableCellProps[], fromId: number, toId: numb
 	next[fromId] = null
 	return next
 }
+
+export function countLegalMoves(board: NullableCellProps[], team: Team, redFirst: boolean): number {
+	const direction = getMoveDirection(redFirst, team)
+	let legalMovesCount = 0
+
+	for (let id = 0; id < board.length; id += 1) {
+		const cell = board[id]
+		if (!cell || getTeamFromPieceChar(cell.piece) !== team) {
+			continue
+		}
+
+		const candidateMoves = getAvailableMoves(board, id, direction)
+		for (const toId of candidateMoves) {
+			const nextBoard = applyMove(board, id, toId)
+			const checkingPieces = findCheckingPieces(nextBoard, team)
+			if (checkingPieces.length === 0) {
+				legalMovesCount += 1
+			}
+		}
+	}
+
+	return legalMovesCount
+}

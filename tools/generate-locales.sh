@@ -14,10 +14,10 @@ if ! pip show openpyxl >/dev/null 2>&1; then
   pip install openpyxl
 fi
 
+echo "running update-excel-from-csv.py..."
+python3 update-excel-from-csv.py
+
 echo "running convert-to-json.py..."
 python3 convert-to-json.py
-
-echo "running convert-to-csv.py..."
-python3 convert-to-csv.py
 
 echo "complete"

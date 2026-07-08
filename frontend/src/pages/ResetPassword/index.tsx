@@ -232,14 +232,7 @@ export default function ResetPasswordPage() {
 
 	if (validating) {
 		return (
-			<Box
-				sx={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center"
-				}}
-			>
+			<Box className="reset-password-container">
 				<CircularProgress />
 			</Box>
 		)
@@ -253,21 +246,13 @@ export default function ResetPasswordPage() {
 	}
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				display: "flex",
-				alignItems: "center",
-				width: "100%",
-				justifyContent: "center",
-			}}
-		>
-			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+		<Box className=""reset-password-container>
+			<Paper elevation={4} className="reset-password-container">
 				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
 					<TTypography
 						variant="h5"
 						component="h1"
-						sx={{ fontWeight: 700 }}
+						className="bold"
 						content="reset-password.form.title"
 					/>
 
@@ -336,7 +321,10 @@ export default function ResetPasswordPage() {
 								endAdornment: (
 									<TI
 										className={eyeIconClassConfirm}
-										title={showConfirmPassword ? "register.confirm-password.hide" : "register.confirm-password.show"}
+										title={showConfirmPassword
+											? "register.confirm-password.hide"
+											: "register.confirm-password.show"
+										}
 										onClick={() => setShowConfirmPassword(prev => !prev)}
 									/>
 								)

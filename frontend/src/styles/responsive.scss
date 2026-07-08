@@ -67,6 +67,7 @@
 			justify-content: space-between;
 			flex-direction: row;
 			gap: 12px;
+			width: 100% !important;
 		}
 	}
 
@@ -100,6 +101,9 @@
 
 	.extra-money-page {
 		height: calc(100vh - 56px);
+		height: calc(100dvh - 56px);
+		min-height: calc(100vh - 56px);
+		min-height: calc(100dvh - 56px);
 	}
 }
 

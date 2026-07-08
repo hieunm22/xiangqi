@@ -1,6 +1,8 @@
 import { forwardRef } from "react"
 import {
 	Button,
+	Tab,
+	TabProps,
 	TextField,
 	Tooltip,
 	TooltipProps,
@@ -87,6 +89,16 @@ const TSpan = forwardRef<HTMLElement, TSpanProps>((props, ref) => {
 	)
 })
 
+const TTab = (props: TabProps) => {
+	const translatedProps = {
+		...props,
+		label: typeof props.label === "string" ? t(props.label) : props.label,
+		title: typeof props.title === "string" ? t(props.title) : props.title
+	}
+
+	return <Tab {...translatedProps} />
+}
+
 const TTextField = (props: TextFieldProps) => {
 	const translatedProps = {
 		...props,
@@ -123,6 +135,7 @@ TI.displayName = "TI"
 TInput.displayName = "TInput"
 TLabel.displayName = "TLabel"
 TSpan.displayName = "TSpan"
+TTab.displayName = "TTab"
 TTextField.displayName = "TTextField"
 TTooltip.displayName = "TTooltip"
 TTypography.displayName = "TTypography"
@@ -134,6 +147,7 @@ export {
 	TInput,
 	TLabel,
 	TSpan,
+	TTab,
 	TTextField,
 	TTooltip,
 	TTypography

@@ -21,6 +21,8 @@ const userFindUniqueMock = vi.fn()
 const emitGameStartedMock = vi.fn()
 const emitRoomUsersUpdatedMock = vi.fn()
 const playBotMoveMock = vi.fn()
+const clearPostGameLockMock = vi.fn()
+const isPostGameStartBlockedMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -58,6 +60,11 @@ vi.mock("../../common/game/presence-sync", () => ({
 vi.mock("../../common/socket", () => ({
 	emitGameStarted: emitGameStartedMock,
 	emitRoomUsersUpdated: emitRoomUsersUpdatedMock
+}))
+
+vi.mock("common/game/post-game.helper", () => ({
+	clearPostGameLock: clearPostGameLockMock,
+	isPostGameStartBlocked: isPostGameStartBlockedMock
 }))
 
 vi.mock("../../common/bot-engine/play-bot-move", () => ({
@@ -103,6 +110,7 @@ describe("POST /api/room/start", () => {
 	it("returns 400 when roomId is invalid", async () => {
 		const accessToken = buildAccessToken(61, "session-start-1")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		isPostGameStartBlockedMock.mockReturnValue(false)
 
 		const res = await request(app)
 			.post(PATH)
@@ -119,9 +127,29 @@ describe("POST /api/room/start", () => {
 		expect(roomFindUniqueMock).not.toHaveBeenCalled()
 	})
 
+	it("returns 409 when waiting for players to press back-to-room", async () => {
+		const accessToken = buildAccessToken(61, "session-start-lock")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		isPostGameStartBlockedMock.mockReturnValue(true)
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(409)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "start-game.messages.waiting-players-back",
+			status_code: 409
+		})
+		expect(roomFindUniqueMock).not.toHaveBeenCalled()
+	})
+
 	it("returns 201 when game is started successfully", async () => {
 		const accessToken = buildAccessToken(61, "session-start-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		isPostGameStartBlockedMock.mockReturnValue(false)
 		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-1" })
 		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), host_id: BigInt(61), bet_amount: 50 })
 		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
@@ -141,8 +169,8 @@ describe("POST /api/room/start", () => {
 			bot_difficulty: null
 		})
 		roomUserFindManyMock.mockResolvedValue([
-			{ user_id: BigInt(11) },
-			{ user_id: BigInt(12) }
+			{ user_id: BigInt(11), team: "red" },
+			{ user_id: BigInt(12), team: "black" }
 		])
 		gameUserCreateMock.mockResolvedValue({})
 		transactionMock.mockImplementation(async callback =>
@@ -219,12 +247,13 @@ describe("POST /api/room/start", () => {
 		expect(gameUserCreateMock).toHaveBeenNthCalledWith(1, {
 			data: {
 				game_id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
-				user_id: BigInt(11)
+				user_id: BigInt(11),
+				team: "red"
 			}
 		})
 		expect(roomUserFindManyMock).toHaveBeenCalledWith({
 			where: { room_id: BigInt(101), team: { not: null } },
-			select: { user_id: true }
+			select: { user_id: true, team: true }
 		})
 	})
 
@@ -247,8 +276,8 @@ describe("POST /api/room/start", () => {
 			bot_difficulty: 3
 		})
 		roomUserFindManyMock.mockResolvedValue([
-			{ user_id: BigInt(61) },
-			{ user_id: BOT_USER_ID }
+			{ user_id: BigInt(61), team: "red" },
+			{ user_id: BOT_USER_ID, team: "black" }
 		])
 		gameUserCreateMock.mockResolvedValue({})
 		transactionMock.mockImplementation(async callback =>
@@ -322,8 +351,8 @@ describe("POST /api/room/start", () => {
 			bot_difficulty: null
 		})
 		roomUserFindManyMock.mockResolvedValue([
-			{ user_id: BigInt(13) },
-			{ user_id: BigInt(14) }
+			{ user_id: BigInt(13), team: "black" },
+			{ user_id: BigInt(14), team: "red" }
 		])
 		gameUserCreateMock.mockResolvedValue({})
 		transactionMock.mockImplementation(async callback =>
@@ -360,19 +389,21 @@ describe("POST /api/room/start", () => {
 		expect(gameUserCreateMock).toHaveBeenNthCalledWith(1, {
 			data: {
 				game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
-				user_id: BigInt(13)
+				user_id: BigInt(13),
+				team: "black"
 			}
 		})
 		expect(gameUserCreateMock).toHaveBeenNthCalledWith(2, {
 			data: {
 				game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
-				user_id: BigInt(14)
+				user_id: BigInt(14),
+				team: "red"
 			}
 		})
 
 		expect(roomUserFindManyMock).toHaveBeenCalledWith({
 			where: { room_id: BigInt(102), team: { not: null } },
-			select: { user_id: true }
+			select: { user_id: true, team: true }
 		})
 	})
 

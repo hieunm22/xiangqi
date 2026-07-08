@@ -29,6 +29,14 @@ export const MessageList = (props: MessageListProps) => {
 
 	return (
 		<Stack spacing={1}>
+			{props.loadingOlder && (
+				<TTypography
+					variant="caption"
+					color="text.secondary"
+					className="announce-loading-older"
+					content="announce.loading-older"
+				/>
+			)}
 			{messages.map((msg, idx) => {
 				const senderId = msg.sender?.id ?? null
 				const isSender = senderId === currentUserId

@@ -5,14 +5,17 @@ applyTo: "**/*.json"
 Localization JSON files are generated artifacts.
 
 Do not manually edit:
-- `/src/locales/en.json`
-- `/src/locales/vi.json`
+- `frontend/src/locales/en.json`
+- `frontend/src/locales/vi.json`
 
-Instead:
-1. Update `/tools/languages.xlsx`
+Source of truth is `tools/languages.csv`. To add or update translations:
+1. Edit `tools/languages.csv` (format: `key;English;Vietnamese`)
 2. Run:
 
 ```sh
-./tools/convert.sh
+./tools/generate-locales.sh
 ```
+
+This syncs `tools/languages.xlsx` and regenerates both JSON files. Use generated output only.
+
 3. Use generated output only.

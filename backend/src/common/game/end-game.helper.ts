@@ -1,4 +1,5 @@
 import prisma from "prisma"
+import { evaluateAchievements } from "./achievement.helper"
 import { getUTCNow } from "../helper"
 import { EndGameParams } from "types/game.type"
 
@@ -6,7 +7,7 @@ import { EndGameParams } from "types/game.type"
 export async function runEndGameTransaction(params: EndGameParams): Promise<boolean> {
 	const { gameId, roomId, winnerId, isBotGame, betAmount } = params
 
-	return prisma.$transaction(async tx => {
+	const ended = await prisma.$transaction(async tx => {
 		// Claim the game: only matches while it is still in progress (status != 2).
 		const claimed = await tx.game.updateMany({
 			where: { id: gameId, status: { not: 2 } },
@@ -98,4 +99,15 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 
 		return true
 	})
+
+	// Award achievements after the game result is committed
+	if (ended) {
+		try {
+			await evaluateAchievements(prisma, gameId)
+		} catch (err) {
+			console.error(`[End-Game] achievement evaluation failed for game ${gameId}:`, err)
+		}
+	}
+
+	return ended
 }

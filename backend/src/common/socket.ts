@@ -1,7 +1,14 @@
 import { Server as SocketIOServer, Socket } from "socket.io"
 import { Server as HTTPServer } from "http"
 import prisma from "prisma"
-import { PRESENCE_DISCONNECT_GRACE_MS, PresenceStatus, markInactive, recordHeartbeat } from "common/presence"
+import { getAllowedOrigins, isOriginAllowed } from "common/cors"
+import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
+import {
+	PRESENCE_DISCONNECT_GRACE_MS,
+	PresenceStatus,
+	markInactive,
+	recordHeartbeat
+} from "common/presence"
 
 let io: SocketIOServer | null = null
 
@@ -35,30 +42,20 @@ export function getConnectedDeviceCount(userId: number): number {
  * Initialize Socket.io server
  */
 export function initializeSocket(httpServer: HTTPServer) {
-	const corsOriginStr = process.env.CORS_ORIGINS ?? "http://localhost:3004"
-	const corsOrigins = corsOriginStr.split(",").map(o => o.trim()).filter(Boolean)
-	
-	// In development, also allow common dev ports
-	if (process.env.NODE_ENV !== "production") {
-		const devPorts = [
-			"http://localhost:3004",
-			"http://localhost:5001",
-			"http://localhost:8000",
-			"https://xaq.hieunm.io.vn",
-			"https://xaa.hieunm.io.vn"
-		]
-		devPorts.forEach(port => {
-			if (!corsOrigins.includes(port)) {
-				corsOrigins.push(port)
-			}
-		})
-	}
+	// Same origin rules as the Express API (see common/cors): explicit
+	// CORS_ORIGINS whitelist, plus localhost/private-LAN origins in development
+	const allowedOrigins = getAllowedOrigins()
+	console.log(`[Socket.io] Initializing with CORS origins:`, allowedOrigins)
 
-	console.log(`[Socket.io] Initializing with CORS origins:`, corsOrigins)
-	
 	io = new SocketIOServer(httpServer, {
 		cors: {
-			origin: corsOrigins,
+			origin: (requestOrigin, callback) => {
+				if (isOriginAllowed(requestOrigin, allowedOrigins)) {
+					callback(null, true)
+				} else {
+					callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`))
+				}
+			},
 			credentials: true,
 		},
 		transports: ["websocket", "polling"],
@@ -377,6 +374,20 @@ export function emitGameStarted(roomId: string | number, data: any) {
 }
 
 /**
+ * Emit game-ended event to all clients in a room.
+ */
+export function emitGameEnded(roomId: string | number, data: any) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit game-ended: Socket.io server not initialized`)
+		return
+	}
+
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("game-ended", { roomId, ...data })
+	console.log(`[Socket.io] [${new Date().toISOString()}] Game ended emitted to ${roomChannel}`)
+}
+
+/**
  * Emit draw request to all clients in a room
  */
 export function emitDrawRequest(roomId: string | number, gameId: string, requestUserId: number) {
@@ -434,9 +445,15 @@ export function emitRoomUsersUpdated(roomId: string | number, users: any[], host
 	}
 
 	const roomChannel = `room-${roomId}`
+	const roomIdNumber = Number(roomId)
+	const usersWithBackReady = Number.isInteger(roomIdNumber)
+		? decorateRoomUsersWithBackReady(roomIdNumber, users)
+		: users
 	// Only carry `hostId` when the caller knows it changed; clients keep their
 	// current host when the field is absent.
-	const payload = hostId === undefined ? { roomId, users } : { roomId, users, hostId }
+	const payload = hostId === undefined
+		? { roomId, users: usersWithBackReady }
+		: { roomId, users: usersWithBackReady, hostId }
 	io.to(roomChannel).emit("room-users-updated", payload)
 	io.emit("dashboard-room-users-updated", payload)
 	console.log(`[Socket.io] [${new Date().toISOString()}] Room users updated emitted to ${roomChannel}`)

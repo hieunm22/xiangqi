@@ -82,6 +82,7 @@ router.get("/game/movement-history", requireAuth(), async (req: AuthenticatedReq
 			.find({
 				$or: [{ gameId }, { game_id: gameId }]
 			})
+			.sort({ time_stamp: 1 })
 			.toArray()
 
 		const data = histories.map((item: any) => ({

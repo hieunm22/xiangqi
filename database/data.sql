@@ -160,16 +160,16 @@ INSERT INTO game.game_history (game_id, fen, team, time_stamp, surrender_id) VAL
 ('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778606710, null),
 ('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778606760, 83);
 
-INSERT INTO game.archivement (id, name) OVERRIDING SYSTEM VALUE VALUES
-(01, 'archivement.title-01'),
-(02, 'archivement.title-02'),
-(03, 'archivement.title-03'),
-(04, 'archivement.title-04'),
-(05, 'archivement.title-05'),
-(06, 'archivement.title-06'),
-(07, 'archivement.title-07'),
-(08, 'archivement.title-08'),
-(09, 'archivement.title-09'),
-(10, 'archivement.title-10');
+INSERT INTO game.achievement (id, name) OVERRIDING SYSTEM VALUE VALUES
+(01, 'achievement.title-01'),
+(02, 'achievement.title-02'),
+(03, 'achievement.title-03'),
+(04, 'achievement.title-04'),
+(05, 'achievement.title-05'),
+(06, 'achievement.title-06'),
+(07, 'achievement.title-07'),
+(08, 'achievement.title-08'),
+(09, 'achievement.title-09'),
+(10, 'achievement.title-10');
 
-SELECT setval(pg_get_serial_sequence('game.archivement', 'id'), (SELECT MAX(id) FROM game.archivement));
+SELECT setval(pg_get_serial_sequence('game.achievement', 'id'), (SELECT MAX(id) FROM game.achievement));

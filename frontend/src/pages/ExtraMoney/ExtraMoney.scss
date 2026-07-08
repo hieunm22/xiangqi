@@ -3,6 +3,10 @@
 	flex-direction: column;
 	padding: 16px;
 	height: 100vh;
+	height: 100dvh;
+	min-height: 100vh;
+	min-height: 100dvh;
+	box-sizing: border-box;
 
 	.page-title {
 		font-weight: 600;
@@ -11,6 +15,11 @@
 
 	.extra-money-tabs {
 		margin-top: 8px;
+
+		&.skeleton {
+			display: flex;
+			gap: 1rem;
+		}
 
 		.MuiTab-root {
 			border-radius: 8px 8px 0 0;
@@ -205,26 +214,22 @@
 		}
 	}
 
-	.watch-video-btn {
+	.watch-video-btn, .collect-btn {
+		margin-top: auto;
 		padding: 8px 32px;
 		font-weight: 800;
 		font-size: 18px;
 		text-transform: uppercase;
 		color: #fff;
-		background: linear-gradient(180deg, #e8992e 0%, #c9701a 100%);
-		box-shadow: 0 4px 0 #9c530f, 0 6px 12px rgba(0, 0, 0, 0.2);
-
-		&:hover {
-			background: linear-gradient(180deg, #f0a63e 0%, #d67a1f 100%);
-			box-shadow: 0 4px 0 #9c530f, 0 6px 12px rgba(0, 0, 0, 0.25);
-		}
 	}
 
 }
 
-// Shared "next reward in" countdown, used by the bonus-coin, daily-bonus and
-// lucky-wheel tabs. The time is shown as a gold chip (the "current" highlight
-// color) so it stays readable on every tab background.
+.bonus-coin-tab > .bonus-next {
+	margin-top: auto;
+}
+
+// Shared "next reward in" countdown, used by the bonus-coin, daily-bonus and lucky-wheel tabs
 .bonus-next {
 	display: flex;
 	align-items: center;
@@ -344,6 +349,10 @@
 		&.spinable {
 			cursor: pointer;
 			color: #c92a2a;
+		}
+
+		&.attention-blink {
+			animation: wheel-hub-attention-blink 1.05s ease-in-out infinite;
 		}
 
 		&.not-spinable {

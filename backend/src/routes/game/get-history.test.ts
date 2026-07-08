@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const toArrayMock = vi.fn()
+const sortMock = vi.fn()
 const findMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 
@@ -89,7 +90,8 @@ describe("GET /api/game/movement-history", () => {
 				move: "p3+1"
 			}
 		])
-		findMock.mockReturnValue({ toArray: toArrayMock })
+		sortMock.mockReturnValue({ toArray: toArrayMock })
+		findMock.mockReturnValue({ sort: sortMock })
 		getGameHistoryCollectionMock.mockResolvedValue({ find: findMock })
 
 		const res = await request(app)
@@ -100,6 +102,7 @@ describe("GET /api/game/movement-history", () => {
 		expect(findMock).toHaveBeenCalledWith({
 			$or: [{ gameId: "game-1" }, { game_id: "game-1" }]
 		})
+		expect(sortMock).toHaveBeenCalledWith({ time_stamp: 1 })
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "get-game-history.messages.success",

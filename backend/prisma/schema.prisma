@@ -9,33 +9,34 @@ datasource db {
 }
 
 model User {
-  id                    BigInt     @id @default(autoincrement())
-  user_name             String     @unique @db.VarChar(50)
-  password              String     @db.VarChar(36)
-  email                 String     @unique @db.VarChar(255)
-  display_name          String
-  gender                Boolean
-  avatar_seq            Int        @default(0)
-  total_amount          Int        @default(200)
+  id           BigInt  @id @default(autoincrement())
+  user_name    String  @unique @db.VarChar(50)
+  password     String  @db.VarChar(36)
+  email        String  @unique @db.VarChar(255)
+  display_name String
+  gender       Boolean
+  avatar_seq   Int     @default(0)
+  total_amount Int     @default(200)
 
-  lucky_spins           Int        @default(0)
-  lucky_claimed_at      DateTime?  @db.Timestamptz(6)
-  bonus_claimed_count   Int        @default(0)
-  bonus_claimed_at      DateTime?  @db.Timestamptz(6)
-  daily_claimed_count   Int        @default(0)
-  daily_claimed_at      DateTime?  @db.Timestamptz(6)
-  selected_tab          Int        @default(0)
+  lucky_spins         Int       @default(0)
+  lucky_claimed_at    DateTime? @db.Timestamptz(6)
+  bonus_claimed_count Int       @default(0)
+  bonus_claimed_at    DateTime? @db.Timestamptz(6)
+  daily_claimed_count Int       @default(0)
+  daily_claimed_at    DateTime? @db.Timestamptz(6)
+  selected_tab        Int       @default(0)
 
-  is_bot                Boolean    @default(false)
+  is_bot                Boolean                @default(false)
   room_users            RoomUser[]
-  hosted_rooms          Room[]     @relation("RoomHost")
-  won_games             Game[]     @relation("Game_winner")
+  hosted_rooms          Room[]                 @relation("RoomHost")
+  won_games             Game[]                 @relation("Game_winner")
   game_users            GameUser[]
-  surrendered_histories GameHistory[] @relation("GameHistory_surrender")
-  undone_histories      GameHistory[] @relation("GameHistory_undo")
+  surrendered_histories GameHistory[]          @relation("GameHistory_surrender")
+  undone_histories      GameHistory[]          @relation("GameHistory_undo")
   announcement_reads    UserAnnouncementRead[]
   user_amount_histories UserAmountHistory[]
   identities            UserIdentity[]
+  user_achievements     UserAchievement[]
 
   @@map("users")
   @@schema("user")
@@ -102,14 +103,14 @@ model RoomUser {
 }
 
 model Game {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  room_id        BigInt    @db.BigInt
-  winner_id      BigInt?   @db.BigInt
-  status         Int       @db.SmallInt @default(0)
-  bot_difficulty Int?      @db.SmallInt
-  room           Room      @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  winner         User?     @relation("Game_winner", fields: [winner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  starts_at      DateTime  @default(now()) @db.Timestamptz(6)
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  room_id        BigInt        @db.BigInt
+  winner_id      BigInt?       @db.BigInt
+  status         Int           @default(0) @db.SmallInt
+  bot_difficulty Int?          @db.SmallInt
+  room           Room          @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  winner         User?         @relation("Game_winner", fields: [winner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  starts_at      DateTime      @default(now()) @db.Timestamptz(6)
   ends_at        DateTime?
   game_users     GameUser[]
   game_histories GameHistory[]
@@ -119,17 +120,17 @@ model Game {
 }
 
 model GameHistory {
-  id             BigInt   @id @default(autoincrement())
-  game_id        String   @db.Uuid
-  fen            String
-  team           String
-  capture        String?
-  time_stamp     Int
-  surrender_id   BigInt?
-  undo_id        BigInt?
-  games          Game     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  surrenders     User?    @relation("GameHistory_surrender", fields: [surrender_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  undoes         User?    @relation("GameHistory_undo", fields: [undo_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id           BigInt  @id @default(autoincrement())
+  game_id      String  @db.Uuid
+  fen          String
+  team         String
+  capture      String?
+  time_stamp   Int
+  surrender_id BigInt?
+  undo_id      BigInt?
+  games        Game    @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  surrenders   User?   @relation("GameHistory_surrender", fields: [surrender_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  undoes       User?   @relation("GameHistory_undo", fields: [undo_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([game_id])
   @@map("game_history")
@@ -137,11 +138,12 @@ model GameHistory {
 }
 
 model GameUser {
-  game_id   String   @db.Uuid
-  user_id   BigInt
-  amount    Int?
-  games     Game     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  game_id String  @db.Uuid
+  user_id BigInt
+  amount  Int?
+  team    String? @db.VarChar(10)
+  games   Game    @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users   User    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([game_id, user_id])
   @@map("game_users")
@@ -149,30 +151,35 @@ model GameUser {
 }
 
 model UserAmountHistory {
-  id         BigInt     @id @default(autoincrement())
+  id         BigInt   @id @default(autoincrement())
   user_id    BigInt
   amount     Int
   type       Int
-  created_at DateTime   @default(now()) @db.Timestamptz(6)
-  users      User       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("user_amount_history")
   @@schema("game")
 }
 
-model Archivement {
-  id         BigInt     @id @default(autoincrement())
-  name       String
+model Achievement {
+  id                BigInt            @id @default(autoincrement())
+  name              String
+  user_achievements UserAchievement[]
 
-  @@map("archivement")
+  @@map("achievement")
   @@schema("game")
 }
 
-model UserArchivement {
-  user_id          BigInt
-  archivement_id   BigInt
+model UserAchievement {
+  user_id        BigInt
+  achievement_id BigInt
+  created_at     DateTime    @default(now()) @db.Timestamptz(6)
+  users          User        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  achievements   Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([user_id, archivement_id])
-  @@map("user_archivements")
+  @@id([user_id, achievement_id])
+  @@index([achievement_id])
+  @@map("user_achievements")
   @@schema("game")
 }

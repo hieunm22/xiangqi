@@ -13,6 +13,7 @@ export interface MessageListProps {
   // Per-row ref so the caller can pin scroll anchors (first unread, first
   // message for "load older", etc.). Return undefined for rows it doesn't track.
   getRowRef?: (msg: BaseChatMessage, idx: number) => Ref<HTMLDivElement> | undefined
+  loadingOlder: boolean
 }
 
 export interface MessageInputProps {

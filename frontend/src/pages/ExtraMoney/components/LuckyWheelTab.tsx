@@ -112,6 +112,7 @@ export default function LuckyWheelTab() {
 	}
 
 	const wheelHubCls = classnames("wheel-hub data-content", {
+		"attention-blink": spinsRemaining > 0 && !isSpinning,
 		"spinable": spinsRemaining > 0 && !isSpinning,
 		"not-spinable": spinsRemaining === 0 || isSpinning
 	})
@@ -201,12 +202,6 @@ export default function LuckyWheelTab() {
 			</Box>
 
 			<Stack spacing={2} sx={{ mt: 4, alignItems: "center", width: "100%" }}>
-				<TTypography
-					variant="body2"
-					className="lucky-wheel-desc"
-					align="center"
-					content="extra-money.lucky-wheel.description"
-				/>
 				<Box className="bonus-next">
 					<TTypography
 						component="span"

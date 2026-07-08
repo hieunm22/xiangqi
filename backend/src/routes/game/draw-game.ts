@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { getUTCTimestamp } from "common/helper"
 import { runEndGameTransaction } from "common/game/end-game.helper"
+import { activatePostGameLock } from "common/game/post-game.helper"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { getGameHistoryCollection } from "common/mongodb"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -190,6 +191,7 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 		// Skip when another request already ended the game to avoid duplicate work.
 		if (ended) {
 			await syncPlayersPresence(normalizedGameId, false)
+			await activatePostGameLock(game.room_id, normalizedGameId)
 		}
 
 		res.status(200).json({

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import classnames from "classnames"
-import { Box, CircularProgress } from "@mui/material"
+import { Box } from "@mui/material"
 import { LS_LANGUAGE } from "common/constant"
 import RewardAdDialog from "components/RewardAdDialog"
 import { TButton, TTypography } from "components/TranslationTag"
+import { ClaimIconButton } from "./Icons"
 import RewardGridSkeleton from "./RewardGridSkeleton"
 import { formatNumber, getTimeToNextSlot, getToken } from "common/helper"
 import { formatCountdown, getCellStatus } from "../rewardHelpers"
@@ -28,7 +29,15 @@ export default function DailyBonusTab() {
 	const [canClaim, setCanClaim] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
 
-	const { adOpen, isClaiming, openAd, closeAd, claimReward } = useRewardAd<DailyBonus>({
+	const {
+		adOpen,
+		isClaiming,
+		
+		openAd,
+		claimReward,
+		closeAd,
+		collect,
+	} = useRewardAd<DailyBonus>({
 		canWatch: canClaim,
 		claim: claimDailyBonus,
 		onClaimed: (data) => {
@@ -116,14 +125,26 @@ export default function DailyBonusTab() {
 
 			{!isLoading && (canClaim
 				? (
-					<TButton
-						className="watch-video-btn"
-						variant="contained"
-						disabled={isClaiming || adOpen}
-						startIcon={isClaiming ? <CircularProgress size={20} color="inherit" /> : <i className="fas fa-circle-play" />}
-						value="extra-money.bonus-coin.watch-video"
-						onClick={openAd}
-					/>
+					<Box className="flex center gap-2">
+						<TButton
+							className="collect-btn"
+							variant="contained"
+							color="success"
+							disabled={isClaiming || adOpen}
+							startIcon={<ClaimIconButton isClaiming={isClaiming} icon="fa-hand-holding-circle-dollar" />}
+							value="extra-money.bonus-coin.collect"
+							onClick={collect}
+						/>
+						<TButton
+							className="watch-video-btn"
+							variant="contained"
+							color="warning"
+							disabled={isClaiming || adOpen}
+							startIcon={<ClaimIconButton isClaiming={isClaiming} icon="fa-circle-play" />}
+							value="extra-money.bonus-coin.watch-video"
+							onClick={openAd}
+						/>
+					</Box>
 				)
 				: (
 					<Box className="bonus-next">

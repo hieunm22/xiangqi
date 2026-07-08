@@ -332,6 +332,20 @@ export function useSocket() {
 		}
 	}, [])
 
+	const onGameEnded = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.on("game-ended", callback)
+		} else {
+			console.warn("[Socket.io] Socket not initialized for game-ended listener")
+		}
+	}, [])
+
+	const offGameEnded = useCallback((callback: (data: any) => void) => {
+		if (socketRef.current) {
+			socketRef.current.off("game-ended", callback)
+		}
+	}, [])
+
 	const onRoomMessageSent = useCallback((callback: (data: any) => void) => {
 		if (socketRef.current) {
 			socketRef.current.on("room-message-sent", callback)
@@ -433,6 +447,7 @@ export function useSocket() {
 		offDashboardRoomUsersUpdated,
 		offDrawRequest,
 		offDrawResponse,
+		offGameEnded,
 		offGameStarted,
 		offMovePiece,
 		offPresenceChanged,
@@ -447,6 +462,7 @@ export function useSocket() {
 		onAnnouncementSent,
 		onDrawRequest,
 		onDrawResponse,
+		onGameEnded,
 		onDashboardRoomUsersUpdated,
 		onGameStarted,
 		onMovePiece,

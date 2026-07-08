@@ -88,9 +88,9 @@ export const JoinRoomDialog = () => {
 	}
 
 	const players = room?.users.filter(u => u.team !== null) ?? []
-	const host = room?.users.find(u => u.id === room?.host_id) ?? null
-	const opponent = players.find(u => u.id !== room?.host_id) ?? null
-	const spectators = room?.users.filter(u => u.team === null && u.id !== room?.host_id) ?? []
+	const host = room && room.host_id ? (players.find(u => u.id === room.host_id) ?? players[0]) : null
+	const opponent = players.find(u => u.id !== host?.id) ?? null
+	const spectators = room?.users.filter(u => u.team === null) ?? []
 
 	// Check if current user can afford this room's bet (>80% of balance disqualifies them)
 	const canAffordBet = room && profileUser && profileUser.total_amount
@@ -175,7 +175,7 @@ export const JoinRoomDialog = () => {
 				backdrop: { sx: { pointerEvents: "none" } }
 			}}
 		>
-			<DialogTitle align="center">{room?.name}</DialogTitle>
+			<DialogTitle align="center">{room?.name || "room-invite.messages.title"}</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
 				<Stack className="dashboard__join-room-user-stack" >

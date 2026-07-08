@@ -10,6 +10,10 @@ const GOOGLE_SUPPORTED_LOCALES = new Set(["en", "vi"])
 // whole app, no matter how many login views mount.
 let loaderPromise: Promise<void> | null = null
 
+// Initialize once and route the credential to whichever hook is currently mounted.
+let isGoogleInitialized = false
+let activeCredentialHandler: ((credential: string) => void) | null = null
+
 const normalizeGoogleLocale = (language?: string) => {
 	if (!language) return GOOGLE_FALLBACK_LOCALE
 	const normalized = language.toLowerCase().replace("_", "-")
@@ -57,11 +61,11 @@ export const useGoogleAuth = ({ onCredential, onError }: UseGoogleAuthParams) =>
 	const [googleLocale, setGoogleLocale] = useState(() =>
 		normalizeGoogleLocale(i18n.resolvedLanguage || i18n.language)
 	)
-	// Keep the latest callbacks without re-running the effect on every render.
-	const credentialRef = useRef(onCredential)
+	// Keep the latest error callback without re-running the effect on every render.
 	const errorRef = useRef(onError)
-	credentialRef.current = onCredential
 	errorRef.current = onError
+	// Point the one-time initialize() callback at this (currently mounted) hook.
+	activeCredentialHandler = onCredential
 
 	useEffect(() => {
 		const onLanguageChanged = (language: string) => {
@@ -87,14 +91,17 @@ export const useGoogleAuth = ({ onCredential, onError }: UseGoogleAuthParams) =>
 				const parentWidth = buttonRef.current.parentElement?.clientWidth ?? 0
 				const buttonWidth = Math.floor(parentWidth || buttonRef.current.clientWidth)
 
-				window.google.accounts.id.initialize({
-					client_id: GOOGLE_CLIENT_ID,
-					callback: (response: { credential?: string }) => {
-						if (response?.credential) {
-							credentialRef.current(response.credential)
+				if (!isGoogleInitialized) {
+					window.google.accounts.id.initialize({
+						client_id: GOOGLE_CLIENT_ID,
+						callback: (response: { credential?: string }) => {
+							if (response?.credential) {
+								activeCredentialHandler?.(response.credential)
+							}
 						}
-					}
-				})
+					})
+					isGoogleInitialized = true
+				}
 
 				window.google.accounts.id.renderButton(buttonRef.current, {
 					type: "standard",

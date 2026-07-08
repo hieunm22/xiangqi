@@ -557,3 +557,8 @@ export function getTimeToNextSlot(slotHours: number): number {
 	nextBoundary.setUTCHours(nextBoundaryHour, 0, 0, 0)
 	return nextBoundary.getTime() - now.getTime()
 }
+
+// Solid icon for the active tab, regular for the rest.
+export function tabIconClassBuilder(index: number, activeTab: number, icon: string) {
+	return `${activeTab === index ? "fas" : "far"} fa-${icon}`
+}

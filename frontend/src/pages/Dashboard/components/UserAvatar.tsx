@@ -6,7 +6,7 @@ import { NumberVoid } from "types/Common"
 import { RoomUser } from "pages/Room/types"
 import { UserAvatarGroupProps } from "../types"
 
-interface UserAvatarProps extends RoomUser {
+interface UserAvatarProps extends Pick<RoomUser, "id" | "display_name" | "avatar_url"> {
 	size: number
 	showPresence?: boolean
 	onUserClick?: NumberVoid

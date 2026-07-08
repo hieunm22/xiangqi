@@ -119,6 +119,13 @@
 	object-fit: cover;
 }
 
+.avatar-skeleton {
+	width: 120px;
+	height: 120px !important;
+	border-radius: 50%;
+	margin: 0 auto;
+}
+
 .profile-avatar-hover-zone {
 	position: relative;
 	width: 120px;
@@ -235,6 +242,83 @@
 	}
 }
 
+.profile-tabs {
+	min-height: 48px;
+
+	.profile-tab {
+		min-height: 48px;
+	}
+}
+
+// Game history list lives in a profile tab; cap it at the same height as the
+// other tabs so switching tabs doesn't jump the dialog width (scrollbar reserved).
+.profile-history {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	height: 221px;
+	overflow-y: auto;
+
+	> * {
+		flex-shrink: 0;
+	}
+}
+
+.profile-achievements {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	height: 221px;
+	overflow-y: auto;
+
+	.achievement-loading {
+		min-height: 42px;
+		border-radius: 8px;
+	}
+
+	.achievement-item {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		border-radius: 8px;
+		border: solid 1px lightgray;
+		opacity: 0.6;
+
+		&.earned {
+			opacity: 1;
+			font-weight: bold;
+			border-color: #07c148;
+			background-color: #07c14829;
+		}
+
+		.achievement-icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 40px;
+			height: 40px;
+			flex-shrink: 0;
+			font-size: 1.4rem;
+			color: gray;
+		}
+
+		&.earned .achievement-icon {
+			color: #07c148;
+		}
+
+		.achievement-info {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+
+		.achievement-status {
+			font-size: 0.8rem;
+			opacity: 0.7;
+		}
+	}
+}
+
 .email-with-copy {
 	display: flex;
 	align-items: center;
@@ -271,6 +355,7 @@
 
 .layout-page-shell {
 	min-height: 100vh;
+	min-height: 100dvh;
 	background-size: cover;
 	background-position: center;
 	background-attachment: fixed;
@@ -355,7 +440,7 @@
 
 .setting-feedback {
 	width: 100%;
-	font-size: 12px;
+	font-size: 12px !important;
 	color: rgba(0, 0, 0, 0.6);
 }
 
@@ -401,6 +486,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+
+	 &:hover {
+		background-color: rgba(0, 0, 0, 0.04);
+		cursor: pointer;
+	}
 }
 
 .game-history-header {

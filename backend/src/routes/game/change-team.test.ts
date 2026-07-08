@@ -511,8 +511,8 @@ describe("POST /api/game/change-team", () => {
 			}
 		])
 		expect(res.body.data).toEqual([
-			expect.objectContaining({ id: 10, team: "red", is_bot: false }),
-			expect.objectContaining({ id: 11, team: "black", is_bot: false })
+			expect.objectContaining({ id: 10, team: "red", is_bot: false, back_ready: null }),
+			expect.objectContaining({ id: 11, team: "black", is_bot: false, back_ready: null })
 		])
 	})
 
@@ -574,8 +574,8 @@ describe("POST /api/game/change-team", () => {
 			data: { team: null }
 		})
 		expect(res.body.data).toEqual([
-			expect.objectContaining({ id: 10, team: "red", is_bot: false }),
-			expect.objectContaining({ id: 11, team: null, is_bot: false })
+			expect.objectContaining({ id: 10, team: "red", is_bot: false, back_ready: null }),
+			expect.objectContaining({ id: 11, team: null, is_bot: false, back_ready: null })
 		])
 	})
 

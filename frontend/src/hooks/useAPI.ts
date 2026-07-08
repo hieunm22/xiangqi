@@ -16,6 +16,7 @@ import { APIResponse, APIResponseEmpty, UserAvatarType } from "types/Common"
 import { Team } from "types/GameState"
 import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
 import {
+	Achievement,
 	ChangePasswordBodyType,
 	GameHistoryItem,
 	UpdateUserInfoPayload,
@@ -31,11 +32,14 @@ import {
 	SelectedTab
 } from "pages/ExtraMoney/types"
 import {
+	BackToRoomRequest,
 	GameMovements,
 	MovePieceRequest,
 	RoomInfo,
 	RoomInfoData,
 	RoomUser,
+	VerifyStateRequest,
+	VerifyStateResponseData,
 	RoomWithUsers,
 } from "pages/Room/types"
 
@@ -57,6 +61,7 @@ const EP = { // end points
 	resetPassword: "/auth/reset-password",
 
 	// user endpoints
+	getAchievements: "/user/achievements",
 	bonusCoins: "/user/bonus-coins",
 	claimBonusCoin: "/user/bonus-coins-claim",
 	dailyBonus: "/user/daily-bonus",
@@ -79,6 +84,7 @@ const EP = { // end points
 	updateRoom: "/room/update",
 
 	// game endpoints
+	backToRoom: "/game/back-to-room",
 	changeTeam: "/game/change-team",
 	drawGame: "/game/draw-game",
 	getGameMovementHistory: "/game/movement-history",
@@ -87,6 +93,7 @@ const EP = { // end points
 	getPlayerHistory: "/game/player-history",
 	surrenderGame: "/game/surrender",
 	undoGame: "/game/undo",
+	verifyState: "/game/verify-state",
 
 	// message endpoints
 	getAnnouncement: "/message/get-announcement",
@@ -174,6 +181,12 @@ export const useAPI = () => {
 
 	// ---------- API methods ----------
 
+	const backToRoom = async (token: string, body: BackToRoomRequest) => authFetch(EP.backToRoom)
+							.auth(`Bearer ${token}`)
+							.post(body)
+							.json(backToRoomCallback)
+							.catch(handleError)
+
 	const changePassword = async (token: string, form: ChangePasswordBodyType) => authFetch(EP.changePassword)
 							.auth(`Bearer ${token}`)
 							.post(form)
@@ -192,9 +205,9 @@ export const useAPI = () => {
 							.json(claimBonusCoinCallback)
 							.catch(handleError)
 
-	const claimDailyBonus = async (token: string) => authFetch(EP.claimDailyBonus)
+	const claimDailyBonus = async (token: string, double: boolean) => authFetch(EP.claimDailyBonus)
 							.auth(`Bearer ${token}`)
-							.post()
+							.post({ double })
 							.json(claimDailyBonusCallback)
 							.catch(handleError)
 
@@ -248,6 +261,12 @@ export const useAPI = () => {
 							.json(form)
 							.post()
 							.json(forgotPasswordCallback)
+							.catch(handleError)
+
+	const getAchievements = async (token: string, userId: number) => authFetch(`${EP.getAchievements}?userId=${userId}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getAchievementsCallback)
 							.catch(handleError)
 
 	const getAnnouncements = async (token: string) => authFetch(EP.getAnnouncement)
@@ -527,7 +546,17 @@ export const useAPI = () => {
 							.json(validateTokenCallback)
 							.catch(handleError)
 
+	const verifyGameState = async (token: string, body: VerifyStateRequest) => authFetch(EP.verifyState)
+							.auth(`Bearer ${token}`)
+							.post(body)
+							.json(verifyGameStateCallback)
+							.catch(handleError)
+
 	// ---------- Callbacks ----------
+
+	const backToRoomCallback = (response: APIResponseEmpty) => {
+		return response
+	}
 
 	const changePasswordCallback = (response: APIResponseEmpty) => {
 		return response
@@ -566,6 +595,10 @@ export const useAPI = () => {
 	}
 
 	const facebookUnlinkCallback = (response: APIResponseEmpty) => {
+		return response
+	}
+
+	const getAchievementsCallback = (response: APIResponse<Achievement[]>) => {
 		return response
 	}
 
@@ -749,6 +782,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const verifyGameStateCallback = (response: APIResponse<VerifyStateResponseData>) => {
+		return response
+	}
+
 	// ---------- error handler ----------
 	
 	const handleError = async (reason: any) => {
@@ -770,6 +807,7 @@ export const useAPI = () => {
 	return {
 		authFetch,
 
+		backToRoom,
 		changePassword,
 		changeTeam,
 		claimBonusCoin,
@@ -782,6 +820,7 @@ export const useAPI = () => {
 		facebookUnlink,
 		fetchRooms,
 		forgotPassword,
+		getAchievements,
 		getAnnouncements,
 		getAnnouncementsMore,
 		getBonusCoins,
@@ -826,6 +865,7 @@ export const useAPI = () => {
 		updateSelectedTab,
 		updateUserAvatar,
 		updateUserInfo,
-		validateToken
+		validateToken,
+		verifyGameState,
 	}
 }

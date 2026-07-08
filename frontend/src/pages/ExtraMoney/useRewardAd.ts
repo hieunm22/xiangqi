@@ -5,7 +5,7 @@ import { APIResponse } from "types/Common"
 
 interface UseRewardAdParams<T> {
 	canWatch: boolean
-	claim: (token: string) => Promise<APIResponse<T> | undefined>
+	claim: (token: string, double: boolean) => Promise<APIResponse<T> | undefined>
 	onClaimed: (data: T) => void
 	errorLabel: string
 }
@@ -17,15 +17,14 @@ export function useRewardAd<T>(props: UseRewardAdParams<T>) {
 	const [adOpen, setAdOpen] = useState(false)
 	const [isClaiming, setIsClaiming] = useState(false)
 
-	// Runs the claim request and applies the result. Called by RewardAdDialog after
-	// a full ad view, or directly (no ad) in debug mode.
-	const claimReward = async () => {
+	// Runs the claim request and applies the result.
+	const runClaim = async (double: boolean) => {
 		const token = getToken()
 		if (!token) return
 
 		setIsClaiming(true)
 		try {
-			const response = await claim(token)
+			const response = await claim(token, double)
 			if (response?.success && response.data) {
 				onClaimed(response.data)
 			}
@@ -36,9 +35,15 @@ export function useRewardAd<T>(props: UseRewardAdParams<T>) {
 		}
 	}
 
+	// Collect the reward at face value (no ad).
+	const collect = () => runClaim(false)
+
+	// Doubled reward, granted only after a full ad view; passed to RewardAdDialog.
+	const claimReward = () => runClaim(true)
+
 	const openAd = () => {
 		if (isClaiming || !canWatch) return
-		// Debug mode skips the ad entirely and claims the reward straight away.
+		// Debug mode skips the ad entirely but still grants the doubled reward straight away
 		if (state.debugMode) {
 			claimReward()
 			return
@@ -48,5 +53,13 @@ export function useRewardAd<T>(props: UseRewardAdParams<T>) {
 
 	const closeAd = () => setAdOpen(false)
 
-	return { adOpen, isClaiming, openAd, closeAd, claimReward }
+	return {
+		adOpen,
+		isClaiming,
+
+		claimReward,
+		closeAd,
+		collect,
+		openAd,
+	}
 }

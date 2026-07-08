@@ -16,7 +16,7 @@ import {
 	LS_LANGUAGE
 } from "common/constant"
 import { PopupState } from "common/enums"
-import { TButton, TTypography } from "components/TranslationTag"
+import { TButton, TSpan, TTypography } from "components/TranslationTag"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useFacebookAuth } from "hooks/useFacebookAuth"
@@ -217,7 +217,7 @@ export const SettingsPopup = () => {
 								: "settings.connected-accounts.link-facebook")}
 						</Button>
 						{facebookFeedback && (
-							<TTypography className="setting-feedback" content={facebookFeedback} />
+							<TSpan className="setting-feedback" content={facebookFeedback} />
 						)}
 					</Grid>
 				)}

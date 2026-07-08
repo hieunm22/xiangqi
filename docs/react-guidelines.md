@@ -105,6 +105,15 @@ const {
 
 ---
 
+## Frontend Authoring Rules
+
+For frontend authoring-specific conventions (types/interfaces and MUI styling),
+use `.github/instructions/frontend-authoring.instructions.md` as the source of
+truth. This avoids rule duplication and keeps runtime agent instructions aligned
+with the project docs.
+
+---
+
 ## Expected Agent Behavior
 
 When modifying frontend code:

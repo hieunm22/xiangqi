@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -273,6 +274,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			is_bot: roomUser.users.is_bot,
 			joined_at: roomUser.joined_at
 		}))
+		const usersWithBackReady = decorateRoomUsersWithBackReady(id, formattedUsers)
 
 		emitRoomUsersUpdated(id, formattedUsers)
 
@@ -280,7 +282,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			success: true,
 			message: "join-room.messages.success",
 			status_code: 201,
-			data: formattedUsers
+			data: usersWithBackReady
 		})
 	} catch (error) {
 		console.error("Error joining room:", error)

@@ -315,6 +315,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 						showPresence
 						endRef={messagesEndRef}
 						getRowRef={getRowRef}
+						loadingOlder={false}
 					/>
 				</Box>
 

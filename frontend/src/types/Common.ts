@@ -48,6 +48,9 @@ export interface ComponentWithChild {
 export interface ConfirmProps {
 	title?: string
 	message: string
+	okLabel?: string
+	countdownSeconds?: number
+	countdownMessageBuilder?: (secondsLeft: number) => string
 }
 
 export interface FenMoveDiffResult {

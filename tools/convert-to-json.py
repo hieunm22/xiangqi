@@ -1,6 +1,6 @@
+import csv
 import datetime
 import json
-import openpyxl
 import pathlib
 from pathlib import Path
 import os
@@ -14,21 +14,20 @@ def insert_nested(dictionary, keys, value):
       dictionary[key] = {}
     insert_nested(dictionary[key], keys[1:], value)
 
-# Load Excel
-wb = openpyxl.load_workbook("languages.xlsx")
-ws = wb.active
-
+# Load CSV
 nested_en = {}
 nested_vi = {}
 
-# Remove header row
-for row in ws.iter_rows(min_row=2, values_only=True):
-  if row and len(row) >= 2:
-    full_key, en, vi = row
-    if full_key:
-      key_parts = str(full_key).split(".")
-      insert_nested(nested_en, key_parts, str(en) if en else "")
-      insert_nested(nested_vi, key_parts, str(vi) if vi else "")
+with open("languages.csv", "r", encoding="utf-8-sig") as f:
+  reader = csv.reader(f, delimiter=";")
+  next(reader)  # Skip header
+  for row in reader:
+    if row and len(row) >= 3:
+      full_key, en, vi = row[0], row[1], row[2]
+      if full_key:
+        key_parts = str(full_key).split(".")
+        insert_nested(nested_en, key_parts, str(en) if en else "")
+        insert_nested(nested_vi, key_parts, str(vi) if vi else "")
 
 # Write JSON with tab format
 def write_json(filename, data):

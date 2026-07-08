@@ -8,9 +8,9 @@ import {
 } from "@mui/material"
 import { PopupState } from "common/enums"
 import { TButton, TTypography } from "components/TranslationTag"
+import { BotDifficultySlider } from "./Slider"
 import useToolkit from "hooks/useToolkit"
 import { setPopup } from "toolkit/slice/game"
-import { BotDifficultySlider } from "./Slider"
 import { NumberVoid } from "types/Common"
 
 interface BotDifficultyPopupProps {

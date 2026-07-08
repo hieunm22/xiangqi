@@ -7,7 +7,10 @@ Localization files are generated artifacts.
 **Never edit localization JSON files directly.**
 
 Source of truth:
-* `tools/languages.xlsx` (synchronized with `tools/languages.csv`)
+* `tools/languages.csv`
+
+Derived artifact (auto-synced, do not edit directly):
+* `tools/languages.xlsx`
 
 Generated files (auto-generated, do not edit):
 * `frontend/src/locales/en.json`
@@ -20,9 +23,9 @@ Generated files (auto-generated, do not edit):
 ```
 Edit /tools/languages.csv
         ↓
-Run update-excel-from-csv.py (syncs Excel)
-        ↓
-Run generate-locales.sh (generates JSON)
+Run generate-locales.sh
+  ├─ syncs languages.xlsx from CSV
+  └─ generates JSON from CSV
         ↓
 JSON files auto-generated in frontend/src/locales/
 ```
@@ -33,7 +36,7 @@ JSON files auto-generated in frontend/src/locales/
 
 ### 1. Edit CSV File
 
-Edit `/tools/languages.csv` with your new/updated translation keys.
+Edit `tools/languages.csv` with your new/updated translation keys.
 
 **Format:** `key;English;Vietnamese` (semicolon-separated)
 
@@ -48,30 +51,19 @@ Key naming convention: `feature.category.message`
 - Category: `messages`, `actions`, `button`, etc.
 - Message: descriptive name in kebab-case
 
-### 2. Sync Excel from CSV
+### 2. Generate JSON Locales
 
-From project root or `/tools` directory:
-
-```bash
-cd /tools
-python3 update-excel-from-csv.py
-```
-
-This updates `/tools/languages.xlsx` from the CSV file.
-
-### 3. Generate JSON Locales
-
-From project root:
+From the `tools/` directory:
 
 ```bash
 ./tools/generate-locales.sh
 ```
 
-This generates:
-- `frontend/src/locales/en.json` (English)
-- `frontend/src/locales/vi.json` (Vietnamese)
+This script:
+1. Syncs `tools/languages.xlsx` from `tools/languages.csv`
+2. Generates `frontend/src/locales/en.json` and `frontend/src/locales/vi.json` from the CSV
 
-### 4. Verify
+### 3. Verify
 
 Check that your keys appear in both JSON files:
 

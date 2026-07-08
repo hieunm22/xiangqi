@@ -17,6 +17,7 @@ const findMock = vi.fn()
 const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const runEndGameTransactionMock = vi.fn()
+const activatePostGameLockMock = vi.fn()
 const syncPlayersPresenceMock = vi.fn()
 
 const PATH = "/api/game/surrender"
@@ -50,6 +51,10 @@ vi.mock("../../common/mongodb", () => ({
 
 vi.mock("../../common/game/end-game.helper", () => ({
 	runEndGameTransaction: runEndGameTransactionMock
+}))
+
+vi.mock("../../common/game/post-game.helper", () => ({
+	activatePostGameLock: activatePostGameLockMock
 }))
 
 vi.mock("../../common/game/presence-sync", () => ({
@@ -216,6 +221,7 @@ describe("POST /api/game/surrender", () => {
 			betAmount: 50
 		})
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-1", false)
+		expect(activatePostGameLockMock).toHaveBeenCalledWith(100n, "game-1")
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "surrender.messages.success",

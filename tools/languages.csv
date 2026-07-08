@@ -6,6 +6,7 @@ common.password.policy-2;Must contain upper case character;Phải chứa một k
 common.password.policy-3;Must contain digit;Phải chứa một ký tự số
 common.password.policy-4;Must contain a special character;Phải chứa một ký tự đặc biệt
 common.password.policy-5;Text length at least 8;Ít nhất 8 ký tự
+common.date.today;Today;Hôm nay
 common.date.yesterday;Yesterday;Hôm qua
 common.date.mon;Mon;Thứ 2
 common.date.tue;Tue;Thứ 3
@@ -15,10 +16,11 @@ common.date.fri;Fri;Thứ 6
 common.date.sat;Sat;Thứ 7
 common.date.sun;Sun;Chủ nhật
 page.home.title;Home;Trang chủ
-page.history.title;History;Lịch sử
 page.history.no-games;No finished games yet;Chưa có trận đấu nào hoàn thành
-page.history.point-label;Points:;Điểm:
-page.about.title;About;Thông tin
+page.replay.title;Game Replay;Xem lại ván đấu
+page.replay.no-moves;No moves to replay;Không có nước đi để xem lại
+page.replay.play;Play;Phát
+page.replay.pause;Pause;Tạm dừng
 menu.app-name;Xiangqi;Cờ tướng
 menu.profile;Profile;Trang cá nhân
 menu.messages;Message;Tin nhắn
@@ -31,25 +33,27 @@ menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
 menu.expired;Set expired;Hết hạn token
 menu.logout;Logout;Đăng xuất
-menu.rooms;Rooms;Trò chơi
 announce.title;Announcement;Thông báo
 announce.placeholder;Type an announcement...;Nhập thông báo...
 announce.empty;No announcements yet;Chưa có thông báo nào
 announce.loading-older;Loading older announcements...;Đang tải thông báo cũ hơn...
-archivement.title-01;Checkmate an opponent who still has 13 or more pieces;Chiếu bí khi đối thủ vẫn còn >= 13 quân
-archivement.title-02;Win your first game;Thắng trận đầu khi chơi game
-archivement.title-03;Leave your opponent with no legal moves;Đánh cho đối thủ không còn nước đi
-archivement.title-04;Defeat opponents of equal or higher rank in 10 games;Thắng đối thủ cùng hoặc hơn đẳng cấp 10 ván
-archivement.title-05;Hold a draw with only your king remaining;Cầm hoà đối thủ khi chỉ còn tướng
-archivement.title-06;Win 100 games;Thắng 100 trận
-archivement.title-07;Draw 50 games;Hoà 50 trận
-archivement.title-08;Checkmate an opponent with only 1 attacking piece remaining;Chiếu bí khi đối thủ khi chỉ còn 1 quân tấn công
-archivement.title-09;Checkmate an opponent with only a knight remaining;Chiếu bí khi đối thủ khi chỉ còn mã
-archivement.title-10;Checkmate an opponent with only a pawn remaining;Chiếu bí khi đối thủ khi chỉ còn tốt
-archivement.title-11;Checkmate an opponent with only a cannon remaining;Chiếu bí khi đối thủ khi chỉ còn pháo
-archivement.title-12;Defeat opponents with master rank in 50 games;Thắng đối thủ có đẳng cấp kỳ thủ 50 ván
+achievement.title-01;Checkmate an opponent who still has 13 or more pieces;Chiếu bí khi đối thủ vẫn còn >= 13 quân
+achievement.title-02;Win your first game;Thắng trận đầu khi chơi game
+achievement.title-03;Leave your opponent with no legal moves;Đánh cho đối thủ không còn nước đi
+achievement.title-04;Defeat opponents of equal or higher rank in 10 games;Thắng đối thủ cùng hoặc hơn đẳng cấp 10 ván
+achievement.title-05;Hold a draw with only your king remaining;Cầm hoà đối thủ khi chỉ còn tướng
+achievement.title-06;Win 100 games;Thắng 100 trận
+achievement.title-07;Draw 50 games;Hoà 50 trận
+achievement.title-08;Checkmate an opponent with only 1 attacking piece remaining;Chiếu bí khi đối thủ khi chỉ còn 1 quân tấn công
+achievement.title-09;Checkmate an opponent with only a knight remaining;Chiếu bí khi đối thủ khi chỉ còn mã
+achievement.title-10;Checkmate an opponent with only a pawn remaining;Chiếu bí khi đối thủ khi chỉ còn tốt
+achievement.title-11;Checkmate an opponent with only a cannon remaining;Chiếu bí khi đối thủ khi chỉ còn pháo
+achievement.title-12;Defeat opponents with master rank in 50 games;Thắng đối thủ có đẳng cấp kỳ thủ 50 ván
+achievement.tab-title;Achievements;Thành tựu
+achievement.messages.success;Success;Thành công
+achievement.messages.invalid-user-id;Invalid user ID;ID người dùng không hợp lệ
+achievement.messages.internal-server-error;Internal server error;Lỗi máy chủ
 chat.conversation.you;You;Bạn
-chat.conversation.new;New conversation;Cuộc trò chuyện mới
 chat.messages.unread;Unread messages;Tin nhắn chưa đọc
 search.user.title;Search user;Tìm kiếm
 search.user.placeholder;Search user...;Tìm kiếm người dùng...
@@ -62,7 +66,6 @@ dashboard.filters.playing;Playing;Đang chơi
 dashboard.feedback.empty;No room tables match the selected filter.;Không có bàn chơi phù hợp với bộ lọc đã chọn.
 dashboard.feedback.error;Unable to load room tables.;Không tải được danh sách phòng chơi.
 dashboard.status.unknown;Unknown;Không xác định
-dashboard.feedback.result-count;Found {{count}} tables;Tìm thấy {{count}} bàn chơi
 dashboard.room.create;Create room;Tạo phòng chơi
 dashboard.popup.piece-selection;Select team;Chọn quân
 dashboard.popup.red-first;Red first;Đỏ tiên
@@ -83,14 +86,15 @@ settings.connected-accounts.link-success;Facebook linked successfully;Đã liên
 settings.connected-accounts.unlink-success;Facebook unlinked;Đã huỷ liên kết Facebook
 settings.connected-accounts.link-error;Could not update Facebook link;Không cập nhật được liên kết Facebook
 settings.close;Close;Đóng
-settings.change-password;Change password;Đổi mật khẩu
 popup.alert.title;Warning;Cảnh báo
 popup.confirm.title;Confirm;Xác nhận
 popup.confirm.ok;Ok;Ok
 popup.confirm.cancel;Cancel;Huỷ
-home.turn.title;Turn;Lượt đánh
 game.general.captured;General has been captured. Room over;Tướng đã bị bắt. Game kết thúc
 game.general.in-check;Your general is under attack;Tướng của bạn đang bị chiếu
+game.label.win;Win;Thắng
+game.label.draw;Draw;Hoà
+game.label.lose;Lose;Thua
 room.bot-difficulty.title;Select Bot Difficulty;Chọn độ khó của Bot
 room.bot-difficulty.beginner;Beginner;Mới bắt đầu
 room.bot-difficulty.amateur;Amateur;Nghiệp dư
@@ -103,7 +107,6 @@ login.username.label;User name;Tên người dùng
 login.username.placeholder;User name;Tên người dùng
 login.password.label;Password;Mật khẩu
 login.password.placeholder;Password;Mật khẩu
-login.password.error1;Password is required;Mật khẩu bắt buộc nhập
 login.password.show;Show password;Hiện mật khẩu
 login.password.hide;Hide password;Ẩn mật khẩu
 login.form.error1;Login failed. Please check your credentials ;Đăng nhập không thành công. Hãy kiểm tra lại
@@ -159,7 +162,6 @@ reset-password.form.error1;An error occurred while resetting your password. Plea
 reset-password.form.invalid-token;Invalid or expired reset password token;Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn
 reset-password.form.success;Password reset successfully. Redirecting to login...;Đặt lại mật khẩu thành công. Đang chuyển hướng đến đăng nhập...
 reset-password.action.back-to-login;Back to login;Quay lại trang chủ
-reset-password.action.submit;Reset password;Đặt lại mật khẩu
 auth-middleware.messages.invalid-token-payload;Invalid token payload;Payload của token không hợp lệ
 auth-middleware.messages.session-not-found;Session not found;Không tìm thấy phiên
 auth-middleware.messages.token-expired;Token is expired;Token đã hết hạn
@@ -242,11 +244,6 @@ reset-password.messages.missing-id-or-token;ID and token are required;ID và tok
 reset-password.messages.missing-userId-or-password;UserId and password are required;UserId và mật khẩu là bắt buộc
 reset-password.messages.token-valid;Reset password token is valid;Token đặt lại mật khẩu hợp lệ
 reset-password.messages.user-not-found;User not found;Không tìm thấy người dùng
-set-room-status.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
-set-room-status.messages.invalid-room-id;Field 'id' is required and must be a positive integer;Trường 'id' là bắt buộc và phải là số nguyên dương
-set-room-status.messages.invalid-status;Field 'status' must be either 1 or 2;Trường 'status' phải là 1 hoặc 2
-set-room-status.messages.room-not-found;Room not found;Không tìm thấy phòng
-set-room-status.messages.success;Set room status successfully;Đặt trạng thái phòng thành công
 room.actions.start-room;Start room;Bắt đầu chơi
 room.actions.challenge;Challenge;Thách đấu
 room.actions.leave-seat;Leave seat;Dự khán
@@ -260,10 +257,9 @@ room.actions.reject-draw;Reject;Từ chối
 room.actions.send-pm;Send PM;Chat
 room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
-room.actions.settings;Room settings;Cài đặt phòng
+room.actions.back-to-room;Back to room;Quay lại phòng chơi
 room.messages.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
 room.messages.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
-room.messages.draw-completed;Draw completed;Hòa cờ thành công
 room.messages.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
 room.messages.confirm-leave;Are you sure you want to leave room?;Bạn có chắc muốn rời bàn chơi?
 room.messages.confirm-surrender;Are you sure you want to surrender?;Bạn có chắc chắn muốn đầu hàng không?
@@ -272,6 +268,11 @@ room.messages.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;�
 room.messages.insufficient-amount;You do not have enough balance to join this room;Bạn không đủ tiền để tham gia bàn chơi này
 room.messages.will-leave-current-room;You are currently in another room. Joining this room will remove you from the current room;Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại
 room.messages.all-seats-occupied;All player seats are occupied;Tất cả ghế chơi đã được chiếm
+room.messages.game-ended;Game ended;Ván đấu đã kết thúc
+room.messages.you-win;You win;Bạn đã chiến thắng
+room.messages.you-lose;You lose;Bạn đã thua
+room.messages.back-to-room;Back to room;Quay lại phòng
+room.messages.auto-back-countdown;{0}. Press the back button to return to the room. You will be automatically returned in {1}s;{0}. Bấm nút quay lại để quay lại room. Bạn sẽ tự động quay lại trong {1}s
 room.notifications.joined;{0} joined the room;{0} đã vào phòng
 room.notifications.left;{0} left the room;{0} đã rời phòng
 room.settings.title;Room Settings;Cài đặt phòng
@@ -369,17 +370,13 @@ guide.result.paragraph2;If a player runs out of time for a single move (for exam
 guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
 guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
-extra-money.lucky-wheel.title;Lucky Wheel;Vòng quay may mắn
-extra-money.lucky-wheel.description;Spin the wheel to earn money! Click the spin button in the middle of the wheel to try your luck.;Quay vòng để kiếm tiền! Bấm nút Quay ở giữa vòng quay để thử vận may của bạn.
-extra-money.lucky-wheel.spin-button;Spin;Quay
-extra-money.lucky-wheel.reward-placeholder;Click Spin to get started;Nhấp Quay để bắt đầu
 extra-money.title;Daily tasks;Kiếm tiền
 extra-money.tab.lucky-wheel;Lucky Wheel;Vòng Quay May Mắn
 extra-money.tab.bonus-coin;Bonus Coin;Xu Thưởng
 extra-money.tab.daily-bonus;Daily Bonus;Thưởng hàng ngày
 extra-money.bonus-coin.subtitle;Watch a short video to earn free coin;Xem video ngắn để nhận xu miễn phí
 extra-money.bonus-coin.next-in;Next in:;Lượt kế tiếp:
-extra-money.bonus-coin.coin-unit;coin;xu
+extra-money.bonus-coin.collect;Collect;Thu thập
 extra-money.bonus-coin.watch-video;Watch video;Xem video
 extra-money.daily-bonus.subtitle;Login 7 days in a row to earn 4000 coin;Đăng nhập 7 ngày liên tiếp để nhận 4000 xu
 extra-money.daily-bonus.day;Day;Ngày

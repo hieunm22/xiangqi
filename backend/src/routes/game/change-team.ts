@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -270,6 +271,7 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 			is_bot: u.users.is_bot,
 			joined_at: u.joined_at
 		}))
+		const usersWithBackReady = decorateRoomUsersWithBackReady(Number(roomIdBigInt), usersPayload)
 
 		emitRoomUsersUpdated(Number(roomIdBigInt), usersPayload)
 
@@ -277,7 +279,7 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 			success: true,
 			message: "challenge.messages.success",
 			status_code: 200,
-			data: usersPayload
+			data: usersWithBackReady
 		})
 	} catch (err) {
 		console.error("[challenge]", err)

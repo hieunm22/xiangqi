@@ -10,8 +10,11 @@ This project is an online Xiangqi (Chinese Chess) platform featuring:
 - **Play vs. Bot (PvE)** — challenge a [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) UCI engine across 5 tunable difficulty tiers (Beginner → Master)
 - **Full in-game actions** — move, surrender, offer/accept draw, request undo, and reset
 - **Rooms** — create rooms, join as a player or spectator, leave, kick users, and update room settings (red-first, PvE mode, bet amount)
-- **Player profiles & ranking** — point-based scoring, per-player game history, and profile popups
+- **Player profiles & ranking** — point-based scoring, per-player game history, profile popups, and avatar upload (S3)
 - **Authentication** — register, login, logout, and password recovery with email verification; JWT access + refresh tokens with protected routes
+- **Social login** — sign in with Google and Facebook; link/unlink social providers from existing accounts
+- **In-app messaging** — room chat, private conversations, and system announcements
+- **Rewards** — daily bonus, lucky spins, achievements, and point reconciliation
 - **Polish** — sound effects on game events, win confetti, an in-app guide popup, and avatar groups
 - **Dark / Light theme** with persistent user preferences
 - **Internationalization** (English & Vietnamese) with an Excel-driven locale generation workflow
@@ -22,23 +25,23 @@ This project is an online Xiangqi (Chinese Chess) platform featuring:
 ## Tech Stack
 
 **Frontend**
-- React 19, TypeScript, Vite
-- MUI (Material UI), Bootstrap, SCSS, styled-components
+- React 19, TypeScript, Vite 8
+- MUI 9, Bootstrap 5, SCSS, styled-components
 - Redux Toolkit for state management
-- React Router DOM for routing
+- React Router 7 for routing
 - i18next / react-i18next for internationalization
-- Socket.IO client for real-time communication
+- Socket.IO client for real-time gameplay and communication
 - wretch for HTTP requests, FontAwesome Pro icons, react-confetti-boom for win effects
 
 **Backend**
 - Node.js, Express 5, TypeScript
-- Prisma ORM with PostgreSQL (multi-schema: `auth` + `game`)
-- MongoDB driver and Redis (ioredis) integrations
-- Socket.IO server for real-time gameplay
-- Redis for caching
-- JWT authentication
+- Prisma 7 ORM with PostgreSQL (multi-schema: `auth` + `game`)
+- MongoDB driver and Redis (ioredis) for supplemental storage and caching
+- Socket.IO server for real-time gameplay and communication
 - Fairy-Stockfish UCI engine integration for the bot opponent
 - JWT authentication (access + refresh tokens via cookies)
+- Google Auth Library + Facebook Graph API for social login (OAuth)
+- AWS S3 (`@aws-sdk/client-s3`) for avatar uploads
 - Nodemailer for transactional email (password recovery)
 - Swagger UI for API documentation
 - CORS enabled with configurable origins
@@ -51,7 +54,7 @@ xiangqi/
 │   ├── src/
 │   │   ├── common/             # Board logic, socket, bot engine, DB connections, helpers
 │   │   ├── middleware/         # JWT auth middleware
-│   │   ├── routes/             # auth / room / game / tool endpoints
+│   │   ├── routes/             # auth / game / room / message / user / tool endpoints
 │   │   ├── templates/          # Email templates (HTML)
 │   │   ├── types/              # Type definitions
 │   │   └── generated/prisma/   # Generated Prisma client
@@ -128,18 +131,54 @@ The backend loads env files in order: `.env.local`, `.env.backend`, `.env`. `DAT
 
 **Backend** (`.env.local` / `.env.backend` / `.env`)
 ```
+# Core (required)
 DATABASE_URL=postgresql://user:pass@localhost:5432/xiangqi
 JWT_SECRET=your-secret-key
+JWT_ISSUER=localhost:8000
+
+# Server
 PORT=8000
+API_HOST=http://localhost:8000
+
+# CORS & frontend
 CORS_ORIGINS=http://localhost:3004,https://your-domain.com
+FRONTEND_BASE_URL=http://localhost:3004
+
+# Cookies
+COOKIE_DOMAIN=localhost
+COOKIE_SAMESITE=lax
+COOKIE_SECURE=false
+
+# Redis
 REDIS_HOST=localhost
+REDIS_PORT=6379
 REDIS_PASSWORD=your-redis-password
+
+# MongoDB
 MONGO_CONNECTION_STRING=mongodb://root:pass@localhost:27017/?authSource=admin
 MONGODB_DB_NAME=xiangqi
-API_HOST=http://localhost:5001
+
+# Email (password recovery)
 APP_EMAIL=your-email@gmail.com
 APP_PASSWORD=your-app-password
+
+# Social login
+GOOGLE_CLIENT_ID=your-google-client-id
+FACEBOOK_APP_ID=your-facebook-app-id
+FACEBOOK_APP_SECRET=your-facebook-app-secret
+
+# S3 (avatar uploads)
+AWS_ACCESS_ID=your-aws-access-key-id
+AWS_SECRET_KEY=your-aws-secret-access-key
+AWS_REGION=ap-southeast-1
+AWS_S3_BUCKET=your-bucket-name
+
+# Bot engine
 FAIRY_STOCKFISH_PATH=fairy-stockfish
+
+# Point reconciliation (optional)
+AMOUNT_RECONCILE_CRON=0 23 * * 0
+AMOUNT_RECONCILE_AUTOFIX=false
 ```
 
 **Frontend** (`.env.frontend`)

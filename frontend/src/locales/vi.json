@@ -12,6 +12,7 @@
 			"policy-5": "Ít nhất 8 ký tự"
 		},
 		"date": {
+			"today": "Hôm nay",
 			"yesterday": "Hôm qua",
 			"mon": "Thứ 2",
 			"tue": "Thứ 3",
@@ -27,12 +28,13 @@
 			"title": "Trang chủ"
 		},
 		"history": {
-			"title": "Lịch sử",
-			"no-games": "Chưa có trận đấu nào hoàn thành",
-			"point-label": "Điểm:"
+			"no-games": "Chưa có trận đấu nào hoàn thành"
 		},
-		"about": {
-			"title": "Thông tin"
+		"replay": {
+			"title": "Xem lại ván đấu",
+			"no-moves": "Không có nước đi để xem lại",
+			"play": "Phát",
+			"pause": "Tạm dừng"
 		}
 	},
 	"menu": {
@@ -48,8 +50,7 @@
 		},
 		"home": "Trang chủ",
 		"expired": "Hết hạn token",
-		"logout": "Đăng xuất",
-		"rooms": "Trò chơi"
+		"logout": "Đăng xuất"
 	},
 	"announce": {
 		"title": "Thông báo",
@@ -57,7 +58,7 @@
 		"empty": "Chưa có thông báo nào",
 		"loading-older": "Đang tải thông báo cũ hơn..."
 	},
-	"archivement": {
+	"achievement": {
 		"title-01": "Chiếu bí khi đối thủ vẫn còn >= 13 quân",
 		"title-02": "Thắng trận đầu khi chơi game",
 		"title-03": "Đánh cho đối thủ không còn nước đi",
@@ -69,12 +70,17 @@
 		"title-09": "Chiếu bí khi đối thủ khi chỉ còn mã",
 		"title-10": "Chiếu bí khi đối thủ khi chỉ còn tốt",
 		"title-11": "Chiếu bí khi đối thủ khi chỉ còn pháo",
-		"title-12": "Thắng đối thủ có đẳng cấp kỳ thủ 50 ván"
+		"title-12": "Thắng đối thủ có đẳng cấp kỳ thủ 50 ván",
+		"tab-title": "Thành tựu",
+		"messages": {
+			"success": "Thành công",
+			"invalid-user-id": "ID người dùng không hợp lệ",
+			"internal-server-error": "Lỗi máy chủ"
+		}
 	},
 	"chat": {
 		"conversation": {
-			"you": "Bạn",
-			"new": "Cuộc trò chuyện mới"
+			"you": "Bạn"
 		},
 		"messages": {
 			"unread": "Tin nhắn chưa đọc"
@@ -101,8 +107,7 @@
 		},
 		"feedback": {
 			"empty": "Không có bàn chơi phù hợp với bộ lọc đã chọn.",
-			"error": "Không tải được danh sách phòng chơi.",
-			"result-count": "Tìm thấy {{count}} bàn chơi"
+			"error": "Không tải được danh sách phòng chơi."
 		},
 		"status": {
 			"unknown": "Không xác định"
@@ -134,8 +139,7 @@
 			"unlink-success": "Đã huỷ liên kết Facebook",
 			"link-error": "Không cập nhật được liên kết Facebook"
 		},
-		"close": "Đóng",
-		"change-password": "Đổi mật khẩu"
+		"close": "Đóng"
 	},
 	"popup": {
 		"alert": {
@@ -147,15 +151,15 @@
 			"cancel": "Huỷ"
 		}
 	},
-	"home": {
-		"turn": {
-			"title": "Lượt đánh"
-		}
-	},
 	"game": {
 		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc",
 			"in-check": "Tướng của bạn đang bị chiếu"
+		},
+		"label": {
+			"win": "Thắng",
+			"draw": "Hoà",
+			"lose": "Thua"
 		}
 	},
 	"room": {
@@ -181,12 +185,11 @@
 			"send-pm": "Chat",
 			"view-history": "Lịch sử",
 			"kick": "Kick",
-			"settings": "Cài đặt phòng"
+			"back-to-room": "Quay lại phòng chơi"
 		},
 		"messages": {
 			"draw-accepted": "Đối phương đã đồng ý hòa",
 			"draw-rejected": "Đối phương từ chối hòa",
-			"draw-completed": "Hòa cờ thành công",
 			"opponent-surrendered": "Đối phương đã đầu hàng! Bạn thắng!",
 			"confirm-leave": "Bạn có chắc muốn rời bàn chơi?",
 			"confirm-surrender": "Bạn có chắc chắn muốn đầu hàng không?",
@@ -194,7 +197,12 @@
 			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"insufficient-amount": "Bạn không đủ tiền để tham gia bàn chơi này",
 			"will-leave-current-room": "Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại",
-			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm"
+			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm",
+			"game-ended": "Ván đấu đã kết thúc",
+			"you-win": "Bạn đã chiến thắng",
+			"you-lose": "Bạn đã thua",
+			"back-to-room": "Quay lại phòng",
+			"auto-back-countdown": "{0}. Bấm nút quay lại để quay lại room. Bạn sẽ tự động quay lại trong {1}s"
 		},
 		"notifications": {
 			"joined": "{0} đã vào phòng",
@@ -226,7 +234,6 @@
 		"password": {
 			"label": "Mật khẩu",
 			"placeholder": "Mật khẩu",
-			"error1": "Mật khẩu bắt buộc nhập",
 			"show": "Hiện mật khẩu",
 			"hide": "Ẩn mật khẩu"
 		},
@@ -331,8 +338,7 @@
 			"success": "Đặt lại mật khẩu thành công. Đang chuyển hướng đến đăng nhập..."
 		},
 		"action": {
-			"back-to-login": "Quay lại trang chủ",
-			"submit": "Đặt lại mật khẩu"
+			"back-to-login": "Quay lại trang chủ"
 		},
 		"messages": {
 			"internal-server-error": "Lỗi máy chủ nội bộ",
@@ -454,15 +460,6 @@
 			"missing-refresh-token": "Thiếu cookie token làm mới",
 			"mismatch-or-expired": "Thiếu refresh token hoặc đã hết hạn",
 			"success": "Token đã làm mới"
-		}
-	},
-	"set-room-status": {
-		"messages": {
-			"internal-server-error": "Lỗi máy chủ nội bộ",
-			"invalid-room-id": "Trường 'id' là bắt buộc và phải là số nguyên dương",
-			"invalid-status": "Trường 'status' phải là 1 hoặc 2",
-			"room-not-found": "Không tìm thấy phòng",
-			"success": "Đặt trạng thái phòng thành công"
 		}
 	},
 	"room-invite": {
@@ -623,12 +620,6 @@
 		}
 	},
 	"extra-money": {
-		"lucky-wheel": {
-			"title": "Vòng quay may mắn",
-			"description": "Quay vòng để kiếm tiền! Bấm nút Quay ở giữa vòng quay để thử vận may của bạn.",
-			"spin-button": "Quay",
-			"reward-placeholder": "Nhấp Quay để bắt đầu"
-		},
 		"title": "Kiếm tiền",
 		"tab": {
 			"lucky-wheel": "Vòng Quay May Mắn",
@@ -638,7 +629,7 @@
 		"bonus-coin": {
 			"subtitle": "Xem video ngắn để nhận xu miễn phí",
 			"next-in": "Lượt kế tiếp:",
-			"coin-unit": "xu",
+			"collect": "Thu thập",
 			"watch-video": "Xem video"
 		},
 		"daily-bonus": {

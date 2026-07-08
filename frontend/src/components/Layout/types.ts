@@ -2,6 +2,7 @@ import { Dispatch, ReactNode, SetStateAction } from "react"
 import { PrivateConversation } from "components/ChatDialog/types"
 import { UserAvatarType } from "types/Common"
 import { Users } from "types/Entities"
+import { Team } from "types/GameState"
 
 export interface UserProfileProps {
 	isOwnProfile: boolean
@@ -27,6 +28,12 @@ export interface GameStats {
 	lose: number
 }
 
+export interface Achievement {
+	id: number
+	name: string
+	earned: boolean
+}
+
 export interface UserProfileWithStats {
 	user: Users
 	stats: GameStats
@@ -39,19 +46,37 @@ interface UpdateUserInfo {
 	avatar_url: string
 }
 
+export interface ProfileTabProps {
+	user: Users | null
+}
+
 export interface UpdateUserInfoPayload extends UpdateUserInfo { }
 
 export interface UpdateUserInfoResponse extends UpdateUserInfo { }
 
+export interface HistoryTabProps {
+	gameHistories: GameHistoryItem[] | null
+	onOpenReplay: (item: GameHistoryItem) => void
+}
+
 interface GameHistory {
 	gameId: string
-	ends_at?: string | Date
+	ends_at: string | Date | null
+}
+
+export interface GameHistoryUser extends UserAvatarType {
+	team: Team | null
 }
 
 export interface GameHistoryItem {
 	game: GameHistory
-	users: UserAvatarType[]
-	point: number
+	users: GameHistoryUser[]
+	amount: number
+}
+
+export interface PlayerAvatarsProps {
+	game: GameHistoryItem
+	userId: number
 }
 
 interface UnreadCountByConversation {

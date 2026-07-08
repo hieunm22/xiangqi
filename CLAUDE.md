@@ -10,6 +10,7 @@ Before making any changes, review and follow:
 
 ## Frontend coding convention
 - docs/react-guidelines.md
+- docs/frontend-authoring.md (type field & MUI styling rules for frontend/src/**/*.{ts,tsx})
 
 ## New function / entry convention
 - docs/new-function-convention.md (e.g. when editing frontend/src/hooks/useAPI.ts)

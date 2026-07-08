@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
-import { Box, Divider, Skeleton, Tab, Tabs } from "@mui/material"
-import { TTypography } from "components/TranslationTag"
-import { getToken } from "common/helper"
-import { translate as t } from "locales/translate"
+import { Box, Divider, Skeleton, Tabs } from "@mui/material"
+import { TTab, TTypography } from "components/TranslationTag"
+import { getToken, tabIconClassBuilder } from "common/helper"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import BonusCoinTab from "./components/BonusCoinTab"
@@ -60,7 +59,7 @@ export default function ExtraMoneyPage() {
 
 			{activeTab === -1
 				? (
-					<Box className="extra-money-tabs extra-money-tabs--skeleton" sx={{ display: "flex", gap: 1 }}>
+					<Box className="extra-money-tabs skeleton">
 						{Array.from({ length: 3 }).map((_, index) => (
 							<Skeleton key={index} variant="rounded" height={48} sx={{ flex: 1 }} />
 						))}
@@ -75,20 +74,20 @@ export default function ExtraMoneyPage() {
 						textColor="primary"
 						indicatorColor="primary"
 					>
-						<Tab
-							icon={<i className="fas fa-dharmachakra" />}
+						<TTab
+							icon={<i className={tabIconClassBuilder(0, activeTab, "dharmachakra")} />}
 							iconPosition="start"
-							label={t("extra-money.tab.lucky-wheel")}
+							label="extra-money.tab.lucky-wheel"
 						/>
-						<Tab
-							icon={<i className="fas fa-coins" />}
+						<TTab
+							icon={<i className={tabIconClassBuilder(1, activeTab, "coins")} />}
 							iconPosition="start"
-							label={t("extra-money.tab.bonus-coin")}
+							label="extra-money.tab.bonus-coin"
 						/>
-						<Tab
-							icon={<i className="fas fa-gift" />}
+						<TTab
+							icon={<i className={tabIconClassBuilder(2, activeTab, "gift")} />}
 							iconPosition="start"
-							label={t("extra-money.tab.daily-bonus")}
+							label="extra-money.tab.daily-bonus"
 						/>
 					</Tabs>
 				)}

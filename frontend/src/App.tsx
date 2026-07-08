@@ -143,9 +143,11 @@ function AppWithTheme() {
 					</Route>
 					<Route
 						element={
-							<SocketProvider>
-								<Layout />
-							</SocketProvider>
+							<ProtectedRoute>
+								<SocketProvider>
+									<Layout />
+								</SocketProvider>
+							</ProtectedRoute>
 						}
 					>
 						<Route

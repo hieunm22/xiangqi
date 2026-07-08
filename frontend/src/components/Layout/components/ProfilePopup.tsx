@@ -1,49 +1,51 @@
-import { ChangeEvent, useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import {
-	Box,
 	Dialog,
 	DialogContent,
 	DialogTitle,
 	Divider,
 	Grid,
 	Skeleton,
-	Typography,
+	Tabs,
 } from "@mui/material"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider"
-import { EditableProfileField } from "./EditableProfileField"
+import { GameReplayPopup } from "components/GameReplay"
+import { HistoryTab, ProfileAchievement, ProfileTab } from "./ProfileTabs"
+import { TButton, TTab } from "components/TranslationTag"
 import {
-	TButton,
-	TI,
-	TTooltip,
-	TTypography,
-} from "components/TranslationTag"
-import { formatNumber, getClaimsFromLocalStorage, getToken, requireImage } from "common/helper"
+	getCurrentUserId,
+	getToken,
+	tabIconClassBuilder,
+} from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useProfilePopup } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
-import { translate } from "locales/translate"
 import { setPopup, setRoomHostId, setUserId } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
-import { UpdateUserInfoResponse, UserProfileWithStats } from "../types"
+import {
+	Achievement,
+	GameHistoryItem,
+	UserProfileWithStats
+} from "../types"
 
 export const ProfilePopup = () => {
-	const { gameState, state, dispatch } = useToolkit()
-	const { getUserById, kickUser, updateUserAvatar } = useAPI()
-	const avatarInputRef = useRef<HTMLInputElement>(null)
-	const selectedAvatarFileRef = useRef<File | null>(null)
-	const [isCopied, setIsCopied] = useState(false)
-	const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
-	const [hasPendingAvatarPreview, setHasPendingAvatarPreview] = useState(false)
-	const [isApplyingAvatarPreview, setIsApplyingAvatarPreview] = useState(false)
+	const { gameState, dispatch } = useToolkit()
+	const {
+		getAchievements,
+		getPlayerHistory,
+		getUserById,
+		kickUser,
+	} = useAPI()
+	const [activeTab, setActiveTab] = useState(0)
+	const [achievements, setAchievements] = useState<Achievement[] | null>(null)
+	const [gameHistories, setGameHistories] = useState<GameHistoryItem[] | null>(null)
+	const [replayGame, setReplayGame] = useState<GameHistoryItem | null>(null)
 	const {
 		profileUser: user,
-		gameStats,
 		setGameStats,
 		setProfileUser
 	} = useProfilePopup()
-
-	const displayedAvatar = avatarPreviewUrl || requireImage(user ? user.avatar_url : "")
 
 	const handleCloseProfilePopup = (_: unknown, reason: "backdropClick" | "escapeKeyDown") => {
 		if (reason === "backdropClick") return
@@ -51,33 +53,18 @@ export const ProfilePopup = () => {
 		dispatch(setRoomHostId(null))
 		setProfileUser(null)
 		setGameStats(null)
+		setActiveTab(0)
+		setAchievements(null)
+		setGameHistories(null)
+		setReplayGame(null)
 		dispatch(setPopup(PopupState.NONE))
 	}
 
-	const handleCopyEmail = async () => {
-		if (isCopied) return
-		if (!user?.email) return
-		try {
-			await navigator.clipboard.writeText(user.email)
-			setIsCopied(true)
-		}
-		catch (err) {
-			console.error("Failed to copy email:", err)
-			setIsCopied(false)
-		}
-	}
-
-	const onAnimationEnd = () => {
-		setIsCopied(false)
-	}
-
-	const claims = getClaimsFromLocalStorage()
-	const currentUserId = Number(claims?.sub)
-	// const normalizedCurrentUserId = currentUserId ?? null
+	const currentUserId = getCurrentUserId()
 	const isOwnProfile = user?.id === currentUserId
 
 	const loadRoomContext = async () => {
-		if (gameState.popupState !== PopupState.PROFILE) {
+		if ((gameState.popupState & PopupState.PROFILE) !== PopupState.PROFILE) {
 			return
 		}
 
@@ -93,115 +80,66 @@ export const ProfilePopup = () => {
 		}
 	}
 
+	// Achievements are fetched lazily the first time the tab is opened, then
+	// cached in state so re-opening the tab (while the popup stays open) reuses it.
+	const loadAchievements = async () => {
+		if (achievements !== null) {
+			return
+		}
+
+		const token = getToken()
+		if (!token) {
+			return
+		}
+
+		const response = await getAchievements(token, gameState.activeUserId!) as APIResponse<Achievement[]>
+		if (response?.success) {
+			setAchievements(response.data)
+		}
+	}
+
+	// Game history is likewise fetched lazily on first open of the tab and cached.
+	const loadHistory = async () => {
+		if (gameHistories !== null) {
+			return
+		}
+
+		const token = getToken()
+		if (!token) {
+			return
+		}
+
+		const response = await getPlayerHistory(token, gameState.activeUserId!) as APIResponse<GameHistoryItem[]>
+		if (response?.success && response.data) {
+			setGameHistories(response.data)
+		}
+	}
+
+	const handleTabChange = (value: number) => {
+		setActiveTab(value)
+		if (value === 1) {
+			loadAchievements()
+		} else if (value === 2) {
+			loadHistory()
+		}
+	}
+
 	useEffect(() => {
 		loadRoomContext()
 	}, [gameState.popupState, gameState.roomHostId])
 
+	// Reset to the profile tab and clear cached tab data whenever the viewed user changes
 	useEffect(() => {
-		setAvatarPreviewUrl(null)
-		setHasPendingAvatarPreview(false)
-		setIsApplyingAvatarPreview(false)
-		selectedAvatarFileRef.current = null
-	}, [user?.id, user?.avatar_url])
+		setActiveTab(0)
+		setAchievements(null)
+		setGameHistories(null)
+		setReplayGame(null)
+	}, [gameState.activeUserId])
 
-	const triggerAvatarFileDialog = () => {
-		avatarInputRef.current?.click()
-	}
-
-	const handleAvatarFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0]
-		if (!file) {
-			return
-		}
-
-		selectedAvatarFileRef.current = file
-
-		const previewUrl = URL.createObjectURL(file)
-		setAvatarPreviewUrl(previous => {
-			if (previous) {
-				URL.revokeObjectURL(previous)
-			}
-			return previewUrl
-		})
-		setHasPendingAvatarPreview(true)
-
-		// Allow selecting the same file again in the next attempt.
-		event.target.value = ""
-	}
-
-	const cancelAvatarPreview = () => {
-		selectedAvatarFileRef.current = null
-
-		if (!avatarPreviewUrl) {
-			setHasPendingAvatarPreview(false)
-			return
-		}
-
-		URL.revokeObjectURL(avatarPreviewUrl)
-		setAvatarPreviewUrl(null)
-		setHasPendingAvatarPreview(false)
-	}
-
-	const applyAvatarPreview = async () => {
-		if (!avatarPreviewUrl || !hasPendingAvatarPreview || !user) {
-			return
-		}
-
-		const selectedFile = selectedAvatarFileRef.current
-		if (!selectedFile) {
-			return
-		}
-
-		setIsApplyingAvatarPreview(true)
-		try {
-			const token = getToken()
-			if (!token) {
-				await openAlert({
-					title: "popup.alert.title",
-					message: "Unauthorized"
-				})
-				return
-			}
-
-			const response = await updateUserAvatar(token, selectedFile) as APIResponse<Partial<UpdateUserInfoResponse>>
-			if (!response?.success) {
-				await openAlert({
-					title: "popup.alert.title",
-					message: response?.message ?? "Failed to update avatar"
-				})
-				return
-			}
-
-			setProfileUser({
-				...user,
-				avatar_seq: response.data.avatar_seq ?? user.avatar_seq,
-				avatar_url: response.data.avatar_url ?? user.avatar_url,
-			})
-
-			selectedAvatarFileRef.current = null
-			setHasPendingAvatarPreview(false)
-			setAvatarPreviewUrl(null)
-		} finally {
-			setIsApplyingAvatarPreview(false)
-		}
-	}
-
-	useEffect(() => {
-		return () => {
-			if (avatarPreviewUrl) {
-				URL.revokeObjectURL(avatarPreviewUrl)
-			}
-		}
-	}, [avatarPreviewUrl])
 
 	const handleSendPM = () => {
 		dispatch(setUserId(gameState.activeUserId))
 		dispatch(setPopup(PopupState.SEND_PM))
-	}
-
-	const handleViewHistory = () => {
-		dispatch(setUserId(gameState.activeUserId))
-		dispatch(setPopup(PopupState.GAME_HISTORY))
 	}
 
 	const handleKickUser = async () => {
@@ -234,8 +172,6 @@ export const ProfilePopup = () => {
 		dispatch(setPopup(PopupState.NONE))
 	}
 
-	const isSameUser = user?.id === gameState.activeUserId
-
 	return (
 		<Dialog
 			open={(gameState.popupState & PopupState.PROFILE) === PopupState.PROFILE}
@@ -246,152 +182,59 @@ export const ProfilePopup = () => {
 			disableAutoFocus
 			autoFocus={false}
 		>
-			<DialogTitle className="pt-8 pb-8">{translate("menu.profile")}</DialogTitle>
+			<DialogTitle className="pt-8 pb-8">
+				{
+					user ? user.display_name : <Skeleton variant="text" width={120} height={32} />
+				}
+			</DialogTitle>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<DialogContent>
-				<Box
-					sx={{
-						display: "flex",
-						flexDirection: { xs: "column", md: "row" },
-						gap: 2,
-						alignItems: { xs: "center", md: "flex-start" },
-					}}
+				<Tabs
+					className="profile-tabs"
+					value={activeTab}
+					onChange={(_, value) => handleTabChange(value)}
+					variant="fullWidth"
+					textColor="primary"
+					indicatorColor="primary"
 				>
-					<Box className="profile-avatar-container">
-						{!isSameUser ? (
-							<Skeleton variant="circular" width="120px" height="120px" sx={{ margin: "0 auto" }} />
-						) : (
-							<>
-								<div className="profile-avatar-hover-zone">
-									<img
-										src={displayedAvatar}
-										alt={user?.display_name}
-										className="profile-avatar"
-									/>
-									{isOwnProfile && (
-										<>
-											<input
-												ref={avatarInputRef}
-												type="file"
-												accept="image/*"
-												onChange={handleAvatarFileChange}
-												className="avatar-file-input"
-											/>
-											<button type="button" className="avatar-change-button" onClick={triggerAvatarFileDialog}>
-												<i className="fal fa-camera" />
-											</button>
-										</>
-									)}
-								</div>
-								{isOwnProfile && hasPendingAvatarPreview && (
-									<div className="avatar-preview-actions">
-										<button
-											type="button"
-											className="avatar-preview-action apply"
-											disabled={isApplyingAvatarPreview}
-											onClick={applyAvatarPreview}
-										>
-											{isApplyingAvatarPreview
-												? <i className="fas fa-spinner fa-pulse" />
-												: <TI className="fas fa-check" title="profile.button.save" />}
-										</button>
-										<button
-											type="button"
-											className="avatar-preview-action cancel"
-											disabled={isApplyingAvatarPreview}
-											onClick={cancelAvatarPreview}
-										>
-											<TI className="fas fa-times" title="profile.button.cancel" />
-										</button>
-									</div>
-								)}
-							</>
-						)}
-					</Box>
+					<TTab
+						className="profile-tab"
+						icon={<i className={tabIconClassBuilder(0, activeTab, "user")} />}
+						iconPosition="start"
+						label="menu.profile"
+					/>
+					<TTab
+						className="profile-tab"
+						icon={<i className={tabIconClassBuilder(1, activeTab, "trophy")} />}
+						iconPosition="start"
+						label="achievement.tab-title"
+					/>
+					<TTab
+						className="profile-tab"
+						icon={<i className={tabIconClassBuilder(2, activeTab, "clock")} />}
+						iconPosition="start"
+						label="room.actions.view-history"
+					/>
+				</Tabs>
+				<Divider className="mb-20" sx={{ borderColor: "primary.main" }} />
 
-					<Box className="profile-user-info">
-						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="fad fa-user mr-20" />
-						</TTooltip>
-						{isSameUser
-							? (<a href={`https://facebook.com/${user.user_name}`} target="_blank" rel="noopener noreferrer">
-								{user.user_name}
-							</a>)
-							: <Skeleton variant="text" width="75%" height={24} />}
-						<TTooltip title="register.display-name.label" arrow placement="left">
-							<i className="fad fa-tag" />
-						</TTooltip>
-						{isSameUser
-							? (
-								<EditableProfileField
-									className="info-with-pen"
-									editable={isOwnProfile}
-									field="display_name"
-									value={user.display_name}
-									type="text"
-								/>
-							)
-							: <Skeleton variant="text" width="65%" height={24} />}
-						<TTooltip title="register.email.label" arrow placement="left">
-							<i className="fad fa-envelope" />
-						</TTooltip>
-						{isSameUser
-							? (
-								<EditableProfileField
-									className="email-with-copy"
-									editable={isOwnProfile}
-									extraActions={
-										<TI
-											className={isCopied ? "fas fa-circle-check copied-icon" : "fad fa-copy cursor-pointer"}
-											onClick={handleCopyEmail}
-											onAnimationEnd={onAnimationEnd}
-											title="Copy email"
-										/>
-									}
-									field="email"
-									renderDisplay={value => <a href={`mailto:${value}`}>{value}</a>}
-									type="email"
-									value={user.email}
-								/>
-							)
-							: <Skeleton variant="text" width="90%" height={24} />}
-						<TTooltip title="register.username.label" arrow placement="left">
-							<i className="fad fa-coins mr-20" />
-						</TTooltip>
-						{isSameUser
-							? formatNumber(user.total_amount, state.lang)
-							: <Skeleton variant="text" width="75%" height={24} />}
-					</Box>
-				</Box>
-				<Divider className="mt-20 mb-20" sx={{ borderColor: "primary.main" }} />
+				{activeTab === 0 && (
+					<ProfileTab user={user} />
+				)}
 
-				<Box className="profile-stats-title">
-					<Box className="statistic win">
-						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.win ?? -1}</Typography>
-							: <Skeleton variant="text" width="90%" height={24} />}
-						<TTypography color="textPrimary" className="statistic-label" content="Win" />
-					</Box>
-					<Box className="statistic draw">
-						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.draw ?? -1}</Typography>
-							: <Skeleton variant="text" width="90%" height={24} />}
-						<TTypography color="textPrimary" className="statistic-label" content="Draw" />
-					</Box>
-					<Box className="statistic lose">
-						{isSameUser
-							? <Typography component="span" className="statistic-value">{gameStats?.lose ?? -1}</Typography>
-							: <Skeleton variant="text" width="90%" height={24} />}
-						<TTypography color="textPrimary" className="statistic-label" content="Lose" />
-					</Box>
-				</Box>
+				{activeTab === 1 && (
+					<ProfileAchievement achievements={achievements} />
+				)}
+
+				{activeTab === 2 && (
+					<HistoryTab gameHistories={gameHistories} onOpenReplay={setReplayGame} />
+				)}
 
 			</DialogContent>
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<Grid container className="profile-dialog-actions">
-				{!isSameUser ? (
+				{!(user?.id === gameState.activeUserId) ? (
 					<>
-						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
 						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
 						<Skeleton variant="rounded" width="calc(40% - 8px)" height={31} />
 					</>
@@ -404,17 +247,7 @@ export const ProfilePopup = () => {
 								color="info"
 								onClick={handleSendPM}
 								value="room.actions.send-pm"
-								startIcon={<i className="fad fa-comment" />}
-							/>
-						)}
-						{user && (
-							<TButton
-								variant="contained"
-								size="small"
-								color="success"
-								onClick={handleViewHistory}
-								value="room.actions.view-history"
-								startIcon={<i className="fad fa-clock" />}
+								startIcon={<i className="fas fa-comment" />}
 							/>
 						)}
 						{user && !isOwnProfile && gameState.roomHostId === currentUserId && (
@@ -422,11 +255,10 @@ export const ProfilePopup = () => {
 								variant="contained"
 								size="small"
 								color="error"
-								// TODO: Only allow kicking when the room is in "waiting" status
-								disabled={gameState.roomHostId !== currentUserId}
+								disabled={gameState.roomHostId !== currentUserId || gameState.isInGame}
 								onClick={handleKickUser}
 								value="room.actions.kick"
-								startIcon={<i className="fad fa-ban" />}
+								startIcon={<i className="fas fa-ban" />}
 							/>
 						)}
 					</>
@@ -436,9 +268,10 @@ export const ProfilePopup = () => {
 					size="small"
 					onClick={e => handleCloseProfilePopup(e, "escapeKeyDown")}
 					value="settings.close"
-					startIcon={<i className="fad fa-xmark" />}
+					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</Grid>
+			<GameReplayPopup game={replayGame} onClose={() => setReplayGame(null)} />
 		</Dialog>
 	)
 }

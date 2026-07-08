@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl } from "common/helper"
 import { getChatMessageCollection } from "common/mongodb"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -246,6 +247,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 			joined_at: ru.joined_at,
 			avatar_url: getAvatarUrl(ru.users.id, ru.users.avatar_seq)
 		}))
+		const usersWithBackReady = decorateRoomUsersWithBackReady(roomId, formattedUsers)
 
 		res.status(200).json({
 			success: true,
@@ -266,7 +268,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				chat: {
 					unread_count: unreadCount
 				},
-				users: formattedUsers,
+				users: usersWithBackReady,
 				game
 			}
 		})

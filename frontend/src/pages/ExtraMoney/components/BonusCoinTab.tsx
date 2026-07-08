@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import classnames from "classnames"
-import { Box, CircularProgress } from "@mui/material"
+import { Box } from "@mui/material"
 import { LS_LANGUAGE } from "common/constant"
 import RewardAdDialog from "components/RewardAdDialog"
 import { TButton, TTypography } from "components/TranslationTag"
+import { ClaimIconButton } from "./Icons"
 import RewardGridSkeleton from "./RewardGridSkeleton"
 import { formatNumber, getTimeToNextSlot, getToken } from "common/helper"
 import { formatCountdown, getCellStatus } from "../rewardHelpers"
@@ -116,8 +117,9 @@ export default function BonusCoinTab() {
 					<TButton
 						className="watch-video-btn"
 						variant="contained"
+						color="warning"
 						disabled={isClaiming || adOpen}
-						startIcon={isClaiming ? <CircularProgress size={20} color="inherit" /> : <i className="fas fa-circle-play" />}
+						startIcon={<ClaimIconButton isClaiming={isClaiming} icon="fa-circle-play" />}
 						value="extra-money.bonus-coin.watch-video"
 						onClick={openAd}
 					/>

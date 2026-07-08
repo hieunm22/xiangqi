@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express"
 import swaggerUi from "swagger-ui-express"
 import swaggerSpec from "./swagger"
-import cors from "cors"
+import { getAllowedOrigins, isOriginAllowed } from "common/cors"
 import cookieParser from "cookie-parser"
+import cors from "cors"
 
 import changePasswordRoutes from "./routes/auth/change-password"
 import facebookLinkRoutes from "./routes/auth/facebook-link"
@@ -21,6 +22,7 @@ import validateTokenRoutes from "./routes/auth/validate-token"
 
 import bonusCoinsRoutes from "./routes/user/bonus-coins"
 import dailyBonusRoutes from "./routes/user/daily-bonus"
+import getAchievementsRoutes from "./routes/user/get-achievements"
 import luckySpinsRoutes from "./routes/user/lucky-spins"
 import searchUserRoutes from "./routes/user/search-user"
 import selectedTabRoutes from "./routes/user/selected-tab"
@@ -34,6 +36,7 @@ import leaveRoomRoutes from "./routes/room/leave-room"
 import loadRoomRoutes from "./routes/room/load-room"
 import updateRoomRoutes from "./routes/room/update-room"
 
+import backToRoomRoutes from "./routes/game/back-to-room"
 import changeTeamRoutes from "./routes/game/change-team"
 import drawGameRoutes from "./routes/game/draw-game"
 import getGameHistoryRoutes from "./routes/game/get-history"
@@ -43,6 +46,7 @@ import playerHistoryRoutes from "./routes/game/player-history"
 import startGameRoutes from "./routes/game/start-game"
 import surrenderGameRoutes from "./routes/game/surrender"
 import undoRoutes from "./routes/game/undo"
+import verifyStateRoutes from "./routes/game/verify-state"
 
 import recalculateAmountRoutes from "./routes/tool/recalculate-amount"
 import resetGameRoutes from "./routes/tool/reset-game"
@@ -62,21 +66,12 @@ import unreadCountRoutes from "./routes/message/unread-count"
 
 const app = express()
 
-const rawOrigins = process.env.CORS_ORIGINS ?? "http://localhost:3004"
-const allowedOrigins = rawOrigins.split(",").map(o => o.trim()).filter(Boolean)
-
-// Allow Swagger UI (same host as the API server) to make requests
-const port = process.env.PORT ?? "8000"
-const swaggerOrigin = `http://localhost:${port}`
-if (!allowedOrigins.includes(swaggerOrigin)) {
-	allowedOrigins.push(swaggerOrigin)
-}
+const allowedOrigins = getAllowedOrigins()
 
 app.use(
 	cors({
 		origin: (requestOrigin, callback) => {
-			// Allow server-to-server calls (no origin) or whitelisted origins
-			if (!requestOrigin || allowedOrigins.includes(requestOrigin)) {
+			if (isOriginAllowed(requestOrigin, allowedOrigins)) {
 				callback(null, requestOrigin || true)
 			} else {
 				callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`))
@@ -109,6 +104,7 @@ app.use("/api", refreshTokenRoutes)
 
 app.use("/api", bonusCoinsRoutes)
 app.use("/api", dailyBonusRoutes)
+app.use("/api", getAchievementsRoutes)
 app.use("/api", luckySpinsRoutes)
 app.use("/api", searchUserRoutes)
 app.use("/api", selectedTabRoutes)
@@ -123,6 +119,7 @@ app.use("/api", leaveRoomRoutes)
 app.use("/api", loadRoomRoutes)
 app.use("/api", updateRoomRoutes)
 
+app.use("/api", backToRoomRoutes)
 app.use("/api", changeTeamRoutes)
 app.use("/api", drawGameRoutes)
 app.use("/api", getOnlineRoutes)
@@ -131,6 +128,7 @@ app.use("/api", playerHistoryRoutes)
 app.use("/api", startGameRoutes)
 app.use("/api", surrenderGameRoutes)
 app.use("/api", undoRoutes)
+app.use("/api", verifyStateRoutes)
 
 app.use("/api", recalculateAmountRoutes)
 app.use("/api", resetGameRoutes)

@@ -156,11 +156,11 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 
 		const gameHistories = await collection.find({ game_id: gameId }).toArray()
 
-		// Check undo limit (max 3 undo per game)
+		// Check undo limit (max 1 undo per game)
 		const undoRecords = gameHistories
 			.filter(record => record.undo === Number(userId))
 
-		if (undoRecords.length >= 3) {
+		if (undoRecords.length >= 1) {
 			res.status(400).json({
 				success: false,
 				message: "undo.messages.undo-limit-exceeded",

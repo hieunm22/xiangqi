@@ -139,7 +139,7 @@ describe("GET /api/game/player-history", () => {
 
 		// User has games but none are finished (status=2)
 		gameUserFindManyMock.mockResolvedValueOnce([
-			{ game_id: "game-1", point: 10 }
+			{ game_id: "game-1", amount: 10 }
 		])
 		gameFindManyMock.mockResolvedValueOnce([]) // no finished games
 
@@ -162,7 +162,7 @@ describe("GET /api/game/player-history", () => {
 
 		// Step 1: user's game list
 		gameUserFindManyMock.mockResolvedValueOnce([
-			{ game_id: "game-1", point: 10 }
+			{ game_id: "game-1", amount: 10 }
 		])
 
 		// Step 2: finished games
@@ -175,14 +175,16 @@ describe("GET /api/game/player-history", () => {
 			{
 				game_id: "game-1",
 				user_id: BigInt(1),
-				point: 10,
+				amount: 10,
+				team: "red",
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-1",
 				user_id: BigInt(2),
-				point: -10,
+				amount: -10,
+				team: "black",
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(1) }
 			}
@@ -203,10 +205,10 @@ describe("GET /api/game/player-history", () => {
 						gameId: "game-1",
 						ends_at: expect.any(String)
 					},
-					point: 10,
+					amount: 10,
 					users: expect.arrayContaining([
-						{ id: 1, display_name: "Player One", avatar_url: "/images/1.jpg" },
-						{ id: 2, display_name: "Player Two", avatar_url: "/images/2_1.jpg" }
+						{ id: 1, display_name: "Player One", avatar_url: "/images/1.jpg", team: "red" },
+						{ id: 2, display_name: "Player Two", avatar_url: "/images/2_1.jpg", team: "black" }
 					])
 				}
 			]
@@ -218,8 +220,8 @@ describe("GET /api/game/player-history", () => {
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
 
 		gameUserFindManyMock.mockResolvedValueOnce([
-			{ game_id: "game-1", point: 10 },
-			{ game_id: "game-2", point: -10 }
+			{ game_id: "game-1", amount: 10 },
+			{ game_id: "game-2", amount: -10 }
 		])
 
 		gameFindManyMock.mockResolvedValueOnce([
@@ -231,28 +233,28 @@ describe("GET /api/game/player-history", () => {
 			{
 				game_id: "game-1",
 				user_id: BigInt(1),
-				point: 10,
+				amount: 10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-1",
 				user_id: BigInt(2),
-				point: -10,
+				amount: -10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-2",
 				user_id: BigInt(1),
-				point: -10,
+				amount: -10,
 				games: { ends_at: new Date("2025-01-20T15:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-2",
 				user_id: BigInt(3),
-				point: 10,
+				amount: 10,
 				games: { ends_at: new Date("2025-01-20T15:00:00Z") },
 				users: { id: BigInt(3), display_name: "Player Three", avatar_seq: BigInt(0) }
 			}
@@ -264,16 +266,16 @@ describe("GET /api/game/player-history", () => {
 
 		expect(res.status).toBe(200)
 		expect(res.body.data).toHaveLength(2)
-		expect(res.body.data.find((g: any) => g.game.gameId === "game-1").point).toBe(10)
-		expect(res.body.data.find((g: any) => g.game.gameId === "game-2").point).toBe(-10)
+		expect(res.body.data.find((g: any) => g.game.gameId === "game-1").amount).toBe(10)
+		expect(res.body.data.find((g: any) => g.game.gameId === "game-2").amount).toBe(-10)
 	})
 
-	it("uses point from the requested user's record (not opponent)", async () => {
+	it("uses amount from the requested user's record (not opponent)", async () => {
 		const token = buildAccessToken(2, "session-ph-9")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
 
 		gameUserFindManyMock.mockResolvedValueOnce([
-			{ game_id: "game-1", point: -10 }
+			{ game_id: "game-1", amount: -10 }
 		])
 
 		gameFindManyMock.mockResolvedValueOnce([
@@ -284,14 +286,14 @@ describe("GET /api/game/player-history", () => {
 			{
 				game_id: "game-1",
 				user_id: BigInt(1),
-				point: 10,
+				amount: 10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-1",
 				user_id: BigInt(2),
-				point: -10,
+				amount: -10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(0) }
 			}
@@ -302,7 +304,7 @@ describe("GET /api/game/player-history", () => {
 			.set("Authorization", `Bearer ${token}`)
 
 		expect(res.status).toBe(200)
-		expect(res.body.data[0].point).toBe(-10)
+		expect(res.body.data[0].amount).toBe(-10)
 	})
 
 	it("returns 500 when database throws an error", async () => {
@@ -328,8 +330,8 @@ describe("GET /api/game/player-history", () => {
 
 		// Step 1: User has two games
 		gameUserFindManyMock.mockResolvedValueOnce([
-			{ game_id: "game-1", point: 10 },
-			{ game_id: "game-2", point: -5 }
+			{ game_id: "game-1", amount: 10 },
+			{ game_id: "game-2", amount: -5 }
 		])
 
 		// Step 2: Finished games ordered by ends_at (mock provides desc order)
@@ -344,14 +346,14 @@ describe("GET /api/game/player-history", () => {
 			{
 				game_id: "game-2",
 				user_id: BigInt(1),
-				point: -5,
+				amount: -5,
 				games: { ends_at: new Date("2025-01-20T15:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-2",
 				user_id: BigInt(3),
-				point: 5,
+				amount: 5,
 				games: { ends_at: new Date("2025-01-20T15:00:00Z") },
 				users: { id: BigInt(3), display_name: "Player Three", avatar_seq: BigInt(1) }
 			},
@@ -359,14 +361,14 @@ describe("GET /api/game/player-history", () => {
 			{
 				game_id: "game-1",
 				user_id: BigInt(1),
-				point: 10,
+				amount: 10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
 			},
 			{
 				game_id: "game-1",
 				user_id: BigInt(2),
-				point: -10,
+				amount: -10,
 				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
 				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(0) }
 			}
@@ -380,9 +382,9 @@ describe("GET /api/game/player-history", () => {
 		expect(res.body.data).toHaveLength(2)
 		// game-2 (newer) should come first
 		expect(res.body.data[0].game.gameId).toBe("game-2")
-		expect(res.body.data[0].point).toBe(-5)
+		expect(res.body.data[0].amount).toBe(-5)
 		// game-1 (older) should come second
 		expect(res.body.data[1].game.gameId).toBe("game-1")
-		expect(res.body.data[1].point).toBe(10)
+		expect(res.body.data[1].amount).toBe(10)
 	})
 })

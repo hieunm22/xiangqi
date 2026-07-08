@@ -194,6 +194,9 @@ router.post("/user/daily-bonus-claim", requireAuth(), async (req: AuthenticatedR
 			return
 		}
 
+		// Claiming via the "watch video" flow doubles the reward
+		const multiplier = req.body?.double === true ? 2 : 1
+
 		const result = await prisma.$transaction(async (tx) => {
 			const user = await tx.user.findUnique({
 				where: { id: BigInt(userId) },
@@ -209,7 +212,7 @@ router.post("/user/daily-bonus-claim", requireAuth(), async (req: AuthenticatedR
 
 			// Credit today's reward and advance the streak atomically. Writing the
 			// resolved streak+1 also persists a reset when the streak had broken.
-			const reward = DAILY_REWARDS[streak]
+			const reward = DAILY_REWARDS[streak] * multiplier
 
 			await tx.userAmountHistory.create({
 				data: {

@@ -1,4 +1,5 @@
 import classnames from "classnames"
+import { Tooltip } from "@mui/material"
 import { PopupState } from "common/enums"
 import { TI } from "components/TranslationTag"
 import { formatNumber, getCurrentUserId, requireImage } from "common/helper"
@@ -9,6 +10,47 @@ import { PlayerInfoCardProps } from "../types"
 
 // Bots are rated on a fixed 1–5 difficulty scale
 const MAX_BOT_LEVEL = 5
+
+const TOTAL_AMOUNT_COMPACT_UNITS = ["k", "m", "b"]
+
+const formatCompactTotalAmount = (amount: number | undefined, lang: string) => {
+	if (typeof amount !== "number") {
+		return formatNumber(amount, lang)
+	}
+
+	let unitIndex = -1
+	let scaled = amount
+
+	while (scaled >= 1000 && unitIndex < TOTAL_AMOUNT_COMPACT_UNITS.length - 1) {
+		scaled /= 1000
+		unitIndex += 1
+	}
+
+	if (unitIndex < 0) {
+		return formatNumber(amount, lang)
+	}
+
+	const integerDigits = Math.max(1, Math.floor(Math.log10(scaled)) + 1)
+	const fractionDigits = Math.max(0, 4 - integerDigits)
+	const roundedScaled = Number(scaled.toFixed(fractionDigits))
+
+	if (roundedScaled >= 1000 && unitIndex < TOTAL_AMOUNT_COMPACT_UNITS.length - 1) {
+		const nextScaled = roundedScaled / 1000
+		const nextIntegerDigits = Math.max(1, Math.floor(Math.log10(nextScaled)) + 1)
+		const nextFractionDigits = Math.max(0, 4 - nextIntegerDigits)
+		const nextRoundedScaled = Number(nextScaled.toFixed(nextFractionDigits))
+
+		return `${nextRoundedScaled.toLocaleString(lang, {
+			minimumFractionDigits: 0,
+			maximumFractionDigits: nextFractionDigits
+		})}${TOTAL_AMOUNT_COMPACT_UNITS[unitIndex + 1]}`
+	}
+
+	return `${roundedScaled.toLocaleString(lang, {
+		minimumFractionDigits: 0,
+		maximumFractionDigits: fractionDigits
+	})}${TOTAL_AMOUNT_COMPACT_UNITS[unitIndex]}`
+}
 
 export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
@@ -66,6 +108,11 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		return index < botLevel ? "fas fa-star bot-level-star" : "far fa-star bot-level-star"
 	}
 
+	const backReadyClass = classnames("player-back-ready-badge", {
+		"is-ready": user.back_ready,
+		"is-waiting": !user.back_ready
+	})
+
 	return (
 		<div className={containerClass}>
 			<div className="player-avatar">
@@ -74,6 +121,9 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					src={fullAvatarUrl}
 					alt={user?.display_name}
 				/>
+				{user.team !== null && user.back_ready !== null && (
+					<div className={backReadyClass} />
+				)}
 			</div>
 			<div className="player-meta">
 				<div
@@ -96,7 +146,12 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 				) : (
 					<div className="player-total-points">
 						<i className="fas fa-sack-dollar user-points" />
-						{formatNumber(user?.total_amount, state.lang)}
+						<Tooltip title={formatNumber(user?.total_amount, state.lang)} arrow placement="top">
+							<span
+								className="data-content"
+								data-content={formatCompactTotalAmount(user?.total_amount, state.lang)}
+							/>
+						</Tooltip>
 					</div>
 				)}
 			</div>

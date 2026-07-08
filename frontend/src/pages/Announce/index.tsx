@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState
 } from "react"
-import { Box, Divider, Stack } from "@mui/material"
+import { Box, Divider, Skeleton, Stack } from "@mui/material"
 import { TTypography } from "components/TranslationTag"
 import { MessageInput, MessageList } from "components/MessageThread"
 import { getCurrentUserId, getToken } from "common/helper"
@@ -23,6 +23,29 @@ const ANNOUNCE_PAGE_SIZE = 20
 // Distance (px) from the top that triggers loading the previous page.
 const SCROLL_TOP_THRESHOLD = 60
 
+function LoadingSkeleton() {
+	return (
+		<Stack spacing={1.5} className="announce-messages-skeleton">
+			{Array.from({ length: 6 }, (_, idx) => (
+				<Box key={idx} className="announce-skeleton-row">
+					<Skeleton variant="circular" width={32} height={32} />
+					<Box className="announce-skeleton-content">
+						<Skeleton variant="text" width="40%" height={20} />
+						<Skeleton variant="rounded" width="100%" height={36} />
+					</Box>
+				</Box>
+			))}
+		</Stack>
+	)
+}
+
+function EmptyAnnouncement() {
+	return (<Stack spacing={1} className="announce-messages-empty">
+		<TTypography variant="body2" color="text.secondary" content="announce.empty" />
+	</Stack>
+	)
+}
+
 export default function AnnouncePage() {
 	useAutoTitle("announce.title")
 	const {
@@ -36,6 +59,7 @@ export default function AnnouncePage() {
 
 	const [messageContent, setMessageContent] = useState("")
 	const [messages, setMessages] = useState<AnnouncementMessage[]>([])
+	const [isInitialLoading, setIsInitialLoading] = useState(true)
 	const [sending, setSending] = useState(false)
 	const [hasMore, setHasMore] = useState(true)
 	const [loadingOlder, setLoadingOlder] = useState(false)
@@ -72,20 +96,25 @@ export default function AnnouncePage() {
 		const loadAnnouncements = async () => {
 			const token = getToken()
 			if (!token) {
+				setIsInitialLoading(false)
 				return
 			}
 
-			const response = await getAnnouncements(token)
-			if (response?.success && response.data) {
-				const nextMessages = response.data as AnnouncementMessage[]
-				const unreadIndex = nextMessages.findIndex(msg => !msg.seen)
+			try {
+				const response = await getAnnouncements(token)
+				if (response?.success && response.data) {
+					const nextMessages = response.data as AnnouncementMessage[]
+					const unreadIndex = nextMessages.findIndex(msg => !msg.seen)
 
-				setMessages(nextMessages)
-				setFirstUnreadId(unreadIndex >= 0 ? nextMessages[unreadIndex]._id : null)
+					setMessages(nextMessages)
+					setFirstUnreadId(unreadIndex >= 0 ? nextMessages[unreadIndex]._id : null)
 
-				if (unreadIndex >= 0) {
-					await markAnnouncementAsRead(token)
+					if (unreadIndex >= 0) {
+						await markAnnouncementAsRead(token)
+					}
 				}
+			} finally {
+				setIsInitialLoading(false)
 			}
 		}
 
@@ -224,6 +253,22 @@ export default function AnnouncePage() {
 		if (msg._id === firstUnreadId) firstUnreadRef.current = el
 	}
 
+	const FullMessages = () => {
+		return messages.length > 0 ? (
+			<MessageList
+				messages={messages}
+				firstUnreadId={firstUnreadId}
+				isUnread={msg => !(msg as AnnouncementMessage).seen}
+				onAvatarClick={handleAvatarClick}
+				endRef={messagesEndRef}
+				getRowRef={getRowRef}
+				loadingOlder={loadingOlder}
+			/>
+		) : (
+			<EmptyAnnouncement />
+		)
+	}
+
 	return (
 		<Box className="announce-page">
 			<TTypography
@@ -238,30 +283,7 @@ export default function AnnouncePage() {
 				ref={containerRef}
 				onScroll={handleScroll}
 			>
-				{messages.length === 0 ? (
-					<Stack spacing={1} className="announce-messages-empty">
-						<TTypography variant="body2" color="text.secondary" content="announce.empty" />
-					</Stack>
-				) : (
-					<>
-						{loadingOlder && (
-							<TTypography
-								variant="caption"
-								color="text.secondary"
-								className="announce-loading-older"
-								content="announce.loading-older"
-							/>
-						)}
-						<MessageList
-							messages={messages}
-							firstUnreadId={firstUnreadId}
-							isUnread={msg => !(msg as AnnouncementMessage).seen}
-							onAvatarClick={handleAvatarClick}
-							endRef={messagesEndRef}
-							getRowRef={getRowRef}
-						/>
-					</>
-				)}
+				{isInitialLoading ? <LoadingSkeleton /> : <FullMessages />}
 			</Box>
 
 			<MessageInput

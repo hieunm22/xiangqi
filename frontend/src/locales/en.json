@@ -12,6 +12,7 @@
 			"policy-5": "Text length at least 8"
 		},
 		"date": {
+			"today": "Today",
 			"yesterday": "Yesterday",
 			"mon": "Mon",
 			"tue": "Tue",
@@ -27,12 +28,13 @@
 			"title": "Home"
 		},
 		"history": {
-			"title": "History",
-			"no-games": "No finished games yet",
-			"point-label": "Points:"
+			"no-games": "No finished games yet"
 		},
-		"about": {
-			"title": "About"
+		"replay": {
+			"title": "Game Replay",
+			"no-moves": "No moves to replay",
+			"play": "Play",
+			"pause": "Pause"
 		}
 	},
 	"menu": {
@@ -48,8 +50,7 @@
 		},
 		"home": "Home",
 		"expired": "Set expired",
-		"logout": "Logout",
-		"rooms": "Rooms"
+		"logout": "Logout"
 	},
 	"announce": {
 		"title": "Announcement",
@@ -57,7 +58,7 @@
 		"empty": "No announcements yet",
 		"loading-older": "Loading older announcements..."
 	},
-	"archivement": {
+	"achievement": {
 		"title-01": "Checkmate an opponent who still has 13 or more pieces",
 		"title-02": "Win your first game",
 		"title-03": "Leave your opponent with no legal moves",
@@ -69,12 +70,17 @@
 		"title-09": "Checkmate an opponent with only a knight remaining",
 		"title-10": "Checkmate an opponent with only a pawn remaining",
 		"title-11": "Checkmate an opponent with only a cannon remaining",
-		"title-12": "Defeat opponents with master rank in 50 games"
+		"title-12": "Defeat opponents with master rank in 50 games",
+		"tab-title": "Achievements",
+		"messages": {
+			"success": "Success",
+			"invalid-user-id": "Invalid user ID",
+			"internal-server-error": "Internal server error"
+		}
 	},
 	"chat": {
 		"conversation": {
-			"you": "You",
-			"new": "New conversation"
+			"you": "You"
 		},
 		"messages": {
 			"unread": "Unread messages"
@@ -101,8 +107,7 @@
 		},
 		"feedback": {
 			"empty": "No room tables match the selected filter.",
-			"error": "Unable to load room tables.",
-			"result-count": "Found {{count}} tables"
+			"error": "Unable to load room tables."
 		},
 		"status": {
 			"unknown": "Unknown"
@@ -134,8 +139,7 @@
 			"unlink-success": "Facebook unlinked",
 			"link-error": "Could not update Facebook link"
 		},
-		"close": "Close",
-		"change-password": "Change password"
+		"close": "Close"
 	},
 	"popup": {
 		"alert": {
@@ -147,15 +151,15 @@
 			"cancel": "Cancel"
 		}
 	},
-	"home": {
-		"turn": {
-			"title": "Turn"
-		}
-	},
 	"game": {
 		"general": {
 			"captured": "General has been captured. Room over",
 			"in-check": "Your general is under attack"
+		},
+		"label": {
+			"win": "Win",
+			"draw": "Draw",
+			"lose": "Lose"
 		}
 	},
 	"room": {
@@ -181,12 +185,11 @@
 			"send-pm": "Send PM",
 			"view-history": "History",
 			"kick": "Kick",
-			"settings": "Room settings"
+			"back-to-room": "Back to room"
 		},
 		"messages": {
 			"draw-accepted": "Opponent accepted the draw",
 			"draw-rejected": "Opponent rejected the draw",
-			"draw-completed": "Draw completed",
 			"opponent-surrendered": "Opponent surrendered! You won!",
 			"confirm-leave": "Are you sure you want to leave room?",
 			"confirm-surrender": "Are you sure you want to surrender?",
@@ -194,7 +197,12 @@
 			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
 			"insufficient-amount": "You do not have enough balance to join this room",
 			"will-leave-current-room": "You are currently in another room. Joining this room will remove you from the current room",
-			"all-seats-occupied": "All player seats are occupied"
+			"all-seats-occupied": "All player seats are occupied",
+			"game-ended": "Game ended",
+			"you-win": "You win",
+			"you-lose": "You lose",
+			"back-to-room": "Back to room",
+			"auto-back-countdown": "{0}. Press the back button to return to the room. You will be automatically returned in {1}s"
 		},
 		"notifications": {
 			"joined": "{0} joined the room",
@@ -226,7 +234,6 @@
 		"password": {
 			"label": "Password",
 			"placeholder": "Password",
-			"error1": "Password is required",
 			"show": "Show password",
 			"hide": "Hide password"
 		},
@@ -331,8 +338,7 @@
 			"success": "Password reset successfully. Redirecting to login..."
 		},
 		"action": {
-			"back-to-login": "Back to login",
-			"submit": "Reset password"
+			"back-to-login": "Back to login"
 		},
 		"messages": {
 			"internal-server-error": "Internal server error",
@@ -454,15 +460,6 @@
 			"missing-refresh-token": "Missing refresh token cookie",
 			"mismatch-or-expired": "Refresh token mismatch or expired",
 			"success": "Token refreshed"
-		}
-	},
-	"set-room-status": {
-		"messages": {
-			"internal-server-error": "Internal server error",
-			"invalid-room-id": "Field 'id' is required and must be a positive integer",
-			"invalid-status": "Field 'status' must be either 1 or 2",
-			"room-not-found": "Room not found",
-			"success": "Set room status successfully"
 		}
 	},
 	"room-invite": {
@@ -623,12 +620,6 @@
 		}
 	},
 	"extra-money": {
-		"lucky-wheel": {
-			"title": "Lucky Wheel",
-			"description": "Spin the wheel to earn money! Click the spin button in the middle of the wheel to try your luck.",
-			"spin-button": "Spin",
-			"reward-placeholder": "Click Spin to get started"
-		},
 		"title": "Daily tasks",
 		"tab": {
 			"lucky-wheel": "Lucky Wheel",
@@ -638,7 +629,7 @@
 		"bonus-coin": {
 			"subtitle": "Watch a short video to earn free coin",
 			"next-in": "Next in:",
-			"coin-unit": "coin",
+			"collect": "Collect",
 			"watch-video": "Watch video"
 		},
 		"daily-bonus": {

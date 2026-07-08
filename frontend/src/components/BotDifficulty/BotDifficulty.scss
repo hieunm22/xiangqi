@@ -1,0 +1,56 @@
+.bot-difficulty-slider {
+	--level-color: #ffb74d;
+
+	margin-bottom: 24px;
+
+	& .MuiSlider-rail {
+		height: 6px;
+		opacity: 1;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #66bb6a 0%, #ffb74d 50%, #ef5350 100%);
+	}
+
+	& .MuiSlider-track {
+		height: 6px;
+		border: none;
+		background: transparent;
+	}
+
+	& .MuiSlider-thumb {
+		background-color: var(--level-color);
+		border: 2px solid #fff;
+		box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+	}
+
+	& .MuiSlider-markActive {
+		background-color: var(--level-color);
+	}
+
+	& .MuiSlider-markLabel {
+		font-size: 12px;
+		white-space: normal;
+		text-align: center;
+		width: 74px;
+		line-height: 1.2;
+	}
+
+	&.level-1 {
+		--level-color: #66bb6a;
+	}
+
+	&.level-2 {
+		--level-color: #9ccc65;
+	}
+
+	&.level-3 {
+		--level-color: #ffb74d;
+	}
+
+	&.level-4 {
+		--level-color: #ff8a65;
+	}
+
+	&.level-5 {
+		--level-color: #ef5350;
+	}
+}

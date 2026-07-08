@@ -7,8 +7,7 @@ import {
 	Grid,
 	Typography
 } from "@mui/material"
-import { TButton, TSpan } from "components/TranslationTag"
-import { translate } from "locales/translate"
+import { TButton, TSpan, TTypography } from "components/TranslationTag"
 import { ComponentWithChild } from "types/Common"
 import { ConfirmOptions, InternalHandler, QueueProps } from "./types"
 import "./ConfirmProvider.scss"
@@ -61,9 +60,11 @@ export const ConfirmProvider = (props: ComponentWithChild) => {
 				disableEnforceFocus
 			>
 				<DialogTitle className="popup-title">
-					<Typography component="div" className="flex">
-						{translate(current?.options.title ?? "popup.confirm.title")}
-					</Typography>
+					<TTypography
+						component="div"
+						className="flex"
+						content={current?.options.title ?? "popup.confirm.title"}
+					/>
 				</DialogTitle>
 				<Divider className="mt-5 mb-5" />
 				<DialogContent>

@@ -20,6 +20,7 @@ export function openAlert(options: ConfirmProps) {
 
 export const AlertProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<AlertQueueItem[]>([])
+	const [countdownLeft, setCountdownLeft] = useState<number | null>(null)
 
 	useEffect(() => {
 		handler = (options: ConfirmProps) => {
@@ -35,10 +36,63 @@ export const AlertProvider = (props: ComponentWithChild) => {
 
 	const current = queue[0] ?? null
 
+	useEffect(() => {
+		if (!current || current.options.countdownSeconds === undefined) {
+			setCountdownLeft(null)
+			return
+		}
+
+		setCountdownLeft(current.options.countdownSeconds)
+		const intervalId = window.setInterval(() => {
+			setCountdownLeft(prev => {
+				if (prev === null || prev <= 0) {
+					window.clearInterval(intervalId)
+					return 0
+				}
+
+				return prev - 1
+			})
+		}, 1000)
+
+		return () => {
+			window.clearInterval(intervalId)
+		}
+	}, [current])
+
+	useEffect(() => {
+		if (!current || current.options.countdownSeconds === undefined) {
+			return
+		}
+
+		if (countdownLeft !== 0) {
+			return
+		}
+
+		current.resolve()
+		setQueue([])
+		setCountdownLeft(null)
+	}, [countdownLeft, current])
+
+	const getAlertMessage = () => {
+		if (!current) {
+			return ""
+		}
+
+		if (
+			current.options.countdownMessageBuilder
+			&& countdownLeft !== null
+		) {
+			return current.options.countdownMessageBuilder(countdownLeft)
+		}
+
+		return current.options.message
+	}
+
 	const onOk = () => {
 		if (!current) return
 		current.resolve()
 		setQueue([])
+		setCountdownLeft(null)
 	}
 
 	return (
@@ -60,14 +114,14 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				</DialogTitle>
 				<Divider className="divider" />
 				<DialogContent>
-					<TTypography className="alert-message" content={current?.options.message} />
+					<TTypography className="alert-message" content={getAlertMessage()} />
 					<Grid container className="button-container">
 						<TButton
 							className="btn btn-primary center"
-							variant="outlined"
+							variant="contained"
 							size="small"
 							onClick={onOk}
-							value="settings.close"
+							value={current?.options.okLabel ?? "settings.close"}
 						/>
 					</Grid>
 				</DialogContent>

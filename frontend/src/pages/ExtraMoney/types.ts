@@ -1,6 +1,6 @@
 export type LuckySpins = {
 	spins: number
-	pending?: boolean
+	pending: boolean
 }
 
 export type BonusCoins = {
@@ -17,4 +17,9 @@ export type DailyBonus = {
 
 export type SelectedTab = {
 	selected_tab: number
+}
+
+export interface ClaimButtonIconProps {
+	isClaiming: boolean
+	icon: string
 }

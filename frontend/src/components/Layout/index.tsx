@@ -31,7 +31,6 @@ import {
 } from "common/constant"
 import { PopupState } from "common/enums"
 import { PrivateChatPopup } from "./components/PrivateChatPopup"
-import { GameHistoryPopup } from "./components/GameHistoryPopup"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
 import { ProfilePopupProvider, useAuth } from "hooks/useAppContext"
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog"
@@ -429,7 +428,7 @@ export default function Layout() {
 				}
 				<ListItem disablePadding className="menu-item">
 					<ListItemButton onClick={logoutClick}>
-						<TI className="fas fa-left-from-bracket icon" title="menu.logout" />
+						<TI className="fad fa-left-from-bracket icon" title="menu.logout" />
 						{drawerOpen && <TTypography className="text" content="menu.logout" />}
 					</ListItemButton>
 					<TI className={toogleDrawerClass} onClick={handleDrawerToggle} />
@@ -529,7 +528,7 @@ export default function Layout() {
 						<TSpan className="menu-text" content="menu.messages" />
 					</Box>
 				</MenuItem>
-				<Divider className="menu-divider" />
+				{!gameState.isInGame && (<Divider className="menu-divider" />)}
 				{!gameState.isInGame && (
 					<MenuItem onClick={handleChangePassword} className="menu-item-gap">
 						<i className="fas fa-key fsx-14" />
@@ -613,7 +612,6 @@ export default function Layout() {
 						<ProfilePopup />
 						<ChangePasswordDialog />
 						<GuidePopup />
-						<GameHistoryPopup />
 						<PrivateChatPopup />
 						<SearchUserPopup />
 						<JoinRoomDialog />

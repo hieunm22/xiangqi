@@ -40,3 +40,20 @@
 	justify-content: center;
 	text-align: center;
 }
+
+.announce-messages-skeleton {
+	padding: 4px 0;
+}
+
+.announce-skeleton-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+
+.announce-skeleton-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}

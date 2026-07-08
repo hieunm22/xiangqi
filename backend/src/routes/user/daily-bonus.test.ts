@@ -241,6 +241,33 @@ describe("daily-bonus routes", () => {
 			)
 		})
 
+		it("doubles the reward when claimed with the double flag (watch video)", async () => {
+			const accessToken = buildAccessToken(14, "session-daily-14")
+			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 14 }))
+			userFindUniqueMock.mockResolvedValue({ daily_claimed_count: 0, daily_claimed_at: null })
+			userAmountHistoryCreateMock.mockResolvedValue({ id: BigInt(4) })
+			userUpdateMock.mockResolvedValue({ daily_claimed_count: 1 })
+
+			const res = await request(app)
+				.post("/api/user/daily-bonus-claim")
+				.set("Authorization", `Bearer ${accessToken}`)
+				.send({ double: true })
+
+			expect(res.status).toBe(200)
+			// Day index 0 reward 1000, doubled via watch video.
+			expect(res.body.data).toMatchObject({ claimed: 1, reward: 2000 })
+			expect(userAmountHistoryCreateMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ amount: 2000, type: 3 })
+				})
+			)
+			expect(userUpdateMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ total_amount: { increment: 2000 } })
+				})
+			)
+		})
+
 		it("claims the next day continuing yesterday's streak", async () => {
 			const accessToken = buildAccessToken(10, "session-daily-10")
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 10 }))
