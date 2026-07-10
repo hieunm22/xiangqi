@@ -37,7 +37,8 @@ export const ConversationDrawer = (props: ConversationDrawerProps) => {
 					: last_message.message
 				// [dateLabel, timeLabel]: when dateLabel exists, show it with the time
 				// as a tooltip; otherwise (today) just show the time.
-				const [dateLabel, timeLabel] = formatTimestampToDateTimeArray(last_message.timestamp, state.lang)
+				const formatTimeStamp = formatTimestampToDateTimeArray(last_message.timestamp, state.lang)
+				const [dateLabel, timeLabel] = formatTimeStamp
 				return (
 					<ListItemButton
 						key={conversation.conversation_key}
@@ -79,12 +80,20 @@ export const ConversationDrawer = (props: ConversationDrawerProps) => {
 								</Typography>
 								{dateLabel ? (
 									<Tooltip title={timeLabel} arrow placement="top">
-										<Typography variant="caption" className="chat-conversation-time" color="text.secondary">
+										<Typography
+											variant="caption"
+											className="chat-conversation-time"
+											color="text.secondary"
+										>
 											{dateLabel}
 										</Typography>
 									</Tooltip>
 								) : (
-									<Typography variant="caption" className="chat-conversation-time" color="text.secondary">
+									<Typography
+										variant="caption"
+										className="chat-conversation-time"
+										color="text.secondary"
+									>
 										{timeLabel}
 									</Typography>
 								)}

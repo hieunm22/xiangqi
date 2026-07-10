@@ -8,6 +8,7 @@ const roomFindUniqueMock = vi.fn()
 const roomUserFindUniqueMock = vi.fn()
 const countDocumentsMock = vi.fn()
 const getChatMessageCollectionMock = vi.fn()
+const computeClockMock = vi.fn()
 
 const PATH = "/api/room/info"
 
@@ -30,6 +31,10 @@ vi.mock("prisma", () => ({
 
 vi.mock("../../common/mongodb", () => ({
 	getChatMessageCollection: getChatMessageCollectionMock
+}))
+
+vi.mock("common/game/game-clock", () => ({
+	computeClock: computeClockMock
 }))
 
 describe("GET /api/room/info?id=:id", () => {
@@ -110,12 +115,21 @@ describe("GET /api/room/info?id=:id", () => {
 		roomUserFindUniqueMock.mockResolvedValue({ joined_at: joinedAt })
 		countDocumentsMock.mockResolvedValue(4)
 		getChatMessageCollectionMock.mockResolvedValue({ countDocuments: countDocumentsMock })
+		computeClockMock.mockResolvedValue({
+			redMs: 300000,
+			blackMs: 250000,
+			activeTeam: "red",
+			serverNow: 1700000000000,
+			timeLimit: 600,
+			timeIncrement: 0
+		})
 		roomFindUniqueMock.mockResolvedValue({
 			id: BigInt(101),
 			name: "Final Table",
 			status: 2,
 			red_first: false,
 			bet_amount: 100,
+			time_limit: 600,
 			host_id: BigInt(12),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
@@ -173,14 +187,22 @@ describe("GET /api/room/info?id=:id", () => {
 					status: 2,
 					red_first: false,
 					bet_amount: 100,
+					time_limit: 600,
 					host_id: 12
 				},
 				chat: {
 					unread_count: 4
 				},
-				users: expect.any(Array)
+				users: expect.any(Array),
+				clock: {
+					redMs: 300000,
+					blackMs: 250000,
+					activeTeam: "red",
+					timeLimit: 600
+				}
 			}
 		})
+		expect(computeClockMock).toHaveBeenCalledWith("game-101")
 		expect(countDocumentsMock).toHaveBeenCalledWith({
 			room_id: 101,
 			timestamp: { $gt: joinedAt },

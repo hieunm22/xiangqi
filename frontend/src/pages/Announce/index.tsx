@@ -253,21 +253,19 @@ export default function AnnouncePage() {
 		if (msg._id === firstUnreadId) firstUnreadRef.current = el
 	}
 
-	const FullMessages = () => {
-		return messages.length > 0 ? (
-			<MessageList
-				messages={messages}
-				firstUnreadId={firstUnreadId}
-				isUnread={msg => !(msg as AnnouncementMessage).seen}
-				onAvatarClick={handleAvatarClick}
-				endRef={messagesEndRef}
-				getRowRef={getRowRef}
-				loadingOlder={loadingOlder}
-			/>
-		) : (
-			<EmptyAnnouncement />
-		)
-	}
+	const fullMessages = messages.length > 0 ? (
+		<MessageList
+			messages={messages}
+			firstUnreadId={firstUnreadId}
+			isUnread={msg => msg.seen === false}
+			onAvatarClick={handleAvatarClick}
+			endRef={messagesEndRef}
+			getRowRef={getRowRef}
+			loadingOlder={loadingOlder}
+		/>
+	) : (
+		<EmptyAnnouncement />
+	)
 
 	return (
 		<Box className="announce-page">
@@ -283,7 +281,7 @@ export default function AnnouncePage() {
 				ref={containerRef}
 				onScroll={handleScroll}
 			>
-				{isInitialLoading ? <LoadingSkeleton /> : <FullMessages />}
+				{isInitialLoading ? <LoadingSkeleton /> : fullMessages}
 			</Box>
 
 			<MessageInput

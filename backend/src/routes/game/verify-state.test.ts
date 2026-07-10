@@ -25,6 +25,7 @@ const updateOneGameHistoryMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
+const stopClockMock = vi.fn()
 
 const PATH = "/api/game/verify-state"
 
@@ -56,6 +57,10 @@ vi.mock("common/mongodb", () => ({
 
 vi.mock("common/socket", () => ({
 	emitGameEnded: emitGameEndedMock
+}))
+
+vi.mock("common/game/game-clock", () => ({
+	stopClock: stopClockMock
 }))
 
 vi.mock("prisma", () => ({
@@ -273,6 +278,8 @@ describe("POST /api/game/verify-state", () => {
 		})
 		expect(res.body.data.legalMovesCount).toBeGreaterThan(0)
 		expect(runEndGameTransactionMock).not.toHaveBeenCalled()
+		// Game continues -> the clock keeps running.
+		expect(stopClockMock).not.toHaveBeenCalled()
 	})
 
 	it("ends the game on checkmate, updates latest history winner_id and emits game-ended", async () => {
@@ -327,6 +334,8 @@ describe("POST /api/game/verify-state", () => {
 			winnerId: 91
 		})
 		expect(activatePostGameLockMock).toHaveBeenCalledWith(11n, "game-1")
+		// Checkmate ends the game -> the countdown clock is stopped.
+		expect(stopClockMock).toHaveBeenCalledWith("game-1")
 		expect(res.body.data).toMatchObject({
 			gameEnded: true,
 			status: "checkmate",

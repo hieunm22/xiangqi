@@ -1,4 +1,4 @@
-import { TI } from "components/TranslationTag"
+import { TI, TTooltip } from "components/TranslationTag"
 import RoomSettingsDialog from "./RoomSettingsDialog"
 import { RoomSettingsDialogContext } from "hooks/useAppContext"
 import { SettingsButtonProps } from "../types"
@@ -6,7 +6,9 @@ import { SettingsButtonProps } from "../types"
 export const SettingsButton = (props: SettingsButtonProps) => {
 	return (
 		<RoomSettingsDialogContext.Provider value={props}>
-			<TI className="room-more-action fas fa-gear" onClick={props.openSettings} />
+			<TTooltip title="room.settings.title" placement="left">
+				<TI className="room-more-action fas fa-gear" onClick={props.openSettings} />
+			</TTooltip>
 			<RoomSettingsDialog />
 		</RoomSettingsDialogContext.Provider>
 	)

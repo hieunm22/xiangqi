@@ -10,5 +10,7 @@ export const INITIAL_FEN_BLACK_BOTTOM = "rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S
 // Starting score every user is seeded with. Used to recompute the correct balance from the GameUser ledger.
 export const INITIAL_AMOUNT = 200
 
+export const ACCEPTABLE_TIME_LIMITS = [300, 600, 900, 1200, 1800, 3600]
+
 export const ACCESS_TOKEN_EXPIRES_IN = "1h"
 export const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60

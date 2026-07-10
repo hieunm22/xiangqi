@@ -1,4 +1,3 @@
-import { MouseEvent } from "react"
 import { EmptyPromise, EmptyVoid, StringVoid } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -32,6 +31,16 @@ export interface PlayerInfoCardProps {
 	botLevel: number | null
 	roomHostId: number | null
 	roomId: number | null
+	remainingMs?: number | null
+}
+
+export interface ClockSnapshot {
+	redMs: number
+	blackMs: number
+	activeTeam: Team
+	serverNow: number
+	timeLimit: number
+	timeIncrement: number
 }
 
 export interface RoomUser {
@@ -58,6 +67,7 @@ export interface RoomInfo {
 	red_first: boolean
 	pve_mode: boolean
 	host_id: number | null
+	time_limit: number | null
 }
 
 interface RoomChatInfo {
@@ -69,6 +79,7 @@ export interface RoomInfoData {
 	users: RoomUser[]
 	game: GameInfo | null
 	chat: RoomChatInfo
+	clock: ClockSnapshot | null
 }
 
 export interface RoomWithUsers {
@@ -119,6 +130,7 @@ export interface HistoryData {
 	capture?: string
 	captured?: CapturedPieces | null
 	userId?: number
+	clock?: ClockSnapshot | null
 }
 
 export interface RoomActionButton {
@@ -128,6 +140,12 @@ export interface RoomActionButton {
 	visible: boolean
 	enabled: boolean
 	onClick: EmptyPromise | EmptyVoid
+}
+
+export interface SurrenderRequest {
+	roomId: string | number
+	gameId: string
+	surrenderingUserId: number
 }
 
 export interface DrawRequest {
@@ -141,7 +159,7 @@ export interface MoveProps {
 	to: number
 }
 
-export interface RemoteMoveProps extends MoveProps { 
+export interface RemoteMoveProps extends MoveProps {
 	fen: string
 	isCapture: boolean
 }
@@ -151,14 +169,8 @@ export interface PieceSideUser {
 	bottom: RoomUser | null
 }
 
-export interface GameMenuActionContextValue {
-	actionMenuItems: RoomActionButton[]
-	isActionMenuOpen: boolean
-	menuAnchorEl: HTMLElement | null
-
-	closeActionMenu: EmptyVoid
-	handleMenuItemClick: (onClick: EmptyVoid) => () => void
-	openActionMenu: (e: MouseEvent<HTMLButtonElement>) => void
+export interface GameMenuProps {
+	buttons: RoomActionButton[]
 }
 
 export interface RoomChatDialogContextValue {
@@ -192,4 +204,5 @@ export interface StartGameBody {
 	gameId: string
 	status: number
 	bot_difficulty: number | null
+	clock: ClockSnapshot | null
 }

@@ -45,6 +45,17 @@
 	gap: 16px;
 }
 
+.game-replay-speed {
+	min-width: 52px;
+	flex: 0 0 auto;
+	font-variant-numeric: tabular-nums;
+
+	&::before,
+	&::after {
+		display: none;
+	}
+}
+
 .game-replay-slider {
 	flex: 1;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import classnames from "classnames"
 import {
 	Dialog,
 	DialogContent,
@@ -7,11 +8,10 @@ import {
 	Grid,
 	Stack
 } from "@mui/material"
-import classnames from "classnames"
 import { PopupState } from "common/enums"
 import { getToken } from "common/helper"
 import { isPasswordPolicyMet } from "common/password"
-import { openSnackbar } from "components/SnackbarProvider"
+import { openSnackbar } from "components/SnackbarProvider/helper"
 import { PasswordPolicyChecklist } from "components/PasswordPolicyChecklist"
 import { TButton, TI, TTextField, TTypography } from "components/TranslationTag"
 import { useAPI } from "hooks/useAPI"
@@ -58,7 +58,8 @@ export const ChangePasswordDialog = () => {
 	}
 
 	const isPolicyMet = isPasswordPolicyMet(form.newPassword)
-	const isConfirmMismatch = form.confirmPassword.length > 0 && form.confirmPassword !== form.newPassword
+	const { confirmPassword, newPassword } = form
+	const isConfirmMismatch = confirmPassword.length > 0 && confirmPassword !== newPassword
 	const canSubmit =
 		form.currentPassword.length > 0
 		&& isPolicyMet
@@ -108,6 +109,13 @@ export const ChangePasswordDialog = () => {
 		"fa-eye": !shown,
 		"fa-eye-slash": shown
 	})
+	
+	const changePasswordIcon = loading
+		? <i className="fas fa-spinner fa-pulse" />
+		: <i className="fas fa-key" />
+	const changePasswordLabel = loading
+		? "change-password.submitting"
+		: "change-password.submit"
 
 	const eyeAdornment = (shown: boolean, toggle: () => void) => (
 		<TI
@@ -124,7 +132,6 @@ export const ChangePasswordDialog = () => {
 			className="change-password-dialog"
 			fullWidth
 			maxWidth="xs"
-			disableEnforceFocus
 		>
 			<DialogTitle className="popup-title">
 				<TTypography content="change-password.title" />
@@ -177,7 +184,7 @@ export const ChangePasswordDialog = () => {
 						onChange={onChange("confirmPassword")}
 						fullWidth
 						error={isConfirmMismatch}
-						helperText={isConfirmMismatch ? translate("change-password.confirm.mismatch") : undefined}
+						helperText={isConfirmMismatch ? "change-password.confirm.mismatch" : undefined}
 						slotProps={{
 							input: {
 								startAdornment: <i className="fas fa-lock start-icon" />,
@@ -194,20 +201,22 @@ export const ChangePasswordDialog = () => {
 			<Divider sx={{ borderColor: "primary.main" }} />
 			<Grid container className="change-password-actions">
 				<TButton
-					variant="outlined"
-					size="small"
-					onClick={closeDialog}
-					value="settings.close"
-					startIcon={<i className="fad fa-xmark" />}
-				/>
-				<TButton
 					variant="contained"
 					size="small"
 					color="primary"
 					disabled={!canSubmit}
 					onClick={handleSubmit}
-					value={loading ? "change-password.submitting" : "change-password.submit"}
-					startIcon={loading ? <i className="fas fa-spinner fa-pulse" /> : <i className="fad fa-key" />}
+					className="fit-content"
+					value={changePasswordLabel}
+					startIcon={changePasswordIcon}
+				/>
+				<TButton
+					variant="outlined"
+					size="small"
+					onClick={closeDialog}
+					className="fit-content"
+					value="settings.close"
+					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</Grid>
 		</Dialog>

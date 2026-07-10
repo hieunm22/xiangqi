@@ -7,12 +7,11 @@ interface UseRewardAdParams<T> {
 	canWatch: boolean
 	claim: (token: string, double: boolean) => Promise<APIResponse<T> | undefined>
 	onClaimed: (data: T) => void
-	errorLabel: string
 }
 
 // Shared "watch a rewarded ad, then claim" flow for the reward tabs
 export function useRewardAd<T>(props: UseRewardAdParams<T>) {
-	const { canWatch, claim, onClaimed, errorLabel } = props
+	const { canWatch, claim, onClaimed } = props
 	const { state } = useToolkit()
 	const [adOpen, setAdOpen] = useState(false)
 	const [isClaiming, setIsClaiming] = useState(false)
@@ -28,8 +27,6 @@ export function useRewardAd<T>(props: UseRewardAdParams<T>) {
 			if (response?.success && response.data) {
 				onClaimed(response.data)
 			}
-		} catch (error) {
-			console.error(errorLabel, error)
 		} finally {
 			setIsClaiming(false)
 		}

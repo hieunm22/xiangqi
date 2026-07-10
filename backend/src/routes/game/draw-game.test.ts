@@ -1,15 +1,7 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
-import {
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi
-} from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
@@ -27,6 +19,7 @@ const getGameHistoryCollectionMock = vi.fn()
 const runEndGameTransactionMock = vi.fn()
 const activatePostGameLockMock = vi.fn()
 const syncPlayersPresenceMock = vi.fn()
+const stopClockMock = vi.fn()
 
 const PATH = "/api/game/draw-game"
 
@@ -67,6 +60,10 @@ vi.mock("../../common/game/post-game.helper", () => ({
 
 vi.mock("../../common/game/presence-sync", () => ({
 	syncPlayersPresence: syncPlayersPresenceMock
+}))
+
+vi.mock("../../common/game/game-clock", () => ({
+	stopClock: stopClockMock
 }))
 
 describe("POST /api/game/draw-game", () => {
@@ -345,6 +342,8 @@ describe("POST /api/game/draw-game", () => {
 		})
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-1", false)
 		expect(activatePostGameLockMock).toHaveBeenCalledWith(100n, "game-1")
+		// The countdown clock is stopped when the game ends as a draw.
+		expect(stopClockMock).toHaveBeenCalledWith("game-1")
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "draw-game.messages.success",
@@ -380,6 +379,8 @@ describe("POST /api/game/draw-game", () => {
 		expect(res.status).toBe(200)
 		expect(runEndGameTransactionMock).toHaveBeenCalled()
 		expect(syncPlayersPresenceMock).not.toHaveBeenCalled()
+		// Lost the race -> the other request owns the shutdown, so we don't stop the clock.
+		expect(stopClockMock).not.toHaveBeenCalled()
 		expect(res.body).toMatchObject({
 			success: true,
 			message: "draw-game.messages.success",

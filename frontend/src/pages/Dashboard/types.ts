@@ -14,6 +14,8 @@ export type DashboardRoom = {
 	created_at: string
 	updated_at: string
 	users: RoomUser[]
+	// Per-player total time budget in seconds; null / omitted = no clock.
+	time_limit?: number | null
 }
 
 export interface UserAvatarGroupProps {
@@ -55,4 +57,6 @@ export interface CreateRoomRequest {
 	redFirst: boolean
 	pveMode: boolean
 	betAmount: number
+	// Per-player total time budget in seconds; null = no clock.
+	timeLimit: number | null
 }

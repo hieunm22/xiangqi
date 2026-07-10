@@ -2,21 +2,18 @@ import { FormEvent, useState } from "react"
 import { Link as RouterLink } from "react-router-dom"
 import {
 	Box,
-	Button,
 	CircularProgress,
 	Link,
 	Paper,
 	Stack
 } from "@mui/material"
-import { LOGIN_PATH } from "common/constant"
+import { EMAIL_PATTERN, LOGIN_PATH } from "common/constant"
 import Alert from "components/AlertWithIcon"
-import { TTextField, TTypography } from "components/TranslationTag"
+import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { translate } from "locales/translate"
 import "./LostPassword.scss"
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function LostPasswordPage() {
 	useAutoTitle(translate("forgot-password.page.title"))
@@ -29,12 +26,12 @@ export default function LostPasswordPage() {
 
 	const validateEmail = (value: string) => {
 		if (!value.trim()) {
-			setEmailError(translate("common.input.is-required"))
+			setEmailError("common.input.is-required")
 			return false
 		}
 
 		if (!EMAIL_PATTERN.test(value)) {
-			setEmailError(translate("register.email.error1"))
+			setEmailError("register.email.error1")
 			return false
 		}
 
@@ -66,13 +63,13 @@ export default function LostPasswordPage() {
 
 			if (!response?.success) {
 				const responseMessage = response?.message || "forgot-password.form.error1"
-				setError(translate(responseMessage) === responseMessage ? responseMessage : translate(responseMessage))
+				setMessage(responseMessage)
 				setLoading(false)
 				return
 			}
 
 			const responseMessage = response?.message || "forgot-password.form.success"
-			setMessage(translate(responseMessage) === responseMessage ? responseMessage : translate(responseMessage))
+			setMessage(responseMessage)
 		} catch (submitError) {
 			const submitMessage = submitError instanceof Error
 				? submitError.message
@@ -84,16 +81,8 @@ export default function LostPasswordPage() {
 	}
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				display: "flex",
-				alignItems: "center",
-				width: "100%",
-				justifyContent: "center",
-			}}
-		>
-			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+		<Box className="unauth-form-container">
+			<Paper elevation={4} className="unauth-form-paper-container">
 				<Stack component="form" spacing={2} onSubmit={onSubmit}>
 					<TTypography
 						variant="h5"
@@ -125,9 +114,15 @@ export default function LostPasswordPage() {
 						}}
 					/>
 
-					<Button type="submit" variant="contained" disabled={loading} fullWidth size="large">
-						{loading ? <CircularProgress size={22} color="inherit" /> : translate("forgot-password.form.submit")}
-					</Button>
+					<TButton
+						type="submit"
+						variant="contained"
+						disabled={loading}
+						fullWidth
+						size="large"
+						value="forgot-password.form.submit"
+						startIcon={loading ? <CircularProgress size={22} color="inherit" /> : null}
+					/>
 
 					{error && <Alert severity="error">{error}</Alert>}
 					{message && <Alert severity="success">{message}</Alert>}

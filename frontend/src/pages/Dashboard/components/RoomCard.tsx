@@ -1,35 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import classnames from "classnames"
-import {
-	Grid,
-	Stack,
-	Typography
-} from "@mui/material"
-import { FILTER_KEYS, FILTER_STATUS, GRID_SIZE } from "../constants"
-import { TI, TTypography } from "components/TranslationTag"
+import { Grid, Stack, Typography } from "@mui/material"
+import { FILTER_STATUS, GRID_SIZE } from "../constants"
+import { TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getClaimsFromLocalStorage } from "common/helper"
-import { openJoinRoom } from "./JoinRoomDialog"
+import { openJoinRoom } from "./joinRoomController"
 import { RoomCardProps } from "../types"
-
-const getStatusKey = (status: number) => {
-	if (status === FILTER_STATUS.available) {
-		return FILTER_KEYS.available
-	}
-
-	if (status === FILTER_STATUS.playing) {
-		return FILTER_KEYS.playing
-	}
-
-	return "dashboard.status.unknown"
-}
-
-const roomStatusClass = (status: number) => classnames({
-	"dashboard__status-icon fas": true,
-	"fa-dagger available": status === FILTER_STATUS.available,
-	"fa-swords playing": status === FILTER_STATUS.playing
-})
 
 const formatBetAmount = (amount?: number) => {
 	if (!amount) {
@@ -69,14 +47,15 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 	const navigate = useNavigate()
 	const oldestJoinedUsers = room.users.filter(u => u.team !== null)
 	const remainingUsers = room.users.filter(u => u.team === null)
-	const classIconRoomStatus = roomStatusClass(room.status)
 
 	const roomCardClass = classnames({
 		"dashboard__room-card": true,
 		"zero-bet": !room.bet_amount,
 		"low": room.bet_amount <= 100 && room.bet_amount > 0,
 		"medium": room.bet_amount > 100 && room.bet_amount <= 2000,
-		"high": room.bet_amount > 2000
+		"high": room.bet_amount > 2000,
+		"is-available": room.status === FILTER_STATUS.available,
+		"is-playing": room.status === FILTER_STATUS.playing,
 	})
 
 	const handleOpenJoinRoom = () => {
@@ -106,9 +85,11 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 						content={room.name}
 					/>
 					{room.bet_amount > 0 && <i className="fas fa-coin bet-icon" />}
-					{room.bet_amount > 0 && <Typography component="span" className="dashboard__room-bet">
-						{formatBetAmount(room.bet_amount)}
-					</Typography>}
+					{room.bet_amount > 0 && (
+						<Typography component="span" className="dashboard__room-bet">
+							{formatBetAmount(room.bet_amount)}
+						</Typography>
+					)}
 				</Stack>
 
 				<Stack direction="row" className="dashboard__card-meta">
@@ -117,7 +98,12 @@ export const RoomCard = ({ room }: RoomCardProps) => {
 						type="primary"
 						maxVisible={2}
 					/>
-					<TI className={classIconRoomStatus} title={getStatusKey(room.status)} />
+					<Typography component="span" className="dashboard__room-time">
+						<i className="far fa-clock" />
+						{room.time_limit
+							? `${Math.round(room.time_limit / 60)}'`
+							: <i className="fas fa-infinity" />}
+					</Typography>
 				</Stack>
 
 				<UserAvatarGroup

@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { ACCEPTABLE_TIME_LIMITS } from "common/constant"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -78,8 +79,13 @@ const router = Router()
  *         description: Internal server error
  */
 router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, res: Response) => {
-	const { id, name } = req.body as { id: number; name: string }
+	const { id, name, timeLimit } = req.body as {
+		id: number
+		name: string
+		timeLimit: number | null
+	}
 	const userId = req.auth?.userId
+	const hasTimeLimit = Object.prototype.hasOwnProperty.call(req.body ?? {}, "timeLimit")
 
 	if (!userId) {
 		res.status(401).json({
@@ -103,6 +109,19 @@ router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, re
 		res.status(400).json({
 			success: false,
 			message: "update-room.messages.name-required",
+			status_code: 400
+		})
+		return
+	}
+
+	if (
+		hasTimeLimit &&
+		timeLimit !== null &&
+		!ACCEPTABLE_TIME_LIMITS.includes(timeLimit as number)
+	) {
+		res.status(400).json({
+			success: false,
+			message: "update-room.messages.invalid-time-limit",
 			status_code: 400
 		})
 		return
@@ -138,14 +157,18 @@ router.patch("/room/update", requireAuth(), async (req: AuthenticatedRequest, re
 
 		const updatedRoom = await prisma.room.update({
 			where: { id: roomId },
-			data: { name: name.trim() },
+			data: {
+				name: name.trim(),
+				...(hasTimeLimit ? { time_limit: timeLimit ?? null } : {})
+			},
 			select: {
 				id: true,
 				name: true,
 				status: true,
 				red_first: true,
 				pve_mode: true,
-				bet_amount: true
+				bet_amount: true,
+				time_limit: true,
 			}
 		})
 

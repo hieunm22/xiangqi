@@ -2,7 +2,6 @@ import { SubmitEvent, useEffect, useState } from "react"
 import classnames from "classnames"
 import {
 	Box,
-	Button,
 	CircularProgress,
 	Divider,
 	Link,
@@ -169,16 +168,8 @@ export default function LoginPage() {
 	})
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				display: "flex",
-				alignItems: "center",
-				width: "100%",
-				justifyContent: "center",
-			}}
-		>
-			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 450, p: 3, borderRadius: 3 }}>
+		<Box className="unauth-form-container">
+			<Paper elevation={4} className="unauth-form-paper-container">
 				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
 					<TTypography
 						variant="h5"
@@ -245,9 +236,15 @@ export default function LoginPage() {
 					{error && <Alert severity="error">{error}</Alert>}
 					{message && <Alert severity="success">{message}</Alert>}
 
-					<Button type="submit" variant="contained" disabled={loading} fullWidth size="large">
-						{loading ? <CircularProgress size={22} color="inherit" /> : translate("login.form.submit")}
-					</Button>
+					<TButton
+						type="submit"
+						variant="contained"
+						disabled={loading}
+						fullWidth
+						size="large"
+						value="login.form.submit"
+						startIcon={loading ? <CircularProgress size={22} color="inherit" /> : null}
+					/>
 
 					{(isGoogleConfigured || isFacebookConfigured) && (
 						<Divider sx={{ color: "text.secondary", fontSize: 13 }}>

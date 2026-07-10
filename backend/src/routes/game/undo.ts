@@ -1,8 +1,11 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { armClock, computeUndoBaseline } from "common/game/game-clock"
+import { getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { getIO } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { ClockHistoryRecord } from "types/game.type"
 
 const router = Router()
 
@@ -99,6 +102,7 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 			select: {
 				id: true,
 				room_id: true,
+				time_limit: true,
 				game_users: {
 					select: { user_id: true }
 				}
@@ -156,7 +160,7 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 
 		const gameHistories = await collection.find({ game_id: gameId }).toArray()
 
-		// Check undo limit (max 1 undo per game)
+		// Check undo limit (max 1 undo per game, per user)
 		const undoRecords = gameHistories
 			.filter(record => record.undo === Number(userId))
 
@@ -222,13 +226,27 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 		// Get the last remaining record (oldest record after deletion)
 		const remainingRecord = gameHistories[gameHistories.length - recordsToDelete - 1] || null
 
-		// Update the last remaining record to add undo user_id
-		if (remainingRecord) {
-			await collection.updateOne(
-				{ _id: remainingRecord._id },
-				{ $set: { undo: Number(userId) } }
-			)
+		// Update the last remaining record to add undo user_id. For clocked games,
+		// also restart the current turn from now and stamp a clock
+		// baseline capturing time already spent
+		const undoUpdate: Record<string, unknown> = { undo: Number(userId) }
+		if (game.time_limit != null) {
+			const remainingClockRecords: ClockHistoryRecord[] = gameHistories
+				.slice(0, gameHistories.length - recordsToDelete)
+				.map(record => ({
+					team: record.team,
+					timeStamp: Number(record.time_stamp),
+					fen: record.fen,
+					baseline: record.clock_baseline ?? null
+				}))
+			undoUpdate.time_stamp = getUTCTimestamp()
+			undoUpdate.clock_baseline = computeUndoBaseline(remainingClockRecords)
 		}
+		if (remainingRecord) {
+			await collection.updateOne({ _id: remainingRecord._id }, { $set: undoUpdate })
+		}
+
+		const clock = game.time_limit != null ? await armClock(gameId) : null
 
 		const previousFen = remainingRecord?.fen || null
 		const previousTeam = remainingRecord?.team || null
@@ -242,7 +260,8 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 				userId: Number(userId),
 				previousFen,
 				previousTeam,
-				movesDeleted: recordsToDelete
+				movesDeleted: recordsToDelete,
+				clock,
 			})
 		} catch (err) {
 			console.error("[Undo] Socket emission error:", err)
@@ -252,7 +271,8 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 			success: true,
 			message: "undo.messages.success",
 			status_code: 200,
-			data: deletedRecords
+			data: deletedRecords,
+			clock,
 		})
 	} catch (err) {
 		console.error("Undo error:", err)

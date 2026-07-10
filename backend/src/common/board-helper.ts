@@ -72,6 +72,51 @@ export const fenToBoard = (fen: string): (CellProps | null)[] => {
 	return board
 }
 
+const ATTACKING_PIECES = new Set(["chariot", "horse", "cannon", "soldier"])
+
+/**
+ * Whether `team` has at least one attacking piece (chariot / horse / cannon /
+ * soldier) that has crossed the river into the opponent's half.
+ *
+ * Used by the game-clock time-out rule (vi.json result.paragraph4): when a
+ * player runs out of time, the opponent only wins if they still have crossing
+ * material capable of delivering mate; otherwise the game is drawn.
+ *
+ * The team's own half is identified by the row of its general (which can never
+ * cross the river).
+ */
+export const hasPieceAcrossRiver = (fen: string, team: "red" | "black"): boolean => {
+	const board = fenToBoard(fen)
+
+	let generalRow: number | null = null
+	for (const cell of board) {
+		if (cell && cell.team === team && cell.piece === "general") {
+			generalRow = Math.floor(cell.id / BOARD_COLUMNS)
+			break
+		}
+	}
+
+	// General missing (should not happen in a live game): fall back to the normal
+	// "flag = loss" outcome rather than surprising players with a draw.
+	if (generalRow === null) {
+		return true
+	}
+
+	const homeIsTop = generalRow <= 4
+	for (const cell of board) {
+		if (!cell || cell.team !== team || !ATTACKING_PIECES.has(cell.piece)) {
+			continue
+		}
+		const row = Math.floor(cell.id / BOARD_COLUMNS)
+		const crossed = homeIsTop ? row >= 5 : row <= 4
+		if (crossed) {
+			return true
+		}
+	}
+
+	return false
+}
+
 export const boardToFen = (board: (CellProps | null)[]): string => {
 	const rows: string[] = []
 

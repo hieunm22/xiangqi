@@ -29,8 +29,7 @@ export default function ExtraMoneyPage() {
 				const tab = response?.success && response.data ? response.data.selected_tab : 0
 				// Ignore the restored value if the user already switched while loading.
 				setActiveTab((prev) => (prev === -1 ? tab : prev))
-			} catch (error) {
-				console.error("Failed to load selected tab:", error)
+			} catch {
 				setActiveTab((prev) => (prev === -1 ? 0 : prev))
 			}
 		}
@@ -38,14 +37,12 @@ export default function ExtraMoneyPage() {
 		loadSelectedTab()
 	}, [])
 
-	const handleTabChange = (value: number) => {
+	const handleTabChange = async (value: number) => {
 		setActiveTab(value)
 
 		const token = getToken()
 		if (!token) return
-		updateSelectedTab(token, value).catch((error) => {
-			console.error("Failed to persist selected tab:", error)
-		})
+		await updateSelectedTab(token, value)
 	}
 
 	return (

@@ -13,11 +13,7 @@ import {
 	NullableCellProps,
 	Team
 } from "types/GameState"
-import {
-	GameMovements,
-	HistoryData,
-	MoveProps
-} from "pages/Room/types"
+import { GameMovements, MoveProps } from "pages/Room/types"
 import {
 	PendingCommit,
 	UseReplayArgs,
@@ -26,11 +22,18 @@ import {
 
 // The board slide is driven by the `.piece-wrapper` CSS transition (0.5s)
 const ANIMATION_MS = 520
-const STEP_MS = 1500
+const STEP_NORMAL_MS = 1000
+const STEP_FAST_MS = 1500
+const STEP_VFAST_MS = 2000
+
+// Playback speed options (YouTube-style). Multiplier is relative to normal speed.
+export const REPLAY_SPEEDS: { label: string; value: number }[] = [
+	{ label: "1x", value: STEP_NORMAL_MS },
+	{ label: "1.5x", value: STEP_FAST_MS },
+	{ label: "2x", value: STEP_VFAST_MS },
+]
 
 const EMPTY_CAPTURED: CapturedPieces = { red: [], black: [] }
-
-
 
 const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 	const { getGameMovementHistory } = useAPI()
@@ -43,11 +46,13 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 	const [previousMove, setPreviousMove] = useState<MoveProps | null>(null)
 	const [redFirst, setRedFirst] = useState(true)
 	const [stepIndex, setStepIndex] = useState(0)
+	const [stepMs, setStepMsState] = useState(STEP_NORMAL_MS)
 	const [totalMoves, setTotalMoves] = useState(0)
 
 	const movementsRef = useRef<GameMovements[]>([])
 	const stepRef = useRef(0)
 	const playingRef = useRef(false)
+	const stepMsRef = useRef(STEP_NORMAL_MS)
 	const tickTimerRef = useRef<number | null>(null)
 	const commitTimerRef = useRef<number | null>(null)
 	const pendingCommitRef = useRef<PendingCommit | null>(null)
@@ -60,7 +65,7 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		setBoard(fenToBoard(movements[step].fen))
 		setCurrentTurn(movements[step].team)
 		setPreviousMove(diff)
-		setCapturedPieces(getCapturedPiecesFromHistory(movements.slice(0, step + 1) as unknown as HistoryData[]))
+		setCapturedPieces(getCapturedPiecesFromHistory(movements.slice(0, step + 1)))
 	}, [])
 
 	const flushPendingCommit = useCallback(() => {
@@ -123,8 +128,19 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		tickTimerRef.current = window.setTimeout(() => {
 			stepForward(true)
 			scheduleTick()
-		}, STEP_MS)
+		}, stepMsRef.current)
 	}, [stepForward])
+
+	const setStepMs = useCallback((ms: number) => {
+		stepMsRef.current = ms
+		setStepMsState(ms)
+		// Apply the new speed right away if a playback tick is already scheduled.
+		if (playingRef.current && tickTimerRef.current !== null) {
+			window.clearTimeout(tickTimerRef.current)
+			tickTimerRef.current = null
+			scheduleTick()
+		}
+	}, [scheduleTick])
 
 	const togglePlay = useCallback(() => {
 		if (playingRef.current) {
@@ -151,7 +167,9 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 			return
 		}
 		const clamped = Math.max(0, Math.min(step, movements.length - 1))
-		const diff = clamped > 0 ? diffFenMove(movements[clamped - 1].fen, movements[clamped].fen) : null
+		const diff = clamped > 0
+			? diffFenMove(movements[clamped - 1].fen, movements[clamped].fen)
+			: null
 		const move = diff ? { from: diff.oldIndex, to: diff.newIndex } : null
 		commitStep({ step: clamped, diff: move })
 	}, [commitStep, pause])
@@ -197,7 +215,6 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		// getGameMovementHistory (a fresh ref each render) and commitStep are intentionally
 		// omitted: re-fetch only when the popup opens for a game. Including the useAPI fn
 		// would re-fetch and reset to move 0 on every tick.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open, gameId])
 
 	// Stop timers when the popup closes or the component unmounts.
@@ -220,9 +237,11 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		previousMove,
 		redFirst,
 		stepIndex,
+		stepMs,
 		totalMoves,
 
 		goToStep,
+		setStepMs,
 		togglePlay
 	}
 }

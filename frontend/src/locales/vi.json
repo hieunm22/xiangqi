@@ -120,6 +120,9 @@
 			"red-first": "Đỏ tiên",
 			"pve-mode": "Chơi với máy",
 			"bet-amount": "Giá trị cược",
+			"time-limit": "Thời gian mỗi người",
+			"time-unlimited": "Không giới hạn",
+			"time-minutes": "{0} phút",
 			"room-name-label": "Tên phòng chơi",
 			"room-name-helptext": "không được để trống",
 			"play": "Chơi",
@@ -173,8 +176,8 @@
 		},
 		"actions": {
 			"start-room": "Bắt đầu chơi",
-			"challenge": "Thách đấu",
-			"leave-seat": "Dự khán",
+			"challenge": "Vào chơi",
+			"leave-seat": "Ra xem",
 			"undo": "Hoán tác",
 			"surrender": "Đầu hàng",
 			"draw": "Hòa",
@@ -185,7 +188,8 @@
 			"send-pm": "Chat",
 			"view-history": "Lịch sử",
 			"kick": "Kick",
-			"back-to-room": "Quay lại phòng chơi"
+			"back-to-room": "Quay lại phòng chơi",
+			"chat": "Phòng chat"
 		},
 		"messages": {
 			"draw-accepted": "Đối phương đã đồng ý hòa",
@@ -366,6 +370,7 @@
 			"insufficient-amount": "Bạn không còn đủ amount để tạo phòng với mức cược này",
 			"internal-server-error": "Lỗi máy chủ nội bộ khi tạo phòng",
 			"invalid-bet-amount": "Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận",
+			"invalid-time-limit": "Thời gian không hợp lệ",
 			"invalid-redFirst": "'redFirst' phải là giá trị boolean",
 			"invalid-team-name": "Tên đội phải là 'red', 'black' hoặc null",
 			"name-required": "Tên phòng (tableName) là bắt buộc và không được để trống",
@@ -484,6 +489,7 @@
 			"success": "Cập nhật phòng thành công",
 			"internal-server-error": "Lỗi máy chủ nội bộ",
 			"invalid-room-id": "ID phòng không hợp lệ",
+			"invalid-time-limit": "Thời gian không hợp lệ",
 			"name-required": "Tên phòng không được để trống",
 			"room-not-found": "Không tìm thấy phòng",
 			"forbidden": "Bạn không phải chủ phòng"

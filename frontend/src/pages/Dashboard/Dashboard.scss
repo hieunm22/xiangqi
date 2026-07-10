@@ -30,7 +30,7 @@
 		height: 100%;
 		cursor: pointer;
 		border: 3px solid #9b613d;
-    padding: 12px;
+		padding: 12px;
 
 		&.zero-bet {
 			background: linear-gradient(0deg, #bd65d9, #ba1fc7);
@@ -46,6 +46,41 @@
 
 		&.high {
 			background: linear-gradient(0deg, #2295b8, #66ccff);
+		}
+
+		&.is-available {
+			border: none;
+		}
+
+		&.is-playing {
+			position: relative;
+			border: solid 3px #e20606; // dominant solid red border
+
+			&::before {
+				content: "";
+				position: absolute;
+				inset: -3px; // sit over the 3px border
+				border-radius: 12px; // match the card radius
+				padding: 3px; // ring thickness
+				background: conic-gradient(
+					from var(--room-border-angle),
+					transparent 0deg,
+					transparent 235deg,
+					rgba(255, 138, 128, 0) 260deg,
+					rgba(255, 154, 148, 0.7) 305deg,
+					rgba(255, 138, 128, 0) 360deg
+				);
+				-webkit-mask:
+					linear-gradient(#000 0 0) content-box,
+					linear-gradient(#000 0 0);
+				mask:
+					linear-gradient(#000 0 0) content-box,
+					linear-gradient(#000 0 0);
+				-webkit-mask-composite: xor;
+				mask-composite: exclude;
+				pointer-events: none;
+				animation: room-border-run 1s linear infinite;
+			}
 		}
 
 		&:hover {
@@ -92,22 +127,21 @@
 		white-space: nowrap;
 	}
 
+	&__room-time {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-weight: 700 !important;
+		white-space: nowrap;
+
+		i {
+			font-size: 16px;
+		}
+	}
+
 	.bet-icon {
 		color: #fbc02d;
 		font-size: 20px;
-	}
-
-	&__status-icon {
-		font-size: 28px;
-		align-self: flex-start;
-
-		&.available {
-			color: #2e7d32;
-		}
-
-		&.playing {
-			color: #e65100;
-		}
 	}
 
 	&__card-meta {
@@ -127,7 +161,7 @@
 
 		&.primary {
 			gap: 8px;
- 		}
+		}
 
 		&.secondary {
 			min-height: 28px;
@@ -159,7 +193,7 @@
 			background: rgba(155, 97, 61, 0.5) !important;
 			color: #fff;
 			cursor: default;
-			
+
 			&:hover {
 				opacity: 1 !important;
 			}
@@ -167,8 +201,8 @@
 	}
 
 	&__seat {
-    display: inline-flex;
-    flex-direction: column;
+		display: inline-flex;
+		flex-direction: column;
 	}
 
 	&__seat-avatar {
@@ -206,8 +240,8 @@
 	}
 
 	&__join-room-board {
-    color: #9b613d;
-    width: 160px;
+		color: #9b613d;
+		width: 160px;
 	}
 
 	&__join-room-actions {
@@ -247,4 +281,10 @@
 	display: flex;
 	height: 37px;
 	align-items: center;
+}
+
+@property --room-border-angle {
+	syntax: "<angle>";
+	initial-value: 0deg;
+	inherits: false;
 }

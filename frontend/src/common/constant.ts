@@ -7,6 +7,8 @@ export const LS_DEBUG = "debug-mode"
 export const BOARD_COLUMNS = 9
 export const BOARD_ROWS = 10
 
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export const LUCKY_WHEEL_SLOT_HOURS = 6
 
 // Google IMA VAST tag for the rewarded "watch video" ad.

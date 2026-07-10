@@ -29,6 +29,12 @@ vi.mock("../helper", () => ({
 	getUTCNow: () => new Date("2026-06-24T00:00:00.000Z")
 }))
 
+// Achievement awarding is a post-commit side effect covered by its own test;
+// stub it so this suite doesn't reach Redis / the achievement catalog.
+vi.mock("./achievement.helper", () => ({
+	evaluateAchievements: vi.fn()
+}))
+
 // Imported dynamically in beforeAll so the vi.mock factories above (which close
 // over the mock consts) are evaluated only after those consts are initialized.
 let runEndGameTransaction: typeof import("./end-game.helper").runEndGameTransaction

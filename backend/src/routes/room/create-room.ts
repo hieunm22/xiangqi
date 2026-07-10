@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID } from "common/bot-engine"
+import { ACCEPTABLE_TIME_LIMITS } from "common/constant"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -118,7 +119,14 @@ router.post(
 	"/room/create-room",
 	requireAuth(),
 	async (req: AuthenticatedRequest, res: Response) => {
-		const { tableName, teamName, redFirst = true, pveMode = false, betAmount = 10 } = req.body as CreateRoomRequest
+		const {
+			tableName,
+			teamName,
+			redFirst = true,
+			pveMode = false,
+			betAmount = 10,
+			timeLimit = null
+		} = req.body as CreateRoomRequest
 		const userId = req.auth?.userId
 
 		// Validate room name
@@ -153,6 +161,23 @@ router.post(
 			})
 			return
 		}
+
+		// Validate time limit: null/omitted (no clock) or one of the accepted budgets.
+		if (
+			timeLimit !== null &&
+			timeLimit !== undefined &&
+			!ACCEPTABLE_TIME_LIMITS.includes(timeLimit)
+		) {
+			res.status(400).json({
+				success: false,
+				message: "create-room.messages.invalid-time-limit",
+				status_code: 400
+			})
+			return
+		}
+
+		// Clock applies to PvP only; PvE rooms never carry a time limit.
+		const effectiveTimeLimit = pveMode ? null : (timeLimit ?? null)
 
 		// Validate bet amount
 		const isValidBetAmount = pveMode
@@ -216,6 +241,7 @@ router.post(
 					red_first: redFirst,
 					pve_mode: pveMode,
 					bet_amount: betAmount,
+					time_limit: effectiveTimeLimit,
 					host_id: userIdBigInt,
 					room_users: {
 						create: roomUserSeed
@@ -228,6 +254,7 @@ router.post(
 					red_first: true,
 					pve_mode: true,
 					bet_amount: true,
+					time_limit: true,
 					host_id: true,
 					created_at: true,
 					updated_at: true,
@@ -269,14 +296,7 @@ router.post(
 			}
 
 			const dashboardRoom = {
-				id: Number(room.id),
-				name: room.name,
-				status: room.status,
-				red_first: room.red_first,
-				bet_amount: room.bet_amount,
-				host_id: room.host_id === null ? null : Number(room.host_id),
-				created_at: room.created_at,
-				updated_at: room.updated_at,
+				...normalizedRoom,
 				users: room_users.map(gu => ({
 					id: Number(gu.users.id),
 					display_name: gu.users.display_name,

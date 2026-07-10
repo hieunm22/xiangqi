@@ -38,14 +38,16 @@ import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SearchUserPopup } from "./components/SearchUserPopup"
 import { SettingsPopup } from "./components/SettingsPopup"
-import { JoinRoomDialog, openJoinRoom } from "pages/Dashboard/components/JoinRoomDialog"
+import { JoinRoomDialog } from "pages/Dashboard/components/JoinRoomDialog"
+import { openJoinRoom } from "pages/Dashboard/components/joinRoomController"
 import {
 	decodePayload,
 	getTimeToNextSlot,
 	getToken,
+	logger,
 	requireImage
 } from "common/helper"
-import { OnlinePresenceProvider } from "hooks/useOnlinePresence"
+import { OnlinePresenceProvider } from "hooks/OnlinePresenceProvider"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -64,6 +66,7 @@ const fullWidth = 240
 const miniWidth = 90
 
 export default function Layout() {
+	useAutoTitle()
 	const [drawerOpen, setDrawerOpen] = useState(true)
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
@@ -99,7 +102,6 @@ export default function Layout() {
 	usePresenceHeartbeat(currentUserId)
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-	useAutoTitle()
 
 	const setDarkModeAction = (darkMode: boolean) => dispatch(setDarkMode(darkMode))
 	const handleMobileToggle = () => setMobileOpen(!mobileOpen)
@@ -145,7 +147,7 @@ export default function Layout() {
 					setAnnouncementCount(response.data.announcements)
 				}
 			} catch (error) {
-				console.error("Failed to get unread count:", error)
+				logger.error("Failed to get unread count:", error)
 			}
 		}
 
@@ -169,7 +171,7 @@ export default function Layout() {
 					setLuckyPending(Boolean(response.data.pending))
 				}
 			} catch (error) {
-				console.error("Failed to get lucky spins status:", error)
+				logger.error("Failed to get lucky spins status:", error)
 			}
 
 			timer = setTimeout(fetchLuckyStatus, getTimeToNextSlot(LUCKY_WHEEL_SLOT_HOURS))
@@ -225,7 +227,7 @@ export default function Layout() {
 				await logout(token)
 			}
 		} catch (error) {
-			console.error("Logout failed:", error)
+			logger.error("Logout failed:", error)
 		} finally {
 			localStorage.removeItem(LS_TOKEN_KEY)
 			setLogout()
@@ -382,7 +384,7 @@ export default function Layout() {
 		setUnreadCount
 	}
 
-	const DrawerContent = () => (
+	const drawerContent = (
 		<>
 			<Toolbar>
 				<TTypography
@@ -471,7 +473,12 @@ export default function Layout() {
 
 			{isMobile && <AppBar position="fixed" className="layout-mobile-appbar">
 				<Toolbar>
-					<IconButton color="inherit" edge="start" onClick={handleMobileToggle} className="layout-mobile-menu-btn">
+					<IconButton
+						color="inherit"
+						edge="start"
+						onClick={handleMobileToggle}
+						className="layout-mobile-menu-btn"
+					>
 						<i className="fas fa-bars" />
 					</IconButton>
 					<Box sx={{ flexGrow: 1 }} />
@@ -514,7 +521,7 @@ export default function Layout() {
 				<MenuItem
 					onClick={handleGoMessages}
 					className="menu-item-gap"
-					disabled={gameState.popupState === PopupState.SEND_PM}
+					disabled={(gameState.popupState & PopupState.SEND_PM) === PopupState.SEND_PM}
 				>
 					<Badge
 						badgeContent={unreadCount}
@@ -563,10 +570,13 @@ export default function Layout() {
 					onClose={handleMobileDrawerClose}
 					sx={{
 						display: { xs: "block", sm: "none" },
-						"& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerOpen ? fullWidth : miniWidth },
+						"& .MuiDrawer-paper": {
+							boxSizing: "border-box",
+							width: drawerOpen ? fullWidth : miniWidth,
+						}
 					}}
 				>
-					<DrawerContent />
+					{drawerContent}
 				</Drawer>
 
 				{/* Desktop drawer - permanent */}
@@ -586,7 +596,7 @@ export default function Layout() {
 						},
 					}}
 				>
-					<DrawerContent />
+					{drawerContent}
 				</Drawer>
 			</Box>
 

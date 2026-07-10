@@ -6,7 +6,12 @@ import RewardAdDialog from "components/RewardAdDialog"
 import { TButton, TTypography } from "components/TranslationTag"
 import { ClaimIconButton } from "./Icons"
 import RewardGridSkeleton from "./RewardGridSkeleton"
-import { formatNumber, getTimeToNextSlot, getToken } from "common/helper"
+import {
+	formatNumber,
+	getTimeToNextSlot,
+	getToken,
+	logger
+} from "common/helper"
 import { formatCountdown, getCellStatus } from "../rewardHelpers"
 import { useAPI } from "hooks/useAPI"
 import { useRewardAd } from "../useRewardAd"
@@ -45,7 +50,6 @@ export default function DailyBonusTab() {
 			// Only one chest per day: today's is now spent.
 			setCanClaim(false)
 		},
-		errorLabel: "Failed to claim daily bonus:"
 	})
 
 	// Load the persisted streak on entry.
@@ -64,7 +68,7 @@ export default function DailyBonusTab() {
 					setCanClaim(Boolean(response.data.canClaim))
 				}
 			} catch (error) {
-				console.error("Failed to load daily bonus:", error)
+				logger.error("Failed to load daily bonus:", error)
 			} finally {
 				setIsLoading(false)
 			}
@@ -131,7 +135,7 @@ export default function DailyBonusTab() {
 							variant="contained"
 							color="success"
 							disabled={isClaiming || adOpen}
-							startIcon={<ClaimIconButton isClaiming={isClaiming} icon="fa-hand-holding-circle-dollar" />}
+							startIcon={<ClaimIconButton isClaiming={isClaiming} icon="fa-hand-holding-dollar" />}
 							value="extra-money.bonus-coin.collect"
 							onClick={collect}
 						/>

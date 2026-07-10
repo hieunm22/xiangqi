@@ -61,11 +61,13 @@ export const useGoogleAuth = ({ onCredential, onError }: UseGoogleAuthParams) =>
 	const [googleLocale, setGoogleLocale] = useState(() =>
 		normalizeGoogleLocale(i18n.resolvedLanguage || i18n.language)
 	)
-	// Keep the latest error callback without re-running the effect on every render.
+	// Keep the latest callbacks pointed at this (currently mounted) hook without
+	// re-running the load effect on every render
 	const errorRef = useRef(onError)
-	errorRef.current = onError
-	// Point the one-time initialize() callback at this (currently mounted) hook.
-	activeCredentialHandler = onCredential
+	useEffect(() => {
+		errorRef.current = onError
+		activeCredentialHandler = onCredential
+	})
 
 	useEffect(() => {
 		const onLanguageChanged = (language: string) => {

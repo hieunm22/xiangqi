@@ -50,9 +50,9 @@ export interface ProfileTabProps {
 	user: Users | null
 }
 
-export interface UpdateUserInfoPayload extends UpdateUserInfo { }
+export type UpdateUserInfoPayload = UpdateUserInfo
 
-export interface UpdateUserInfoResponse extends UpdateUserInfo { }
+export type UpdateUserInfoResponse = UpdateUserInfo
 
 export interface HistoryTabProps {
 	gameHistories: GameHistoryItem[] | null

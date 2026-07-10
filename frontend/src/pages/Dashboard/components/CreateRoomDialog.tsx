@@ -35,6 +35,8 @@ export const CreateRoomDialog = () => {
 	const [pveMode, setPveMode] = useState(false)
 	const [betAmount, setBetAmount] = useState(10)
 	const [oldBetAmount, setOldBetAmount] = useState(10)
+	// 0 = no time limit; otherwise total seconds per player.
+	const [timeLimit, setTimeLimit] = useState(0)
 	const [selectedColor, setSelectedColor] = useState<Team>("red")
 	const [submitting, setSubmitting] = useState(false)
 	const [submitError, setSubmitError] = useState("")
@@ -48,6 +50,7 @@ export const CreateRoomDialog = () => {
 		setRoomNameError(false)
 		setIsRedFirst(true)
 		setBetAmount(10)
+		setTimeLimit(0)
 		setSelectedColor("red")
 		setSubmitting(false)
 		setSubmitError("")
@@ -64,7 +67,14 @@ export const CreateRoomDialog = () => {
 		setBetAmount(checked ? 0 : oldBetAmount)
 	}
 
-	const formatBetAmount = (amount: number) => amount >= 1000 ? `${amount / 1000}k` : amount
+	const formatBetAmount = (amount: number) => (amount >= 1000 ? `${amount / 1000}k` : amount)
+
+	// 0 = unlimited; other values are total seconds per player (5-10-15-20-30-60 min).
+	const timeLimitOptions = [0, 300, 600, 900, 1200, 1800, 3600]
+	const formatTimeLimit = (seconds: number) =>
+		seconds === 0
+			? translate("dashboard.popup.time-unlimited")
+			: translate("dashboard.popup.time-minutes").format(seconds / 60)
 
 	const handleCreateRoom = async () => {
 		if (isRoomNameEmpty || submitting) {
@@ -80,9 +90,10 @@ export const CreateRoomDialog = () => {
 			teamName: selectedColor,
 			redFirst: isRedFirst,
 			pveMode,
-			betAmount: pveMode ? 0 : betAmount
+			betAmount: pveMode ? 0 : betAmount,
+			timeLimit: pveMode ? null : timeLimit || null,
 		}
-		const response = await createRoom(token, body) as APIResponse<RoomWithUsers>
+		const response = (await createRoom(token, body)) as APIResponse<RoomWithUsers>
 
 		setSubmitting(false)
 
@@ -167,19 +178,32 @@ export const CreateRoomDialog = () => {
 
 					<FormControl fullWidth size="small">
 						<FormLabel>{translate("dashboard.popup.bet-amount")}</FormLabel>
-							<Select
-								value={betAmount}
-								disabled={pveMode}
-								onChange={e => setBetAmount(Number(e.target.value))}
-							>
-								{(pveMode ? botBetOptions : betOptions).map(option => (
+						<Select
+							value={betAmount}
+							disabled={pveMode}
+							onChange={e => setBetAmount(Number(e.target.value))}
+						>
+							{(pveMode ? botBetOptions : betOptions).map(option => (
 									<MenuItem key={option} value={option}>{formatBetAmount(option)}</MenuItem>
-								))}
-							</Select>
+							))}
+						</Select>
+					</FormControl>
+
+					<FormControl fullWidth size="small">
+						<FormLabel>{translate("dashboard.popup.time-limit")}</FormLabel>
+						<Select
+							value={pveMode ? 0 : timeLimit}
+							disabled={pveMode}
+							onChange={e => setTimeLimit(Number(e.target.value))}
+						>
+							{timeLimitOptions.map(option => (
+								<MenuItem key={option} value={option}>{formatTimeLimit(option)}</MenuItem>
+							))}
+						</Select>
 					</FormControl>
 				</Stack>
 			</DialogContent>
-			<DialogActions sx={{ px: 3, pb: 2 }}>
+			<DialogActions sx={{ p: 2 }}>
 				<TButton
 					variant="contained"
 					onClick={handleCreateRoom}

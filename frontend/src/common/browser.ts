@@ -1,6 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-len */
-
 import type { ReportModel } from "./browser.types"
 
 /*
@@ -15,7 +12,7 @@ export function getDeviceInfo() {
 
 	// initialize object to store results
 
-	let report: ReportModel = {
+	const report: ReportModel = {
 		browser: {
 			name: null,
 			version: null
@@ -207,7 +204,7 @@ export function getDeviceInfo() {
 	try {
 		Object.defineProperty({}, "x", {})
 		definePropertySupported = true
-	} catch (e) {
+	} catch {
 		definePropertySupported = false
 	}
 

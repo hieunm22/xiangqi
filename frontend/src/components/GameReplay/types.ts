@@ -22,9 +22,11 @@ export interface UseReplayResult {
 	previousMove: MoveProps | null
 	redFirst: boolean
 	stepIndex: number
+	stepMs: number
 	totalMoves: number
 
 	goToStep: NumberVoid
+	setStepMs: NumberVoid
 	togglePlay: EmptyVoid
 }
 

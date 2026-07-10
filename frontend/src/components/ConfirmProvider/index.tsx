@@ -9,28 +9,22 @@ import {
 } from "@mui/material"
 import { TButton, TSpan, TTypography } from "components/TranslationTag"
 import { ComponentWithChild } from "types/Common"
-import { ConfirmOptions, InternalHandler, QueueProps } from "./types"
+import { ConfirmOptions, QueueProps } from "./types"
+import { setConfirmHandler } from "./helper"
 import "./ConfirmProvider.scss"
-
-let handler: InternalHandler | null = null
-
-export function openConfirm(options: ConfirmOptions = {}): Promise<boolean> {
-	if (!handler) return Promise.resolve(false)
-	return handler(options)
-}
 
 export const ConfirmProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<QueueProps[]>([])
 
 	useEffect(() => {
-		handler = (options: ConfirmOptions) => {
+		setConfirmHandler((options: ConfirmOptions) => {
 			return new Promise<boolean>(resolve => {
 				setQueue([{ id: Date.now() + Math.random(), options, resolve }])
 			})
-		}
+		})
 
 		return () => {
-			handler = null
+			setConfirmHandler(null)
 		}
 	}, [])
 

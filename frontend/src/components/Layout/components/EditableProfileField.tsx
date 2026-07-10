@@ -1,7 +1,7 @@
 import { type KeyboardEvent, useEffect, useState } from "react"
 import classnames from "classnames"
 import { InputAdornment, TextField } from "@mui/material"
-import { openAlert } from "components/AlertProvider"
+import { openAlert } from "components/AlertProvider/helper"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useProfilePopup } from "hooks/useAppContext"
@@ -69,7 +69,8 @@ export const EditableProfileField = (props: EditableProfileFieldProps) => {
 			}
 
 			setIsSaving(true)
-			const response = await updateUserInfo(token, { [field]: nextValue }) as APIResponse<Partial<UpdateUserInfoResponse>>
+			type Response = APIResponse<Partial<UpdateUserInfoResponse>>
+			const response = await updateUserInfo(token, { [field]: nextValue }) as Response
 			if (!response?.success) {
 				await openAlert({
 					title: "popup.alert.title",

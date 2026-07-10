@@ -1,15 +1,8 @@
 import { createContext, useContext } from "react"
 import { AuthContextProps } from "components/AuthProvider/types"
 import { ProfilePopupContextValue } from "components/Layout/types"
-import {
-	CreateRoomContextValue,
-	PieceSelectionContextValue
-} from "pages/Dashboard/types"
-import {
-	GameMenuActionContextValue,
-	RoomChatDialogContextValue,
-	RoomSettingsDialogContextValue
-} from "pages/Room/types"
+import { CreateRoomContextValue, PieceSelectionContextValue } from "pages/Dashboard/types"
+import { RoomChatDialogContextValue, RoomSettingsDialogContextValue } from "pages/Room/types"
 
 export const AuthContext = createContext<AuthContextProps>({
 	isLoading: true,
@@ -52,18 +45,6 @@ export const useProfilePopup = () => {
 	const context = useContext(ProfilePopupContext)
 	if (!context) {
 		throw new Error("useProfilePopup must be used within ProfilePopupProvider")
-	}
-
-	return context
-}
-
-export const GameMenuActionContext = createContext<GameMenuActionContextValue | null>(null)
-
-export const useGameMenuActionContext = () => {
-	const context = useContext(GameMenuActionContext)
-
-	if (!context) {
-		throw new Error("GameMenuAction must be used within GameMenuActionContext.Provider")
 	}
 
 	return context

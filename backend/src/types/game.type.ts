@@ -68,6 +68,63 @@ export interface UserPresenceStatus {
 	status: PresenceStatus
 }
 
+// ---- Game clock (countdown / chess clock) ----
+
+export interface ClockParticipant {
+	userId: number
+	team: Team | null
+}
+
+// Per-game clock configuration plus the participants needed to settle a time-out.
+export interface ClockConfig {
+	status: number
+	roomId: bigint
+	timeLimit: number | null
+	timeIncrement: number
+	betAmount: number | null
+	pveMode: boolean
+	participants: ClockParticipant[]
+}
+
+// Accumulated time (ms) and completed-move counts per side at a fixed point in
+// the game. Written onto the move-history record that an undo rewinds to, so the
+// clock can resume the current turn from "now" without re-charging the wall-clock
+// time the undo removed.
+export interface ClockBaseline {
+	spentMs: { red: number; black: number }
+	moves: { red: number; black: number }
+}
+
+// A single move-history record reduced to the fields the clock derives from.
+// `baseline`, when present, marks this record as a resume anchor: time spent up
+// to here is taken from the baseline and only later gaps are added on top.
+export interface ClockHistoryRecord {
+	team: Team
+	timeStamp: number
+	fen: string
+	baseline?: ClockBaseline | null
+}
+
+// Derived clock math, including the active team's flag deadline (ms epoch).
+export interface ClockState {
+	redMs: number
+	blackMs: number
+	activeTeam: Team
+	deadlineMs: number
+	serverNow: number
+}
+
+// Clock payload broadcast to / loaded by clients. `serverNow` lets clients
+// correct for clock skew when ticking locally between updates.
+export interface ClockSnapshot {
+	redMs: number
+	blackMs: number
+	activeTeam: Team
+	serverNow: number
+	timeLimit: number
+	timeIncrement: number
+}
+
 export interface PostGameParticipant {
 	team: Team
 	ready: boolean
@@ -104,4 +161,9 @@ export interface RoomUserSnapshot {
 		is_bot: boolean
 		total_amount: number
 	}
+}
+
+export interface CachedAchievement {
+	id: bigint
+	name: string
 }

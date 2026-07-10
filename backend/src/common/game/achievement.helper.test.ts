@@ -1,8 +1,39 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from "vitest"
+
+// The achievement catalog is now read through getCachedAchievements, which hits
+// the global prisma client and Redis (not the transaction client).
+// vi.hoisted keeps these mocks available inside the hoisted vi.mock factories.
+const { achievementFindManyMock, redisGetMock, redisSetMock } = vi.hoisted(() => ({
+	achievementFindManyMock: vi.fn(),
+	redisGetMock: vi.fn(),
+	redisSetMock: vi.fn()
+}))
+
+vi.mock("prisma", () => ({
+	default: {
+		achievement: {
+			findMany: achievementFindManyMock
+		}
+	}
+}))
+
+vi.mock("../redis", () => ({
+	default: {
+		get: redisGetMock,
+		set: redisSetMock
+	}
+}))
+
 import { evaluateAchievements } from "./achievement.helper"
 
-// Mock of the achievement rows present in the DB, returned by tx.achievement.findMany.
-// evaluateAchievements maps these name -> id to decide which rows to award.
+// Achievement catalog rows as the DB would return them.
 const DB_ACHIEVEMENTS = [
 	{ id: 1n, name: "achievement.title-02" },
 	{ id: 2n, name: "achievement.title-06" },
@@ -15,7 +46,6 @@ const buildTx = (options: {
 	participants: { user_id: bigint; is_bot: boolean }[]
 	winCount: number
 	drawCount: number
-	achievements?: { id: bigint; name: string }[]
 }) => {
 	const createManyMock = vi.fn().mockResolvedValue({ count: 0 })
 	const countMock = vi.fn().mockImplementation(({ where }: { where: { amount: unknown } }) => {
@@ -26,9 +56,6 @@ const buildTx = (options: {
 	})
 
 	const tx = {
-		achievement: {
-			findMany: vi.fn().mockResolvedValue(options.achievements ?? DB_ACHIEVEMENTS)
-		},
 		gameUser: {
 			findMany: vi.fn().mockResolvedValue(
 				options.participants.map(participant => ({
@@ -47,6 +74,12 @@ const buildTx = (options: {
 }
 
 describe("evaluateAchievements", () => {
+	beforeEach(() => {
+		// Cache miss by default, so the catalog is read from the (mocked) DB.
+		redisGetMock.mockResolvedValue(null)
+		achievementFindManyMock.mockResolvedValue(DB_ACHIEVEMENTS)
+	})
+
 	afterEach(() => {
 		vi.clearAllMocks()
 	})
@@ -112,15 +145,36 @@ describe("evaluateAchievements", () => {
 	})
 
 	it("does nothing when no achievements exist in the database", async () => {
+		achievementFindManyMock.mockResolvedValue([])
+
 		const { tx, createManyMock } = buildTx({
 			participants: [{ user_id: 10n, is_bot: false }],
 			winCount: 5,
-			drawCount: 60,
-			achievements: []
+			drawCount: 60
 		})
 
 		await evaluateAchievements(tx as never, "game-1")
 
 		expect(createManyMock).not.toHaveBeenCalled()
+	})
+
+	it("serves the catalog from the Redis cache without querying the DB", async () => {
+		redisGetMock.mockResolvedValue(JSON.stringify([
+			{ id: "1", name: "achievement.title-02" }
+		]))
+
+		const { tx, createManyMock } = buildTx({
+			participants: [{ user_id: 10n, is_bot: false }],
+			winCount: 1,
+			drawCount: 0
+		})
+
+		await evaluateAchievements(tx as never, "game-1")
+
+		expect(achievementFindManyMock).not.toHaveBeenCalled()
+		expect(createManyMock).toHaveBeenCalledWith({
+			data: [{ user_id: 10n, achievement_id: 1n }],
+			skipDuplicates: true
+		})
 	})
 })

@@ -3,19 +3,18 @@ import { Link as RouterLink, useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	Box,
-	Button,
 	CircularProgress,
 	Link,
 	Paper,
 	Stack
 } from "@mui/material"
-import { LOGIN_PATH } from "common/constant"
+import { EMAIL_PATTERN, LOGIN_PATH } from "common/constant"
 import { isPasswordPolicyMet } from "common/password"
 import { GENDER_OPTIONS, VALIDATION_RULES } from "./constants"
 import Alert from "components/AlertWithIcon"
 import { ComboBoxWithLabel } from "components/ComboBoxWithLabel"
 import { PasswordPolicyChecklist } from "components/PasswordPolicyChecklist"
-import { TI, TTextField, TTypography } from "components/TranslationTag"
+import { TButton, TI, TTextField, TTypography } from "components/TranslationTag"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
 import { translate } from "locales/translate"
@@ -49,14 +48,31 @@ export default function RegisterPage() {
 	const [message, setMessage] = useState<string | null>(null)
 	const navigate = useNavigate()
 
+	const validateEmail = (value: string) => {
+		if (!value.trim()) {
+			setErrors(prev => ({ ...prev, email: "common.input.is-required" }))
+			return false
+		}
+
+		if (!EMAIL_PATTERN.test(value)) {
+			setErrors(prev => ({ ...prev, email: "register.email.error1" }))
+			return false
+		}
+
+		return true
+	}
+
 	const validateFieldWithPattern = (fieldName: keyof typeof formData, value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, [fieldName]: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, [fieldName]: "common.input.is-required" }))
 			return false
 		}
 		if (fieldName === "username" && !VALIDATION_RULES[fieldName].pattern.test(value)) {
-			setErrors(prev => ({ ...prev, [fieldName]: translate(VALIDATION_RULES[fieldName].message) }))
+			setErrors(prev => ({ ...prev, [fieldName]: VALIDATION_RULES[fieldName].message }))
 			return false
+		}
+		if (fieldName === "email") {
+			return validateEmail(value)
 		}
 		setErrors(prev => ({ ...prev, [fieldName]: undefined }))
 		return true
@@ -64,11 +80,11 @@ export default function RegisterPage() {
 
 	const validatePassword = (value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, password: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, password: "common.input.is-required" }))
 			return false
 		}
 		if (!isPasswordPolicyMet(value)) {
-			setErrors(prev => ({ ...prev, password: translate(VALIDATION_RULES.password.message) }))
+			setErrors(prev => ({ ...prev, password: VALIDATION_RULES.password.message }))
 			return false
 		}
 		setErrors(prev => ({ ...prev, password: undefined }))
@@ -77,11 +93,11 @@ export default function RegisterPage() {
 
 	const validateConfirmPassword = (value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, confirmPassword: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, confirmPassword: "common.input.is-required" }))
 			return false
 		}
 		if (value !== formData.password) {
-			setErrors(prev => ({ ...prev, confirmPassword: translate("register.confirm-password.error1") }))
+			setErrors(prev => ({ ...prev, confirmPassword: "register.confirm-password.error1" }))
 			return false
 		}
 		setErrors(prev => ({ ...prev, confirmPassword: undefined }))
@@ -90,16 +106,16 @@ export default function RegisterPage() {
 
 	const validateRequiredField = (fieldName: keyof typeof formData, value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, [fieldName]: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, [fieldName]: "common.input.is-required" }))
 			return false
 		}
 		setErrors(prev => ({ ...prev, [fieldName]: undefined }))
 		return true
 	}
 
-	const onChangeField = (fieldName: keyof typeof formData) => (event: ChangeEvent<HTMLInputElement>) => {
-		const value = event.target.value
-		setFormData(prev => ({ ...prev, [fieldName]: value }))
+	const onChangeField = (field: keyof typeof formData) => (e: ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value
+		setFormData(prev => ({ ...prev, [field]: value }))
 	}
 
 	const onChangePassword = (event: ChangeEvent<HTMLInputElement>) => {
@@ -193,7 +209,7 @@ export default function RegisterPage() {
 			} else {
 				setLoading(false)
 				const errorMsg = response?.message || translate("register.form.error1")
-				setError(translate(errorMsg) === errorMsg ? errorMsg : translate(errorMsg))
+				setError(translate(errorMsg) === errorMsg ? errorMsg : (errorMsg))
 			}
 		} catch (submitError) {
 			setLoading(false)
@@ -226,7 +242,7 @@ export default function RegisterPage() {
 				justifyContent: "center",
 			}}
 		>
-			<Paper elevation={4} sx={{ width: "calc(100% - 16px)", maxWidth: 500, p: 3, borderRadius: 3 }}>
+			<Paper elevation={4} className="unauth-form-paper-container">
 				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
 					<TTypography
 						variant="h5"
@@ -303,7 +319,9 @@ export default function RegisterPage() {
 								endAdornment: (
 									<TI
 										className={eyeIconClassConfirm}
-										title={showConfirmPassword ? "register.confirm-password.hide" : "register.confirm-password.show"}
+										title={showConfirmPassword
+											? "register.confirm-password.hide"
+											: "register.confirm-password.show"}
 										onClick={() => setShowConfirmPassword(prev => !prev)}
 									/>
 								)
@@ -316,7 +334,7 @@ export default function RegisterPage() {
 						title="register.gender.label"
 						options={GENDER_OPTIONS}
 						value={formData.gender}
-						errorMessage={errors.gender}
+						errorMessage={translate(errors.gender)}
 						change={onChangeGender}
 						blur={onBlurGender}
 					/>
@@ -333,7 +351,7 @@ export default function RegisterPage() {
 						error={!!errors.displayName}
 						helperText={errors.displayName}
 						slotProps={{
-						input: {
+							input: {
 								startAdornment: (
 									<i className="fas fa-tag start-icon" />
 								)
@@ -362,9 +380,15 @@ export default function RegisterPage() {
 						}}
 					/>
 
-					<Button type="submit" variant="contained" disabled={loading || !isFormValid} fullWidth size="large">
-						{loading ? <CircularProgress size={22} color="inherit" /> : translate("register.form.submit")}
-					</Button>
+					<TButton
+						type="submit"
+						variant="contained"
+						disabled={loading || !isFormValid}
+						fullWidth
+						size="large"
+						value="register.form.submit"
+						startIcon={loading ? <CircularProgress size={22} color="inherit" /> : undefined}
+					/>
 
 					{error && <Alert severity="error">{error}</Alert>}
 					{message && <Alert severity="success">{message}</Alert>}

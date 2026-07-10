@@ -8,8 +8,7 @@ import {
 	Divider,
 	Grid,
 } from "@mui/material"
-import { openAlert } from "components/AlertProvider"
-import { Empty } from "components/Common"
+import { openAlert } from "components/AlertProvider/helper"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import { BotDifficultySlider } from "components/BotDifficulty/Slider"
 import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
@@ -24,14 +23,14 @@ import { setRoomHostId } from "toolkit/slice/game"
 const RoomSettingsDialog = () => {
 	const {
 		game,
-    isHost,
-    isOpen,
-    room,
-    users,
+		isHost,
+		isOpen,
+		room,
+		users,
 
-    closeSettings,
-    handleSettingsSaved
-  } = useRoomSettingsDialogContext()
+		closeSettings,
+		handleSettingsSaved
+	} = useRoomSettingsDialogContext()
 	// Spectators are all users except the first 2 (players)
 	const spectatorsUsers = users.filter(u => u.team === null)
 	const { updateRoom } = useAPI()
@@ -94,7 +93,7 @@ const RoomSettingsDialog = () => {
 		showProfilePopup(userId)
 	}
 
-  if (!room) return <Empty />
+	if (!room) return null
 
 	return (
 		<Dialog
@@ -109,7 +108,7 @@ const RoomSettingsDialog = () => {
 				<TTextField
 					label="room.settings.room-name"
 					value={name}
-          variant="standard"
+					variant="standard"
 					onChange={handleNameChange}
 					onBlur={() => setNameError(name.trim().length === 0)}
 					error={nameError}
@@ -118,13 +117,23 @@ const RoomSettingsDialog = () => {
 					autoFocus={isHost}
 					disabled={submitting || !isHost}
 				/>
-				{room.bet_amount > 0 && <Grid className="room-bet-amount">
-					<i className="fas fa-sack-dollar user-points" />
-					{room.bet_amount.toLocaleString(state.lang)}
-				</Grid>}
-				{game && game.bot_difficulty !== null && <Grid className="game-lelvel">
-					<BotDifficultySlider level={game.bot_difficulty} disabled />
-				</Grid>}
+				{room.bet_amount > 0 && (
+					<Grid className="room-bet-amount">
+						<i className="fas fa-sack-dollar user-points" />
+						{room.bet_amount.toLocaleString(state.lang)}
+					</Grid>
+				)}
+				{!!room.time_limit && (
+					<Grid className="room-time-limit">
+						<i className="far fa-clock" />
+						{translate("dashboard.popup.time-minutes").format(room.time_limit / 60)}
+					</Grid>
+				)}
+				{game && game.bot_difficulty !== null && (
+					<Grid className="game-lelvel">
+						<BotDifficultySlider level={game.bot_difficulty} disabled />
+					</Grid>
+				)}
 
 				{spectatorsUsers.length > 0 && (
 					<Box>

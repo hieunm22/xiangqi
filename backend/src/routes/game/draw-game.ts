@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { getUTCTimestamp } from "common/helper"
 import { runEndGameTransaction } from "common/game/end-game.helper"
+import { stopClock } from "common/game/game-clock"
 import { activatePostGameLock } from "common/game/post-game.helper"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { getGameHistoryCollection } from "common/mongodb"
@@ -190,6 +191,7 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 		// Game over — clear players' "busy" presence back to their live status.
 		// Skip when another request already ended the game to avoid duplicate work.
 		if (ended) {
+			stopClock(normalizedGameId)
 			await syncPlayersPresence(normalizedGameId, false)
 			await activatePostGameLock(game.room_id, normalizedGameId)
 		}

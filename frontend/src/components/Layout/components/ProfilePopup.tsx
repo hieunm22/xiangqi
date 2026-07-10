@@ -9,7 +9,7 @@ import {
 	Tabs,
 } from "@mui/material"
 import { PopupState } from "common/enums"
-import { openAlert } from "components/AlertProvider"
+import { openAlert } from "components/AlertProvider/helper"
 import { GameReplayPopup } from "components/GameReplay"
 import { HistoryTab, ProfileAchievement, ProfileTab } from "./ProfileTabs"
 import { TButton, TTab } from "components/TranslationTag"
@@ -64,7 +64,10 @@ export const ProfilePopup = () => {
 	const isOwnProfile = user?.id === currentUserId
 
 	const loadRoomContext = async () => {
-		if ((gameState.popupState & PopupState.PROFILE) !== PopupState.PROFILE) {
+		// PROFILE bit must be set and the chat (SEND_PM) must not be on top —
+		// otherwise the profile is only stacked behind an open chat.
+		if ((gameState.popupState & PopupState.PROFILE) !== PopupState.PROFILE
+			|| (gameState.popupState & PopupState.SEND_PM) === PopupState.SEND_PM) {
 			return
 		}
 
@@ -73,7 +76,8 @@ export const ProfilePopup = () => {
 			return
 		}
 
-		const response = await getUserById(token, gameState.activeUserId!) as APIResponse<UserProfileWithStats>
+		type ProfileTabResponse = APIResponse<UserProfileWithStats>
+		const response = await getUserById(token, gameState.activeUserId!) as ProfileTabResponse
 		if (response) {
 			setProfileUser(response.data.user)
 			setGameStats(response.data.stats)
@@ -92,7 +96,8 @@ export const ProfilePopup = () => {
 			return
 		}
 
-		const response = await getAchievements(token, gameState.activeUserId!) as APIResponse<Achievement[]>
+		type ListAchievements = APIResponse<Achievement[]>
+		const response = await getAchievements(token, gameState.activeUserId!) as ListAchievements
 		if (response?.success) {
 			setAchievements(response.data)
 		}
@@ -109,7 +114,8 @@ export const ProfilePopup = () => {
 			return
 		}
 
-		const response = await getPlayerHistory(token, gameState.activeUserId!) as APIResponse<GameHistoryItem[]>
+		type ListGameHistory = APIResponse<GameHistoryItem[]>
+		const response = await getPlayerHistory(token, gameState.activeUserId!) as ListGameHistory
 		if (response?.success && response.data) {
 			setGameHistories(response.data)
 		}
@@ -139,7 +145,7 @@ export const ProfilePopup = () => {
 
 	const handleSendPM = () => {
 		dispatch(setUserId(gameState.activeUserId))
-		dispatch(setPopup(PopupState.SEND_PM))
+		dispatch(setPopup(PopupState.PROFILE | PopupState.SEND_PM))
 	}
 
 	const handleKickUser = async () => {
@@ -172,9 +178,12 @@ export const ProfilePopup = () => {
 		dispatch(setPopup(PopupState.NONE))
 	}
 
+	const profileOpen = (gameState.popupState & PopupState.PROFILE) === PopupState.PROFILE
+		&& (gameState.popupState & PopupState.SEND_PM) !== PopupState.SEND_PM
+
 	return (
 		<Dialog
-			open={(gameState.popupState & PopupState.PROFILE) === PopupState.PROFILE}
+			open={profileOpen}
 			onClose={handleCloseProfilePopup}
 			className="profile-dialog"
 			fullWidth

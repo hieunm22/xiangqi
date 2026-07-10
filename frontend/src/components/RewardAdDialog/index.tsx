@@ -10,6 +10,7 @@ import { TButton, TTypography } from "components/TranslationTag"
 import { useIMASdk } from "hooks/useIMASdk"
 import { AdStatus, RewardAdDialogProps } from "./types"
 import "./RewardAdDialog.scss"
+import { logger } from "common/helper"
 
 export default function RewardAdDialog({ open, onClose, onReward }: RewardAdDialogProps) {
 	const loadImaSdk = useIMASdk()
@@ -38,10 +39,10 @@ export default function RewardAdDialog({ open, onClose, onReward }: RewardAdDial
 			onClose()
 		}
 
-		const handleError = (event?: any) => {
+		const handleError = (e?: any) => {
 			// Surface the real reason (SDK blocked, VAST error code, autoplay, etc.)
 			// so failures are diagnosable from the console instead of a silent overlay.
-			console.error("Reward ad failed:", event?.getError?.() ?? event)
+			logger.error("Reward ad failed:", e?.getError?.() ?? e)
 			if (!cancelled) setStatus("error")
 		}
 

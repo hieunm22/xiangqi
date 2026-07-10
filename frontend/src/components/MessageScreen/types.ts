@@ -1,8 +1,10 @@
+import { EmptyVoid } from "types/Common"
+
 export interface MessageScreenProps {
 	message: string
 	data?: string[]
 	actionMessage?: string
-	action?: Function
+	action?: EmptyVoid
 	icon: MessageScreenIcon
 }
 

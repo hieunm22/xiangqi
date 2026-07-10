@@ -1,50 +1,22 @@
-import { Menu, MenuItem } from "@mui/material"
-import { Empty } from "components/Common"
-import { TI } from "components/TranslationTag"
-import { GameMenuActionContext } from "hooks/useAppContext"
-import { translate } from "locales/translate"
-import { GameMenuActionContextValue } from "../types"
+import Stack from "@mui/material/Stack"
+import classnames from "classnames"
+import { TTooltip } from "components/TranslationTag"
+import { GameMenuProps } from "../types"
 
-export const GameMenu = (props: GameMenuActionContextValue) => {
-	const {
-		actionMenuItems,
-		isActionMenuOpen,
-		menuAnchorEl,
+export const GameMenu = (props: GameMenuProps) => (
+	<Stack direction={{ xs: "row", sm: "column" }} spacing={1}>
+		{props.buttons.map(item => {
+			if (!item.visible) return null
+			const iconClass = classnames("game-more-action", item.icon, {
+				"disabled": !item.enabled
+			})
+			const handleClick = item.enabled ? item.onClick : undefined
 
-		closeActionMenu,
-		handleMenuItemClick,
-		openActionMenu
-	} = props
-
-	return (
-		<GameMenuActionContext.Provider value={props}>
-			<TI className="room-more-action fas fa-ellipsis-h" onClick={openActionMenu} />
-			<Menu
-				anchorEl={menuAnchorEl}
-				open={isActionMenuOpen}
-				onClose={closeActionMenu}
-				anchorOrigin={{ vertical: "top", horizontal: "left" }}
-				transformOrigin={{ vertical: "center", horizontal: "right" }}
-				slotProps={{
-					root: {
-						"aria-hidden": false
-					}
-				}}
-			>
-				{actionMenuItems.map(item => {
-					if (!item.visible) return <Empty key={item.key} />
-					return (
-						<MenuItem
-							key={item.key}
-							onClick={handleMenuItemClick(item.onClick)}
-							disabled={!item.enabled}
-						>
-							<i className={`${item.icon} action-menu-icon`} />
-							{translate(item.label)}
-						</MenuItem>
-					)
-				})}
-			</Menu>
-		</GameMenuActionContext.Provider>
-	)
-}
+			return (
+				<TTooltip title={item.label} key={item.key} placement="left">
+					<i className={iconClass} onClick={handleClick} />
+				</TTooltip>
+			)
+		})}
+	</Stack>
+)

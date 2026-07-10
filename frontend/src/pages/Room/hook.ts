@@ -1,4 +1,10 @@
-import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { HOME_PATH, LOGIN_PATH } from "common/constant"
 import {
@@ -8,15 +14,16 @@ import {
 	MOVE_SOUND_URL
 } from "./constant"
 import { PopupState } from "common/enums"
-import { openAlert } from "components/AlertProvider"
+import { openAlert } from "components/AlertProvider/helper"
 import { RoomChatMessage } from "components/ChatDialog/types"
-import { openConfirm } from "components/ConfirmProvider"
-import { openSnackbar } from "components/SnackbarProvider"
+import { openConfirm } from "components/ConfirmProvider/helper"
+import { openSnackbar } from "components/SnackbarProvider/helper"
 import {
 	diffFenMove,
 	getAvailableMoves,
 	getCurrentUserId,
-	getToken
+	getToken,
+	logger,
 } from "common/helper"
 import {
 	applyMove,
@@ -36,9 +43,10 @@ import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
+import useGameClock from "./useGameClock"
 import { translate } from "locales/translate"
-import { setPopup } from "toolkit/slice/game"
-import { APIResponse, EmptyVoid, FenMoveDiffResult } from "types/Common"
+import { setIsInGame, setPopup } from "toolkit/slice/game"
+import { APIResponse, FenMoveDiffResult } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
@@ -47,8 +55,8 @@ import {
 	Team
 } from "types/GameState"
 import {
+	ClockSnapshot,
 	DrawRequest,
-	GameMenuActionContextValue,
 	GameMovements,
 	HistoryData,
 	MovePieceRequest,
@@ -61,6 +69,7 @@ import {
 	RoomSettingsDialogContextValue,
 	RoomUser,
 	StartGameBody,
+	SurrenderRequest,
 	VerifyStateResponseData,
 } from "./types"
 
@@ -96,6 +105,7 @@ const useRoomHook = () => {
 		offDrawResponse,
 		offGameEnded,
 		offGameStarted,
+		offGameUndo,
 		offMovePiece,
 		offRoomMessageSent,
 		offRoomUsersUpdated,
@@ -105,6 +115,7 @@ const useRoomHook = () => {
 		onDrawResponse,
 		onGameEnded,
 		onGameStarted,
+		onGameUndo,
 		onMovePiece,
 		onRoomMessageSent,
 		onRoomUsersUpdated,
@@ -124,7 +135,7 @@ const useRoomHook = () => {
 	const [unreadChatCount, setUnreadChatCount] = useState(0)
 	const [incomingChatMessage, setIncomingChatMessage] = useState<RoomChatMessage | null>(null)
 
-	const [actionMenuItems, setActionMenuItems] = useState<RoomActionButton[]>([])
+	const [gameButtons, setGameButtons] = useState<RoomActionButton[]>([])
 	const [board, setBoard] = useState<NullableCellProps[]>([])
 	const [selected, setSelected] = useState<number | null>(null)
 	const [availableMoves, setAvailableMoves] = useState<number[]>([])
@@ -141,6 +152,8 @@ const useRoomHook = () => {
 	// Remote move waiting for its animation to finish before being committed to history
 	const [pendingRemoteMove, setPendingRemoteMove] = useState<HistoryData | null>(null)
 	const [pendingDrawRequest, setPendingDrawRequest] = useState<DrawRequest | null>(null)
+	// Latest server countdown snapshot; useGameClock ticks it locally for display.
+	const [clock, setClock] = useState<ClockSnapshot | null>(null)
 	const boardRef = useRef(board)
 	// The opponent's last move (from/to), keyed to the FEN it produces. Captured in
 	// handleMovePiece where the diff is computed against the live board, because the
@@ -152,7 +165,9 @@ const useRoomHook = () => {
 	const previousJoinedUsersRef = useRef<RoomUser[]>([])
 	const processedGameEndRef = useRef<string | null>(null)
 	const openRoomChatRef = useRef(openRoomChat)
-	openRoomChatRef.current = openRoomChat
+	useEffect(() => {
+		openRoomChatRef.current = openRoomChat
+	}, [openRoomChat])
 	const { id } = useParams()
 	const roomId = Number(id)
 	const navigate = useNavigate()
@@ -194,18 +209,20 @@ const useRoomHook = () => {
 		})
 
 		if (!response?.success) {
-			console.warn("[Room] back-to-room failed", response)
+			logger.warn("[Room] back-to-room failed", response)
 		}
 	}, [backToRoom, roomId])
 
-	const buildPostGameBackAlertMessage = useCallback((isWinner: boolean, secondsLeft: number) => {
-		const resultText = isWinner ? translate("room.messages.you-win") : translate("room.messages.you-lose")
-		return translate("room.messages.auto-back-countdown").format(resultText, secondsLeft)
+	const buildPostGameAlertMessage = useCallback((isWinner: boolean, secondsLeft: number) => {
+		const resultText = isWinner ? "room.messages.you-win" : "room.messages.you-lose"
+		return translate("room.messages.auto-back-countdown").format(
+			translate(resultText),
+			secondsLeft)
 	}, [])
 
 	const handleGameEnded = useCallback(async (data: {
 		gameId: string
-		status: "checkmate" | "stalemate"
+		status: "checkmate" | "stalemate" | "timeout"
 		winnerId: number | null
 	}) => {
 		const dedupeKey = `${data.gameId}-${data.status}-${data.winnerId ?? "draw"}`
@@ -221,14 +238,14 @@ const useRoomHook = () => {
 		}
 
 		if (myTeam !== null) {
-			const alertMessage = buildPostGameBackAlertMessage(isWinner, POST_GAME_BACK_COUNTDOWN_SECONDS)
+			const alertMessage = buildPostGameAlertMessage(isWinner, POST_GAME_BACK_COUNTDOWN_SECONDS)
 
 			await openAlert({
 				title: "popup.alert.title",
 				message: alertMessage,
 				okLabel: "room.messages.back-to-room",
 				countdownSeconds: POST_GAME_BACK_COUNTDOWN_SECONDS,
-				countdownMessageBuilder: secondsLeft => buildPostGameBackAlertMessage(isWinner, secondsLeft)
+				countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(isWinner, secondsLeft)
 			})
 
 			await submitBackToRoom(data.gameId)
@@ -237,12 +254,13 @@ const useRoomHook = () => {
 		resetToWaitingRoom()
 		setShowConfetti(false)
 		await enforcePostGameBalance()
-	}, [buildPostGameBackAlertMessage, currentUserId, myTeam, submitBackToRoom])
+	}, [buildPostGameAlertMessage, currentUserId, myTeam, submitBackToRoom])
 
 	// Reset client state to the post-game "waiting" view (room.status === 1, no active game)
 	const resetToWaitingRoom = () => {
 		setRoom(prev => prev ? { ...prev, status: 1 } : prev)
 		setGame(null)
+		setClock(null)
 		setHistory([])
 		setAvailableMoves([])
 		const emptyBoard = fenToBoard(EMPTY_BOARD_FEN)
@@ -317,6 +335,7 @@ const useRoomHook = () => {
 
 		setRoom(roomData.room)
 		setGame(roomData.game)
+		setClock(roomData.clock ?? null)
 		setUnreadChatCount(roomData.chat.unread_count)
 
 		if (!roomData.game) {
@@ -377,7 +396,6 @@ const useRoomHook = () => {
 			}
 		}
 
-		const playerIds = joinedUsers.filter(u => u.team !== null).map(user => user.id)
 		const currentUser = joinedUsers.find(user => user.id === currentUserId)
 
 		const { top, bottom } = resolveSideUsers(joinedUsers, room.red_first)
@@ -392,22 +410,28 @@ const useRoomHook = () => {
 			? (room.bet_amount === 0 || room.bet_amount * 10 <= currentUser.total_amount * 8)
 			: true
 
+		// Shared button-state flags. "Waiting" = room open before a game; "playing" =
+		// a game is actively running (room.status 2 AND game.status 1 = ongoing).
+		const isHost = room.host_id === currentUserId
+		const isWaiting = room.status === 1
+		const isPlaying = room.status === 2 && game?.status === 1
+		const mySeat = currentUser?.team ?? null
+		const isPlayer = mySeat !== null
+		const bothSeatsFilled = seatSet.has("red") && seatSet.has("black")
+		const allPlayersReady = bothSeatsFilled && !isStartBlockedByBackReady
+
 		const menus: RoomActionButton[] = [
 			{
 				key: "start-room",
-				icon: "fad fa-swords",
+				icon: "fas fa-swords",
 				label: "room.actions.start-room",
 				onClick: handleStartGame,
-				visible: room.host_id === currentUserId && room.status === 1 && joinedUsers.length > 1,
-				enabled: joinedUsers.length > 1
-					&& room !== null
-					&& room.status === 1
-					&& (seatSet.has("red") && seatSet.has("black"))
-					&& !isStartBlockedByBackReady
+				visible: isHost && isWaiting,
+				enabled: isWaiting && allPlayersReady
 			},
 			{
 				key: "rotate-board",
-				icon: "fad fa-arrows-rotate",
+				icon: "fas fa-arrows-rotate",
 				label: "room.actions.flip-board",
 				onClick: handleRotateBoard,
 				visible: true,
@@ -415,47 +439,47 @@ const useRoomHook = () => {
 			},
 			{
 				key: "challenge",
-				icon: "fad fa-hand-rock",
+				icon: "fas fa-hand-rock",
 				label: "room.actions.challenge",
 				onClick: handleChallenge,
-				visible: currentUser?.team === null,
-				enabled: room.status === 1 && currentUser?.team === null && hasAvailableSeat && canAffordBet
+				visible: isWaiting && !isHost && mySeat === null,
+				enabled: hasAvailableSeat && canAffordBet
 			},
 			{
 				key: "leave-seat",
-				icon: "fad fa-seat",
+				icon: "fas fa-seat",
 				label: "room.actions.leave-seat",
 				onClick: handleLeaveSeat,
-				visible: currentUser !== undefined && currentUser.team !== null && room.host_id !== currentUserId,
-				enabled: room.status === 1 && currentUser !== undefined && currentUser.team !== null
+				visible: isWaiting && isPlayer && !isHost,
+				enabled: true
 			},
 			{
 				key: "undo",
-				icon: "fad fa-rotate-left",
+				icon: "fas fa-rotate-left",
 				label: "room.actions.undo",
 				onClick: handleUndo,
-				visible: false,
-				enabled: false
+				visible: isPlaying,
+				enabled: isPlaying && isPlayer && history.length > 2
 			},
 			{
 				key: "draw",
-				icon: "fad fa-handshake",
+				icon: "fas fa-handshake",
 				label: "room.actions.draw",
 				onClick: handleDraw,
-				visible: false,
-				enabled: false
+				visible: isPlaying,
+				enabled: isPlaying && isPlayer
 			},
 			{
 				key: "surrender",
-				icon: "fad fa-flag",
+				icon: "fas fa-flag",
 				label: "room.actions.surrender",
 				onClick: handleSurrender,
-				visible: false,
-				enabled: false
+				visible: isPlaying,
+				enabled: isPlaying && isPlayer
 			},
 			{
 				key: "back-home",
-				icon: "fad fa-left-from-bracket",
+				icon: "fas fa-left-from-bracket",
 				label: "room.actions.back-home",
 				onClick: handleBackToHome,
 				visible: true,
@@ -463,42 +487,18 @@ const useRoomHook = () => {
 			},
 		]
 
+		setGameButtons(menus)
+
 		if (history.length === 0) {
 			setCurrentTurn(room && room.red_first ? "red" : "black")
-			setActionMenuItems(menus)
 			return
 		}
 
-		const nextCapturedPieces = getCapturedPiecesFromHistory(history)
+		const nextCaptured = getCapturedPiecesFromHistory(history)
 		const latest = history[history.length - 1]
 		const fen = latest.fen as string
 		const nextBoard = fenToBoard(fen)
-		const isInCurrentRoom = currentUser !== undefined
-		const newIsPlayer = currentUserId !== null && playerIds.includes(currentUserId)
 		setCurrentTurn(latest.team as Team)
-		// const isMyTurn = Boolean(currentUser?.team === latest.team)
-
-		const canSurrender = isInCurrentRoom
-			&& newIsPlayer
-			&& room !== null
-			&& room.status === 2
-			&& Boolean(game)
-
-		menus[0].visible = false
-		menus[0].enabled = false
-		menus[1].visible = isInCurrentRoom
-		menus[1].enabled = isInCurrentRoom
-		menus[2].enabled = false
-		menus[2].enabled = false
-		menus[3].enabled = false
-		menus[3].enabled = false
-		menus[4].visible = canSurrender
-		menus[4].enabled = canSurrender && history.length > 2
-		menus[5].visible = canSurrender
-		menus[5].enabled = canSurrender
-		menus[6].visible = canSurrender
-		menus[6].enabled = canSurrender
-		setActionMenuItems(menus)
 
 		// For spectators: highlight all moves
 		// For players: only highlight opponent moves.
@@ -534,14 +534,23 @@ const useRoomHook = () => {
 		setSelected(null)
 		setPreviousMove(nextPreviousMove)
 		setCheckingPieces(nextCheckingPieces)
-		// Merge new captures from history instead of replacing entirely, since local moves
-		// are never added to history (socket skips them), so recalculating from history
-		// alone would lose captures made by the current player
+		// Merge new captures from history instead of replacing entirely
 		setCapturedPieces(prev => ({
-			red: nextCapturedPieces.red.length > prev.red.length ? nextCapturedPieces.red : prev.red,
-			black: nextCapturedPieces.black.length > prev.black.length ? nextCapturedPieces.black : prev.black
+			red: nextCaptured.red.length > prev.red.length ? nextCaptured.red : prev.red,
+			black: nextCaptured.black.length > prev.black.length ? nextCaptured.black : prev.black
 		}))
 	}
+
+	const isInGame = room?.status === 2 && (game?.id ?? null) != null
+
+	// Expose the in-game state globally
+	useEffect(() => {
+		dispatch(setIsInGame(isInGame))
+	}, [dispatch, isInGame])
+
+	useEffect(() => () => {
+		dispatch(setIsInGame(false))
+	}, [dispatch])
 
 	useEffect(() => {
 		loadCurrentRoom()
@@ -555,7 +564,7 @@ const useRoomHook = () => {
 		boardRef.current = board
 	}, [board])
 
-	useEffect(updateToState, [history, joinedUsers])
+	useEffect(updateToState, [history, joinedUsers, room?.status, game?.status, game?.id])
 
 	// Socket.io: Update joined users in host view when another user joins the room
 	useEffect(() => {
@@ -656,7 +665,7 @@ const useRoomHook = () => {
 		const handleMovePiece = (moveRecord: HistoryData) => {
 			// Skip if this move was sent by current user
 			if (moveRecord.userId === currentUserId) {
-				// console.log("[Room] Skipping piece move from self (userId:", moveRecord.userId, ")")
+				logger.log("[Room] Skipping piece move from self (userId:", moveRecord.userId, ")")
 				return
 			}
 
@@ -664,13 +673,21 @@ const useRoomHook = () => {
 				return
 			}
 
+			if (moveRecord.clock) {
+				setClock(moveRecord.clock)
+			}
+
 			const currentFen = boardToFen(boardRef.current)
 			const newFen = moveRecord.fen
 			const diff = diffFenMove(currentFen, newFen)
 			// Remember this move so updateToState can highlight it once the FEN lands
 			remoteMoveRef.current = diff !== null
-				? { fen: newFen, from: diff.oldIndex, to: diff.newIndex, isCapture: diff.capturedCell !== null }
-				: null
+				? {
+					fen: newFen,
+					from: diff.oldIndex,
+					to: diff.newIndex,
+					isCapture: diff.capturedCell !== null
+				} : null
 			const boardClone = boardRef.current.map(cell => {
 				if (cell && diff && cell.id === diff.oldIndex) {
 					const cellClone = { ...cell }
@@ -733,7 +750,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const handleDrawRequest = (data: { roomId: string | number; gameId: string; requestUserId: number }) => {
+		const handleDrawRequest = (data: DrawRequest) => {
 			if (game && (data.gameId !== game.id || data.requestUserId === currentUserId)) {
 				return
 			}
@@ -796,7 +813,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const handleSurrender = async (data: { roomId: string | number; gameId: string; surrenderingUserId: number }) => {
+		const handleSurrender = async (data: SurrenderRequest) => {
 			if (Number(data.roomId) !== roomId) {
 				// Surrender event is for different room, ignoring
 				return
@@ -812,14 +829,14 @@ const useRoomHook = () => {
 
 			// Trigger confetti animation
 			setShowConfetti(true)
-			const alertMessage = buildPostGameBackAlertMessage(true, POST_GAME_BACK_COUNTDOWN_SECONDS)
+			const alertMessage = buildPostGameAlertMessage(true, POST_GAME_BACK_COUNTDOWN_SECONDS)
 
 			await openAlert({
 				title: "popup.alert.title",
 				message: alertMessage,
 				okLabel: "room.messages.back-to-room",
 				countdownSeconds: POST_GAME_BACK_COUNTDOWN_SECONDS,
-				countdownMessageBuilder: secondsLeft => buildPostGameBackAlertMessage(true, secondsLeft)
+				countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(true, secondsLeft)
 			})
 
 			await submitBackToRoom(data.gameId)
@@ -838,11 +855,12 @@ const useRoomHook = () => {
 		return () => {
 			offSurrender(handleSurrender)
 		}
-	}, [isConnected,
+	}, [
+		isConnected,
 		roomId,
 		game,
 		currentUserId,
-		buildPostGameBackAlertMessage,
+		buildPostGameAlertMessage,
 		onSurrender,
 		offSurrender,
 		submitBackToRoom
@@ -884,8 +902,7 @@ const useRoomHook = () => {
 	}, [isConnected, roomId, game, onGameEnded, offGameEnded, handleGameEnded])
 
 	// Socket.io: Play the gong and initialize the board when a game starts in this room.
-	// Fires for everyone in the room (host, opponent, spectators) - the host plays it
-	// here too, which is why handleStartGame no longer plays it directly.
+	// Fires for everyone in the room (host, opponent, spectators)
 	useEffect(() => {
 		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -903,7 +920,7 @@ const useRoomHook = () => {
 					id: data.gameId,
 					room_id: roomId,
 					winner_id: null,
-					status: data.status ?? 2,
+					status: 1,
 					bot_difficulty: data.bot_difficulty ?? null
 				}
 				setGame(game)
@@ -912,6 +929,7 @@ const useRoomHook = () => {
 				? { ...currentRoom, status: data.status ?? 2 }
 				: currentRoom
 			)
+			setClock(data.clock ?? null)
 		}
 
 		onGameStarted(handleGameStarted)
@@ -920,6 +938,43 @@ const useRoomHook = () => {
 			offGameStarted(handleGameStarted)
 		}
 	}, [isConnected, roomId, onGameStarted, offGameStarted])
+
+	// Socket.io: mirror an opponent's undo. The player who pressed undo already
+	// rewound locally via the HTTP response, so ignore our own event; everyone else
+	// trims the same number of trailing moves (updateToState rebuilds the board)
+	// and syncs to the server's rewound clock.
+	useEffect(() => {
+		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
+			return
+		}
+
+		const handleGameUndo = (data: {
+			gameId: string
+			userId: number
+			movesDeleted?: number
+			clock?: ClockSnapshot | null
+		}) => {
+			if (!data || data.userId === currentUserId) {
+				return
+			}
+			if (game && data.gameId !== game.id) {
+				return
+			}
+
+			const movesDeleted = data.movesDeleted ?? 1
+			setHistory(prev => prev.slice(0, Math.max(0, prev.length - movesDeleted)))
+			setClock(data.clock ?? null)
+			setSelected(null)
+			setAvailableMoves([])
+			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + MOVE_SOUND_URL)
+		}
+
+		onGameUndo(handleGameUndo)
+
+		return () => {
+			offGameUndo(handleGameUndo)
+		}
+	}, [isConnected, roomId, game, currentUserId, onGameUndo, offGameUndo])
 
 	// Handle pending draw request confirmation
 	useEffect(() => {
@@ -1024,7 +1079,7 @@ const useRoomHook = () => {
 				id: response.data.game.id,
 				room_id: roomId,
 				winner_id: null,
-				status: response.data.game.status ?? nextStatus,
+				status: response.data.game.status ?? 1,
 				bot_difficulty: response.data.game.bot_difficulty ?? null
 			}
 			setGame(newGame)
@@ -1071,7 +1126,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		setJoinedUsers(response.data as RoomUser[])		
+		setJoinedUsers(response.data as RoomUser[])
 	}
 
 	const handleUndo = async () => {
@@ -1111,6 +1166,9 @@ const useRoomHook = () => {
 				return
 			}
 
+			// Refresh the countdown from the server's rewound clock (null = unclocked).
+			setClock((response as { clock?: ClockSnapshot | null }).clock ?? null)
+
 			// Remove the undone moves from history
 			const movesDeleted = response.data?.movesDeleted ?? 1
 			const newHistory = history.slice(0, history.length - movesDeleted)
@@ -1119,7 +1177,7 @@ const useRoomHook = () => {
 			// Play sound
 			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + MOVE_SOUND_URL)
 		} catch (err) {
-			console.error("Undo error:", err)
+			logger.error("Undo error:", err)
 			await openAlert({
 				title: "popup.alert.title",
 				message: "undo.messages.internal-server-error"
@@ -1132,11 +1190,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
-		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
-		const isInCurrentRoom = currentUser !== undefined
-		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-		const canDraw = isInCurrentRoom && isCurrentlyPlayer && room.status === 2
+		const canDraw = room.status === 2 && game.status === 1 && myTeam !== null
 		if (!canDraw) {
 			return
 		}
@@ -1174,7 +1228,7 @@ const useRoomHook = () => {
 		}
 
 		// Emit draw request to opponent
-		emitDrawRequest(roomId, game.id, currentUserId)
+		emitDrawRequest(roomId, game.id, currentUserId ?? 0)
 	}
 
 	const handleSurrender = async () => {
@@ -1182,11 +1236,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
-		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
-		const isInCurrentRoom = currentUser !== undefined
-		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-		const canSurrender = isInCurrentRoom && isCurrentlyPlayer && room.status === 2
+		const canSurrender = room.status === 2 && game.status === 1 && myTeam !== null
 		if (!canSurrender) {
 			return
 		}
@@ -1211,14 +1261,14 @@ const useRoomHook = () => {
 
 		// Notify the opponent immediately after surrender succeeds
 		emitSurrender(roomId, game.id, currentUserId ?? 0)
-		const alertMessage = buildPostGameBackAlertMessage(false, POST_GAME_BACK_COUNTDOWN_SECONDS)
+		const alertMessage = buildPostGameAlertMessage(false, POST_GAME_BACK_COUNTDOWN_SECONDS)
 
 		await openAlert({
 			title: "popup.alert.title",
 			message: alertMessage,
 			okLabel: "room.messages.back-to-room",
 			countdownSeconds: POST_GAME_BACK_COUNTDOWN_SECONDS,
-			countdownMessageBuilder: secondsLeft => buildPostGameBackAlertMessage(false, secondsLeft)
+			countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(false, secondsLeft)
 		})
 		await submitBackToRoom(game.id)
 		resetToWaitingRoom()
@@ -1232,7 +1282,9 @@ const useRoomHook = () => {
 		}
 
 		const currentUser = joinedUsers.find(user => user.id === currentUserId)
-		if (currentUser?.team) {
+		const isSpectator = currentUser?.team == null
+		const isWaitingRoom = room?.status === 1
+		if (!isSpectator && !isWaitingRoom) {
 			const confirmed = await openConfirm({
 				title: "popup.confirm.title",
 				message: "room.messages.confirm-leave"
@@ -1373,7 +1425,9 @@ const useRoomHook = () => {
 		const enemyTeam = movedTeam === "red" ? "black" : "red"
 		const enemyCheckingPieces = findCheckingPieces(gameStateClone, enemyTeam)
 		const enemyInCheck = enemyCheckingPieces.length > 0
-		const enemyLegalMovesCount = room ? countLegalMoves(gameStateClone, enemyTeam, room.red_first) : 0
+		const enemyLegalMovesCount = room
+			? countLegalMoves(gameStateClone, enemyTeam, room.red_first)
+			: 0
 		const shouldVerifyState = enemyInCheck || enemyLegalMovesCount === 0
 		if (capturedPieceCharacter) {
 			playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + CAPTURE_SOUND_URL)
@@ -1405,22 +1459,26 @@ const useRoomHook = () => {
 
 			try {
 				setIsMovePending(true)
-				await movePiece(token, body)
+				const moveResponse = await movePiece(token, body) as APIResponse<HistoryData>
+				if (moveResponse?.data?.clock) {
+					setClock(moveResponse.data.clock)
+				}
 
 				if (shouldVerifyState) {
-					const verifyResponse: APIResponse<VerifyStateResponseData> = await verifyGameState(token, {
+					const verify = await verifyGameState(token, {
 						gameId: game.id,
 						newFen,
 						checkedTeam: enemyTeam
-					})
+					}) as APIResponse<VerifyStateResponseData>
 
-					if (!verifyResponse?.success) {
-						console.warn("[Room] verify-state failed", verifyResponse)
-					} else if (verifyResponse.data?.gameEnded && (verifyResponse.data.status === "checkmate" || verifyResponse.data.status === "stalemate")) {
+					const isCheckmate = verify.data?.gameEnded && verify.data.status === "checkmate"
+					if (!verify?.success) {
+						logger.warn("[Room] verify-state failed", verify)
+					} else if (isCheckmate) {
 						await handleGameEnded({
 							gameId: game.id,
-							status: verifyResponse.data.status,
-							winnerId: verifyResponse.data.winnerId
+							status: verify.data.status as "checkmate" | "stalemate",
+							winnerId: verify.data.winnerId
 						})
 					}
 				}
@@ -1438,39 +1496,13 @@ const useRoomHook = () => {
 		}
 	}
 
-	const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
-	const isActionMenuOpen = Boolean(menuAnchorEl)
-
-	const openActionMenu = (e: MouseEvent<HTMLButtonElement>) => {
-		setMenuAnchorEl(e.currentTarget)
-	}
-
-	const closeActionMenu = () => {
-		setMenuAnchorEl(null)
-	}
-
-	const handleMenuItemClick = (callback: EmptyVoid) => () => {
-		setMenuAnchorEl(null)
-		callback()
-	}
-
 	const showHideSettings = (open: boolean) => () => setIsOpen(open)
 
 	const handleSettingsSaved = (newName: string) => {
 		setRoom(prev => prev ? { ...prev, name: newName } : prev)
 	}
 
-
-	const gameMenuActionContextValue: GameMenuActionContextValue = {
-		actionMenuItems,
-		isActionMenuOpen,
-		menuAnchorEl,
-		closeActionMenu,
-		handleMenuItemClick,
-		openActionMenu
-	}
-
-	const roomChatDialogContextValue: RoomChatDialogContextValue = {
+	const roomChatDialogContext: RoomChatDialogContextValue = {
 		open: openRoomChat,
 		roomId: room?.id || 0,
 		roomName: room?.name || "room.chat.title",
@@ -1495,25 +1527,31 @@ const useRoomHook = () => {
 		handleSettingsSaved,
 		openSettings: showHideSettings(true)
 	}
-	
+
 	// When the board view is flipped, keep each player's info card next to their
 	// side of the board by swapping the top/bottom cards. UI-only, like the board flip.
 	const displayTopUser = isBoardRotated ? bottomSideUser : topSideUser
 	const displayBottomUser = isBoardRotated ? topSideUser : bottomSideUser
+
+	// Locally-ticking countdown derived from the latest server snapshot.
+	const clockDisplay = useGameClock(clock, isInGame)
 
 	return {
 		availableMoves,
 		board,
 		capturedPieces,
 		checkingPieces,
+		clockDisplay,
 		currentTurn,
 		displayTopUser,
 		displayBottomUser,
-		gameMenuActionContextValue,
+		game,
+		gameButtons,
 		isBoardRotated,
+		isInGame,
 		myTeam,
 		previousMove,
-		roomChatDialogContextValue,
+		roomChatDialogContext,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,

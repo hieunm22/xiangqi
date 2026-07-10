@@ -1,48 +1,48 @@
 import { useNavigate } from "react-router-dom"
 import {
 	Box,
-	Button,
 	Container,
 	Stack,
-	Typography
 } from "@mui/material"
 import { HOME_PATH } from "common/constant"
+import { TButton, TSpan } from "components/TranslationTag"
 import useAutoTitle from "hooks/useAutoTitle"
-import { translate } from "locales/translate"
 import "./NotFound.scss"
+import { translate } from "locales/translate"
 
 export default function NotFoundPage() {
 	useAutoTitle("Page Not Found")
 	const navigate = useNavigate()
 
 	return (
-		<Container maxWidth="sm" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-			<Stack spacing={4} sx={{ alignItems: "center", textAlign: "center" }}>
+		<Container maxWidth="sm" className="not-found-container">
+			<Stack spacing={4} className="not-found-content">
 				<Box className="not-found-decoration">
-					<Typography variant="h1" sx={{ fontSize: 120, fontWeight: 900, lineHeight: 1, color: "primary.main" }}>
-						404
-					</Typography>
-					<Typography variant="h3" sx={{ fontSize: 48, fontWeight: 700, mt: -2 }}>
-						<i className="fas fa-face-sad-tear" style={{ marginRight: 16 }} />
-						{translate("notfound.title")}
-					</Typography>
+					<TSpan className="not-found-code" content="404" />
+					<div className="not-found-title data-content" data-content={translate("notfound.title")}>
+						<i className="fas fa-face-sad-tear mr-16" />
+					</div>
 				</Box>
 
-				<Typography variant="body1" sx={{ fontSize: 16, color: "text.secondary", maxWidth: 400 }}>
-					{translate("notfound.description")}
-				</Typography>
+				<TSpan className="not-found-description" content="notfound.description" />
 
-				<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
-					<Button variant="contained" size="large" onClick={() => navigate(HOME_PATH)}>
-						{translate("notfound.home")}
-					</Button>
-					<Button variant="outlined" size="large" onClick={() => navigate(-1)}>
-						{translate("notfound.back")}
-					</Button>
+				<Stack direction="row" spacing={2} className="not-found-actions">
+					<TButton
+						variant="contained"
+						size="large"
+						onClick={() => navigate(HOME_PATH)}
+						value="notfound.home"
+					/>
+					<TButton
+						variant="outlined"
+						size="large"
+						onClick={() => navigate(-1)}
+						value="notfound.back"
+					/>
 				</Stack>
 
-				<Box sx={{ mt: 4 }}>
-					<i className="fas fa-circle-notch" style={{ fontSize: 64, opacity: 0.1 }} />
+				<Box className="not-found-spinner-wrap">
+					<i className="fas fa-circle-notch fa-spin not-found-spinner" />
 				</Box>
 			</Stack>
 		</Container>

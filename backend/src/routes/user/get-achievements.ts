@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { getCachedAchievements } from "common/game/achievement.helper"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -70,10 +71,7 @@ router.get("/user/achievements", requireAuth(), async (req: AuthenticatedRequest
 	}
 
 	try {
-		const achievements = await prisma.achievement.findMany({
-			orderBy: { id: "asc" },
-			select: { id: true, name: true }
-		})
+		const achievements = await getCachedAchievements()
 
 		const earned = await prisma.userAchievement.findMany({
 			where: { user_id: BigInt(userId) },

@@ -39,7 +39,6 @@ export default function BonusCoinTab() {
 		canWatch: claimed < TOTAL_TREASURES,
 		claim: claimBonusCoin,
 		onClaimed: (data) => setClaimed(data.claimed),
-		errorLabel: "Failed to claim bonus coin:"
 	})
 
 	// Load the persisted progress for the current slot on entry.
@@ -56,8 +55,6 @@ export default function BonusCoinTab() {
 				if (response?.success && response.data) {
 					setClaimed(response.data.claimed)
 				}
-			} catch (error) {
-				console.error("Failed to load bonus coins:", error)
 			} finally {
 				setIsLoading(false)
 			}
@@ -74,7 +71,7 @@ export default function BonusCoinTab() {
 	}, [])
 
 	const renderCell = (index: number, amount: number, isTreasure: boolean) => {
-		const status = getCellStatus(index, claimed)
+		const status = getCellStatus(index, claimed, true)
 		const className = classnames("bonus-cell", {
 			[`bonus-cell--${status}`]: true,
 			"bonus-cell--treasure": isTreasure

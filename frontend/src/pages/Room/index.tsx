@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React from "react"
 import classnames from "classnames"
 import { Box, Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
@@ -11,8 +11,6 @@ import PieceItem from "./components/Piece"
 import PlayerInfoCard from "./components/PlayerInfoCard"
 import { RoomChatButton } from "./components/RoomChatButton"
 import SettingsButton from "./components/SettingsButton"
-import useToolkit from "hooks/useToolkit"
-import { setIsInGame } from "toolkit/slice/game"
 import useRoomHook from "./hook"
 import "./Room.scss"
 
@@ -22,14 +20,17 @@ export default function RoomPage() {
 		board,
 		capturedPieces,
 		checkingPieces,
+		clockDisplay,
 		currentTurn,
 		displayTopUser,
 		displayBottomUser,
-		gameMenuActionContextValue,
+		game,
+		gameButtons,
 		isBoardRotated,
+		isInGame,
 		myTeam,
 		previousMove,
-		roomChatDialogContextValue,
+		roomChatDialogContext,
 		roomSettingsDialogValue,
 		selected,
 		showConfetti,
@@ -40,20 +41,6 @@ export default function RoomPage() {
 		startGame
 	} = useRoomHook()
 
-	const isInGame = roomSettingsDialogValue.room?.status === 2 && (roomSettingsDialogValue.game?.id ?? null) != null
-
-	const { dispatch } = useToolkit()
-
-	// Expose the in-game state globally so the app shell (e.g. the user menu) can
-	// react to it. Reset on unmount so leaving the room clears the flag.
-	useEffect(() => {
-		dispatch(setIsInGame(isInGame))
-	}, [dispatch, isInGame])
-
-	useEffect(() => () => {
-		dispatch(setIsInGame(false))
-	}, [dispatch])
-
 	return (
 		<Box className="room-container">
 			{showConfetti && <ConfettiBoom mode="boom" particleCount={50} />}
@@ -63,9 +50,16 @@ export default function RoomPage() {
 						user={displayTopUser}
 						team={displayTopUser?.team === "black" ? "black" : "red"}
 						active={isInGame && currentTurn === displayTopUser?.team}
-						botLevel={displayTopUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
+						botLevel={displayTopUser?.is_bot ? (game?.bot_difficulty ?? null) : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
+						remainingMs={
+							clockDisplay
+								? displayTopUser?.team === "black"
+									? clockDisplay.blackMs
+									: clockDisplay.redMs
+								: null
+						}
 					/>
 					<CapturedPiecesDisplay
 						capturedPieces={capturedPieces}
@@ -81,9 +75,16 @@ export default function RoomPage() {
 						user={displayBottomUser}
 						team={displayBottomUser?.team === "black" ? "black" : "red"}
 						active={isInGame && currentTurn === displayBottomUser?.team}
-						botLevel={displayBottomUser?.is_bot ? roomSettingsDialogValue.game?.bot_difficulty ?? null : null}
+						botLevel={displayBottomUser?.is_bot ? (game?.bot_difficulty ?? null) : null}
 						roomHostId={roomSettingsDialogValue.room?.host_id ?? null}
 						roomId={roomSettingsDialogValue.room?.id ?? null}
+						remainingMs={
+							clockDisplay
+								? displayBottomUser?.team === "black"
+									? clockDisplay.blackMs
+									: clockDisplay.redMs
+								: null
+						}
 					/>
 				</div>
 			</div>
@@ -144,7 +145,8 @@ export default function RoomPage() {
 										key={`empty-${id}`}
 										className={emptyClass}
 										onClick={onPieceClick(id)}
-									/>)
+									/>
+								)
 							}
 
 							return (
@@ -169,9 +171,9 @@ export default function RoomPage() {
 				</div>
 			</div>
 			<div className="room-action-row view">
-				<GameMenu {...gameMenuActionContextValue} />
+				<GameMenu buttons={gameButtons} />
 				<Stack direction={{ xs: "row", sm: "column" }} spacing={1}>
-					{!roomChatDialogContextValue.pveMode && <RoomChatButton {...roomChatDialogContextValue} />}
+					{!roomChatDialogContext.pveMode && <RoomChatButton {...roomChatDialogContext} />}
 					<SettingsButton {...roomSettingsDialogValue} />
 				</Stack>
 			</div>

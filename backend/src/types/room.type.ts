@@ -4,6 +4,7 @@ export interface CreateRoomRequest {
 	redFirst: boolean
 	pveMode: boolean
 	betAmount: number
+	timeLimit?: number | null
 }
 
 export enum RoomStatus {

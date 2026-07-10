@@ -44,6 +44,23 @@
 	}
 }
 
+@keyframes room-border-run {
+	to {
+		--room-border-angle: 360deg;
+	}
+}
+
+@keyframes player-clock-low-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.55;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.lucky-wheel-container {
 		.wheel-hub {

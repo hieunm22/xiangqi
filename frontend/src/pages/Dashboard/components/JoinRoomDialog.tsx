@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import classnames from "classnames"
 import {
 	Avatar,
 	Box,
@@ -12,10 +13,11 @@ import {
 } from "@mui/material"
 import BoardImage from "assets/xiangqi-board.png"
 import { PopupState } from "common/enums"
-import { openAlert } from "components/AlertProvider"
+import { openAlert } from "components/AlertProvider/helper"
 import { TButton, TTooltip, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "./UserAvatar"
 import { getToken, requireImage } from "common/helper"
+import { setJoinRoomHandler } from "./joinRoomController"
 import { useAPI } from "hooks/useAPI"
 import { useProfilePopup } from "hooks/useAppContext"
 import useToolkit from "hooks/useToolkit"
@@ -24,14 +26,10 @@ import { setPopup } from "toolkit/slice/game"
 import { Team } from "types/GameState"
 import { DashboardRoom, SeatAvatarProps } from "../types"
 
-let inviteHandler: ((room: DashboardRoom) => void) | null = null
-
-export function openJoinRoom(room: DashboardRoom) {
-	inviteHandler && inviteHandler(room)
-}
-
 const SeatAvatar = ({ user, isHost, onUserClick }: SeatAvatarProps) => {
-	const avatarClass = onUserClick ? "dashboard__seat-avatar cursor-pointer" : "dashboard__seat-avatar"
+	const avatarClass = classnames("dashboard__seat-avatar", {
+		"cursor-pointer": onUserClick
+	})
 	const avatar = user
 		? (
 			<Avatar
@@ -73,11 +71,11 @@ export const JoinRoomDialog = () => {
 
 	useEffect(() => {
 		// The dialog can be opened from anywhere
-		inviteHandler = (nextRoom: DashboardRoom) => {
+		setJoinRoomHandler((nextRoom: DashboardRoom) => {
 			setRoom(nextRoom)
 			dispatch(setPopup(PopupState.JOIN_ROOM))
-		}
-		return () => { inviteHandler = null }
+		})
+		return () => { setJoinRoomHandler(null) }
 	}, [])
 
 	const isOpen = gameState.popupState === PopupState.JOIN_ROOM
@@ -88,7 +86,9 @@ export const JoinRoomDialog = () => {
 	}
 
 	const players = room?.users.filter(u => u.team !== null) ?? []
-	const host = room && room.host_id ? (players.find(u => u.id === room.host_id) ?? players[0]) : null
+	const host = room && room.host_id
+		? (players.find(u => u.id === room.host_id) ?? players[0])
+		: null
 	const opponent = players.find(u => u.id !== host?.id) ?? null
 	const spectators = room?.users.filter(u => u.team === null) ?? []
 
@@ -143,7 +143,11 @@ export const JoinRoomDialog = () => {
 	}
 
 	// Check if user is currently in a different room
-	const isInDifferentRoom = !!(currentRoomId && currentRoomId > 0 && room?.id && currentRoomId !== room.id)
+	const isInDifferentRoom = currentRoomId != null
+		&& currentRoomId > 0
+		&& room
+		&& room.id > 0
+		&& currentRoomId !== room.id
 
 	const getHelpTexts = () => {
 		const errors: string[] = []

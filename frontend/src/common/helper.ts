@@ -5,6 +5,7 @@ import {
 	LS_TOKEN_KEY
 } from "./constant"
 import { fenPieceMap } from "pages/Room/constant"
+import { CustomConsole } from "./logger"
 import { translate } from "locales/translate"
 import {
 	getPieceFromCharacter,
@@ -23,6 +24,8 @@ String.prototype.format = function(...args: any) {
 		return typeof args[index] !== "undefined" ? args[index] : match
 	})
 }
+
+export const logger = new CustomConsole()
 
 const processSoldierMove = (
 	state: any,
@@ -153,8 +156,7 @@ export function getAvailableMoves(
 			const selectedCol = selectedId % BOARD_COLUMNS
 			const selectedRow = ~~(selectedId / BOARD_COLUMNS)
 
-			let push = []
-			let newIndex = -1
+			let push, newIndex
 			// Up leg
 			if (selectedRow > 0 && !gameState[toIndex(selectedRow - 1, selectedCol)]) {
 				if (selectedRow >= 2 && selectedCol > 0) {
@@ -374,7 +376,7 @@ export function decodePayload(token: string | null) {
 		const payload = token.split(".")[1]
 		const decode = atob(normalizeBase64Str(payload))
 		return JSON.parse(decode)
-	} catch (e) {
+	} catch {
 		return null
 	}
 }
@@ -482,7 +484,7 @@ export function diffFenMove(oldFen: string, newFen: string): FenMoveDiffResult |
 /**
  * Convert a timestamp (in seconds) to a date/time string array
  */
-export function formatTimestampToDateTimeArray(timestamp: string, language: string): [string | null, string] {
+export function formatTimestampToDateTimeArray(timestamp: string, language: string) {
 	const date = new Date(timestamp)
 	const now = new Date()
 

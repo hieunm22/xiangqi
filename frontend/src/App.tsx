@@ -15,7 +15,7 @@ import Layout from "components/Layout"
 import LayoutUnAuth from "components/LayoutUnAuth"
 import PageLoader from "components/PageLoader"
 import { ProtectedRoute } from "components/ProtectedRoute"
-import { SocketProvider } from "hooks/useSocket"
+import { SocketProvider } from "hooks/SocketProvider"
 import useToolkit from "hooks/useToolkit"
 import "App.scss"
 import "styles/animation.scss"
@@ -59,7 +59,7 @@ function AppWithTheme() {
 	const darkMode = localStorage.getItem(LS_DARKMODE) || "light"
 	const { state } = useToolkit()
 
-	const createThemeCallback = () =>
+	const theme = useMemo(() =>
 		createTheme({
 			typography: {
 				fontSize: 14
@@ -90,9 +90,7 @@ function AppWithTheme() {
 			palette: {
 				mode: darkMode as PaletteMode
 			}
-		})
-
-	const theme = useMemo(createThemeCallback, [state.darkMode])
+		}), [state.darkMode])
 
 	const DashboardPageElement = (
 		<ConfirmProvider>

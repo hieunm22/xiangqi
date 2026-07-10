@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { fenToBoard } from "common/board-helper"
 import { runEndGameTransaction } from "common/game/end-game.helper"
+import { stopClock } from "common/game/game-clock"
 import { activatePostGameLock } from "common/game/post-game.helper"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { evaluateTeamState } from "common/game/state-evaluator"
@@ -183,6 +184,7 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 
 			if (ended) {
 				gameEnded = true
+				stopClock(gameId)
 				await syncPlayersPresence(gameId, false)
 				await activatePostGameLock(game.room_id, gameId)
 

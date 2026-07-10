@@ -269,7 +269,7 @@
 	width: var(--piece-size);
 	height: var(--piece-size);
 	box-sizing: border-box;
-	transition: transform .5s ease;
+	transition: transform 0.5s ease;
 
 	&.highlight {
 		.piece {
@@ -315,22 +315,34 @@
 
 .room-action-row {
 	justify-content: space-between;
+	background: linear-gradient(135deg, rgb(255, 245, 219), rgb(232, 197, 132));
+	padding: 8px;
+	border-radius: 8px;
 
-	.room-more-action {
-		width: 48px;
-		height: 48px;
+	.room-more-action, .game-more-action {
+		width: 40px;
+		height: 40px;
 		border-radius: 10px;
 		background: linear-gradient(145deg, #7a4f27, #9d6836);
 		color: #fff;
 		font-size: 18px;
-		line-height: 48px;
+		line-height: 40px;
 		cursor: pointer;
 		box-shadow: 0 6px 12px rgba(52, 24, 8, 0.2);
 		transition: filter 160ms ease;
 
+		&.disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
 		&:hover {
 			filter: brightness(1.2);
 		}
+	}
+
+	.game-more-action {
+		background: linear-gradient(145deg, #4f7a27, #689d36);
 	}
 }
 
@@ -358,6 +370,36 @@
 
 	.player-total-points {
 		text-align: left;
+	}
+
+	.player-clock {
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		margin-top: 2px;
+		padding: 2px 8px;
+		border-radius: 8px;
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+		font-size: 14px;
+		color: #3b2b1a;
+		background: rgba(0, 0, 0, 0.06);
+
+		.player-clock-time {
+			letter-spacing: 0.5px;
+		}
+
+		&.is-active {
+			background: rgba(255, 209, 74, 0.35);
+			color: #7a4a12;
+		}
+
+		&.low-time {
+			color: #c62828;
+			background: rgba(198, 40, 40, 0.12);
+			animation: player-clock-low-pulse 1000ms ease-in-out infinite;
+		}
 	}
 
 	&.active-turn {
@@ -508,6 +550,14 @@
 	font-size: 18px;
 }
 
+.room-time-limit {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	font-size: 18px;
+}
+
 .game-lelvel {
 	width: 90%;
 	margin: 0 auto;
@@ -555,7 +605,8 @@
 	flex-direction: column;
 	flex-wrap: wrap;
 	width: fit-content;
-	max-height: calc(20px * 7 + 2px * 6);
+	// max-height: calc(20px * 7 + 2px * 6);
+	max-height: 145px;
 	gap: 2px;
 	direction: rtl;
 

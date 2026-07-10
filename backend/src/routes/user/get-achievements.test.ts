@@ -11,6 +11,7 @@ import {
 } from "vitest"
 
 const redisGetMock = vi.fn()
+const redisSetMock = vi.fn()
 const achievementFindManyMock = vi.fn()
 const userAchievementFindManyMock = vi.fn()
 
@@ -18,7 +19,8 @@ const PATH = "/api/user/achievements"
 
 vi.mock("../../common/redis", () => ({
 	default: {
-		get: redisGetMock
+		get: redisGetMock,
+		set: redisSetMock,
 	}
 }))
 

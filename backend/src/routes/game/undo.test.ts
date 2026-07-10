@@ -2,15 +2,7 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import { ObjectId } from "mongodb"
 import request from "supertest"
-import {
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi
-} from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
@@ -21,6 +13,8 @@ const deleteManyMock = vi.fn()
 const updateOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const getIOMock = vi.fn()
+const computeUndoBaselineMock = vi.fn()
+const armClockMock = vi.fn()
 
 const PATH = "/api/game/undo"
 
@@ -47,6 +41,11 @@ vi.mock("../../common/mongodb", () => ({
 
 vi.mock("../../common/socket", () => ({
 	getIO: getIOMock
+}))
+
+vi.mock("common/game/game-clock", () => ({
+	computeUndoBaseline: computeUndoBaselineMock,
+	armClock: armClockMock
 }))
 
 describe("POST /api/game/undo", () => {
@@ -78,6 +77,12 @@ describe("POST /api/game/undo", () => {
 				emit: vi.fn()
 			})
 		})
+		// Defaults for the clock helpers; clocked tests override armClock.
+		computeUndoBaselineMock.mockReturnValue({
+			spentMs: { red: 0, black: 0 },
+			moves: { red: 0, black: 0 }
+		})
+		armClockMock.mockResolvedValue(null)
 	})
 
 	afterEach(() => {
@@ -323,6 +328,9 @@ describe("POST /api/game/undo", () => {
 			]
 		})
 		expect(updateOneMock).not.toHaveBeenCalled()
+		// Unclocked game: no clock rescheduling, response carries a null clock.
+		expect(armClockMock).not.toHaveBeenCalled()
+		expect(res.body.clock).toBeNull()
 	})
 
 	it("successfully undoes 2 moves when opponent made the last move", async () => {
@@ -385,10 +393,7 @@ describe("POST /api/game/undo", () => {
 				}
 			]
 		})
-		expect(updateOneMock).toHaveBeenCalledWith(
-			{ _id: mockId2 },
-			{ $set: { undo: 1 } }
-		)
+		expect(updateOneMock).toHaveBeenCalledWith({ _id: mockId2 }, { $set: { undo: 1 } })
 	})
 
 	it("returns 400 when delete operation fails", async () => {
@@ -535,9 +540,74 @@ describe("POST /api/game/undo", () => {
 			})
 
 		expect(res.status).toBe(200)
+		expect(updateOneMock).toHaveBeenCalledWith({ _id: mockId }, { $set: { undo: 1 } })
+	})
+
+	it("restarts the clock and stamps a baseline when the game is clocked", async () => {
+		const gameId = "game-1"
+		const accessToken = buildAccessToken(1, "session-undo-clock")
+		const idA = new ObjectId()
+		const idB = new ObjectId()
+		const idC = new ObjectId()
+
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: gameId,
+			room_id: BigInt(1),
+			time_limit: 600,
+			game_users: [{ user_id: BigInt(1) }]
+		})
+		roomUserFindUniqueMock.mockResolvedValue({ team: "red" })
+		// Red is on the move (latest.team === red) -> 2 records deleted, remaining = A.
+		toArrayMock.mockResolvedValueOnce([
+			{ _id: idA, game_id: gameId, fen: "fen-a", team: "red", time_stamp: 100 },
+			{ _id: idB, game_id: gameId, fen: "fen-b", team: "black", time_stamp: 110 },
+			{ _id: idC, game_id: gameId, fen: "fen-c", team: "red", time_stamp: 125 }
+		])
+		deleteManyMock.mockResolvedValue({ deletedCount: 2 })
+		computeUndoBaselineMock.mockReturnValue({
+			spentMs: { red: 10000, black: 0 },
+			moves: { red: 1, black: 0 }
+		})
+		const clockSnapshot = {
+			redMs: 590000,
+			blackMs: 600000,
+			activeTeam: "red",
+			serverNow: 1700000000000,
+			timeLimit: 600,
+			timeIncrement: 0
+		}
+		armClockMock.mockResolvedValue(clockSnapshot)
+		// Capture the socket emit so we can assert the clock rides along with it.
+		const emitMock = vi.fn()
+		getIOMock.mockReturnValue({ to: vi.fn().mockReturnValue({ emit: emitMock }) })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ gameId })
+
+		expect(res.status).toBe(200)
+		// Remaining record gets undo id + a fresh timestamp + the clock baseline.
 		expect(updateOneMock).toHaveBeenCalledWith(
-			{ _id: mockId },
-			{ $set: { undo: 1 } }
+			{ _id: idA },
+			{
+				$set: expect.objectContaining({
+					undo: 1,
+					time_stamp: expect.any(Number),
+					clock_baseline: {
+						spentMs: { red: 10000, black: 0 },
+						moves: { red: 1, black: 0 }
+					}
+				})
+			}
+		)
+		expect(armClockMock).toHaveBeenCalledWith(gameId)
+		expect(res.body.clock).toEqual(clockSnapshot)
+		// The clock snapshot is broadcast with the game-undo event too.
+		expect(emitMock).toHaveBeenCalledWith(
+			"game-undo",
+			expect.objectContaining({ gameId, clock: clockSnapshot })
 		)
 	})
 })

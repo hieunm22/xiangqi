@@ -5,8 +5,12 @@ import { TI } from "components/TranslationTag"
 import { formatNumber, getCurrentUserId, requireImage } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
+import { formatClock } from "../useGameClock"
 import { setInviteRoomId, setPopup, setRoomHostId } from "toolkit/slice/game"
 import { PlayerInfoCardProps } from "../types"
+
+// Below this many ms remaining, the clock turns "low" (red/urgent styling).
+const LOW_TIME_MS = 30_000
 
 // Bots are rated on a fixed 1–5 difficulty scale
 const MAX_BOT_LEVEL = 5
@@ -56,9 +60,10 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	const {
 		active = false,
 		botLevel,
+		remainingMs = null,
 		roomId,
 		team,
-		user,
+		user,		
 	} = props
 	const { showProfilePopup } = useLayoutAuth()
 	const { state, gameState, dispatch } = useToolkit()
@@ -68,12 +73,12 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 
 	if (!user) {
 		if (props.roomHostId !== currentUserId) {
-			return (
-				<div className="player-info-card">
-				</div>
-			)
+			return <div className="player-info-card" />
 		}
-		const containerClass = classnames("player-info-card empty-slot cursor-pointer", `team-${team}`)
+		const containerClass = classnames(
+			"player-info-card empty-slot cursor-pointer",
+			`team-${team}`
+		)
 		const handleEmptySlotClick = () => {
 			if (roomId !== null) {
 				dispatch(setInviteRoomId(roomId))
@@ -136,10 +141,7 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					botLevel !== null && (
 						<div className="bot-level">
 							{Array.from({ length: MAX_BOT_LEVEL }, (_, index) => (
-								<i
-									key={index}
-									className={levelStarsClass(index)}
-								/>
+								<i key={index} className={levelStarsClass(index)} />
 							))}
 						</div>
 					)
@@ -152,6 +154,17 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 								data-content={formatCompactTotalAmount(user?.total_amount, state.lang)}
 							/>
 						</Tooltip>
+					</div>
+				)}
+				{remainingMs !== null && (
+					<div
+						className={classnames("player-clock", {
+							"is-active": active,
+							"low-time": remainingMs <= LOW_TIME_MS
+						})}
+					>
+						<i className="far fa-clock" />
+						<span className="player-clock-time">{formatClock(remainingMs)}</span>
 					</div>
 				)}
 			</div>

@@ -23,6 +23,7 @@ const emitRoomUsersUpdatedMock = vi.fn()
 const playBotMoveMock = vi.fn()
 const clearPostGameLockMock = vi.fn()
 const isPostGameStartBlockedMock = vi.fn()
+const armClockMock = vi.fn()
 
 const PATH = "/api/room/start"
 
@@ -69,6 +70,10 @@ vi.mock("common/game/post-game.helper", () => ({
 
 vi.mock("../../common/bot-engine/play-bot-move", () => ({
 	playBotMove: playBotMoveMock
+}))
+
+vi.mock("common/game/game-clock", () => ({
+	armClock: armClockMock
 }))
 
 describe("POST /api/room/start", () => {
@@ -407,6 +412,68 @@ describe("POST /api/room/start", () => {
 		})
 	})
 
+	it("snapshots the room's time limit onto a PvP game", async () => {
+		const accessToken = buildAccessToken(61, "session-start-clock")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
+		isPostGameStartBlockedMock.mockReturnValue(false)
+		gameHistoryInsertOneMock.mockResolvedValue({ insertedId: "mongo-id-clock" })
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			host_id: BigInt(61),
+			bet_amount: 50,
+			pve_mode: false,
+			time_limit: 600,
+			time_increment: 0
+		})
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
+		getGameHistoryCollectionMock.mockResolvedValue({ insertOne: gameHistoryInsertOneMock })
+		roomUpdateMock.mockResolvedValue({ id: BigInt(101), status: 2, red_first: true })
+		gameCreateMock.mockResolvedValue({
+			id: "clocked-game-uuid",
+			status: 1,
+			room_id: BigInt(101),
+			bot_difficulty: null
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: BigInt(11), team: "red" },
+			{ user_id: BigInt(12), team: "black" }
+		])
+		gameUserCreateMock.mockResolvedValue({})
+		armClockMock.mockResolvedValue({
+			redMs: 600000,
+			blackMs: 600000,
+			activeTeam: "red",
+			serverNow: 1700000000000,
+			timeLimit: 600,
+			timeIncrement: 0
+		})
+		transactionMock.mockImplementation(async callback =>
+			callback({
+				room: { update: roomUpdateMock },
+				game: { create: gameCreateMock },
+				roomUser: { findMany: roomUserFindManyMock },
+				gameUser: { create: gameUserCreateMock }
+			})
+		)
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(201)
+		expect(gameCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ time_limit: 600, time_increment: 0 })
+			})
+		)
+		expect(armClockMock).toHaveBeenCalledWith("clocked-game-uuid")
+		expect(emitGameStartedMock).toHaveBeenCalledWith(
+			101,
+			expect.objectContaining({ gameId: "clocked-game-uuid", clock: expect.objectContaining({ timeLimit: 600 }) })
+		)
+	})
+
 	it("returns 403 when user is not the room host", async () => {
 		const accessToken = buildAccessToken(61, "session-start-403")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 61 }))
@@ -444,7 +511,7 @@ describe("POST /api/room/start", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true, host_id: true, bet_amount: true }
+			select: { id: true, host_id: true, bet_amount: true, pve_mode: true, time_limit: true, time_increment: true }
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
 	})

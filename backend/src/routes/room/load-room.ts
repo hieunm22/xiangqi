@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { computeClock } from "common/game/game-clock"
 import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl } from "common/helper"
 import { getChatMessageCollection } from "common/mongodb"
@@ -135,6 +136,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				red_first: true,
 				pve_mode: true,
 				bet_amount: true,
+				time_limit: true,
 				host_id: true,
 				created_at: true,
 				updated_at: true,
@@ -249,6 +251,9 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 		}))
 		const usersWithBackReady = decorateRoomUsersWithBackReady(roomId, formattedUsers)
 
+		// Current countdown state for an in-progress game
+		const clock = game ? await computeClock(game.id) : null
+
 		res.status(200).json({
 			success: true,
 			message: "load-room.messages.success",
@@ -261,6 +266,7 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					red_first: room.red_first,
 					pve_mode: room.pve_mode,
 					bet_amount: room.bet_amount,
+					time_limit: room.time_limit,
 					host_id: room.host_id === null ? null : Number(room.host_id),
 					created_at: room.created_at,
 					updated_at: room.updated_at
@@ -269,7 +275,8 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					unread_count: unreadCount
 				},
 				users: usersWithBackReady,
-				game
+				game,
+				clock,
 			}
 		})
 	} catch (err) {

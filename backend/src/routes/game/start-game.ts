@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
+import { armClock } from "common/game/game-clock"
 import { clearPostGameLock, isPostGameStartBlocked } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
@@ -128,7 +129,14 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 
 	const existingRoom = await prisma.room.findUnique({
 		where: { id: roomIdBigInt },
-		select: { id: true, host_id: true, bet_amount: true }
+		select: {
+			id: true,
+			host_id: true,
+			bet_amount: true,
+			pve_mode: true,
+			time_limit: true,
+			time_increment: true,
+		}
 	})
 	if (!existingRoom) {
 		res.status(404).json({
@@ -168,7 +176,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 	}
 
 	const requestedDifficulty: number | null
-		= botDifficulty === undefined || botDifficulty === null ? null : botDifficulty
+	 = botDifficulty === undefined || botDifficulty === null ? null : botDifficulty
 	if (requestedDifficulty !== null && !isValidDifficulty(requestedDifficulty)) {
 		res.status(400).json({
 			success: false,
@@ -215,11 +223,15 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				})
 			}
 
+			// Snapshot the room's time control onto the game
+			const isPvE = requestedDifficulty !== null || existingRoom.pve_mode
 			const createdGame = await tx.game.create({
 				data: {
 					status: 1,
 					room_id: roomIdBigInt,
-					bot_difficulty: requestedDifficulty
+					bot_difficulty: requestedDifficulty,
+					time_limit: isPvE ? null : existingRoom.time_limit,
+					time_increment: isPvE ? 0 : existingRoom.time_increment,
 				},
 				select: { id: true, status: true, room_id: true, bot_difficulty: true }
 			})
@@ -308,12 +320,16 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			emitRoomUsersUpdated(Number(room.id), users)
 		}
 
+		// Start the countdown clock (no-op for PvE / unlimited games)
+		const clock = await armClock(game.id)
+
 		// Notify everyone in the room (host, opponent, spectators) that the game began,
 		// so each client can play the start sound and initialize the board in real time.
 		emitGameStarted(Number(room.id), {
 			gameId: game.id,
 			status: room.status,
-			bot_difficulty: game.bot_difficulty
+			bot_difficulty: game.bot_difficulty,
+			clock,
 		})
 
 		// Players are now in a started game — turn their presence badge "busy".

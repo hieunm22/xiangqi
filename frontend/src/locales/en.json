@@ -120,6 +120,9 @@
 			"red-first": "Red first",
 			"pve-mode": "PVE mode",
 			"bet-amount": "Bet amount",
+			"time-limit": "Time per player",
+			"time-unlimited": "Unlimited",
+			"time-minutes": "{0} min",
 			"room-name-label": "Room table name",
 			"room-name-helptext": "is required",
 			"play": "Play",
@@ -185,7 +188,8 @@
 			"send-pm": "Send PM",
 			"view-history": "History",
 			"kick": "Kick",
-			"back-to-room": "Back to room"
+			"back-to-room": "Back to room",
+			"chat": "Room chat"
 		},
 		"messages": {
 			"draw-accepted": "Opponent accepted the draw",
@@ -366,6 +370,7 @@
 			"insufficient-amount": "You do not have enough balance to create a room with this bet",
 			"internal-server-error": "Internal server error while creating room",
 			"invalid-bet-amount": "Bet amount is required and must be one of the acceptable values",
+			"invalid-time-limit": "Invalid time limit",
 			"invalid-redFirst": "'redFirst' must be a boolean",
 			"invalid-team-name": "Team name must be either 'red', 'black', or null",
 			"name-required": "Room name (tableName) is required and must not be empty",
@@ -484,6 +489,7 @@
 			"success": "Room updated successfully",
 			"internal-server-error": "Internal server error",
 			"invalid-room-id": "Invalid room ID",
+			"invalid-time-limit": "Invalid time limit",
 			"name-required": "Room name is required",
 			"room-not-found": "Room not found",
 			"forbidden": "You are not the host of this room"

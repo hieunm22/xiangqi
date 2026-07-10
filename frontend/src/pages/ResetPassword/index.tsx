@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import classnames from "classnames"
 import {
 	Box,
-	Button,
 	CircularProgress,
 	Paper,
 	Stack
@@ -11,11 +10,11 @@ import {
 import { LOGIN_PATH } from "common/constant"
 import Alert from "components/AlertWithIcon"
 import MessageScreen from "components/MessageScreen"
-import { TI, TTextField, TTypography } from "components/TranslationTag"
+import { TButton, TI, TTextField, TTypography } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useAPI } from "hooks/useAPI"
-import { ResetPasswordBodyType, ResetPasswordValidateResponse } from "./types"
+import { ResetPasswordBodyType } from "./types"
 import "./ResetPassword.scss"
 
 const VALIDATION_RULES = {
@@ -24,7 +23,7 @@ const VALIDATION_RULES = {
 		lowercase: /[a-z]/,
 		uppercase: /[A-Z]/,
 		numeric: /[0-9]/,
-		special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+		special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
 		message: "register.password.error1"
 	}
 }
@@ -74,12 +73,12 @@ export default function ResetPasswordPage() {
 
 	const validatePassword = (value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, password: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, password: "common.input.is-required" }))
 			return false
 		}
 		const policyStatus = getPasswordPolicyStatus(value)
 		if (!Object.values(policyStatus).every(Boolean)) {
-			setErrors(prev => ({ ...prev, password: translate(VALIDATION_RULES.password.message) }))
+			setErrors(prev => ({ ...prev, password: VALIDATION_RULES.password.message }))
 			return false
 		}
 		setErrors(prev => ({ ...prev, password: undefined }))
@@ -88,11 +87,11 @@ export default function ResetPasswordPage() {
 
 	const validateConfirmPassword = (value: string): boolean => {
 		if (!value.trim()) {
-			setErrors(prev => ({ ...prev, confirmPassword: translate("common.input.is-required") }))
+			setErrors(prev => ({ ...prev, confirmPassword: "common.input.is-required" }))
 			return false
 		}
 		if (value !== formData.password) {
-			setErrors(prev => ({ ...prev, confirmPassword: translate("register.confirm-password.error1") }))
+			setErrors(prev => ({ ...prev, confirmPassword: "register.confirm-password.error1" }))
 			return false
 		}
 		setErrors(prev => ({ ...prev, confirmPassword: undefined }))
@@ -163,7 +162,7 @@ export default function ResetPasswordPage() {
 					return
 				}
 
-				const response: ResetPasswordValidateResponse = await resetPasswordValidate(Number(id), token)
+				const response = await resetPasswordValidate(Number(id), token)
 
 				if (response?.success && response?.data) {
 					setIsValidToken(true)
@@ -172,8 +171,7 @@ export default function ResetPasswordPage() {
 				} else {
 					setIsValidToken(false)
 				}
-			} catch (err) {
-				console.error("Token validation error:", err)
+			} catch {
 				setIsValidToken(false)
 			} finally {
 				setValidating(false)
@@ -199,7 +197,7 @@ export default function ResetPasswordPage() {
 		}
 
 		if (!userId) {
-			setError(translate("reset-password.form.error1"))
+			setError("reset-password.form.error1")
 			setLoading(false)
 			return
 		}
@@ -232,7 +230,7 @@ export default function ResetPasswordPage() {
 
 	if (validating) {
 		return (
-			<Box className="reset-password-container">
+			<Box className="unauth-form-container">
 				<CircularProgress />
 			</Box>
 		)
@@ -246,8 +244,8 @@ export default function ResetPasswordPage() {
 	}
 
 	return (
-		<Box className=""reset-password-container>
-			<Paper elevation={4} className="reset-password-container">
+		<Box className="unauth-form-container">
+			<Paper elevation={4} className="unauth-form-paper-container">
 				<Stack component="form" spacing={2} onSubmit={handleSubmit}>
 					<TTypography
 						variant="h5"
@@ -332,9 +330,15 @@ export default function ResetPasswordPage() {
 						}}
 					/>
 
-					<Button type="submit" variant="contained" disabled={loading || !isFormValid} fullWidth size="large">
-						{loading ? <CircularProgress size={22} color="inherit" /> : translate("reset-password.form.submit")}
-					</Button>
+					<TButton
+						type="submit"
+						variant="contained"
+						disabled={loading || !isFormValid}
+						fullWidth
+						size="large"
+						value="reset-password.form.submit"
+						startIcon={loading ? <CircularProgress size={22} color="inherit" /> : null}
+					/>
 
 					{error && <Alert severity="error">{error}</Alert>}
 					{message && <Alert severity="success">{message}</Alert>}

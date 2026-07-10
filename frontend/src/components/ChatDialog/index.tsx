@@ -22,7 +22,7 @@ import { MessageInput, MessageList } from "components/MessageThread"
 import { getToken } from "common/helper"
 import useToolkit from "hooks/useToolkit"
 import useLayoutAuth from "pages/Dashboard/hook"
-import { setPopup, setUserId } from "toolkit/slice/game"
+import { setPopup } from "toolkit/slice/game"
 import {
 	BaseChatMessage,
 	ChatDialogDragPosition,
@@ -111,10 +111,8 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	useEffect(() => {
 		if (props.open) {
 			setPosition({ x: 0, y: 0 })
-		} else if (gameState.activeUserId) {
-			showProfilePopup(gameState.activeUserId)
 		}
-	}, [props.open, gameState.activeUserId])
+	}, [props.open])
 
 	// Load messages when the dialog opens or when the active conversation
 	// (refId) changes — e.g. picking a different conversation in the drawer.
@@ -229,9 +227,9 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		inputs.forEach(input => {
 			(input as HTMLElement).blur()
 		})
-		
+
 		handleClose(null, "escapeKeyDown")
-		dispatch(setUserId(userId))
+		showProfilePopup(userId)
 	}
 
 	const onNewConversation = () => {

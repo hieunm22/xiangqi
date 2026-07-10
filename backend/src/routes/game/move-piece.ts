@@ -2,6 +2,7 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { fenToBoard } from "common/board-helper"
 import { playBotMove } from "common/bot-engine/play-bot-move"
+import { armClock, computeClock } from "common/game/game-clock"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitMovePiece } from "common/socket"
 import { getUTCTimestamp } from "common/helper"
@@ -173,6 +174,21 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			return
 		}
 
+		// Reject a move from a player who has already run out of time
+		const preClock = await computeClock(gameId)
+		if (preClock) {
+			const movingRemaining = team === "red" ? preClock.redMs : preClock.blackMs
+			if (movingRemaining <= 0) {
+				await armClock(gameId)
+				res.status(400).json({
+					success: false,
+					message: "move-piece.messages.time-expired",
+					status_code: 400
+				})
+				return
+			}
+		}
+
 		// Calculate next team (toggle)
 		const nextTeam = team === "red" ? "black" : "red"
 
@@ -203,9 +219,13 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			}
 		})
 
+		// Reschedule the flag timer for the next player and snapshot the clock
+		const clock = await armClock(gameId)
+
 		const responseData: any = {
 			...newRecord,
-			_id: insertResult.insertedId.toString()
+			_id: insertResult.insertedId.toString(),
+			clock,
 		}
 
 		// Emit move piece event to all clients in the room EXCEPT the requester

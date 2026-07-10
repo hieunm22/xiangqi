@@ -83,14 +83,17 @@ export const SearchUserPopup = () => {
 
 			// exclude users who cannot afford the room's bet
 			// In chat context it stays undefined.
-			const response = await searchUsers(token, query, gameState.inviteRoomId) as APIResponse<SearchUserType[]>
+			const response = await searchUsers(
+				token,
+				query,
+				gameState.inviteRoomId
+			) as APIResponse<SearchUserType[]>
 			if (response?.success && response.data) {
 				setResults(response.data)
 			} else {
 				setResults([])
 			}
-		} catch (error) {
-			console.error("Search error:", error)
+		} catch {
 			setResults([])
 		} finally {
 			setLoading(false)

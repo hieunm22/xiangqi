@@ -49,7 +49,7 @@ export const PrivateChatPopup = () => {
 				// session (e.g. reopened via the user menu); null falls back to the
 				// profile that opened the chat, or the loading label.
 				const activeConversation = gameState.activeUserId
-					? response.data.find((item: PrivateConversation) => item.partner?.id === gameState.activeUserId)
+					? response.data.find(item => item.partner?.id === gameState.activeUserId)
 					: undefined
 				setActiveTitle(activeConversation?.partner?.display_name ?? null)
 			}
@@ -136,7 +136,9 @@ export const PrivateChatPopup = () => {
 	])
 
 	const onClose = () => {
-		dispatch(setPopup(PopupState.NONE))
+		// Clear only the SEND_PM bit.
+		const next = gameState.popupState & ~PopupState.SEND_PM
+		dispatch(setPopup(next || PopupState.NONE))
 	}
 
 	const handleSelectConversation = (conversation: PrivateConversation) => {

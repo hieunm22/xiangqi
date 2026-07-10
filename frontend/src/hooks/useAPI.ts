@@ -11,7 +11,7 @@ import {
 	LoginBodyType
 } from "pages/Login/types"
 import { ForgotPasswordBodyType } from "pages/LostPassword/types"
-import { ResetPasswordBodyType } from "pages/ResetPassword/types"
+import { ResetPasswordBodyType, ResetPasswordValidateResponse } from "pages/ResetPassword/types"
 import { APIResponse, APIResponseEmpty, UserAvatarType } from "types/Common"
 import { Team } from "types/GameState"
 import { PrivateChatMessage, PrivateConversation } from "components/ChatDialog/types"
@@ -171,7 +171,7 @@ export const useAPI = () => {
 						.fetch()
 						.json(r => r)
 				} catch (err: any) {
-					console.error("Token refresh failed", err.message)
+					// console.error("Token refresh failed", err.message)
 					localStorage.removeItem(LS_TOKEN_KEY)
 					navigate(LOGIN_PATH)
 					throw err
@@ -718,7 +718,7 @@ export const useAPI = () => {
 		return response
 	}
 
-	const resetPasswordValidateCallback = (response: any) => {
+	const resetPasswordValidateCallback = (response: ResetPasswordValidateResponse) => {
 		return response
 	}
 

@@ -4,7 +4,7 @@ export type CellStatus = "collected" | "current" | "upcoming"
 // (highlighted), the rest are upcoming. `currentClaimable` guards the current
 // highlight: when false (e.g. today's daily chest is already taken) the next
 // cell reads as upcoming until it becomes claimable again.
-export const getCellStatus = (index: number, claimed: number, currentClaimable: boolean = true): CellStatus => {
+export const getCellStatus = (index: number, claimed: number, currentClaimable: boolean) => {
 	if (index < claimed) return "collected"
 	if (index === claimed && currentClaimable) return "current"
 	return "upcoming"

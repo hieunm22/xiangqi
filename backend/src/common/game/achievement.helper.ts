@@ -1,13 +1,60 @@
+import prisma from "prisma"
+import redis from "../redis"
 import type { Prisma } from "../../generated/prisma"
-import { DRAW_50_THRESHOLD, WIN_100_THRESHOLD } from "./achievement.constant"
-import { ACHIEVEMENT_TITLE } from "./achievement.constant"
+import { ACHIEVEMENT_TITLE, DRAW_50_THRESHOLD, WIN_100_THRESHOLD } from "./achievement.constant"
+import { CachedAchievement } from "types/game.type"
+
+// The achievement catalog is static reference data stored in redis
+const ACHIEVEMENTS_CACHE_KEY = "cache:achievements"
+const ACHIEVEMENTS_CACHE_TTL_SECONDS = 60 * 60 * 24 * 365 // 1 year
+
+export async function refreshAchievementsCache(): Promise<CachedAchievement[]> {
+	const achievements = await prisma.achievement.findMany({
+		orderBy: { id: "asc" },
+		select: { id: true, name: true }
+	})
+
+	try {
+		const serializable = achievements.map(row => ({ id: row.id.toString(), name: row.name }))
+		await redis.set(ACHIEVEMENTS_CACHE_KEY, JSON.stringify(serializable), "EX", ACHIEVEMENTS_CACHE_TTL_SECONDS)
+	} catch (err) {
+		console.error("[Achievements] cache write failed:", err)
+	}
+
+	return achievements
+}
+
+// Return the full achievement catalog from Redis.
+export async function getCachedAchievements(): Promise<CachedAchievement[]> {
+	try {
+		const cached = await redis.get(ACHIEVEMENTS_CACHE_KEY)
+		if (cached) {
+			const parsed = JSON.parse(cached)
+			if (Array.isArray(parsed)) {
+				return parsed.map((row: { id: string; name: string }) => ({ id: BigInt(row.id), name: row.name }))
+			}
+		}
+	} catch (err) {
+		console.error("[Achievements] cache read failed, rebuilding from DB:", err)
+	}
+
+	return refreshAchievementsCache()
+}
+
+// Drop the cached catalog; call after mutating the achievement table so the next
+// read repopulates from the DB.
+export async function invalidateAchievementsCache(): Promise<void> {
+	try {
+		await redis.del(ACHIEVEMENTS_CACHE_KEY)
+	} catch (err) {
+		console.error("[Achievements] cache invalidation failed:", err)
+	}
+}
 
 // Award achievements to the game's human participants based on their
 // win/draw counts in the `game_users` ledger (win: amount > 0, draw: amount = 0)
 export async function evaluateAchievements(tx: Prisma.TransactionClient, gameId: string): Promise<void> {
-	const achievements = await tx.achievement.findMany({
-		select: { id: true, name: true }
-	})
+	const achievements = await getCachedAchievements()
 
 	if (achievements.length === 0) {
 		return

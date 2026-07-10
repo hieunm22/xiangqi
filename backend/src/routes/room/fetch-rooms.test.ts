@@ -87,6 +87,7 @@ describe("GET /api/room/fetch-rooms", () => {
 				status: 1,
 				red_first: true,
 				bet_amount: 50,
+				time_limit: 600,
 				host_id: BigInt(12),
 				created_at: new Date("2026-05-12T00:00:00.000Z"),
 				updated_at: new Date("2026-05-12T00:00:00.000Z"),
@@ -126,6 +127,7 @@ describe("GET /api/room/fetch-rooms", () => {
 			status: 1,
 			red_first: true,
 			bet_amount: 50,
+			time_limit: 600,
 			// host is independent of join order (Alice joined first, Bob is host)
 			host_id: 12
 		})

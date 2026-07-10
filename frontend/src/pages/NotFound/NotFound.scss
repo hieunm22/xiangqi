@@ -1,3 +1,16 @@
+.not-found-container {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.not-found-content {
+	align-items: center;
+	text-align: center;
+	width: 100%;
+}
+
 .not-found-decoration {
 	animation: float 3s ease-in-out infinite;
 
@@ -9,4 +22,39 @@
 			transform: translateY(-20px);
 		}
 	}
+}
+
+.not-found-code {
+	font-size: 120px !important;
+	font-weight: 900 !important;
+	line-height: 1 !important;
+	// color: var(--mui-palette-primary-main);
+	color: #1976d2;
+}
+
+.not-found-title {
+	font-size: 36px !important;
+	font-weight: 700 !important;
+}
+
+.not-found-title-icon {
+	margin-right: 16px;
+}
+
+.not-found-description {
+	font-size: 16px !important;
+	color: rgba(0, 0, 0, 0.6);
+}
+
+.not-found-actions {
+	justify-content: center;
+}
+
+.not-found-spinner-wrap {
+	margin-top: 32px;
+}
+
+.not-found-spinner {
+	font-size: 64px;
+	opacity: 0.1;
 }

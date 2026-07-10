@@ -21,6 +21,8 @@ const insertOneMock = vi.fn()
 const getGameHistoryCollectionMock = vi.fn()
 const gameHistoryCreateMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
+const computeClockMock = vi.fn()
+const armClockMock = vi.fn()
 
 const PATH = "/api/game/move-piece"
 
@@ -45,6 +47,11 @@ vi.mock("prisma", () => ({
 	}
 }))
 
+vi.mock("common/game/game-clock", () => ({
+	computeClock: computeClockMock,
+	armClock: armClockMock
+}))
+
 describe("POST /api/game/move-piece", () => {
 	let app: express.Express
 	let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -67,6 +74,9 @@ describe("POST /api/game/move-piece", () => {
 			find: findMock,
 			insertOne: insertOneMock
 		})
+		// Default: unclocked game. Individual tests override to exercise the clock.
+		computeClockMock.mockResolvedValue(null)
+		armClockMock.mockResolvedValue(null)
 	})
 
 	afterEach(() => {
@@ -211,6 +221,42 @@ describe("POST /api/game/move-piece", () => {
 			message: "move-piece.messages.game-history-not-found",
 			status_code: 400
 		})
+		expect(insertOneMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 400 when the moving player has already run out of time", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-timeout")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		toArrayMock.mockResolvedValue([
+			{ _id: { toString: () => "mongo-id-prev" }, game_id: "game-1", fen: INITIAL_FEN_BLACK_TOP, team: "red" }
+		])
+		// Red is on the move but has 0ms left -> the move is rejected.
+		computeClockMock.mockResolvedValue({
+			redMs: 0,
+			blackMs: 30000,
+			activeTeam: "red",
+			serverNow: 1700000000000,
+			timeLimit: 600,
+			timeIncrement: 0
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-1",
+				newFen: INITIAL_FEN_BLACK_TOP,
+				capturePiece: null,
+				team: "red"
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "move-piece.messages.time-expired",
+			status_code: 400
+		})
+		expect(armClockMock).toHaveBeenCalledWith("game-1")
 		expect(insertOneMock).not.toHaveBeenCalled()
 	})
 

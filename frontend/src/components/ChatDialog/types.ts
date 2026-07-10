@@ -37,7 +37,7 @@ export interface PrivateChatMessage extends BaseChatMessage {
 	receiver_id: number
 }
 
-export interface AnnouncementMessage extends BaseChatMessage { }
+export type AnnouncementMessage = BaseChatMessage
 
 export interface ChatDialogDragPosition {
 	startX: number

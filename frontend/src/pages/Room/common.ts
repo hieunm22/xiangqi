@@ -281,7 +281,7 @@ export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): Pi
 }
 
 /** Return a new board with the piece at `fromId` moved to `toId`. */
-export function applyMove(board: NullableCellProps[], fromId: number, toId: number): NullableCellProps[] {
+export function applyMove(board: NullableCellProps[], fromId: number, toId: number) {
 	const next = [...board]
 	const moving = next[fromId]!
 	next[toId] = {

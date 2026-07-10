@@ -7,30 +7,24 @@ import {
 	Grid,
 } from "@mui/material"
 import { ComponentWithChild, ConfirmProps } from "types/Common"
-import { AlertHandler, AlertQueueItem } from "./types"
+import { AlertQueueItem } from "./types"
+import { setAlertHandler } from "./helper"
 import { TButton, TTypography } from "components/TranslationTag"
 import "./AlertProvider.scss"
-
-let handler: AlertHandler | null = null
-
-export function openAlert(options: ConfirmProps) {
-	if (!handler) return Promise.resolve()
-	return handler(options)
-}
 
 export const AlertProvider = (props: ComponentWithChild) => {
 	const [queue, setQueue] = useState<AlertQueueItem[]>([])
 	const [countdownLeft, setCountdownLeft] = useState<number | null>(null)
 
 	useEffect(() => {
-		handler = (options: ConfirmProps) => {
+		setAlertHandler((options: ConfirmProps) => {
 			return new Promise<void>(resolve => {
 				setQueue([{ id: Date.now() + Math.random(), options, resolve }])
 			})
-		}
+		})
 
 		return () => {
-			handler = null
+			setAlertHandler(null)
 		}
 	}, [])
 

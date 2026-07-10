@@ -12,7 +12,7 @@ import {
 	Typography
 } from "@mui/material"
 import classnames from "classnames"
-import { openAlert } from "components/AlertProvider"
+import { openAlert } from "components/AlertProvider/helper"
 import {
 	TI,
 	TSpan,
@@ -110,8 +110,8 @@ export const ProfileTab = ({ user }: ProfileTabProps) => {
 			await navigator.clipboard.writeText(user.email)
 			setIsCopied(true)
 		}
-		catch (err) {
-			console.error("Failed to copy email:", err)
+		catch {
+			// console.error("Failed to copy email:", err)
 			setIsCopied(false)
 		}
 	}
@@ -141,7 +141,8 @@ export const ProfileTab = ({ user }: ProfileTabProps) => {
 				return
 			}
 
-			const response = await updateUserAvatar(token, selectedFile) as APIResponse<Partial<UpdateUserInfoResponse>>
+			type Response = APIResponse<Partial<UpdateUserInfoResponse>>
+			const response = await updateUserAvatar(token, selectedFile) as Response
 			if (!response?.success) {
 				await openAlert({
 					title: "popup.alert.title",
@@ -181,6 +182,8 @@ export const ProfileTab = ({ user }: ProfileTabProps) => {
 		avatarInputRef.current?.click()
 	}
 
+	const copyEmailClass = isCopied ? "fas fa-circle-check copied-icon" : "fad fa-copy cursor-pointer"
+
 	return (
 		<>
 			<Box
@@ -211,7 +214,11 @@ export const ProfileTab = ({ user }: ProfileTabProps) => {
 											onChange={handleAvatarFileChange}
 											className="avatar-file-input"
 										/>
-										<button type="button" className="avatar-change-button" onClick={triggerAvatarFileDialog}>
+										<button
+											type="button"
+											className="avatar-change-button"
+											onClick={triggerAvatarFileDialog}
+										>
 											<i className="fal fa-camera" />
 										</button>
 									</>
@@ -278,7 +285,7 @@ export const ProfileTab = ({ user }: ProfileTabProps) => {
 								editable={isOwnProfile}
 								extraActions={
 									<TI
-										className={isCopied ? "fas fa-circle-check copied-icon" : "fad fa-copy cursor-pointer"}
+										className={copyEmailClass}
 										onClick={handleCopyEmail}
 										onAnimationEnd={onAnimationEnd}
 										title="Copy email"
@@ -374,8 +381,14 @@ export const HistoryTab = (props: HistoryTabProps) => {
 								onClick={() => onOpenReplay(item)}
 							>
 								<Box className="game-history-header">
-									<TTypography variant="caption" color="primary" content={dateLabel ?? "common.date.today"} />
-									<TTypography variant="caption" color="secondary" content={timeLabel} />
+									<TTypography
+										variant="caption"
+										color="primary"
+										content={dateLabel ?? "common.date.today"}
+									/>
+									<Typography variant="caption" color="secondary">
+										{timeLabel}
+									</Typography>
 								</Box>
 								<Box className="game-history-content">
 									<PlayerAvatars game={item} userId={gameState.activeUserId!} />

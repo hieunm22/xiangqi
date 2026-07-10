@@ -3,7 +3,7 @@ import classnames from "classnames"
 import { Box, Stack } from "@mui/material"
 import { LUCKY_WHEEL_SLOT_HOURS } from "common/constant"
 import { TTypography } from "components/TranslationTag"
-import { getTimeToNextSlot, getToken } from "common/helper"
+import { getTimeToNextSlot, getToken, logger } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { formatCountdown } from "../rewardHelpers"
 
@@ -44,7 +44,7 @@ export default function LuckyWheelTab() {
 					setSpinsRemaining(response.data.spins)
 				}
 			} catch (error) {
-				console.error("Failed to claim lucky spins:", error)
+				logger.error("Failed to claim lucky spins:", error)
 			}
 		}
 
@@ -76,7 +76,7 @@ export default function LuckyWheelTab() {
 						setSpinsRemaining(prev => Math.max(0, prev - 1))
 					}
 				} catch (error) {
-					console.error("Failed to spin lucky wheel:", error)
+					logger.error("Failed to spin lucky wheel:", error)
 					setSpinsRemaining(prev => Math.max(0, prev - 1))
 				}
 			} else {
@@ -117,6 +117,8 @@ export default function LuckyWheelTab() {
 		"not-spinable": spinsRemaining === 0 || isSpinning
 	})
 
+	const transitionStyle = `transform ${spinDuration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+
 	return (
 		<Box className="lucky-wheel-tab">
 			<Box className="page-content">
@@ -126,7 +128,7 @@ export default function LuckyWheelTab() {
 						className="lucky-wheel"
 						sx={{
 							transform: `rotate(${rotation}deg)`,
-							transition: isSpinning ? `transform ${spinDuration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)` : "none"
+							transition: isSpinning ? transitionStyle : "none"
 						}}
 					>
 						<svg

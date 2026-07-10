@@ -28,4 +28,6 @@ const loadImaSdk = (): Promise<void> => {
 }
 
 // Returns a stable loader that resolves once window.google.ima is ready.
-export const useIMASdk = () => useCallback(loadImaSdk, [])
+export const useIMASdk = () => useCallback(async () => {
+	await loadImaSdk()
+}, [])

@@ -71,6 +71,9 @@ dashboard.popup.piece-selection;Select team;Chọn quân
 dashboard.popup.red-first;Red first;Đỏ tiên
 dashboard.popup.pve-mode;PVE mode;Chơi với máy
 dashboard.popup.bet-amount;Bet amount;Giá trị cược
+dashboard.popup.time-limit;Time per player;Thời gian mỗi người
+dashboard.popup.time-unlimited;Unlimited;Không giới hạn
+dashboard.popup.time-minutes;{0} min;{0} phút
 dashboard.popup.room-name-label;Room table name;Tên phòng chơi
 dashboard.popup.room-name-helptext;is required;không được để trống
 dashboard.popup.play;Play;Chơi
@@ -172,6 +175,7 @@ auth-middleware.messages.token-validation-failed;Token validation failed;Xác th
 create-room.messages.insufficient-amount;You do not have enough balance to create a room with this bet;Bạn không còn đủ amount để tạo phòng với mức cược này
 create-room.messages.internal-server-error;Internal server error while creating room;Lỗi máy chủ nội bộ khi tạo phòng
 create-room.messages.invalid-bet-amount;Bet amount is required and must be one of the acceptable values;Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận
+create-room.messages.invalid-time-limit;Invalid time limit;Thời gian không hợp lệ
 create-room.messages.invalid-redFirst;'redFirst' must be a boolean;'redFirst' phải là giá trị boolean
 create-room.messages.invalid-team-name;Team name must be either 'red', 'black', or null;Tên đội phải là 'red', 'black' hoặc null
 create-room.messages.name-required;Room name (tableName) is required and must not be empty;Tên phòng (tableName) là bắt buộc và không được để trống
@@ -245,8 +249,8 @@ reset-password.messages.missing-userId-or-password;UserId and password are requi
 reset-password.messages.token-valid;Reset password token is valid;Token đặt lại mật khẩu hợp lệ
 reset-password.messages.user-not-found;User not found;Không tìm thấy người dùng
 room.actions.start-room;Start room;Bắt đầu chơi
-room.actions.challenge;Challenge;Thách đấu
-room.actions.leave-seat;Leave seat;Dự khán
+room.actions.challenge;Challenge;Vào chơi
+room.actions.leave-seat;Leave seat;Ra xem
 room.actions.undo;Undo;Hoán tác
 room.actions.surrender;Surrender;Đầu hàng
 room.actions.draw;Draw;Hòa
@@ -258,6 +262,7 @@ room.actions.send-pm;Send PM;Chat
 room.actions.view-history;History;Lịch sử
 room.actions.kick;Kick;Kick
 room.actions.back-to-room;Back to room;Quay lại phòng chơi
+room.actions.chat;Room chat;Phòng chat
 room.messages.draw-accepted;Opponent accepted the draw;Đối phương đã đồng ý hòa
 room.messages.draw-rejected;Opponent rejected the draw;Đối phương từ chối hòa
 room.messages.opponent-surrendered;Opponent surrendered! You won!;Đối phương đã đầu hàng! Bạn thắng!
@@ -291,6 +296,7 @@ start-game.messages.requester-must-pick-team;You must select a team before start
 update-room.messages.success;Room updated successfully;Cập nhật phòng thành công
 update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 update-room.messages.invalid-room-id;Invalid room ID;ID phòng không hợp lệ
+update-room.messages.invalid-time-limit;Invalid time limit;Thời gian không hợp lệ
 update-room.messages.name-required;Room name is required;Tên phòng không được để trống
 update-room.messages.room-not-found;Room not found;Không tìm thấy phòng
 update-room.messages.forbidden;You are not the host of this room;Bạn không phải chủ phòng

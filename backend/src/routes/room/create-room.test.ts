@@ -217,6 +217,107 @@ describe("POST /api/room/create-room", () => {
 		)
 	})
 
+	it("returns 400 when timeLimit is not an accepted value", async () => {
+		const accessToken = buildAccessToken(11, "session-room-time-bad")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "Table 1",
+				teamName: "red",
+				redFirst: true,
+				betAmount: 50,
+				timeLimit: 123
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "create-room.messages.invalid-time-limit",
+			status_code: 400
+		})
+		expect(roomCreateMock).not.toHaveBeenCalled()
+	})
+
+	it("stores the chosen time limit for a PvP room", async () => {
+		const accessToken = buildAccessToken(11, "session-room-time-ok")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
+		roomCreateMock.mockResolvedValue({
+			id: BigInt(9),
+			name: "Table 1",
+			status: 1,
+			red_first: true,
+			pve_mode: false,
+			bet_amount: 50,
+			time_limit: 600,
+			host_id: BigInt(11),
+			created_at: new Date("2026-05-12T00:00:00.000Z"),
+			updated_at: new Date("2026-05-12T00:00:00.000Z"),
+			room_users: [{ users: { id: BigInt(11), display_name: "Alice", avatar_seq: 0, is_bot: false }, team: "red" }]
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "Table 1",
+				teamName: "red",
+				redFirst: true,
+				betAmount: 50,
+				timeLimit: 600
+			})
+
+		expect(res.status).toBe(201)
+		expect(res.body.data.room.time_limit).toBe(600)
+		expect(roomCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ time_limit: 600 })
+			})
+		)
+	})
+
+	it("ignores the time limit for a PvE room (no clock)", async () => {
+		const accessToken = buildAccessToken(11, "session-room-time-pve")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomCreateMock.mockResolvedValue({
+			id: BigInt(10),
+			name: "Bot Table",
+			status: 1,
+			red_first: true,
+			pve_mode: true,
+			bet_amount: 0,
+			time_limit: null,
+			host_id: BigInt(11),
+			created_at: new Date("2026-05-12T00:00:00.000Z"),
+			updated_at: new Date("2026-05-12T00:00:00.000Z"),
+			room_users: [{ users: { id: BigInt(11), display_name: "Alice", avatar_seq: 0, is_bot: false }, team: "red" }]
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "Bot Table",
+				teamName: "red",
+				redFirst: true,
+				pveMode: true,
+				betAmount: 0,
+				timeLimit: 600
+			})
+
+		expect(res.status).toBe(201)
+		expect(roomCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ time_limit: null })
+			})
+		)
+	})
+
 	it("returns 400 when redFirst is not boolean", async () => {
 		const accessToken = buildAccessToken(11, "session-room-4")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))

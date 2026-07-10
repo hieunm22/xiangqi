@@ -5,7 +5,7 @@ export const PASSWORD_POLICY = {
 	lowercase: /[a-z]/,
 	uppercase: /[A-Z]/,
 	numeric: /[0-9]/,
-	special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+	special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
 	message: "register.password.error1"
 }
 

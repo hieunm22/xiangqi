@@ -6,6 +6,8 @@ import {
 	DialogTitle,
 	Divider,
 	IconButton,
+	MenuItem,
+	Select,
 	Slider,
 	Stack,
 	Typography
@@ -17,7 +19,7 @@ import CapturedPiecesDisplay from "pages/Room/components/CapturedPiecesDisplay"
 import { RoomUser } from "pages/Room/types"
 import ReplayBoard from "./components/ReplayBoard"
 import ReplayPlayerCard from "./components/ReplayPlayerCard"
-import useReplay from "./useReplay"
+import useReplay, { REPLAY_SPEEDS } from "./useReplay"
 import { GameReplayPopupProps } from "./types"
 import "./GameReplay.scss"
 
@@ -35,9 +37,11 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 		previousMove,
 		redFirst,
 		stepIndex,
+		stepMs,
 		totalMoves,
 
 		goToStep,
+		setStepMs,
 		togglePlay
 	} = useReplay({ gameId: game?.game.gameId ?? null, open })
 
@@ -113,6 +117,19 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 							>
 								<TI className={isPlaying ? "fas fa-pause" : "fas fa-play"} />
 							</IconButton>
+							<Select
+								className="game-replay-speed"
+								value={stepMs}
+								onChange={e => setStepMs(Number(e.target.value))}
+								size="small"
+								variant="standard"
+							>
+								{REPLAY_SPEEDS.map(speed => (
+									<MenuItem key={speed.value} value={speed.value}>
+										{speed.label}
+									</MenuItem>
+								))}
+							</Select>
 							<Slider
 								className="game-replay-slider"
 								value={stepIndex}

@@ -4,18 +4,11 @@ import { useTheme } from "@mui/material/styles"
 import { requireImage } from "common/helper"
 import { ComponentWithChild } from "types/Common"
 import {
-	SnackbarHandler,
 	SnackbarOptions,
 	SnackbarQueueItem
 } from "./types"
+import { setSnackbarHandler } from "./helper"
 import "./SnackBarProvider.scss"
-
-let handler: SnackbarHandler | null = null
-
-export function openSnackbar(options: SnackbarOptions) {
-	if (!handler) return
-	handler(options)
-}
 
 export const SnackbarProvider = (props: ComponentWithChild) => {
 	const theme = useTheme()
@@ -24,7 +17,7 @@ export const SnackbarProvider = (props: ComponentWithChild) => {
 	const horizontal = isMobile ? "center" : "right"
 
 	useEffect(() => {
-		handler = (options: SnackbarOptions) => {
+		setSnackbarHandler((options: SnackbarOptions) => {
 			setQueue(prev => [
 				...prev,
 				{
@@ -32,10 +25,10 @@ export const SnackbarProvider = (props: ComponentWithChild) => {
 					options
 				}
 			])
-		}
+		})
 
 		return () => {
-			handler = null
+			setSnackbarHandler(null)
 		}
 	}, [])
 

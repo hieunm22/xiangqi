@@ -20,15 +20,13 @@ const SkeletonCell = ({ isTreasure, isDaily }: RewardGridSkeletonCellProps) => {
 	)
 }
 
-// Placeholder grid shown while the reward status loads. Mirrors the real
-// 6-cells + 1 tall-cell layout so the tab doesn't shift when data arrives.
-export default function RewardGridSkeleton({ isDaily }: Pick<RewardGridSkeletonCellProps, "isDaily">) {
+export default function RewardGridSkeleton(props: Pick<RewardGridSkeletonCellProps, "isDaily">) {
 	return (
 		<Box className="bonus-grid">
 			{Array.from({ length: LEFT_CELLS }).map((_, index) => (
-				<SkeletonCell key={index} isTreasure={false} isDaily={isDaily} />
+				<SkeletonCell key={index} isTreasure={false} isDaily={props.isDaily} />
 			))}
-			<SkeletonCell isTreasure isDaily={isDaily} />
+			<SkeletonCell isTreasure isDaily={props.isDaily} />
 		</Box>
 	)
 }

@@ -1,9 +1,25 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
+// import checker from "vite-plugin-checker"
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [react()],
+	plugins: [
+		react(),
+		// checker({
+		// 	overlay: false,
+		// 	eslint: {
+		// 		useFlatConfig: true,
+		// 		lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
+		// 		dev: {
+		// 			logLevel: [
+		// 				"error",
+		// 				"warning"
+		// 			]
+		// 		}
+		// 	}
+		// })
+	],
 	resolve: {
 		tsconfigPaths: true
 	},
@@ -16,6 +32,7 @@ export default defineConfig({
 			output: {
 				manualChunks: (id) => {
 					if (id.includes("node_modules")) {
+						// eslint-disable-next-line max-len
 						if (id.includes("react") || id.includes("react-dom") || id.includes("react-router") || id.includes("redux")) {
 							return "vendor-react"
 						}
