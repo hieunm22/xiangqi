@@ -51,7 +51,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
 		socket.on("connect", () => {
 			const transport = socket.io.engine.transport?.name || "unknown"
-			const getTime = new Date().toISOString
+			const getTime = () => new Date().toISOString()
 			logger.log(`[Socket.io] [${getTime()}] Connected: ${socket.id} Transport: ${transport}`)
 			if (transport === "websocket") {
 				logger.log(`[Socket.io] [${getTime()}] WebSocket connected`)
@@ -60,7 +60,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 		})
 
 		socket.io.engine.on("upgrade", (transport) => {
-			const getTime = new Date().toISOString
+			const getTime = () => new Date().toISOString()
 			logger.log(`[Socket.io] [${getTime()}] Transport upgraded to: ${transport.name}`)
 			if (transport.name === "websocket") {
 				logger.log(`[Socket.io] [${getTime()}] WebSocket connected`)

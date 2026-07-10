@@ -49,12 +49,12 @@
 		}
 
 		&.is-available {
-			border: none;
+			border: solid 2px #2e06e2; // dominant solid red border
 		}
 
 		&.is-playing {
 			position: relative;
-			border: solid 3px #e20606; // dominant solid red border
+			border: solid 4px #e20606; // dominant solid red border
 
 			&::before {
 				content: "";

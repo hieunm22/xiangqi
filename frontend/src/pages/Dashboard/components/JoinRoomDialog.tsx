@@ -86,10 +86,12 @@ export const JoinRoomDialog = () => {
 	}
 
 	const players = room?.users.filter(u => u.team !== null) ?? []
-	const host = room && room.host_id
-		? (players.find(u => u.id === room.host_id) ?? players[0])
-		: null
-	const opponent = players.find(u => u.id !== host?.id) ?? null
+	const player1 = players.length > 0 ? players[0] : null
+	const player2 = players.length > 1 ? players[1] : null
+	// const host = room && room.host_id
+	// 	? (players.find(u => u.id === room.host_id) ?? players[0])
+	// 	: null
+	// const opponent = players.find(u => u.id !== host?.id) ?? null
 	const spectators = room?.users.filter(u => u.team === null) ?? []
 
 	// Check if current user can afford this room's bet (>80% of balance disqualifies them)
@@ -185,14 +187,14 @@ export const JoinRoomDialog = () => {
 				<Stack className="dashboard__join-room-user-stack" >
 					<Stack direction="row" className="dashboard__join-room-player-stack">
 						<SeatAvatar
-							user={host || null}
-							isHost
+							user={player1}
+							isHost={player1 !== null && room !== null && player1.id === room.host_id}
 							onUserClick={handleAvatarClick}
 						/>
 						<img src={BoardImage} alt="Board" className="dashboard__join-room-board" />
 						<SeatAvatar
-							user={opponent || null}
-							isHost={false}
+							user={player2}
+							isHost={player2 !== null && room !== null && player2.id === room.host_id}
 							onUserClick={handleAvatarClick}
 						/>
 					</Stack>

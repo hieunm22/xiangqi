@@ -117,6 +117,8 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"is-ready": user.back_ready,
 		"is-waiting": !user.back_ready
 	})
+	const isHost = props.roomHostId !== null && user.id === props.roomHostId
+	console.log('isHost :>> ', isHost);
 
 	return (
 		<div className={containerClass}>
@@ -126,6 +128,13 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					src={fullAvatarUrl}
 					alt={user?.display_name}
 				/>
+				{isHost && (
+					<Tooltip title="Host" arrow placement="top">
+						<div className="player-host-badge" aria-label="Room host">
+							<i className="fas fa-crown" />
+						</div>
+					</Tooltip>
+				)}
 				{user.team !== null && user.back_ready !== null && (
 					<div className={backReadyClass} />
 				)}

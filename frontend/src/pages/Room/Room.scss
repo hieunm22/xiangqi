@@ -483,6 +483,23 @@
 		}
 	}
 
+	& .player-host-badge {
+		position: absolute;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		border: 1px solid rgba(95, 50, 5, 0.45);
+		background: linear-gradient(135deg, #ffef9d 0%, #f6bf2e 100%);
+		color: #7a4200;
+		font-size: 9px;
+		line-height: 1;
+		z-index: 2;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+	}
+
 	& .player-avatar-image {
 		width: 100%;
 		height: 100%;
@@ -591,9 +608,6 @@
 	flex-direction: column;
 	gap: 8px;
 	align-items: flex-end;
-
-	// &.top-player {
-	// }
 
 	&.bottom-player {
 		flex-direction: column;
