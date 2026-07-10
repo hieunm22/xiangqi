@@ -63,9 +63,15 @@
 	gap: 16px !important;
 }
 
+.setting-button {
+	width: 120px;
+	margin-top: 16px !important;
+}
+
 .unauth-setting-btn {
 	position: fixed !important;
 	top: 16px;
 	right: 16px;
+	width: 120px;
 	z-index: 1400;
 }

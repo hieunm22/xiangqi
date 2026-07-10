@@ -2,7 +2,6 @@ import { ChangeEvent, useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
 import {
 	Box,
-	Button,
 	CssBaseline,
 	Dialog,
 	DialogContent,
@@ -14,10 +13,9 @@ import {
 import landscapeBg from "assets/landscape.PNG?url"
 import portraitBg from "assets/portrait.jpg?url"
 import { COUNTRIES_OPTIONS, LS_DARKMODE, LS_LANGUAGE } from "common/constant"
-import { TTypography } from "components/TranslationTag"
+import { TButton, TTypography } from "components/TranslationTag"
 import useToolkit from "hooks/useToolkit"
 import i18n from "locales/i18n"
-import { translate } from "locales/translate"
 import { setDarkMode } from "toolkit/slice/home"
 import "./LayoutUnAuth.scss"
 
@@ -78,15 +76,15 @@ export default function LayoutUnAuth() {
 		>
 			<CssBaseline />
 			<Outlet />
-			<Button
+			<TButton
 				className="unauth-setting-btn"
-				variant="outlined"
+				variant="contained"
 				startIcon={<i className="fa-solid fa-gear" />}
 				size="small"
+				sx={{ backgroundColor: "background.default", color: "text.primary" }}
 				onClick={handleShowSettings}
-			>
-				{translate("menu.setting.button")}
-			</Button>
+				value="menu.setting.button"
+			/>
 
 			<Dialog
 				open={openSettings}
@@ -103,7 +101,7 @@ export default function LayoutUnAuth() {
 						<TTypography sx={{ width: 100 }} content="settings.language" />
 						<Grid container sx={{ gap: 1 }}>
 							{COUNTRIES_OPTIONS.map(option => (
-								<Button
+								<TButton
 									key={option.key}
 									variant={language === option.key ? "contained" : "outlined"}
 									disabled={option.disabled}
@@ -116,9 +114,8 @@ export default function LayoutUnAuth() {
 										/>
 									}
 									size="small"
-								>
-									{option.value}
-								</Button>
+									value={option.value}
+								/>
 							))}
 						</Grid>
 					</Grid>
@@ -130,15 +127,16 @@ export default function LayoutUnAuth() {
 							onChange={toogleDarkMode}
 						/>
 					</Grid>
+					<Divider className="menu-divider" />
 					<Grid container sx={{ justifyContent: "center" }}>
-						<Button
-							className="btn btn-primary mt-20 center"
+						<TButton
+							className="btn btn-primary setting-button"
 							variant="outlined"
 							size="small"
 							onClick={() => setOpenSettings(false)}
-						>
-							{translate("settings.close")}
-						</Button>
+							startIcon={<i className="fas fa-xmark" />}
+							value="settings.close"
+						/>
 					</Grid>
 				</DialogContent>
 			</Dialog>
