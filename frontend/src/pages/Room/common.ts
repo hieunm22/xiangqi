@@ -173,7 +173,8 @@ export function findCheckingPieces(board: NullableCellProps[], team: Team): numb
 }
 
 export function fenToBoard(fen: string): NullableCellProps[] {
-	const rows = fen.trim().split("/")
+	// Tolerate both board-only and full 6-field FENs: take the placement field only.
+	const rows = fen.trim().split(/\s+/)[0].split("/")
 	if (rows.length !== BOARD_ROWS) {
 		throw new Error(`Invalid FEN row count: expected ${BOARD_ROWS}, got ${rows.length}`)
 	}
