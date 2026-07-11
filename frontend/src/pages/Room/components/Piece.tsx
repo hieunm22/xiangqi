@@ -1,7 +1,7 @@
 import classnames from "classnames"
 import styled from "styled-components"
 import { BOARD_COLUMNS } from "common/constant"
-import { getTeamFromPieceChar } from "../common"
+import { getTeamFromPieceChar } from "../variants/xiangqi/rules"
 import { PieceItemProps } from "../types"
 
 const isSelected = (props: PieceItemProps) => {

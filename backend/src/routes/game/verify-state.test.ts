@@ -161,6 +161,13 @@ describe("POST /api/game/verify-state", () => {
 		resetRouteMocks()
 		const accessToken = buildAccessToken(91, "session-verify-state-2")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		// FEN shape is variant-specific, so it is validated after the game (and thus
+		// its variant) is resolved.
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-1",
+			room_id: 11n,
+			room: { bet_amount: 0, pve_mode: false, red_first: true }
+		})
 
 		const res = await request(app)
 			.post(PATH)
@@ -177,13 +184,17 @@ describe("POST /api/game/verify-state", () => {
 			message: "verify-state.messages.invalid-fen",
 			status_code: 400
 		})
-		expect(gameFindUniqueMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 400 when checkedTeam is invalid", async () => {
 		resetRouteMocks()
 		const accessToken = buildAccessToken(91, "session-verify-state-3")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-1",
+			room_id: 11n,
+			room: { bet_amount: 0, pve_mode: false, red_first: true }
+		})
 
 		const res = await request(app)
 			.post(PATH)
@@ -200,7 +211,6 @@ describe("POST /api/game/verify-state", () => {
 			message: "verify-state.messages.invalid-team",
 			status_code: 400
 		})
-		expect(gameFindUniqueMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 404 when game does not exist", async () => {
@@ -224,6 +234,7 @@ describe("POST /api/game/verify-state", () => {
 			select: {
 				id: true,
 				room_id: true,
+				game_type: true,
 				room: {
 					select: {
 						bet_amount: true,
@@ -402,6 +413,57 @@ describe("POST /api/game/verify-state", () => {
 			winnerId: 102,
 			checkedTeam: "red"
 		})
+	})
+
+	it("ends a chess game on checkmate using the real chess evaluator (white loses)", async () => {
+		resetRouteMocks()
+		// evaluateTeamState is xiangqi-only; chess uses the real chess evaluator,
+		// so we do NOT mock the outcome here.
+		toArrayGameHistoryMock.mockResolvedValue([{ _id: "mongo-chess-mate" }])
+
+		const accessToken = buildAccessToken(91, "session-verify-state-chess")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "chess-1",
+			room_id: 21n,
+			game_type: "chess",
+			room: { bet_amount: 50, pve_mode: false, red_first: true }
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: 91n, team: "white" },
+			{ user_id: 92n, team: "black" }
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "chess-1",
+				// Fool's mate: white is checkmated, so black (user 92) wins.
+				newFen: "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
+				checkedTeam: "white"
+			})
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toMatchObject({
+			gameEnded: true,
+			status: "checkmate",
+			winnerId: 92,
+			checkedTeam: "white"
+		})
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "chess-1",
+			roomId: 21n,
+			winnerId: 92n,
+			isBotGame: false,
+			betAmount: 50
+		})
+		expect(emitGameEndedMock).toHaveBeenCalledWith(21, {
+			gameId: "chess-1",
+			status: "checkmate",
+			winnerId: 92
+		})
+		expect(stopClockMock).toHaveBeenCalledWith("chess-1")
 	})
 
 	it("returns 500 when database throws unexpected error", async () => {

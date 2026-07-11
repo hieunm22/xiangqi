@@ -65,7 +65,7 @@ export function useSocket() {
 		}
 	}, [])
 
-	// Presence heartbeat — only emitted by the client while it has a visible tab.
+	// Presence heartbeat - only emitted by the client while it has a visible tab.
 	const emitPresencePing = useCallback((userId: number) => {
 		if (socketRef.current) {
 			socketRef.current.emit("presence-ping", { userId })

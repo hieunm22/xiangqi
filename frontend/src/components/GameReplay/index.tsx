@@ -14,7 +14,7 @@ import {
 } from "@mui/material"
 import { TI } from "components/TranslationTag"
 import { translate } from "locales/translate"
-import { resolveSideUsers } from "pages/Room/common"
+import { resolveSideUsers } from "pages/Room/variants/xiangqi/rules"
 import CapturedPiecesDisplay from "pages/Room/components/CapturedPiecesDisplay"
 import { RoomUser } from "pages/Room/types"
 import ReplayBoard from "./components/ReplayBoard"

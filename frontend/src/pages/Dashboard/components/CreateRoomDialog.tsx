@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react"
+import { ChangeEvent, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
 	Stack,
@@ -17,6 +17,7 @@ import { betOptions } from "../constants"
 import Alert from "components/AlertWithIcon"
 import { TButton, TTextField } from "components/TranslationTag"
 import { PieceSelection } from "./PieceSelection"
+import { GameType, getVariant } from "common/variants"
 import { translate } from "locales/translate"
 import { getToken } from "common/helper"
 import { PieceSelectionContext, useCreateRoomDialogContext } from "hooks/useAppContext"
@@ -26,9 +27,10 @@ import { Team } from "types/GameState"
 import { RoomWithUsers } from "pages/Room/types"
 import { CreateRoomRequest } from "../types"
 
-export const CreateRoomDialog = () => {
+export const CreateRoomDialog = ({ gameType }: { gameType: GameType }) => {
 	const { open, setOpen } = useCreateRoomDialogContext()
 	const { createRoom } = useAPI()
+	const variant = getVariant(gameType)
 	const [roomName, setRoomName] = useState("")
 	const [roomNameError, setRoomNameError] = useState(false)
 	const [isRedFirst, setIsRedFirst] = useState(true)
@@ -37,7 +39,7 @@ export const CreateRoomDialog = () => {
 	const [oldBetAmount, setOldBetAmount] = useState(10)
 	// 0 = no time limit; otherwise total seconds per player.
 	const [timeLimit, setTimeLimit] = useState(0)
-	const [selectedColor, setSelectedColor] = useState<Team>("red")
+	const [selectedColor, setSelectedColor] = useState<Team>(variant.teams[0])
 	const [submitting, setSubmitting] = useState(false)
 	const [submitError, setSubmitError] = useState("")
 	const botBetOptions = [0]
@@ -45,13 +47,23 @@ export const CreateRoomDialog = () => {
 	const isRoomNameEmpty = roomName.trim().length === 0
 	const navigate = useNavigate()
 
+	// Keep the chosen seat valid for the current game (red/black vs white/black),
+	// and drop PvE when the variant has no bot.
+	useEffect(() => {
+		setSelectedColor(variant.teams[0])
+		if (!variant.pveSupported) {
+			setPveMode(false)
+		}
+	}, [gameType])
+
 	const resetForm = () => {
 		setRoomName("")
 		setRoomNameError(false)
 		setIsRedFirst(true)
+		setPveMode(false)
 		setBetAmount(10)
 		setTimeLimit(0)
-		setSelectedColor("red")
+		setSelectedColor(variant.teams[0])
 		setSubmitting(false)
 		setSubmitError("")
 	}
@@ -87,11 +99,12 @@ export const CreateRoomDialog = () => {
 		const token = getToken()
 		const body: CreateRoomRequest = {
 			tableName: roomName.trim(),
-			teamName: selectedColor,
+			teamName: selectedColor as Team,
 			redFirst: isRedFirst,
 			pveMode,
 			betAmount: pveMode ? 0 : betAmount,
 			timeLimit: pveMode ? null : timeLimit || null,
+			gameType,
 		}
 		const response = (await createRoom(token, body)) as APIResponse<RoomWithUsers>
 
@@ -148,33 +161,37 @@ export const CreateRoomDialog = () => {
 					<FormControl>
 						<FormLabel>{translate("dashboard.popup.piece-selection")}</FormLabel>
 						<PieceSelectionContext.Provider value={{ selectedColor, setSelectedColor }}>
-							<PieceSelection />
+							<PieceSelection variant={variant} />
 						</PieceSelectionContext.Provider>
 					</FormControl>
 
-					<FormControlLabel
-						sx={{ ml: 0, mr: 0, alignSelf: "flex-start" }}
-						control={
-							<Switch
-								className="ios-switch red-first"
-								checked={isRedFirst}
-								onChange={event => setIsRedFirst(event.target.checked)}
-							/>
-						}
-						label={translate("dashboard.popup.red-first")}
-					/>
+					{variant.appliesRedFirst && (
+						<FormControlLabel
+							sx={{ mx: 0, alignSelf: "flex-start" }}
+							control={
+								<Switch
+									className="ios-switch red-first"
+									checked={isRedFirst}
+									onChange={event => setIsRedFirst(event.target.checked)}
+								/>
+							}
+							label={translate("dashboard.popup.red-first")}
+						/>
+					)}
 
-					<FormControlLabel
-						sx={{ ml: 0, mr: 0, alignSelf: "flex-start" }}
-						control={
-							<Switch
-								className="ios-switch pve-mode"
-								checked={pveMode}
-								onChange={onSwitchChanged}
-							/>
-						}
-						label={translate("dashboard.popup.pve-mode")}
-					/>
+					{variant.pveSupported && (
+						<FormControlLabel
+							sx={{ ml: 0, mr: 0, alignSelf: "flex-start" }}
+							control={
+								<Switch
+									className="ios-switch pve-mode"
+									checked={pveMode}
+									onChange={onSwitchChanged}
+								/>
+							}
+							label={translate("dashboard.popup.pve-mode")}
+						/>
+					)}
 
 					<FormControl fullWidth size="small">
 						<FormLabel>{translate("dashboard.popup.bet-amount")}</FormLabel>
@@ -211,6 +228,7 @@ export const CreateRoomDialog = () => {
 					value="popup.confirm.ok"
 				/>
 				<TButton
+					variant="outlined"
 					onClick={handleClose}
 					disabled={submitting}
 					value="popup.confirm.cancel"

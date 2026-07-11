@@ -370,6 +370,8 @@
 			"insufficient-amount": "You do not have enough balance to create a room with this bet",
 			"internal-server-error": "Internal server error while creating room",
 			"invalid-bet-amount": "Bet amount is required and must be one of the acceptable values",
+			"invalid-game-type": "Invalid game type",
+			"pve-not-supported": "This game does not support playing against the bot yet",
 			"invalid-time-limit": "Invalid time limit",
 			"invalid-redFirst": "'redFirst' must be a boolean",
 			"invalid-team-name": "Team name must be either 'red', 'black', or null",
@@ -381,7 +383,24 @@
 		"messages": {
 			"internal-server-error": "Internal server error",
 			"invalid-status": "Query parameter 'status' must be an integer",
+			"invalid-game-type": "Query parameter 'gameType' is invalid",
 			"success": "Fetch rooms successfully"
+		}
+	},
+	"variant": {
+		"xiangqi": {
+			"name": "Chinese Chess",
+			"team": {
+				"red": "Red",
+				"black": "Black"
+			}
+		},
+		"chess": {
+			"name": "Chess",
+			"team": {
+				"white": "White",
+				"black": "Black"
+			}
 		}
 	},
 	"join-room": {

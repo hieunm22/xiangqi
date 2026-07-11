@@ -304,6 +304,58 @@ describe("POST /api/game/move-piece", () => {
 		expect(res.body.data).not.toHaveProperty("capture")
 	})
 
+	it("accepts a chess move: validates white, toggles to black, lowercases white's capture", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-chess")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValueOnce({
+			room_id: BigInt(1),
+			bot_difficulty: null,
+			game_type: "chess",
+			room: { red_first: true }
+		})
+		const chessFen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"
+		toArrayMock.mockResolvedValue([
+			{
+				_id: { toString: () => "mongo-id-prev" },
+				game_id: "game-1",
+				fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+				team: "white"
+			}
+		])
+		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "mongo-id-new" } })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ gameId: "game-1", newFen: chessFen, capturePiece: "N", team: "white" })
+
+		expect(res.status).toBe(201)
+		expect(insertOneMock).toHaveBeenCalledWith(
+			expect.objectContaining({ game_id: "game-1", fen: chessFen, team: "black", capture: "n" })
+		)
+		expect(res.body.data).toMatchObject({ team: "black", fen: chessFen, capture: "n" })
+	})
+
+	it("rejects a xiangqi FEN submitted to a chess game", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-chess-badfen")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValueOnce({
+			room_id: BigInt(1),
+			bot_difficulty: null,
+			game_type: "chess",
+			room: { red_first: true }
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ gameId: "game-1", newFen: INITIAL_FEN_BLACK_TOP, capturePiece: null, team: "white" })
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("move-piece.messages.invalid-fen")
+		expect(insertOneMock).not.toHaveBeenCalled()
+	})
+
 	it("returns 201 and inserts a new history record with capture as uppercase for red team", async () => {
 		const accessToken = buildAccessToken(91, "session-move-piece-6-capture")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))

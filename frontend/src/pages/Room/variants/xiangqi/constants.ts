@@ -1,6 +1,9 @@
-import { Piece, PieceCharacter } from "types/GameState"
+import { Piece, XiangqiPieceCharacter } from "types/GameState"
 
-export const pieceSymbolByType: Record<PieceCharacter, string> = {
+// Xiangqi constants (piece glyphs, FEN maps, board markers, initial positions).
+// Symmetric with variants/chess/constants.ts.
+
+export const pieceSymbolByType: Record<XiangqiPieceCharacter, string> = {
 	"G": "將",
 	"A": "士",
 	"E": "象",
@@ -35,7 +38,7 @@ export const markerPositions: Array<[number, number]> = [
 	[7, 7],
 ]
 
-export const fenPieceMap: Record<PieceCharacter, Piece> = {
+export const fenPieceMap: Record<XiangqiPieceCharacter, Piece> = {
 	g: "general",
 	a: "advisor",
 	e: "elephant",
@@ -53,7 +56,7 @@ export const fenPieceMap: Record<PieceCharacter, Piece> = {
 	S: "soldier",
 }
 
-export const pieceFenMap: Record<Piece, PieceCharacter> = {
+export const pieceFenMap: Record<Piece, XiangqiPieceCharacter> = {
 	general: "g",
 	advisor: "a",
 	elephant: "e",
@@ -67,6 +70,7 @@ export const INITIAL_FEN_BLACK_TOP = "RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/
 export const INITIAL_FEN_BLACK_BOTTOM = "rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S1S/1C5C1/9/RHEAGAEHR"
 export const EMPTY_BOARD_FEN = "9/9/9/9/9/9/9/9/9/9"
 
+// Sound assets (shared by both games; the files live under the /xiangqi/ path).
 export const MOVE_SOUND_URL = "/xiangqi/sound/move.mp3"
 export const CAPTURE_SOUND_URL = "/xiangqi/sound/capture.mp3"
 export const GAME_START_SOUND_URL = "/xiangqi/sound/gong-game-start-end.mp3"

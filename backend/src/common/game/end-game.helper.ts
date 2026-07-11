@@ -18,7 +18,7 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 			}
 		})
 
-		// Another request already ended this game — skip all amount mutations.
+		// Another request already ended this game - skip all amount mutations.
 		if (claimed.count === 0) {
 			return false
 		}

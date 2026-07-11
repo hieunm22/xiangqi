@@ -95,6 +95,13 @@ describe("POST /api/room/join", () => {
 	it("returns 400 when team is invalid", async () => {
 		const accessToken = buildAccessToken(41, "session-join-invalid-team")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 41 }))
+		// The team is validated against the room's variant, so the room must exist.
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			pve_mode: false,
+			bet_amount: 10,
+			game_type: "xiangqi"
+		})
 
 		const res = await request(app)
 			.post(PATH)
@@ -107,7 +114,6 @@ describe("POST /api/room/join", () => {
 			message: "join-room.messages.invalid-team",
 			status_code: 400
 		})
-		expect(roomFindUniqueMock).not.toHaveBeenCalled()
 	})
 
 	it("returns 404 when room does not exist", async () => {
@@ -530,7 +536,7 @@ describe("POST /api/room/join", () => {
 	it("returns 201 and keeps spectator team when re-joining PVE room with only one existing player slot", async () => {
 		const accessToken = buildAccessToken(41, "session-join-7")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 41 }))
-		// PVE room with only 1 member slot taken — user is already in the room
+		// PVE room with only 1 member slot taken - user is already in the room
 		roomFindUniqueMock.mockResolvedValue({ id: BigInt(201), pve_mode: true })
 		roomUserDeleteManyMock.mockResolvedValue({ count: 0 })
 		roomUserFindUniqueMock.mockResolvedValue({ room_id: BigInt(201), user_id: BigInt(41) })

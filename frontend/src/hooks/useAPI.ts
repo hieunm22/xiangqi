@@ -247,8 +247,15 @@ export const useAPI = () => {
 							.json(facebookUnlinkCallback)
 							.catch(handleError)
 
-	const fetchRooms = async (token: string, status?: number) => {
-		const query = status === undefined ? "" : `?status=${status}`
+	const fetchRooms = async (token: string, status?: number, gameType?: string) => {
+		const params = new URLSearchParams()
+		if (status !== undefined) {
+			params.set("status", String(status))
+		}
+		if (gameType !== undefined) {
+			params.set("gameType", gameType)
+		}
+		const query = params.toString() ? `?${params.toString()}` : ""
 
 		return await authFetch(EP.fetchRooms + query)
 							.auth(`Bearer ${token}`)

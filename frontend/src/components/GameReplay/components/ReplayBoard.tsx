@@ -1,13 +1,13 @@
 import React from "react"
 import classnames from "classnames"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
-import { markerClass } from "pages/Room/common"
+import { markerClass } from "pages/Room/variants/xiangqi/rules"
 import {
 	markerPositions,
 	pieceSymbolByType
-} from "pages/Room/constant"
+} from "pages/Room/variants/xiangqi/constants"
 import PieceItem from "pages/Room/components/Piece"
-import { NullableCellProps, Team } from "types/GameState"
+import { NullableCellProps, Team, XiangqiPieceCharacter } from "types/GameState"
 import { MoveProps } from "pages/Room/types"
 
 interface ReplayBoardProps {
@@ -82,7 +82,7 @@ const ReplayBoard = ({ board, currentTurn, previousMove }: ReplayBoardProps) => 
 							$rotated={false}
 							$click={noop()}
 						>
-							{cell.piece ? pieceSymbolByType[cell.piece] : ""}
+							{cell.piece ? pieceSymbolByType[cell.piece as XiangqiPieceCharacter] : ""}
 						</PieceItem>
 					)
 				})}

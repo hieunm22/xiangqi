@@ -2,13 +2,13 @@ import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
-import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
 import { armClock } from "common/game/game-clock"
 import { clearPostGameLock, isPostGameStartBlocked } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow, getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { emitGameStarted, emitRoomUsersUpdated } from "common/socket"
+import { getVariant, otherTeam } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { RoomStatus, StartGameRequest } from "types/room.type"
 
@@ -134,6 +134,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			host_id: true,
 			bet_amount: true,
 			pve_mode: true,
+			game_type: true,
 			time_limit: true,
 			time_increment: true,
 		}
@@ -186,8 +187,10 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		return
 	}
 
+	const variant = getVariant(existingRoom.game_type)
+
 	try {
-		let botTeam: "red" | "black" | null = null
+		let botTeam: string | null = null
 		if (requestedDifficulty !== null) {
 			const requester = await prisma.roomUser.findUnique({
 				where: {
@@ -203,7 +206,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				})
 				return
 			}
-			botTeam = requester.team === "red" ? "black" : "red"
+			botTeam = otherTeam(variant, requester.team)
 		}
 
 		const { game, room } = await prisma.$transaction(async tx => {
@@ -230,6 +233,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 					status: 1,
 					room_id: roomIdBigInt,
 					bot_difficulty: requestedDifficulty,
+					game_type: variant.gameType,
 					time_limit: isPvE ? null : existingRoom.time_limit,
 					time_increment: isPvE ? 0 : existingRoom.time_increment,
 				},
@@ -260,8 +264,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 		clearPostGameLock(Number(room.id))
 
 		const collection = await getGameHistoryCollection()
-		const initialFen = room.red_first ? INITIAL_FEN_BLACK_TOP : INITIAL_FEN_BLACK_BOTTOM
-		const firstTeam: "red" | "black" = room.red_first ? "red" : "black"
+		const { fen: initialFen, firstTeam } = variant.getInitialPosition(room.red_first)
 		const startRecord = {
 			game_id: game.id,
 			team: firstTeam,
@@ -332,7 +335,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			clock,
 		})
 
-		// Players are now in a started game — turn their presence badge "busy".
+		// Players are now in a started game - turn their presence badge "busy".
 		await syncPlayersPresence(game.id, true)
 
 		// If the bot is on the move first, kick off its opening reply after responding.
@@ -342,7 +345,8 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 				roomId: Number(room.id),
 				projectFen: initialFen,
 				redFirst: room.red_first,
-				botTeam,
+				// Bot play is xiangqi-only today, so the seat is always red/black here.
+				botTeam: botTeam as "red" | "black",
 				difficulty: requestedDifficulty
 			}).catch(err => {
 				console.error(`[start-game] bot opening move failed for game ${game.id}:`, err)

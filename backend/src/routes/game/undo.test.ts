@@ -514,7 +514,8 @@ describe("POST /api/game/undo", () => {
 		roomUserFindUniqueMock.mockResolvedValue({
 			team: "red"
 		})
-		// Mock: get all game histories with 1 existing undo for user 1
+		// Mock: two-move history with no prior undo by user 1, so the undo is
+		// allowed (max 1 undo per user) and stamps the remaining record.
 		toArrayMock.mockResolvedValueOnce([
 			{
 				_id: mockId,
@@ -527,7 +528,6 @@ describe("POST /api/game/undo", () => {
 				game_id: gameId,
 				fen: "old-fen",
 				team: "black",
-				undo: 1
 			}
 		])
 		deleteManyMock.mockResolvedValue({ deletedCount: 1 })

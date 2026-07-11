@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
+import { getVariant, otherTeam } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { ChangeTeamRequest } from "types/game.type"
 
@@ -111,7 +112,14 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 
 		const room = await prisma.room.findUnique({
 			where: { id: roomIdBigInt },
-			select: { id: true, status: true, host_id: true, bet_amount: true, pve_mode: true }
+			select: {
+				id: true,
+				status: true,
+				host_id: true,
+				bet_amount: true,
+				pve_mode: true,
+				game_type: true
+			}
 		})
 
 		if (!room) {
@@ -160,7 +168,8 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 			return
 		}
 
-		let newTeam: "red" | "black" | null
+		const variant = getVariant(room.game_type)
+		let newTeam: string | null
 
 		if (isLeaveToSeat) {
 			newTeam = null
@@ -212,11 +221,8 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 				}
 			}
 
-			const oppositeTeam: "red" | "black" = host.team === "red" ? "black" : "red"
+			const oppositeTeam = otherTeam(variant, host.team)
 
-			// Return 400 if opposite seat is already occupied by another user (covers both
-			// the "opposite seat taken" and "both seats taken" cases, since the host always
-			// occupies one seat at this point)
 			const seatOccupied = roomUsers.some(
 				u => u.team === oppositeTeam && u.user_id !== userIdBigInt
 			)

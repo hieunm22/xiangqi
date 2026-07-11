@@ -38,7 +38,7 @@ vi.mock("common/socket", () => ({
 
 // Pin the bot id so the create-call args (which use the real BOT_USER_ID from
 // create-room.ts) stay consistent with the response-side fixtures below. Must be
-// an inline literal — vi.mock is hoisted above the BOT_USER_ID const.
+// an inline literal - vi.mock is hoisted above the BOT_USER_ID const.
 vi.mock("common/bot-engine", () => ({
 	BOT_USER_ID: 0n
 }))
@@ -127,6 +127,93 @@ describe("POST /api/room/create-room", () => {
 			message: "create-room.messages.invalid-team-name",
 			status_code: 400
 		})
+	})
+
+	it("creates a chess room and persists game_type = chess", async () => {
+		const accessToken = buildAccessToken(11, "session-room-chess")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
+		roomCreateMock.mockResolvedValue({
+			id: BigInt(103),
+			name: "Chess Table",
+			status: 1,
+			game_type: "chess",
+			red_first: true,
+			pve_mode: false,
+			bet_amount: 10,
+			host_id: BigInt(11),
+			created_at: new Date("2026-05-12T00:00:00.000Z"),
+			updated_at: new Date("2026-05-12T00:00:00.000Z"),
+			room_users: [
+				{ users: { id: BigInt(11), display_name: "Alice", avatar_seq: 2 }, team: "white" }
+			]
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "Chess Table",
+				teamName: "white",
+				redFirst: true,
+				betAmount: 10,
+				gameType: "chess"
+			})
+
+		expect(res.status).toBe(201)
+		expect(res.body.data.room.game_type).toBe("chess")
+		expect(roomCreateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ game_type: "chess" })
+			})
+		)
+	})
+
+	it("rejects a xiangqi seat name for a chess room", async () => {
+		const accessToken = buildAccessToken(11, "session-room-chess-badteam")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ tableName: "T", teamName: "red", redFirst: true, betAmount: 10, gameType: "chess" })
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("create-room.messages.invalid-team-name")
+	})
+
+	it("returns 400 when PvE is requested for chess (bot unsupported)", async () => {
+		const accessToken = buildAccessToken(11, "session-room-chess-pve")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				tableName: "T",
+				teamName: "white",
+				redFirst: true,
+				pveMode: true,
+				betAmount: 0,
+				gameType: "chess"
+			})
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("create-room.messages.pve-not-supported")
+	})
+
+	it("returns 400 for an unknown game type", async () => {
+		const accessToken = buildAccessToken(11, "session-room-badgame")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ tableName: "T", teamName: null, redFirst: true, betAmount: 10, gameType: "checkers" })
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("create-room.messages.invalid-game-type")
 	})
 
 	it("returns 201 when teamName is null", async () => {

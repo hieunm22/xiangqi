@@ -7,6 +7,9 @@ export const PRESENCE_STATUS_KEY = "presence-status"
 export const INITIAL_FEN_BLACK_TOP = "RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr"
 export const INITIAL_FEN_BLACK_BOTTOM = "rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S1S/1C5C1/9/RHEAGAEHR"
 
+// Standard western chess starting position. White (uppercase) moves first.
+export const INITIAL_FEN_CHESS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
 // Starting score every user is seeded with. Used to recompute the correct balance from the GameUser ledger.
 export const INITIAL_AMOUNT = 200
 

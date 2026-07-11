@@ -118,7 +118,6 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"is-waiting": !user.back_ready
 	})
 	const isHost = props.roomHostId !== null && user.id === props.roomHostId
-	console.log('isHost :>> ', isHost);
 
 	return (
 		<div className={containerClass}>

@@ -1,11 +1,12 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { fenToBoard } from "common/board-helper"
 import { runEndGameTransaction } from "common/game/end-game.helper"
+import { evaluateChessTeamState } from "common/game/chess-state-evaluator"
 import { stopClock } from "common/game/game-clock"
 import { activatePostGameLock } from "common/game/post-game.helper"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { evaluateTeamState } from "common/game/state-evaluator"
+import { getVariant, isTeam, otherTeam } from "common/variants"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitGameEnded } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
@@ -112,32 +113,13 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 		return
 	}
 
-	if (checkedTeam !== "red" && checkedTeam !== "black") {
-		res.status(400).json({
-			success: false,
-			message: "verify-state.messages.invalid-team",
-			status_code: 400
-		})
-		return
-	}
-
-	try {
-		fenToBoard(newFen)
-	} catch {
-		res.status(400).json({
-			success: false,
-			message: "verify-state.messages.invalid-fen",
-			status_code: 400
-		})
-		return
-	}
-
 	try {
 		const game = await prisma.game.findUnique({
 			where: { id: gameId },
 			select: {
 				id: true,
 				room_id: true,
+				game_type: true,
 				room: {
 					select: {
 						bet_amount: true,
@@ -157,12 +139,35 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 			return
 		}
 
-		const evaluation = evaluateTeamState(newFen, checkedTeam, game.room.red_first)
+		// Team vocabulary and FEN shape differ per variant, so validate once we
+		// know which game this is.
+		const variant = getVariant(game.game_type)
+		if (!isTeam(variant, checkedTeam)) {
+			res.status(400).json({
+				success: false,
+				message: "verify-state.messages.invalid-team",
+				status_code: 400
+			})
+			return
+		}
+
+		if (!variant.validateFen(newFen)) {
+			res.status(400).json({
+				success: false,
+				message: "verify-state.messages.invalid-fen",
+				status_code: 400
+			})
+			return
+		}
+
+		const evaluation = variant.gameType === "chess"
+			? evaluateChessTeamState(newFen, checkedTeam as "white" | "black")
+			: evaluateTeamState(newFen, checkedTeam as "red" | "black", game.room.red_first)
 		let gameEnded = false
 		let winnerId: number | null = null
 
 		if (evaluation.status === "checkmate" || evaluation.status === "stalemate") {
-			const winnerTeam = checkedTeam === "red" ? "black" : "red"
+			const winnerTeam = otherTeam(variant, checkedTeam)
 			const roomUsers = await prisma.roomUser.findMany({
 				where: { room_id: game.room_id },
 				select: {

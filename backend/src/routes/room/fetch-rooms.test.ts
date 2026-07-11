@@ -193,6 +193,60 @@ describe("GET /api/room/fetch-rooms", () => {
 		)
 	})
 
+	it("returns 400 when gameType query is invalid", async () => {
+		const accessToken = buildAccessToken(21, "session-fetch-badgame")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 21 }))
+
+		const res = await request(app)
+			.get(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.query({ gameType: "checkers" })
+
+		expect(res.status).toBe(400)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "fetch-rooms.messages.invalid-game-type",
+			status_code: 400,
+			rooms: []
+		})
+		expect(roomFindManyMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 200, filters by gameType, and includes game_type in the response", async () => {
+		const accessToken = buildAccessToken(21, "session-fetch-game")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 21 }))
+		roomFindManyMock.mockResolvedValue([
+			{
+				id: BigInt(202),
+				name: "Chess Table",
+				status: 1,
+				game_type: "chess",
+				red_first: true,
+				bet_amount: 0,
+				time_limit: null,
+				host_id: BigInt(12),
+				created_at: new Date("2026-05-12T00:00:00.000Z"),
+				updated_at: new Date("2026-05-12T00:00:00.000Z"),
+				room_users: []
+			}
+		])
+
+		const res = await request(app)
+			.get(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.query({ gameType: "chess" })
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0]).toMatchObject({ id: 202, game_type: "chess" })
+		expect(roomFindManyMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { is_active: true, game_type: "chess" },
+				select: expect.objectContaining({ game_type: true })
+			})
+		)
+	})
+
 	it("returns 500 when unexpected error happens", async () => {
 		const accessToken = buildAccessToken(21, "session-fetch-5")
 		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)

@@ -370,6 +370,8 @@
 			"insufficient-amount": "Bạn không còn đủ amount để tạo phòng với mức cược này",
 			"internal-server-error": "Lỗi máy chủ nội bộ khi tạo phòng",
 			"invalid-bet-amount": "Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận",
+			"invalid-game-type": "Loại cờ không hợp lệ",
+			"pve-not-supported": "Trò chơi này chưa hỗ trợ đấu với máy",
 			"invalid-time-limit": "Thời gian không hợp lệ",
 			"invalid-redFirst": "'redFirst' phải là giá trị boolean",
 			"invalid-team-name": "Tên đội phải là 'red', 'black' hoặc null",
@@ -381,7 +383,24 @@
 		"messages": {
 			"internal-server-error": "Lỗi máy chủ nội bộ",
 			"invalid-status": "Tham số truy vấn 'status' phải là số nguyên",
+			"invalid-game-type": "Tham số truy vấn 'gameType' không hợp lệ",
 			"success": "Lấy phòng thành công"
+		}
+	},
+	"variant": {
+		"xiangqi": {
+			"name": "Cờ Tướng",
+			"team": {
+				"red": "Đỏ",
+				"black": "Đen"
+			}
+		},
+		"chess": {
+			"name": "Cờ Vua",
+			"team": {
+				"white": "Trắng",
+				"black": "Đen"
+			}
 		}
 	},
 	"join-room": {

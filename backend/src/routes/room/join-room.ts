@@ -3,6 +3,7 @@ import prisma from "prisma"
 import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
+import { getVariant, isTeam } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { JoinRoomRequest } from "types/room.type"
 
@@ -104,21 +105,12 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		return
 	}
 
-	if (team !== undefined && team !== null && team !== "red" && team !== "black") {
-		res.status(400).json({
-			success: false,
-			message: "join-room.messages.invalid-team",
-			status_code: 400
-		})
-		return
-	}
-
 	try {
 		const roomId = BigInt(id)
 		// Check if room exists
 		const room = await prisma.room.findUnique({
 			where: { id: roomId },
-			select: { id: true, pve_mode: true, bet_amount: true }
+			select: { id: true, pve_mode: true, bet_amount: true, game_type: true }
 		})
 
 		if (!room) {
@@ -126,6 +118,17 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 				success: false,
 				message: "join-room.messages.room-not-found",
 				status_code: 404
+			})
+			return
+		}
+
+		const variant = getVariant(room.game_type)
+
+		if (team !== undefined && team !== null && !isTeam(variant, team)) {
+			res.status(400).json({
+				success: false,
+				message: "join-room.messages.invalid-team",
+				status_code: 400
 			})
 			return
 		}
@@ -169,7 +172,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			}
 		})
 
-		let assignedTeam: "red" | "black" | null = null
+		let assignedTeam: string | null = null
 
 		if (!room.pve_mode) {
 			const existingMembers = await prisma.roomUser.findMany({
@@ -209,10 +212,11 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 						.filter(existingTeam => existingTeam !== null)
 				)
 
-				if (!assignedTeams.has("red")) {
-					assignedTeam = "red"
-				} else if (!assignedTeams.has("black")) {
-					assignedTeam = "black"
+				const [firstSeat, secondSeat] = variant.teams
+				if (!assignedTeams.has(firstSeat)) {
+					assignedTeam = firstSeat
+				} else if (!assignedTeams.has(secondSeat)) {
+					assignedTeam = secondSeat
 				}
 			}
 		}

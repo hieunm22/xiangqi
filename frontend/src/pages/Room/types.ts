@@ -1,12 +1,30 @@
+import { GameType } from "common/variants"
 import { EmptyPromise, EmptyVoid, StringVoid } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
 	CellProps,
-	PieceCharacter,
+	NullableCellProps,
+	XiangqiPieceCharacter,
 	Team
 } from "types/GameState"
 import { RoomChatMessage } from "components/ChatDialog/types"
+
+// Shared props for a variant board view (XiangqiBoard / ChessBoard). The hook is
+// board-agnostic; index.tsx picks the component by engine.gameType.
+export interface BoardViewProps {
+	board: NullableCellProps[]
+	availableMoves: number[]
+	selected: number | null
+	currentTurn: Team
+	myTeam?: Team | null
+	previousMove: MoveProps | null
+	checkingPieces: number[]
+	isBoardRotated: boolean
+	symbolOf: (piece: string) => string
+	onPieceClick: (id: number) => () => void
+	onAnimateEnd: () => void | Promise<void>
+}
 
 export interface PieceItemProps {
 	$cell: CellProps
@@ -62,6 +80,7 @@ export interface RoomInfo {
 	id: number
 	name: string
 	status: number
+	game_type: GameType
 	bet_amount: number
 	team: Team | null
 	red_first: boolean
@@ -93,7 +112,7 @@ export interface GameMovements {
 	team: Team
 	fen: string
 	time_stamp: number
-	capture?: PieceCharacter
+	capture?: XiangqiPieceCharacter
 	surrender?: number
 	undo?: number
 }
@@ -102,7 +121,8 @@ export interface MovePieceRequest {
 	gameId: string
 	newFen: string
 	team: Team
-	capturePiece: PieceCharacter | null
+	// Raw FEN char of the captured piece (variant-specific), or null.
+	capturePiece: string | null
 }
 
 export interface VerifyStateRequest {

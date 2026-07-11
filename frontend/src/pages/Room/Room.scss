@@ -76,6 +76,12 @@
 	aspect-ratio: 512 / 612;
 }
 
+.room-container .board-skeleton-fill {
+	width: 100%;
+	height: 100%;
+	transform: none;
+}
+
 .line {
 	position: absolute;
 	background: var(--line-color);
@@ -366,6 +372,11 @@
 
 	&.team-black {
 		color: black;
+	}
+
+	&.team-white {
+		color: #fdfdfd;
+		text-shadow: 0 0 2px #000, 0 1px 2px rgba(0, 0, 0, 0.6);
 	}
 
 	.player-total-points {

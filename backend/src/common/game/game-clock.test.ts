@@ -141,7 +141,7 @@ describe("computeClockState", () => {
 
 	it("resumes from a baseline anchor without charging the removed (undo) pause", () => {
 		// Post-undo: a single resume record stamped with red having spent 15s / 1 move.
-		// `now` is 5s after the resume timestamp — the long gap before it is NOT charged.
+		// `now` is 5s after the resume timestamp - the long gap before it is NOT charged.
 		const records: ClockHistoryRecord[] = [
 			{
 				team: "red",
@@ -180,6 +180,23 @@ describe("computeClockState", () => {
 		expect(state?.activeTeam).toBe("black")
 		expect(state?.redMs).toBe(37_000) // 60 - (15 baseline + 8) = 37
 		expect(state?.blackMs).toBe(57_000) // 60 - 3 in-progress
+	})
+
+	it("maps chess seats onto the two slots (white -> redMs, black -> blackMs)", () => {
+		// White opens and completes its move 10s later; black is now on the move.
+		const records: ClockHistoryRecord[] = [
+			{ team: "white", timeStamp: T0, fen: "x" },
+			{ team: "black", timeStamp: T0 + 10, fen: "y" }
+		]
+		const state = computeClockState(
+			records,
+			{ timeLimit: 60, timeIncrement: 0 },
+			(T0 + 10) * 1000
+		)
+
+		expect(state?.activeTeam).toBe("black")
+		expect(state?.redMs).toBe(50_000) // white spent 10s -> 60 - 10
+		expect(state?.blackMs).toBe(60_000) // black just started its turn
 	})
 })
 

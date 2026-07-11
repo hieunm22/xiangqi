@@ -64,7 +64,7 @@ export const ProfilePopup = () => {
 	const isOwnProfile = user?.id === currentUserId
 
 	const loadRoomContext = async () => {
-		// PROFILE bit must be set and the chat (SEND_PM) must not be on top —
+		// PROFILE bit must be set and the chat (SEND_PM) must not be on top
 		// otherwise the profile is only stacked behind an open chat.
 		if ((gameState.popupState & PopupState.PROFILE) !== PopupState.PROFILE
 			|| (gameState.popupState & PopupState.SEND_PM) === PopupState.SEND_PM) {

@@ -6,7 +6,7 @@ export type PresenceStatus = "online" | "busy" | "inactive" | "offline"
 
 // A user is "online" while their heartbeat is fresh (a visible tab is actively
 // pinging). Once pings stop (tab closed/hidden, socket dropped, network lost),
-// the heartbeat ages: after ACTIVE_THRESHOLD they become "inactive" (away —
+// the heartbeat ages: after ACTIVE_THRESHOLD they become "inactive" (away -
 // shown with a clock badge), and after OFFLINE_THRESHOLD they drop off entirely.
 export const PRESENCE_ACTIVE_THRESHOLD_MS = 2 * 60 * 1000	// 2 mins
 export const PRESENCE_OFFLINE_THRESHOLD_MS = 5 * 60 * 1000	// 5 mins
@@ -21,9 +21,9 @@ export const PRESENCE_SWEEP_INTERVAL_MS = 30 * 1000
 export const PRESENCE_DISCONNECT_GRACE_MS = 5 * 1000
 
 // Presence lives in:
-//   `presence-online` (sorted set) — member=userId, score=last heartbeat (ms).
+//   `presence-online` (sorted set) - member=userId, score=last heartbeat (ms).
 //      Doubles as storage and the "who is present" index.
-//   `presence-status` (hash)       — member=userId, value=last broadcast status.
+//   `presence-status` (hash)       - member=userId, value=last broadcast status.
 //      Used only so the sweeper emits each transition once.
 
 /**
@@ -105,7 +105,7 @@ export async function markOffline(userId: number): Promise<boolean> {
 }
 
 /**
- * Force a currently-online user into "inactive" immediately — used when their
+ * Force a currently-online user into "inactive" immediately - used when their
  * last socket/tab closes so they don't linger as online until the heartbeat
  * naturally ages out. Backdates the heartbeat to the active boundary so the
  * status derives as inactive for both live and freshly-loaded clients. They
@@ -121,7 +121,7 @@ export async function markInactive(userId: number): Promise<boolean> {
 		return false
 	}
 	if (Date.now() - Number(score) >= PRESENCE_ACTIVE_THRESHOLD_MS) {
-		// Already inactive/offline by age — leave it to the sweeper.
+		// Already inactive/offline by age - leave it to the sweeper.
 		return false
 	}
 
@@ -145,7 +145,7 @@ export function startPresenceSweeper(emit: (userId: number, status: PresenceStat
 			const offlineCutoff = now - PRESENCE_OFFLINE_THRESHOLD_MS
 			const activeCutoff = now - PRESENCE_ACTIVE_THRESHOLD_MS
 
-			// Offline: heartbeat older than the offline threshold — evict + notify.
+			// Offline: heartbeat older than the offline threshold - evict + notify.
 			const offlineMembers = await redis.zrangebyscore(PRESENCE_KEY, "-inf", `(${offlineCutoff}`)
 			if (offlineMembers.length > 0) {
 				await redis.zremrangebyscore(PRESENCE_KEY, "-inf", `(${offlineCutoff}`)

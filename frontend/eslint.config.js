@@ -38,7 +38,7 @@ export default defineConfig([
       "src/common/helper.ts",
       "src/hooks/useAPI.ts",
       "src/hooks/useSocket.tsx",
-      "src/pages/Room/constant.ts",
+      "src/**/constant*.ts",
     ],
     rules: {
       "max-len": "off",

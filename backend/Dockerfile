@@ -33,7 +33,7 @@ ENV NODE_ENV=production
 ENV FAIRY_STOCKFISH_PATH=/usr/local/bin/fairy-stockfish
 
 # Same glibc base as the builder, so the binary's libstdc++/libgcc dependencies
-# are already satisfied — no extra runtime packages needed.
+# are already satisfied - no extra runtime packages needed.
 COPY --from=engine-builder /usr/local/bin/fairy-stockfish /usr/local/bin/fairy-stockfish
 
 COPY package.json yarn.lock prisma.config.ts ./

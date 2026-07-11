@@ -1,11 +1,11 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { fenToBoard } from "common/board-helper"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { armClock, computeClock } from "common/game/game-clock"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitMovePiece } from "common/socket"
 import { getUTCTimestamp } from "common/helper"
+import { getVariant, isTeam, otherTeam } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { MovePieceRequest, PVEContext } from "types/game.type"
 
@@ -114,26 +114,6 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		return
 	}
 
-	try {
-		fenToBoard(newFen)
-	} catch {
-		res.status(400).json({
-			success: false,
-			message: "move-piece.messages.invalid-fen",
-			status_code: 400
-		})
-		return
-	}
-
-	if (team !== "red" && team !== "black") {
-		res.status(400).json({
-			success: false,
-			message: "move-piece.messages.invalid-team",
-			status_code: 400
-		})
-		return
-	}
-
 	// Validate capturePiece (optional but should be string or null)
 	if (capturePiece !== null && capturePiece !== undefined && typeof capturePiece !== "string") {
 		res.status(400).json({
@@ -145,6 +125,36 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 	}
 
 	try {
+		// Resolve the variant for this game - it drives FEN and team validation.
+		const game = await prisma.game.findUnique({
+			where: { id: gameId },
+			select: {
+				room_id: true,
+				bot_difficulty: true,
+				game_type: true,
+				room: { select: { red_first: true } }
+			}
+		})
+		const variant = getVariant(game?.game_type)
+
+		if (!variant.validateFen(newFen)) {
+			res.status(400).json({
+				success: false,
+				message: "move-piece.messages.invalid-fen",
+				status_code: 400
+			})
+			return
+		}
+
+		if (!isTeam(variant, team)) {
+			res.status(400).json({
+				success: false,
+				message: "move-piece.messages.invalid-team",
+				status_code: 400
+			})
+			return
+		}
+
 		const collection = await getGameHistoryCollection()
 
 		// Get latest game history record
@@ -177,6 +187,8 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		// Reject a move from a player who has already run out of time
 		const preClock = await computeClock(gameId)
 		if (preClock) {
+			// blackMs is the black seat; redMs is the other seat (red / white).
+			// const movingRemaining = team === "black" ? preClock.blackMs : preClock.redMs
 			const movingRemaining = team === "red" ? preClock.redMs : preClock.blackMs
 			if (movingRemaining <= 0) {
 				await armClock(gameId)
@@ -190,7 +202,10 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		}
 
 		// Calculate next team (toggle)
-		const nextTeam = team === "red" ? "black" : "red"
+		const nextTeam = otherTeam(variant, team)
+
+		// Captured piece is stored in the opponent's case per the variant's FEN dialect.
+		const capture = capturePiece ? variant.formatCapturedPiece(capturePiece, team) : null
 
 		// Insert new record
 		const newRecord: any = {
@@ -200,10 +215,8 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 			time_stamp: getUTCTimestamp()
 		}
 
-		// Add capture piece if provided
-		// Red team captures black pieces (uppercase), black team captures red pieces (lowercase)
-		if (capturePiece) {
-			newRecord.capture = team === "red" ? capturePiece.toUpperCase() : capturePiece.toLowerCase()
+		if (capture) {
+			newRecord.capture = capture
 		}
 
 		const insertResult = await collection.insertOne(newRecord)
@@ -214,7 +227,7 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 				game_id: gameId,
 				fen: newFen,
 				team: nextTeam,
-				capture: capturePiece ? (team === "red" ? capturePiece.toUpperCase() : capturePiece.toLowerCase()) : null,
+				capture,
 				time_stamp: getUTCTimestamp()
 			}
 		})
@@ -232,15 +245,6 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		// Also detect PvE games and queue the bot's reply (after responding to the client).
 		let pveContext: PVEContext | null = null
 		try {
-			const game = await prisma.game.findUnique({
-				where: { id: gameId },
-				select: {
-					room_id: true,
-					bot_difficulty: true,
-					room: { select: { red_first: true } }
-				}
-			})
-
 			const userId = req.auth?.userId ? parseInt(req.auth.userId, 10) : undefined
 			if (game?.room_id) {
 				emitMovePiece(Number(game.room_id), responseData, userId)
@@ -274,7 +278,8 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 				roomId: pveContext.roomId,
 				projectFen: newFen,
 				redFirst: pveContext.redFirst,
-				botTeam: nextTeam,
+				// Bot play is xiangqi-only today, so the seat is always red/black here.
+				botTeam: nextTeam as "red" | "black",
 				difficulty: pveContext.botDifficulty
 			}).catch(err => {
 				console.error(`[Move-Piece] bot reply failed for game ${gameId}:`, err)

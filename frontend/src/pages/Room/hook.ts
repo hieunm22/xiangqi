@@ -9,36 +9,21 @@ import { useNavigate, useParams } from "react-router-dom"
 import { HOME_PATH, LOGIN_PATH } from "common/constant"
 import {
 	CAPTURE_SOUND_URL,
-	EMPTY_BOARD_FEN,
 	GAME_START_SOUND_URL,
 	MOVE_SOUND_URL
-} from "./constant"
+} from "./variants/xiangqi/constants"
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider/helper"
 import { RoomChatMessage } from "components/ChatDialog/types"
 import { openConfirm } from "components/ConfirmProvider/helper"
 import { openSnackbar } from "components/SnackbarProvider/helper"
 import {
-	diffFenMove,
-	getAvailableMoves,
 	getCurrentUserId,
 	getToken,
 	logger,
 } from "common/helper"
-import {
-	applyMove,
-	boardToFen,
-	countLegalMoves,
-	fenToBoard,
-	findCheckingPieces,
-	getCapturedPiecesFromHistory,
-	getMoveDirection,
-	getPieceFromCharacter,
-	getTeamFromPieceChar,
-	markerClass,
-	playSound,
-	resolveSideUsers,
-} from "./common"
+import { playSound } from "./sound"
+import { getRoomEngine, MoveDiff } from "./engine"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -46,12 +31,11 @@ import useToolkit from "hooks/useToolkit"
 import useGameClock from "./useGameClock"
 import { translate } from "locales/translate"
 import { setIsInGame, setPopup } from "toolkit/slice/game"
-import { APIResponse, FenMoveDiffResult } from "types/Common"
+import { APIResponse } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
 	CapturedPieces,
 	NullableCellProps,
-	PieceCharacter,
 	Team
 } from "types/GameState"
 import {
@@ -173,6 +157,11 @@ const useRoomHook = () => {
 	const navigate = useNavigate()
 	const currentUserId = getCurrentUserId()
 
+	// Variant engine (xiangqi/chess), resolved from the room's game type. All
+	// board/FEN/move/team logic routes through it so the rest of the hook stays
+	// variant-agnostic. Defaults to xiangqi until the room loads.
+	const engine = useMemo(() => getRoomEngine(room?.game_type), [room?.game_type])
+
 	// Team controlled by the logged-in player. Null for spectators
 	const myTeam = useMemo<Team | null>(() => {
 		const me = joinedUsers.find(user => user.id === currentUserId)
@@ -263,12 +252,12 @@ const useRoomHook = () => {
 		setClock(null)
 		setHistory([])
 		setAvailableMoves([])
-		const emptyBoard = fenToBoard(EMPTY_BOARD_FEN)
+		const emptyBoard = engine.fenToBoard(engine.emptyFen)
 		setBoard(emptyBoard)
 		setSelected(null)
 		setPreviousMove(null)
 		setCheckingPieces([])
-		setCapturedPieces({ red: [], black: [] })
+		setCapturedPieces(engine.emptyCaptured())
 	}
 
 	// After a game ends, re-check the seated player's balance against the room's bet
@@ -339,14 +328,16 @@ const useRoomHook = () => {
 		setUnreadChatCount(roomData.chat.unread_count)
 
 		if (!roomData.game) {
+			// room state hasn't propagated yet, so resolve the engine from the fetched data.
+			const roomEngine = getRoomEngine(roomData.room.game_type)
 			setHistory([])
 			setAvailableMoves([])
-			setBoard(fenToBoard(EMPTY_BOARD_FEN))
+			setBoard(roomEngine.fenToBoard(roomEngine.emptyFen))
 			setSelected(null)
-			setCurrentTurn(roomData.room.red_first ? "red" : "black")
+			setCurrentTurn(roomEngine.firstTurn(roomData.room.red_first))
 			setPreviousMove(null)
 			setCheckingPieces([])
-			setCapturedPieces({ red: [], black: [] })
+			setCapturedPieces(roomEngine.emptyCaptured())
 		}
 	}
 
@@ -358,19 +349,19 @@ const useRoomHook = () => {
 		if (room.status === 2) {
 			const token = getToken()
 			const history: APIResponse<GameMovements[]> = await getGameMovementHistory(token, game.id)
-			const userBlack = joinedUsers.find(user => user.team === "black")
-			const userRed = joinedUsers.find(user => user.team === "red")
+			const [teamA, teamB] = engine.teams
+			const userA = joinedUsers.find(user => user.team === teamA)
+			const userB = joinedUsers.find(user => user.team === teamB)
 
 			// If a team is missing (e.g., in PvE mode before bot is added to joinedUsers),
 			// defer the userId mapping to avoid errors
-			if (!userBlack || !userRed) {
+			if (!userA || !userB) {
 				setHistory(history.data as HistoryData[])
 				return
 			}
 
 			const historyData = (history.data as HistoryData[]).map(m => {
-				// because history.userId is the id of the player who made the next move
-				m.userId = userBlack!.team === m.team ? userRed!.id : userBlack?.id
+				m.userId = joinedUsers.find(user => user.team === engine.otherTeam(m.team as Team))?.id
 				return m
 			})
 			setHistory(historyData ?? [])
@@ -386,19 +377,22 @@ const useRoomHook = () => {
 			return
 		}
 
-		let diff: FenMoveDiffResult | null = null
+		let diff: MoveDiff | null = null
 		if (history.length > 1) {
 			const latest = history[history.length - 1]
 			const prevLatest = history[history.length - 2]
 			const isOpponentMove = latest.userId !== currentUserId
 			if (isOpponentMove) {
-				diff = diffFenMove(prevLatest.fen, latest.fen)
+				diff = engine.diffMove(prevLatest.fen, latest.fen)
 			}
 		}
 
 		const currentUser = joinedUsers.find(user => user.id === currentUserId)
 
-		const { top, bottom } = resolveSideUsers(joinedUsers, room.red_first)
+		// Bottom seat = the side that moves first; the other player sits at the top.
+		const bottomTeam = engine.firstTurn(room.red_first)
+		const bottom = joinedUsers.find(user => user.team === bottomTeam) ?? null
+		const top = joinedUsers.find(user => user.team !== null && user.team !== bottomTeam) ?? null
 		setTopSideUser(top)
 		setBottomSideUser(bottom)
 
@@ -417,7 +411,7 @@ const useRoomHook = () => {
 		const isPlaying = room.status === 2 && game?.status === 1
 		const mySeat = currentUser?.team ?? null
 		const isPlayer = mySeat !== null
-		const bothSeatsFilled = seatSet.has("red") && seatSet.has("black")
+		const bothSeatsFilled = engine.teams.every(team => seatSet.has(team))
 		const allPlayersReady = bothSeatsFilled && !isStartBlockedByBackReady
 
 		const menus: RoomActionButton[] = [
@@ -490,14 +484,14 @@ const useRoomHook = () => {
 		setGameButtons(menus)
 
 		if (history.length === 0) {
-			setCurrentTurn(room && room.red_first ? "red" : "black")
+			setCurrentTurn(engine.firstTurn(room.red_first))
 			return
 		}
 
-		const nextCaptured = getCapturedPiecesFromHistory(history)
+		const nextCaptured = engine.capturedFromHistory(history)
 		const latest = history[history.length - 1]
 		const fen = latest.fen as string
-		const nextBoard = fenToBoard(fen)
+		const nextBoard = engine.fenToBoard(fen)
 		setCurrentTurn(latest.team as Team)
 
 		// For spectators: highlight all moves
@@ -512,7 +506,7 @@ const useRoomHook = () => {
 				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
 			}
 			else if (diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
+				nextPreviousMove = { from: diff.from, to: diff.to }
 			}
 		} else {
 			// Players only see opponent moves
@@ -520,13 +514,13 @@ const useRoomHook = () => {
 				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
 			}
 			else if (isOpponentMove && diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
+				nextPreviousMove = { from: diff.from, to: diff.to }
 			}
 		}
 
 		// Highlight enemy pieces giving check, but only against the logged-in player's
 		// general - spectators don't get the check highlight.
-		const nextCheckingPieces = myTeam ? findCheckingPieces(nextBoard, myTeam) : []
+		const nextCheckingPieces = myTeam ? engine.findCheckingPieces(nextBoard, myTeam) : []
 
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
@@ -534,11 +528,16 @@ const useRoomHook = () => {
 		setSelected(null)
 		setPreviousMove(nextPreviousMove)
 		setCheckingPieces(nextCheckingPieces)
-		// Merge new captures from history instead of replacing entirely
-		setCapturedPieces(prev => ({
-			red: nextCaptured.red.length > prev.red.length ? nextCaptured.red : prev.red,
-			black: nextCaptured.black.length > prev.black.length ? nextCaptured.black : prev.black
-		}))
+		// Merge new captures from history instead of replacing entirely, per team.
+		setCapturedPieces(prev => {
+			const merged: CapturedPieces = {}
+			for (const team of engine.teams) {
+				const next = nextCaptured[team] ?? []
+				const old = prev[team] ?? []
+				merged[team] = next.length > old.length ? next : old
+			}
+			return merged
+		})
 	}
 
 	const isInGame = room?.status === 2 && (game?.id ?? null) != null
@@ -677,21 +676,33 @@ const useRoomHook = () => {
 				setClock(moveRecord.clock)
 			}
 
-			const currentFen = boardToFen(boardRef.current)
+			const currentFen = engine.boardToFen(boardRef.current, currentTurn)
 			const newFen = moveRecord.fen
-			const diff = diffFenMove(currentFen, newFen)
+			const diff = engine.diffMove(currentFen, newFen)
+
+			// Multi-square moves (chess castling / en passant / promotion) can't be
+			// shown as a single slide, so commit them immediately - updateToState
+			// rebuilds the board from the FEN. Without this the opponent's board would
+			// never advance (no transition => onAnimateEnd never fires).
+			if (diff === null) {
+				playSound(import.meta.env.VITE_PUBLIC_DISTRIBUTION + MOVE_SOUND_URL)
+				remoteMoveRef.current = null
+				setHistory(prev => prev.some(h => h._id === moveRecord._id) ? prev : [...prev, moveRecord])
+				return
+			}
+
 			// Remember this move so updateToState can highlight it once the FEN lands
 			remoteMoveRef.current = diff !== null
 				? {
 					fen: newFen,
-					from: diff.oldIndex,
-					to: diff.newIndex,
-					isCapture: diff.capturedCell !== null
+					from: diff.from,
+					to: diff.to,
+					isCapture: diff.isCapture
 				} : null
 			const boardClone = boardRef.current.map(cell => {
-				if (cell && diff && cell.id === diff.oldIndex) {
+				if (cell && diff && cell.id === diff.from) {
 					const cellClone = { ...cell }
-					cellClone.animateTo = diff.newIndex
+					cellClone.animateTo = diff.to
 					return cellClone
 				}
 
@@ -716,7 +727,7 @@ const useRoomHook = () => {
 			offMovePiece(handleMovePiece)
 			socketLeaveRoom(roomId)
 		}
-	}, [isConnected, roomId, onMovePiece, offMovePiece, socketJoinRoom, socketLeaveRoom])
+	}, [isConnected, roomId, engine, onMovePiece, offMovePiece, socketJoinRoom, socketLeaveRoom])
 
 	// Socket.io: Listen for new room chat messages from other players
 	useEffect(() => {
@@ -1312,7 +1323,7 @@ const useRoomHook = () => {
 		// Prevent piece selection while a move is pending
 		if (isMovePending) return
 
-		const clickedTeam = getTeamFromPieceChar(board[id]?.piece)
+		const clickedTeam = engine.teamOf(board[id]?.piece)
 		const isAvailableMove = availableMoves.includes(id)
 
 		if (!state.debugMode) {
@@ -1336,9 +1347,10 @@ const useRoomHook = () => {
 		if (isAvailableMove) {
 			const gameStateClone = [...board]
 			const oldIndex = selected!
+			// Preserve the moving cell's positional flags (chess castling/en-passant),
+			// just flag it to animate toward the target.
 			gameStateClone[oldIndex] = {
-				id: oldIndex,
-				piece: gameStateClone[oldIndex]!.piece,
+				...gameStateClone[oldIndex]!,
 				animateTo: id
 			}
 
@@ -1347,8 +1359,10 @@ const useRoomHook = () => {
 			return
 		}
 		const nextSelected = selected === id ? null : id
-		const direction = getMoveDirection(room!.red_first, currentTurn)
-		const nextAvailableMoves = getAvailableMoves(board, nextSelected, direction)
+		const nextAvailableMoves = engine.availableMoves(board, nextSelected, {
+			redFirst: room!.red_first,
+			turn: currentTurn
+		})
 		setAvailableMoves(nextAvailableMoves)
 		setPreviousMove(null)
 		setSelected(nextSelected)
@@ -1383,24 +1397,26 @@ const useRoomHook = () => {
 		const targetId = board[selectedId]!.animateTo
 		if (targetId === undefined) return
 		const oldTarget = board[targetId]
-		const movedTeam = getTeamFromPieceChar(board[selectedId]!.piece)
+		const movedTeam = engine.teamOf(board[selectedId]!.piece)
 		if (!movedTeam) {
 			return
 		}
 
-		// Create new board state with the move applied
-		const gameStateClone = applyMove(board, selectedId, targetId)
+		// Create new board state with the move applied (engine handles chess
+		// castling/en-passant/promotion and reports any captured piece).
+		const { board: gameStateClone, captured } = engine.applyMove(board, selectedId, targetId)
 
-		// Check if this move puts the moving team's general in check
-		const checkingPieces = findCheckingPieces(gameStateClone, movedTeam)
+		// Reject a move that leaves the moving side's king/general in check. (Chess
+		// legal-move filtering already prevents this, so it's a safety net there.)
+		const checkingPieces = engine.findCheckingPieces(gameStateClone, movedTeam)
 		const isMovedTeamGeneralInCheck = checkingPieces.length > 0
 
 		if (isMovedTeamGeneralInCheck) {
 			// Revert the move if it puts general in check - restore original board state
 			const revertedBoard = [...board]
 			revertedBoard[selectedId] = {
-				id: selectedId,
-				piece: revertedBoard[selectedId]!.piece,
+				...revertedBoard[selectedId]!,
+				animateTo: undefined
 			}
 
 			await openAlert({
@@ -1415,18 +1431,16 @@ const useRoomHook = () => {
 
 		// Move is valid, commit it
 		const capturedPiecesClone = structuredClone(capturedPieces)
-		let capturedPieceCharacter: PieceCharacter | null = null
-		const oldTargetTeam = getTeamFromPieceChar(oldTarget?.piece)
-		if (oldTarget?.piece && oldTargetTeam !== movedTeam) {
-			capturedPieceCharacter = oldTarget.piece
-			capturedPiecesClone[movedTeam].push(capturedPieceCharacter)
+		const capturedPieceCharacter: string | null = captured
+		if (capturedPieceCharacter) {
+			;(capturedPiecesClone[movedTeam] ??= []).push(capturedPieceCharacter)
 		}
 
-		const enemyTeam = movedTeam === "red" ? "black" : "red"
-		const enemyCheckingPieces = findCheckingPieces(gameStateClone, enemyTeam)
+		const enemyTeam = engine.otherTeam(movedTeam)
+		const enemyCheckingPieces = engine.findCheckingPieces(gameStateClone, enemyTeam)
 		const enemyInCheck = enemyCheckingPieces.length > 0
 		const enemyLegalMovesCount = room
-			? countLegalMoves(gameStateClone, enemyTeam, room.red_first)
+			? engine.countLegalMoves(gameStateClone, enemyTeam, room.red_first)
 			: 0
 		const shouldVerifyState = enemyInCheck || enemyLegalMovesCount === 0
 		if (capturedPieceCharacter) {
@@ -1445,7 +1459,8 @@ const useRoomHook = () => {
 		setCurrentTurn(enemyTeam)
 
 		if (room?.status === 2 && game) {
-			const newFen = boardToFen(gameStateClone)
+			// FEN's active colour is the side to move next (the opponent).
+			const newFen = engine.boardToFen(gameStateClone, enemyTeam)
 			const body: MovePieceRequest = {
 				gameId: game.id,
 				newFen,
@@ -1487,7 +1502,7 @@ const useRoomHook = () => {
 			}
 		}
 
-		if (getPieceFromCharacter(oldTarget?.piece) === "general") {
+		if (engine.endsOnCapture(oldTarget)) {
 			await openAlert({
 				message: "game.general.captured",
 				title: translate("popup.alert.title")
@@ -1533,6 +1548,13 @@ const useRoomHook = () => {
 	const displayTopUser = isBoardRotated ? bottomSideUser : topSideUser
 	const displayBottomUser = isBoardRotated ? topSideUser : bottomSideUser
 
+	// Team occupying each card's seat (independent of whether a user is seated),
+	// used for colour/styling. Bottom = first mover; flip swaps them.
+	const bottomTeam = engine.firstTurn(room?.red_first ?? true)
+	const topTeam = engine.otherTeam(bottomTeam)
+	const displayTopTeam = isBoardRotated ? bottomTeam : topTeam
+	const displayBottomTeam = isBoardRotated ? topTeam : bottomTeam
+
 	// Locally-ticking countdown derived from the latest server snapshot.
 	const clockDisplay = useGameClock(clock, isInGame)
 
@@ -1545,6 +1567,9 @@ const useRoomHook = () => {
 		currentTurn,
 		displayTopUser,
 		displayBottomUser,
+		displayTopTeam,
+		displayBottomTeam,
+		engine,
 		game,
 		gameButtons,
 		isBoardRotated,
@@ -1556,7 +1581,6 @@ const useRoomHook = () => {
 		selected,
 		showConfetti,
 
-		markerClass,
 		onAnimateEnd,
 		onPieceClick,
 		startGame

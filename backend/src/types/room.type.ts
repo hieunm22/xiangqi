@@ -5,6 +5,8 @@ export interface CreateRoomRequest {
 	pveMode: boolean
 	betAmount: number
 	timeLimit?: number | null
+	// Which game the room hosts. Omitted => xiangqi (backward compatible).
+	gameType: string
 }
 
 export enum RoomStatus {
@@ -16,7 +18,7 @@ interface RoomRequestBase {
 	id: number
 }
 
-export type JoinRoomTeam = "red" | "black" | null
+export type JoinRoomTeam = string | null
 
 export interface JoinRoomRequest extends RoomRequestBase {
 	team?: JoinRoomTeam

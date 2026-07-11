@@ -433,7 +433,7 @@ describe("POST /api/game/change-team", () => {
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
 		roomFindUniqueMock.mockResolvedValue({ id: BigInt(100), status: 1, host_id: BigInt(10), bet_amount: 50, pve_mode: false })
 
-		// First findMany: validation pass — host=10 (red), caller=11 (no team)
+		// First findMany: validation pass - host=10 (red), caller=11 (no team)
 		roomUserFindManyMock.mockResolvedValueOnce([
 			{
 				user_id: BigInt(10),
@@ -454,7 +454,7 @@ describe("POST /api/game/change-team", () => {
 
 		roomUserUpdateMock.mockResolvedValueOnce({})
 
-		// Second findMany: updated users — caller now has "black"
+		// Second findMany: updated users - caller now has "black"
 		roomUserFindManyMock.mockResolvedValueOnce([
 			{
 				team: "red",
@@ -513,6 +513,70 @@ describe("POST /api/game/change-team", () => {
 		expect(res.body.data).toEqual([
 			expect.objectContaining({ id: 10, team: "red", is_bot: false, back_ready: null }),
 			expect.objectContaining({ id: 11, team: "black", is_bot: false, back_ready: null })
+		])
+	})
+
+	it("seats the challenger opposite the host using the room's variant (chess: white -> black)", async () => {
+		const accessToken = buildAccessToken(11, "session-challenge-chess")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		// Chess room: teams are white/black, so the opposite of the host's white seat is black.
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(100),
+			status: 1,
+			host_id: BigInt(10),
+			bet_amount: 0,
+			pve_mode: false,
+			game_type: "chess"
+		})
+
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				user_id: BigInt(10),
+				team: "white",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200 }
+			},
+			{
+				user_id: BigInt(11),
+				team: null,
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150 }
+			}
+		])
+
+		roomUserUpdateMock.mockResolvedValueOnce({})
+
+		roomUserFindManyMock.mockResolvedValueOnce([
+			{
+				team: "white",
+				joined_at: HOST_JOINED_AT,
+				users: { id: BigInt(10), display_name: "Host", avatar_seq: 0, total_amount: 200, is_bot: false }
+			},
+			{
+				team: "black",
+				joined_at: CALLER_JOINED_AT,
+				users: { id: BigInt(11), display_name: "Caller", avatar_seq: 0, total_amount: 150, is_bot: false }
+			}
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ roomId: 100, isLeaveToSeat: false })
+
+		expect(res.status).toBe(200)
+		expect(roomUserUpdateMock).toHaveBeenCalledWith({
+			where: {
+				room_id_user_id: {
+					room_id: BigInt(100),
+					user_id: BigInt(11)
+				}
+			},
+			data: { team: "black" }
+		})
+		expect(res.body.data).toEqual([
+			expect.objectContaining({ id: 10, team: "white" }),
+			expect.objectContaining({ id: 11, team: "black" })
 		])
 	})
 

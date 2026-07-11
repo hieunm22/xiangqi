@@ -188,7 +188,7 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 			betAmount: 0
 		})
 
-		// Game over — clear players' "busy" presence back to their live status.
+		// Game over - clear players' "busy" presence back to their live status.
 		// Skip when another request already ended the game to avoid duplicate work.
 		if (ended) {
 			stopClock(normalizedGameId)

@@ -1,4 +1,4 @@
-// Server-side password policy — mirrors the client rules in `frontend/src/common/password.ts`
+// Server-side password policy - mirrors the client rules in `frontend/src/common/password.ts`
 
 export const PASSWORD_POLICY = {
 	minLength: 8,

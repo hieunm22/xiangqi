@@ -140,7 +140,7 @@ export default function LoginPage() {
 		try {
 			accessToken = await facebookSdkLogin()
 		} catch {
-			// User closed the Facebook popup or the SDK failed to load — stay put.
+			// User closed the Facebook popup or the SDK failed to load - stay put.
 			return
 		}
 

@@ -1,0 +1,124 @@
+:root {
+	--chess-light: #f0d9b5;
+	--chess-dark: #b58863;
+	--chess-highlight: rgba(155, 199, 0, 0.55);
+	--chess-check: rgba(255, 0, 0, 0.45);
+	--chess-move-dot: rgba(20, 20, 20, 0.35);
+}
+
+.chess-board {
+	padding: var(--chess-board-pad);
+	border-radius: 12px;
+	background: #8a5a3b;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+
+	.chess-board-frame {
+		position: relative;
+		width: calc(var(--chess-cell-size) * 8);
+		height: calc(var(--chess-cell-size) * 8);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+
+	.chess-square {
+		position: absolute;
+		width: 12.5%;
+		height: 12.5%;
+		box-sizing: border-box;
+
+		&.light {
+			background: var(--chess-light);
+		}
+
+		&.dark {
+			background: var(--chess-dark);
+		}
+
+		&.highlight {
+			box-shadow: inset 0 0 0 9999px var(--chess-highlight);
+		}
+
+		&.check {
+			box-shadow: inset 0 0 0 9999px var(--chess-check);
+		}
+
+		// Empty legal-move target: a centred dot.
+		&.available-empty::after {
+			content: "";
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 30%;
+			height: 30%;
+			transform: translate(-50%, -50%);
+			border-radius: 50%;
+			background: var(--chess-move-dot);
+		}
+
+		// Occupied legal-move target (a capture): a ring.
+		&.available:not(.available-empty) {
+			box-shadow: inset 0 0 0 4px var(--chess-move-dot);
+		}
+
+		&.cursor-pointer {
+			cursor: pointer;
+		}
+	}
+
+	.chess-piece {
+		position: absolute;
+		width: 12.5%;
+		height: 12.5%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.18s ease-in-out;
+		will-change: transform;
+		user-select: none;
+
+		&.clickable {
+			cursor: pointer;
+		}
+
+		&.selected {
+			background: var(--chess-highlight);
+		}
+
+		.chess-glyph {
+			font-size: calc(var(--chess-cell-size) * 0.72);
+			line-height: 1;
+		}
+
+		// Team colours: outline the glyph so both read clearly on either square.
+		&.team-white .chess-glyph {
+			color: #fdfdfd;
+			text-shadow: 0 0 2px #000, 0 1px 2px rgba(0, 0, 0, 0.6);
+		}
+
+		&.team-black .chess-glyph {
+			color: #1a1a1a;
+			text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+		}
+	}
+}
+
+// Captured chess pieces: drop the wooden xiangqi disc, show a plain FA icon
+// coloured by the owning side.
+.captured-pieces-display {
+	&.team-white {
+		color: #f5f5f5;
+	}
+
+	.captured-piece-icon {
+		width: 22px;
+		height: 22px;
+		background: none;
+		border: none;
+		box-shadow: none;
+		font-size: 18px;
+	}
+
+	&.team-white .captured-piece-icon {
+		text-shadow: 0 0 2px #000, 0 1px 2px rgba(0, 0, 0, 0.6);
+	}
+}

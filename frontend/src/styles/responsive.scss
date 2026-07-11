@@ -1,3 +1,11 @@
+// Base chess board sizing
+:root {
+	--chess-board-pad: 18px;
+	--chess-cell-size: calc(
+		(var(--board-height) + var(--board-padding) * 2 - var(--chess-board-pad) * 2) / 8
+	);
+}
+
 @media screen and (max-width: 376px) {
 	:root {
 		--cell-size: 40px;
@@ -5,6 +13,11 @@
 		--river-gap: 20px;
 		--board-padding: 15px;
 		--piece-font-size: 18px;
+
+		// ----------------------------
+
+		--chess-board-pad: 12px;
+		--chess-cell-size: 41px;
 	}
 }
 
@@ -15,6 +28,11 @@
 		--river-gap: 20px;
 		--board-padding: 15px;
 		--piece-font-size: 18px;
+
+		// ----------------------------
+
+		--chess-board-pad: 12px;
+		--chess-cell-size: 41px;
 	}
 }
 
@@ -25,6 +43,11 @@
 		--river-gap: 20px;
 		--board-padding: 18px;
 		--piece-font-size: 20px;
+
+		// ----------------------------
+
+		--chess-board-pad: 15px;
+		--chess-cell-size: 47px;
 	}
 }
 
@@ -45,6 +68,18 @@
 
 	.xiangqi-board {
 		order: -1;
+	}
+
+	.room-container .chess-board {
+		// order: -1;
+		width: 100%;
+		box-sizing: border-box;
+
+		.chess-board-frame {
+			width: 100%;
+			height: auto;
+			aspect-ratio: 1 / 1;
+		}
 	}
 
 	.profile-user-info {
@@ -107,7 +142,7 @@
 	}
 }
 
-@media screen and (min-height: 900px) and (min-width: 1440px) {
+@media screen and (min-width: 1440px) and (orientation: landscape) {
 	:root {
 		--cell-size: 63px;
 		--piece-size: 45px;
@@ -117,7 +152,7 @@
 	}
 }
 
-@media screen and (min-height: 1080px) and (min-width: 1920px) {
+@media screen and (min-width: 1920px) and (orientation: landscape) {
 	:root {
 		--cell-size: 81px;
 		--piece-size: 63px;

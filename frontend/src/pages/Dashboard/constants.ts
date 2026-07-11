@@ -16,3 +16,6 @@ export const FILTER_KEYS: Record<DashboardFilter, string> = {
 	available: "dashboard.filters.available",
 	playing: "dashboard.filters.playing"
 }
+
+// Remembers the lobby's selected game across visits.
+export const LS_LOBBY_GAME = "lobby-game-type"

@@ -4,6 +4,7 @@ import { BOT_USER_ID } from "common/bot-engine"
 import { ACCEPTABLE_TIME_LIMITS } from "common/constant"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomCreated } from "common/socket"
+import { getVariant, isGameType, isTeam, otherTeam } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 import { CreateRoomRequest } from "types/room.type"
 
@@ -125,7 +126,8 @@ router.post(
 			redFirst = true,
 			pveMode = false,
 			betAmount = 10,
-			timeLimit = null
+			timeLimit = null,
+			gameType,
 		} = req.body as CreateRoomRequest
 		const userId = req.auth?.userId
 
@@ -139,11 +141,29 @@ router.post(
 			return
 		}
 
-		// Validate team name
-		if (
-			teamName !== null &&
-			(typeof teamName !== "string" || (teamName !== "red" && teamName !== "black"))
-		) {
+		// Validate game type (omitted => xiangqi)
+		if (gameType !== undefined && !isGameType(gameType)) {
+			res.status(400).json({
+				success: false,
+				message: "create-room.messages.invalid-game-type",
+				status_code: 400
+			})
+			return
+		}
+		const variant = getVariant(gameType)
+
+		// Bot is not offered for every variant yet (e.g. chess).
+		if (pveMode && !variant.pveSupported) {
+			res.status(400).json({
+				success: false,
+				message: "create-room.messages.pve-not-supported",
+				status_code: 400
+			})
+			return
+		}
+
+		// Validate team name against the variant's seats
+		if (teamName !== null && !isTeam(variant, teamName)) {
 			res.status(400).json({
 				success: false,
 				message: "create-room.messages.invalid-team-name",
@@ -226,11 +246,8 @@ router.post(
 				{ user_id: userIdBigInt, team: teamName, joined_at: getUTCNow() }
 			]
 			if (pveMode) {
-				// Determine bot team (opposite of user's team)
-				let botTeam: "red" | "black" = "red"
-				if (teamName === "red") {
-					botTeam = "black"
-				}
+				// Bot takes the seat opposite the creator
+				const botTeam = teamName ? otherTeam(variant, teamName) : variant.teams[0]
 				roomUserSeed.push({ user_id: BOT_USER_ID, team: botTeam, joined_at: getUTCNow() })
 			}
 
@@ -238,6 +255,7 @@ router.post(
 				data: {
 					name: tableName,
 					status: 1, // 1 = waiting for opponent
+					game_type: variant.gameType,
 					red_first: redFirst,
 					pve_mode: pveMode,
 					bet_amount: betAmount,
@@ -251,6 +269,7 @@ router.post(
 					id: true,
 					name: true,
 					status: true,
+					game_type: true,
 					red_first: true,
 					pve_mode: true,
 					bet_amount: true,

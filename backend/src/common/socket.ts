@@ -123,7 +123,7 @@ export function initializeSocket(httpServer: HTTPServer) {
 			const userId = typeof data === "object" ? Number(data?.userId) : Number(data)
 			if (!Number.isInteger(userId) || userId <= 0) return
 
-			// A heartbeat means the user is active again — cancel any pending
+			// A heartbeat means the user is active again - cancel any pending
 			// disconnect-driven inactive transition.
 			cancelInactiveTimer(userId)
 
@@ -149,7 +149,7 @@ export function initializeSocket(httpServer: HTTPServer) {
 					if (socketIds.size === 0) {
 						userIdToSocketIds.delete(disconnectedUserId)
 
-						// Auto-leave on socket disconnect disabled for now — was kicking users
+						// Auto-leave on socket disconnect disabled for now - was kicking users
 						// out of rooms on transient drops (refresh, brief network loss). Users
 						// must explicitly call /api/room/leave to exit a room.
 						// TODO

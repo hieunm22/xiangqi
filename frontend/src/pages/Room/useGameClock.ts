@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { ClockSnapshot } from "./types"
+import { Team } from "types/GameState"
 
 const TICK_MS = 250
 
 export interface ClockDisplay {
 	redMs: number
 	blackMs: number
-	activeTeam: "red" | "black"
+	activeTeam: Team
 }
 
 /**
@@ -15,7 +16,7 @@ export interface ClockDisplay {
  * The server is authoritative for the actual time-out; this only drives the UI
  * between updates. We anchor to the client-local time the snapshot arrived
  * (rather than the server timestamp) so client/server clock skew never makes the
- * clock jump — only the active team's remaining time counts down.
+ * clock jump - only the active team's remaining time counts down.
  */
 export default function useGameClock(
 	snapshot: ClockSnapshot | null,

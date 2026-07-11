@@ -175,6 +175,8 @@ auth-middleware.messages.token-validation-failed;Token validation failed;Xác th
 create-room.messages.insufficient-amount;You do not have enough balance to create a room with this bet;Bạn không còn đủ amount để tạo phòng với mức cược này
 create-room.messages.internal-server-error;Internal server error while creating room;Lỗi máy chủ nội bộ khi tạo phòng
 create-room.messages.invalid-bet-amount;Bet amount is required and must be one of the acceptable values;Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận
+create-room.messages.invalid-game-type;Invalid game type;Loại cờ không hợp lệ
+create-room.messages.pve-not-supported;This game does not support playing against the bot yet;Trò chơi này chưa hỗ trợ đấu với máy
 create-room.messages.invalid-time-limit;Invalid time limit;Thời gian không hợp lệ
 create-room.messages.invalid-redFirst;'redFirst' must be a boolean;'redFirst' phải là giá trị boolean
 create-room.messages.invalid-team-name;Team name must be either 'red', 'black', or null;Tên đội phải là 'red', 'black' hoặc null
@@ -182,6 +184,13 @@ create-room.messages.name-required;Room name (tableName) is required and must no
 create-room.messages.room-created;Room created successfully;Phòng được tạo thành công
 fetch-rooms.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 fetch-rooms.messages.invalid-status;Query parameter 'status' must be an integer;Tham số truy vấn 'status' phải là số nguyên
+fetch-rooms.messages.invalid-game-type;Query parameter 'gameType' is invalid;Tham số truy vấn 'gameType' không hợp lệ
+variant.xiangqi.name;Chinese Chess;Cờ Tướng
+variant.chess.name;Chess;Cờ Vua
+variant.xiangqi.team.red;Red;Đỏ
+variant.xiangqi.team.black;Black;Đen
+variant.chess.team.white;White;Trắng
+variant.chess.team.black;Black;Đen
 fetch-rooms.messages.success;Fetch rooms successfully;Lấy phòng thành công
 forgot-password.messages.email-not-found;Email does not exist;Email không tồn tại
 forgot-password.messages.email-service-not-configured;Email service is not configured;Dịch vụ email chưa được cấu hình

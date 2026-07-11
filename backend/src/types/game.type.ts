@@ -1,6 +1,6 @@
 import { PresenceStatus } from "common/presence"
 
-export type Team = "red" | "black"
+export type Team = "red" | "black" | "white"
 
 export interface ChangeTeamRequest {
 	roomId: number
@@ -24,6 +24,8 @@ export interface MovePieceRequest {
 	gameId: string
 	newFen: string
 	capturePiece: string | null
+	// Variant team ("red"/"black" for xiangqi, "white"/"black" for chess);
+	// validated against the game's variant at the route.
 	team: Team
 }
 
@@ -79,6 +81,7 @@ export interface ClockParticipant {
 export interface ClockConfig {
 	status: number
 	roomId: bigint
+	gameType: string
 	timeLimit: number | null
 	timeIncrement: number
 	betAmount: number | null
@@ -106,6 +109,9 @@ export interface ClockHistoryRecord {
 }
 
 // Derived clock math, including the active team's flag deadline (ms epoch).
+// `blackMs` is the "black" seat's time; `redMs` is the other seat's - red in
+// xiangqi, white in chess. Both variants always have a black seat, so this two-
+// slot shape covers them without a per-variant map.
 export interface ClockState {
 	redMs: number
 	blackMs: number

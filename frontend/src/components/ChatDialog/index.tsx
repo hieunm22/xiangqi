@@ -115,7 +115,7 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 	}, [props.open])
 
 	// Load messages when the dialog opens or when the active conversation
-	// (refId) changes — e.g. picking a different conversation in the drawer.
+	// (refId) changes - e.g. picking a different conversation in the drawer.
 	useEffect(() => {
 		const loadMessages = async () => {
 			if (!props.open) {

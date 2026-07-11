@@ -4,8 +4,12 @@ import {
 	useRef,
 	useState
 } from "react"
-import { diffFenMove, getToken } from "common/helper"
-import { fenToBoard, getCapturedPiecesFromHistory } from "pages/Room/common"
+import { getToken } from "common/helper"
+import {
+	diffFenMove,
+	fenToBoard,
+	getCapturedPiecesFromHistory
+} from "pages/Room/variants/xiangqi/rules"
 import { useAPI } from "hooks/useAPI"
 import {
 	CapturedPieces,

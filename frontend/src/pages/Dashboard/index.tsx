@@ -5,7 +5,7 @@ import {
 	Stack
 } from "@mui/material"
 import Alert from "components/AlertWithIcon"
-import { FILTER_KEYS, FILTER_STATUS } from "./constants"
+import { FILTER_KEYS, FILTER_STATUS, LS_LOBBY_GAME } from "./constants"
 import { CreateRoomCard } from "./components/CreateRoomCard"
 import { CreateRoomDialog } from "./components/CreateRoomDialog"
 import { RoomCard } from "./components/RoomCard"
@@ -18,6 +18,13 @@ import { useProfilePopup } from "hooks/useAppContext"
 import useAutoTitle from "hooks/useAutoTitle"
 import { useSocket } from "hooks/useSocket"
 import { translate } from "locales/translate"
+import {
+	DEFAULT_GAME_TYPE,
+	GAME_TYPES,
+	GameType,
+	getVariant,
+	isGameType
+} from "common/variants"
 import { APIResponse } from "types/Common"
 import { DashboardFilter, DashboardRoom } from "./types"
 import "./Dashboard.scss"
@@ -38,6 +45,10 @@ const DashboardPage = () => {
 		onRoomDeleted,
 	} = useSocket()
 	const [activeFilter, setActiveFilter] = useState<DashboardFilter>("all")
+	const [activeGame, setActiveGame] = useState<GameType>(() => {
+		const stored = localStorage.getItem(LS_LOBBY_GAME)
+		return isGameType(stored) ? stored : DEFAULT_GAME_TYPE
+	})
 	const [rooms, setRooms] = useState<DashboardRoom[]>([])
 	const [loading, setLoading] = useState(true)
 	const [errorMessage, setErrorMessage] = useState("")
@@ -71,7 +82,8 @@ const DashboardPage = () => {
 
 			const response = await fetchRooms(
 				token,
-				activeFilter === "all" ? undefined : FILTER_STATUS[activeFilter]
+				activeFilter === "all" ? undefined : FILTER_STATUS[activeFilter],
+				activeGame
 			) as APIResponse<DashboardRoom[]>
 
 			if (ignore) {
@@ -94,7 +106,7 @@ const DashboardPage = () => {
 		return () => {
 			ignore = true
 		}
-	}, [activeFilter])
+	}, [activeFilter, activeGame])
 
 	useEffect(() => {
 		if (!isConnected) {
@@ -112,6 +124,11 @@ const DashboardPage = () => {
 		const handleRoomCreated = (data: { room?: DashboardRoom }) => {
 			const newRoom = data?.room
 			if (!newRoom || typeof newRoom.id !== "number") {
+				return
+			}
+
+			// Keep the lobby scoped to the selected game.
+			if (newRoom.game_type !== activeGame) {
 				return
 			}
 
@@ -174,6 +191,7 @@ const DashboardPage = () => {
 		}
 	}, [
 		activeFilter,
+		activeGame,
 		isConnected,
 		onDashboardRoomUsersUpdated,
 		onRoomCreated,
@@ -183,11 +201,33 @@ const DashboardPage = () => {
 		offRoomDeleted
 	])
 
+	const handleSelectGame = (game: GameType) => {
+		if (game === activeGame) {
+			return
+		}
+		setActiveGame(game)
+		localStorage.setItem(LS_LOBBY_GAME, game)
+	}
+
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
 			<Box className="dashboard">
 				<Stack spacing={3}>
 					<TSpan className="dashboard__title" content="dashboard.page.title" />
+
+					<Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
+						{GAME_TYPES.map(game => (
+							<TButton
+								key={game}
+								onClick={() => handleSelectGame(game)}
+								variant={game === activeGame ? "contained" : "outlined"}
+								size="medium"
+								className="dashboard__game-btn"
+								sx={{ boxShadow: game === activeGame ? 0 : 2 }}
+								value={getVariant(game).labelKey}
+							/>
+						))}
+					</Stack>
 
 					<Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
 						{(["all", "available", "playing"] as DashboardFilter[]).map(filter => (
@@ -226,7 +266,7 @@ const DashboardPage = () => {
 					) : null}
 				</Stack>
 
-				<CreateRoomDialog />
+				<CreateRoomDialog gameType={activeGame} />
 			</Box>
 		</CreateRoomDialogContext.Provider>
 	)

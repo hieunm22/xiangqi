@@ -135,7 +135,7 @@ describe("GET /api/game/online", () => {
 		getActiveUserStatusesMock.mockResolvedValue([
 			{ userId: 11, status: "online" }
 		])
-		// User 12 is in a started game but not in the heartbeat list — still busy.
+		// User 12 is in a started game but not in the heartbeat list - still busy.
 		roomUserFindManyMock.mockResolvedValue([
 			{ user_id: BigInt(11) },
 			{ user_id: BigInt(12) }

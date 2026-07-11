@@ -1,11 +1,11 @@
 import prisma from "prisma"
-import { hasPieceAcrossRiver } from "common/board-helper"
 import { runEndGameTransaction } from "common/game/end-game.helper"
 import { activatePostGameLock } from "common/game/post-game.helper"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { getUTCTimestamp } from "common/helper"
 import { getGameHistoryCollection } from "common/mongodb"
 import { emitGameEnded } from "common/socket"
+import { getVariant, otherTeam } from "common/variants"
 import {
 	ClockBaseline,
 	ClockConfig,
@@ -15,6 +15,12 @@ import {
 	Team
 } from "types/game.type"
 
+// The clock tracks two seats. One is always "black" (both xiangqi and chess have
+// it); the other ("red" in xiangqi, "white" in chess) maps to the "red" slot. This
+// keeps the persisted two-slot shape working for both variants.
+type ClockSlot = "red" | "black"
+const slotOf = (team: string): ClockSlot => (team === "black" ? "black" : "red")
+
 // setTimeout truncates delays larger than a signed 32-bit int, which would fire
 // almost immediately. Clamp scheduling below that. Real budgets are minutes, so
 // this cap is only a safety net.
@@ -23,7 +29,7 @@ const MAX_TIMEOUT_DELAY_MS = 2_000_000_000
 // In-memory per-game flag timers. A single timer per in-progress game fires when
 // the team on the move runs out of time without moving. Rescheduled on every
 // move; rehydrated on boot (see rehydrateClocks). Mirrors the in-memory timers
-// already used for presence and the post-game lock — assumes a single backend
+// already used for presence and the post-game lock - assumes a single backend
 // instance; a horizontally-scaled deployment would move this to a Redis-backed
 // delayed job.
 const timers = new Map<string, NodeJS.Timeout>()
@@ -38,6 +44,7 @@ async function fetchConfig(gameId: string): Promise<ClockConfig | null> {
 		select: {
 			status: true,
 			room_id: true,
+			game_type: true,
 			time_limit: true,
 			time_increment: true,
 			room: { select: { bet_amount: true, pve_mode: true } },
@@ -52,6 +59,7 @@ async function fetchConfig(gameId: string): Promise<ClockConfig | null> {
 	return {
 		status: game.status,
 		roomId: game.room_id,
+		gameType: game.game_type,
 		timeLimit: game.time_limit,
 		timeIncrement: game.time_increment ?? 0,
 		betAmount: game.room?.bet_amount ?? null,
@@ -86,16 +94,16 @@ async function fetchHistory(gameId: string): Promise<ClockHistoryRecord[]> {
 /**
  * Time spent (ms) and completed moves per side, derived from the ordered
  * history. Honors resume anchors: computation starts from the LAST record that
- * carries a baseline (its accumulated totals), then adds only the gaps after it —
+ * carries a baseline (its accumulated totals), then adds only the gaps after it -
  * so the wall-clock time an undo removed is never charged to anyone.
  */
 function deriveSpent(records: ClockHistoryRecord[]): {
-	spentMs: Record<Team, number>
-	completedMoves: Record<Team, number>
+	spentMs: Record<ClockSlot, number>
+	completedMoves: Record<ClockSlot, number>
 } {
 	let anchorIdx = 0
-	const spentMs: Record<Team, number> = { red: 0, black: 0 }
-	const completedMoves: Record<Team, number> = { red: 0, black: 0 }
+	const spentMs: Record<ClockSlot, number> = { red: 0, black: 0 }
+	const completedMoves: Record<ClockSlot, number> = { red: 0, black: 0 }
 
 	for (let i = records.length - 1; i >= 0; i -= 1) {
 		const baseline = records[i].baseline
@@ -110,7 +118,7 @@ function deriveSpent(records: ClockHistoryRecord[]): {
 	}
 
 	for (let i = anchorIdx + 1; i < records.length; i += 1) {
-		const mover = records[i - 1].team
+		const mover = slotOf(records[i - 1].team)
 		spentMs[mover] += Math.max(0, (records[i].timeStamp - records[i - 1].timeStamp) * 1000)
 		completedMoves[mover] += 1
 	}
@@ -148,25 +156,26 @@ export function computeClockState(
 
 	const last = records[records.length - 1]
 	const activeTeam = last.team
+	const activeSlot = slotOf(activeTeam)
 	const turnStartMs = last.timeStamp * 1000
 	const inProgressMs = Math.max(0, nowMs - turnStartMs)
 
-	const remainingMs = (team: Team): number => {
-		const budget = budgetMs + completedMoves[team] * incrementMs
-		let remaining = budget - spentMs[team]
-		if (team === activeTeam) {
+	const remainingForSlot = (slot: ClockSlot): number => {
+		const budget = budgetMs + completedMoves[slot] * incrementMs
+		let remaining = budget - spentMs[slot]
+		if (slot === activeSlot) {
 			remaining -= inProgressMs
 		}
 		return Math.max(0, remaining)
 	}
 
-	const activeBudget = budgetMs + completedMoves[activeTeam] * incrementMs
+	const activeBudget = budgetMs + completedMoves[activeSlot] * incrementMs
 
 	return {
-		redMs: remainingMs("red"),
-		blackMs: remainingMs("black"),
+		redMs: remainingForSlot("red"),
+		blackMs: remainingForSlot("black"),
 		activeTeam,
-		deadlineMs: turnStartMs + activeBudget - spentMs[activeTeam],
+		deadlineMs: turnStartMs + activeBudget - spentMs[activeSlot],
 		serverNow: nowMs
 	}
 }
@@ -269,16 +278,17 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			return
 		}
 
-		const activeRemaining = state.activeTeam === "red" ? state.redMs : state.blackMs
+		const activeRemaining = slotOf(state.activeTeam) === "black" ? state.blackMs : state.redMs
 		if (activeRemaining > 0) {
 			await armClock(gameId)
 			return
 		}
 
+		const variant = getVariant(config.gameType)
 		const loserTeam = state.activeTeam
-		const winnerTeam: Team = loserTeam === "red" ? "black" : "red"
+		const winnerTeam = otherTeam(variant, loserTeam) as Team
 		const latestFen = records[records.length - 1].fen
-		const winnerCanWin = hasPieceAcrossRiver(latestFen, winnerTeam)
+		const winnerCanWin = variant.flagResolver(latestFen, winnerTeam)
 
 		const findUser = (team: Team) =>
 			config.participants.find(p => p.team === team)?.userId ?? null

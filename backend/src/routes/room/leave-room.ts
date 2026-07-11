@@ -211,7 +211,7 @@ router.delete("/room/leave", requireAuth(), async (req: AuthenticatedRequest, re
 
 				// Skip game-over side effects when another request already ended the game.
 				if (ended) {
-					// Game ended because a player left — clear "busy" for the participants.
+					// Game ended because a player left - clear "busy" for the participants.
 					await syncPlayersPresence(activeGame.id, false)
 
 					engineManager.releaseEngine(activeGame.id).catch(err => {

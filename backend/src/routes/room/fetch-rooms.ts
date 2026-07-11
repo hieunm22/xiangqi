@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { getAvatarUrl } from "common/helper"
+import { isGameType } from "common/variants"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -101,17 +102,32 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 
 	const status = statusQuery !== undefined ? Number(statusQuery) : undefined
 
+	// Optional game_type filter (used by the lobby's game switcher).
+	const gameTypeQuery = req.query.gameType
+	if (gameTypeQuery !== undefined && !isGameType(gameTypeQuery)) {
+		res.status(400).json({
+			success: false,
+			message: "fetch-rooms.messages.invalid-game-type",
+			status_code: 400,
+			rooms: []
+		})
+		return
+	}
+	const gameType = gameTypeQuery as string | undefined
+
 	try {
 		const rooms = await prisma.room.findMany({
 			where: {
 				is_active: true,
-				...(status !== undefined && { status })
+				...(status !== undefined && { status }),
+				...(gameType !== undefined && { game_type: gameType })
 			},
 			orderBy: { created_at: "asc" },
 			select: {
 				id: true,
 				name: true,
 				status: true,
+				game_type: true,
 				red_first: true,
 				bet_amount: true,
 				time_limit: true,

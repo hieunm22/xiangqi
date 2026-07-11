@@ -1,4 +1,4 @@
-// Shared password policy — single source of truth for client-side password validation
+// Shared password policy - single source of truth for client-side password validation
 
 export const PASSWORD_POLICY = {
 	minLength: 8,

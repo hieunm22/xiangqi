@@ -232,7 +232,8 @@ describe("POST /api/room/start", () => {
 			data: {
 				status: 1,
 				room_id: BigInt(101),
-				bot_difficulty: null
+				bot_difficulty: null,
+				game_type: "xiangqi"
 			},
 			select: {
 				id: true,
@@ -511,7 +512,15 @@ describe("POST /api/room/start", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true, host_id: true, bet_amount: true, pve_mode: true, time_limit: true, time_increment: true }
+			select: {
+				id: true,
+				host_id: true,
+				bet_amount: true,
+				pve_mode: true,
+				game_type: true,
+				time_limit: true,
+				time_increment: true
+			}
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
 	})

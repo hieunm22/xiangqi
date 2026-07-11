@@ -1,3 +1,4 @@
+import { GameType } from "common/variants"
 import { RoomUser } from "pages/Room/types"
 import { NumberVoid } from "types/Common"
 import { Team } from "types/GameState"
@@ -8,6 +9,7 @@ export type DashboardRoom = {
 	id: number
 	name: string
 	status: number
+	game_type: GameType
 	bet_amount: number
 	red_first: boolean
 	host_id: number | null
@@ -44,7 +46,7 @@ export interface SeatAvatarProps {
 
 export interface PieceButtonProps {
 	piece: Team
-	label: string
+	label: React.ReactNode
 }
 
 export interface RoomCardProps {
@@ -53,10 +55,12 @@ export interface RoomCardProps {
 
 export interface CreateRoomRequest {
 	tableName: string
+	// Variant seat: "red"/"black" for xiangqi, "white"/"black" for chess.
 	teamName: Team
 	redFirst: boolean
 	pveMode: boolean
 	betAmount: number
 	// Per-player total time budget in seconds; null = no clock.
 	timeLimit: number | null
+	gameType: GameType
 }
