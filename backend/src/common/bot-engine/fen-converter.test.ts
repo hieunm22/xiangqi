@@ -19,6 +19,12 @@ describe("fen-converter", () => {
 			expect(flatArrayToProjectFen(cells)).toBe(INITIAL_FEN_BLACK_BOTTOM)
 		})
 
+		it("tolerates a full 6-field FEN by parsing the placement field only", () => {
+			const cells = projectFenToFlatArray(`${INITIAL_FEN_BLACK_TOP} w - - 0 1`)
+			expect(cells).toHaveLength(90)
+			expect(flatArrayToProjectFen(cells)).toBe(INITIAL_FEN_BLACK_TOP)
+		})
+
 		it("rejects FEN with wrong row count", () => {
 			expect(() => projectFenToFlatArray("9/9/9")).toThrow()
 		})

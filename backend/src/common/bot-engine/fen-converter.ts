@@ -6,7 +6,8 @@ import { projectPieceToStandard } from "./piece-map"
  * Empty squares become null.
  */
 export const projectFenToFlatArray = (projectFen: string): (string | null)[] => {
-	const rows = projectFen.trim().split("/")
+	// Tolerate both board-only and full 6-field FENs: take the placement field only.
+	const rows = projectFen.trim().split(/\s+/)[0].split("/")
 	if (rows.length !== BOARD_ROWS) {
 		throw new Error(`Invalid project FEN: expected ${BOARD_ROWS} rows, got ${rows.length}`)
 	}

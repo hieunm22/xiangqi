@@ -31,4 +31,10 @@ describe("hasPieceAcrossRiver", () => {
 		const fen = "9/9/9/9/9/9/9/9/9/4g4"
 		expect(hasPieceAcrossRiver(fen, "black")).toBe(true)
 	})
+
+	it("tolerates a full 6-field FEN by parsing the placement field only", () => {
+		const initial = "RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr w - - 0 1"
+		expect(hasPieceAcrossRiver(initial, "red")).toBe(false)
+		expect(hasPieceAcrossRiver(initial, "black")).toBe(false)
+	})
 })
