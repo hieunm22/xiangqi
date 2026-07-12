@@ -370,10 +370,12 @@
 
 	&.team-red {
 		color: red;
+		border: 2px solid red;
 	}
 
 	&.team-black {
 		color: black;
+		border: 2px solid black;
 	}
 
 	.player-total-points {
@@ -609,6 +611,9 @@
 
 	&.bottom-player {
 		flex-direction: column;
+		.captured-pieces-display {
+			flex-direction: column-reverse;
+		}
 	}
 }
 
@@ -616,18 +621,25 @@
 	display: flex;
 	flex-direction: column;
 	flex-wrap: wrap;
-	width: fit-content;
+	align-content: flex-start;
+	border-radius: 10px;
+	padding: 10px;
+	width: 100%;
 	// max-height: calc(20px * 7 + 2px * 6);
 	max-height: 145px;
+	height: 145px;
 	gap: 2px;
 	direction: rtl;
+	background: linear-gradient(135deg, rgb(255, 245, 219), rgb(232, 197, 132));
 
 	&.team-red {
 		color: red;
+		border: solid 2px black;
 	}
-
+	
 	&.team-black {
 		color: black;
+		border: solid 2px red;
 	}
 }
 
