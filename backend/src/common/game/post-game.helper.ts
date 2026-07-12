@@ -176,34 +176,7 @@ export async function activatePostGameLock(roomId: bigint, gameId: string) {
 		roomId: Number(roomId),
 		gameId,
 		participants,
-		onTimeout: async ({ notReadyUserIds }) => {
-			if (notReadyUserIds.length === 0) {
-				return
-			}
-
-			const room = await prisma.room.findUnique({
-				where: { id: roomId },
-				select: { host_id: true }
-			})
-			const hostId = room?.host_id == null ? null : Number(room.host_id)
-			const playerIdsToSpectator = hostId == null
-				? notReadyUserIds
-				: notReadyUserIds.filter(userId => userId !== hostId)
-
-			if (playerIdsToSpectator.length > 0) {
-				await prisma.roomUser.updateMany({
-					where: {
-						room_id: roomId,
-						user_id: {
-							in: playerIdsToSpectator.map(userId => BigInt(userId))
-						}
-					},
-					data: {
-						team: null
-					}
-				})
-			}
-
+		onTimeout: async () => {
 			await emitRoomUsersSnapshot(roomId)
 		}
 	})

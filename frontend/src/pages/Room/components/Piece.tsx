@@ -61,6 +61,8 @@ const PieceItem = (props: PieceItemProps) => {
 		$selectedId,
 		$myTeam,
 		$previousMove,
+		$checking,
+		$checkedGeneral,
 		$rotated,
 
 		$animateEnd,
@@ -73,7 +75,11 @@ const PieceItem = (props: PieceItemProps) => {
 		`row-${$top}-piece`,
 		`col-${$left}-piece`,
 		// Skip the highlight while selected/available so those outlines keep priority
-		{ "highlight": $previousMove && !isSelected(props) && !$available }
+		{
+			"previous-move": $previousMove && !isSelected(props) && !$available,
+			"checking": $checking && !isSelected(props) && !$available,
+			"checked-general": $checkedGeneral && !isSelected(props) && !$available
+		}
 	)
 	return (
 		<PieceWrapper

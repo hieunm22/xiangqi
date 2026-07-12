@@ -29,7 +29,7 @@ import { APIResponse } from "types/Common"
 import { DashboardFilter, DashboardRoom } from "./types"
 import "./Dashboard.scss"
 import useToolkit from "hooks/useToolkit"
-import { setCurrentRoomId } from "toolkit/slice/game"
+import { setCurrentRoomId, setIsCurrentRoomPlayer } from "toolkit/slice/game"
 
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
@@ -60,6 +60,7 @@ const DashboardPage = () => {
 	useEffect(() => {
 		if (!profileUser?.id) {
 			dispatch(setCurrentRoomId(null))
+			dispatch(setIsCurrentRoomPlayer(false))
 			return
 		}
 
@@ -67,8 +68,11 @@ const DashboardPage = () => {
 			room.users.some(user => user.id === profileUser.id)
 		)
 		const userRoomId = currentRoom ? currentRoom.id : null
+		const roomUser = currentRoom?.users.find(user => user.id === profileUser.id) ?? null
+		const isCurrentRoomPlayer = roomUser?.team != null
 
 		dispatch(setCurrentRoomId(userRoomId))
+		dispatch(setIsCurrentRoomPlayer(isCurrentRoomPlayer))
 	}, [rooms])
 
 	useEffect(() => {

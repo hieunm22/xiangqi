@@ -257,19 +257,6 @@
 	}
 }
 
-@keyframes previous-move-glow {
-	0%, 100% {
-		box-shadow:
-			0 2px 0 rgba(82, 42, 18, 0.45),
-			0 0 6px 2px rgba(60, 221, 95, 0.5);
-	}
-	50% {
-		box-shadow:
-			0 2px 0 rgba(82, 42, 18, 0.45),
-			0 0 16px 6px rgb(217 26 26 / 95%)
-	}
-}
-
 .piece-wrapper {
 	position: absolute;
 	width: var(--piece-size);
@@ -277,9 +264,25 @@
 	box-sizing: border-box;
 	transition: transform 0.5s ease;
 
-	&.highlight {
+	&.previous-move {
 		.piece {
-			animation: previous-move-glow 1.2s ease-in-out infinite;
+			// animation: previous-move-glow 1.2s ease-in-out infinite;
+			box-shadow: 0 0 0 2px #258545;
+		}
+	}
+
+	&.checking {
+		.piece {
+			animation: checking-glow 800ms ease-in-out infinite;
+		}
+	}
+
+	&.checked-general {
+		.piece {
+			box-shadow:
+				0 0 0 2px #ffe08a,
+				0 0 0 5px rgba(224, 44, 44, 0.85);
+			animation: checking-glow 700ms ease-in-out infinite;
 		}
 	}
 }
@@ -302,8 +305,13 @@
 		box-shadow: 0 0 0 2px #9f00ff;
 	}
 
-	&.highlight {
+	&.previous-move {
 		box-shadow: 0 0 0 2px #76c892;
+		border-radius: 50%;
+	}
+
+	&.checking {
+		box-shadow: 0 0 0 2px #ff4a4a;
 		border-radius: 50%;
 	}
 }
@@ -562,16 +570,6 @@
 	}
 }
 
-@keyframes player-card-turn-pulse {
-	0%, 100% {
-		box-shadow: 0 0 0 3px rgba(208, 10, 10, 0.7), 0 8px 14px rgba(52, 24, 8, 0.24);
-	}
-
-	50% {
-		box-shadow: 0 0 0 5px rgba(255, 209, 74, 0.7), 0 12px 20px rgba(52, 24, 8, 0.34);
-	}
-}
-
 .room-bet-amount {
 	margin-top: 12px;
 	margin-bottom: 12px;
@@ -622,6 +620,9 @@
 
 	&.bottom-player {
 		flex-direction: column;
+		.captured-pieces-display {
+			flex-direction: column-reverse;
+		}
 	}
 }
 
@@ -629,11 +630,16 @@
 	display: flex;
 	flex-direction: column;
 	flex-wrap: wrap;
-	width: fit-content;
+	align-content: flex-start;
+	border-radius: 10px;
+	padding: 10px;
+	width: 100%;
 	// max-height: calc(20px * 7 + 2px * 6);
 	max-height: 145px;
+	height: 145px;
 	gap: 2px;
 	direction: rtl;
+	background: linear-gradient(135deg, rgb(255, 245, 219), rgb(232, 197, 132));
 
 	&.team-red {
 		color: red;

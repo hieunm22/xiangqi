@@ -22,8 +22,8 @@ export interface BoardViewProps {
 	checkingPieces: number[]
 	isBoardRotated: boolean
 	symbolOf: (piece: string) => string
-	onPieceClick: (id: number) => () => void
-	onAnimateEnd: () => void | Promise<void>
+	onPieceClick: (id: number) => EmptyVoid
+	onAnimateEnd: EmptyVoid | Promise<void>
 }
 
 export interface PieceItemProps {
@@ -36,6 +36,8 @@ export interface PieceItemProps {
 	$turn: Team
 	$myTeam?: Team | null
 	$previousMove?: boolean
+	$checking?: boolean
+	$checkedGeneral?: boolean
 	$rotated?: boolean
 
 	$animateEnd?: EmptyVoid

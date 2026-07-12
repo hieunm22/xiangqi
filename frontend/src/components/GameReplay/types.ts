@@ -1,4 +1,5 @@
 import { EmptyVoid, NumberVoid } from "types/Common"
+import { GameType } from "common/variants"
 import { CapturedPieces, NullableCellProps, Team } from "types/GameState"
 import { GameHistoryItem } from "components/Layout/types"
 import { MoveProps } from "pages/Room/types"
@@ -17,6 +18,7 @@ export interface UseReplayResult {
 	board: NullableCellProps[]
 	capturedPieces: CapturedPieces
 	currentTurn: Team
+	gameType: GameType
 	isLoading: boolean
 	isPlaying: boolean
 	previousMove: MoveProps | null

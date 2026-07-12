@@ -118,6 +118,19 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 			return
 		}
 
+		const room = await prisma.room.findUnique({
+			where: { id: game.room_id },
+			select: { pve_mode: true }
+		})
+		if (!room?.pve_mode) {
+			res.status(403).json({
+				success: false,
+				message: "undo.messages.pve-only",
+				status_code: 403
+			})
+			return
+		}
+
 		// Verify user is part of the game
 		const isUserInGame = game.game_users.some(gu => gu.user_id === userId)
 		if (!isUserInGame) {

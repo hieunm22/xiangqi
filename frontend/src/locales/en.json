@@ -544,6 +544,7 @@
 			"game-not-found": "Game not found",
 			"not-in-game": "You are not part of this game",
 			"not-in-room": "You are not in this room",
+			"pve-only": "Undo is only available in PvE rooms",
 			"spectator-cannot-undo": "Spectators cannot undo moves",
 			"no-moves": "No moves to undo",
 			"delete-failed": "Failed to undo move",

@@ -30,7 +30,7 @@ import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import useGameClock from "./useGameClock"
 import { translate } from "locales/translate"
-import { setIsInGame, setPopup } from "toolkit/slice/game"
+import { setIsCurrentRoomPlayer, setIsInGame, setPopup } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -125,8 +125,7 @@ const useRoomHook = () => {
 	const [availableMoves, setAvailableMoves] = useState<number[]>([])
 	const [previousMove, setPreviousMove] = useState<MoveProps | null>(null)
 	const [showConfetti, setShowConfetti] = useState(false)
-	// Indices of enemy pieces currently giving check to myTeam's general. Highlighted
-	// the same way as a previous-move cell so the player can see what's threatening them.
+	// Indices of pieces currently giving check to the side that is checked.
 	const [checkingPieces, setCheckingPieces] = useState<number[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>({ red: [], black: [] })
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
@@ -167,6 +166,13 @@ const useRoomHook = () => {
 		const me = joinedUsers.find(user => user.id === currentUserId)
 		return me?.team ?? null
 	}, [joinedUsers, currentUserId])
+
+	useEffect(() => {
+		dispatch(setIsCurrentRoomPlayer(myTeam !== null))
+		return () => {
+			dispatch(setIsCurrentRoomPlayer(false))
+		}
+	}, [dispatch, myTeam])
 
 	const isStartBlockedByBackReady = useMemo(() => {
 		if (!room || room.status !== 1) {
@@ -381,10 +387,7 @@ const useRoomHook = () => {
 		if (history.length > 1) {
 			const latest = history[history.length - 1]
 			const prevLatest = history[history.length - 2]
-			const isOpponentMove = latest.userId !== currentUserId
-			if (isOpponentMove) {
-				diff = engine.diffMove(prevLatest.fen, latest.fen)
-			}
+			diff = engine.diffMove(prevLatest.fen, latest.fen)
 		}
 
 		const currentUser = joinedUsers.find(user => user.id === currentUserId)
@@ -452,8 +455,8 @@ const useRoomHook = () => {
 				icon: "fas fa-rotate-left",
 				label: "room.actions.undo",
 				onClick: handleUndo,
-				visible: isPlaying,
-				enabled: isPlaying && isPlayer && history.length > 2
+				visible: isPlaying && room.pve_mode,
+				enabled: isPlaying && room.pve_mode && isPlayer && history.length > 2
 			},
 			{
 				key: "draw",
@@ -494,33 +497,18 @@ const useRoomHook = () => {
 		const nextBoard = engine.fenToBoard(fen)
 		setCurrentTurn(latest.team as Team)
 
-		// For spectators: highlight all moves
-		// For players: only highlight opponent moves.
+		// Always highlight the latest move regardless of who moved.
 		let nextPreviousMove: MoveProps | null = null
-		const isSpectator = myTeam === null
-		const isOpponentMove = latest.userId !== currentUserId
 
-		if (isSpectator) {
-			// Spectators see all moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (diff !== null) {
-				nextPreviousMove = { from: diff.from, to: diff.to }
-			}
-		} else {
-			// Players only see opponent moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen && isOpponentMove) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (isOpponentMove && diff !== null) {
-				nextPreviousMove = { from: diff.from, to: diff.to }
-			}
+		if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
+			nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
+		}
+		else if (diff !== null) {
+			nextPreviousMove = { from: diff.from, to: diff.to }
 		}
 
-		// Highlight enemy pieces giving check, but only against the logged-in player's
-		// general - spectators don't get the check highlight.
-		const nextCheckingPieces = myTeam ? engine.findCheckingPieces(nextBoard, myTeam) : []
+		// The side to move is the side that must answer a check.
+		const nextCheckingPieces = engine.findCheckingPieces(nextBoard, latest.team as Team)
 
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
@@ -1154,6 +1142,7 @@ const useRoomHook = () => {
 		const canUndo = isInCurrentRoom
 			&& isCurrentlyPlayer
 			&& room.status === 2
+			&& room.pve_mode
 			// latest move is not a restore point for current user
 			&& (!latest?.undo || latest?.undo !== currentUserId)
 			// && isMyTurn
@@ -1452,10 +1441,10 @@ const useRoomHook = () => {
 		setCapturedPieces(capturedPiecesClone)
 		setBoard(gameStateClone)
 		setSelected(null)
-		// The logged-in player's own move is never highlighted
-		setPreviousMove(null)
-		// A legal local move always resolves any check against the moving side.
-		setCheckingPieces([])
+		// Mark from/to right away so local moves get the same previous-move highlight
+		setPreviousMove({ from: selectedId, to: targetId })
+		// After a legal move, if the opponent is in check, highlight the checking piece(s).
+		setCheckingPieces(enemyCheckingPieces)
 		setCurrentTurn(enemyTeam)
 
 		if (room?.status === 2 && game) {

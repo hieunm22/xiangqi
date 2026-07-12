@@ -14,7 +14,8 @@ import {
 } from "@mui/material"
 import { TI } from "components/TranslationTag"
 import { translate } from "locales/translate"
-import { resolveSideUsers } from "pages/Room/variants/xiangqi/rules"
+import { getRoomEngine } from "pages/Room/engine"
+import ChessBoard from "pages/Room/components/ChessBoard"
 import CapturedPiecesDisplay from "pages/Room/components/CapturedPiecesDisplay"
 import { RoomUser } from "pages/Room/types"
 import ReplayBoard from "./components/ReplayBoard"
@@ -23,8 +24,6 @@ import useReplay, { REPLAY_SPEEDS } from "./useReplay"
 import { GameReplayPopupProps } from "./types"
 import "./GameReplay.scss"
 
-const cardTeam = (user: RoomUser | null) => (user?.team === "black" ? "black" : "red")
-
 export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 	const open = game !== null
 
@@ -32,6 +31,7 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 		board,
 		capturedPieces,
 		currentTurn,
+		gameType,
 		isLoading,
 		isPlaying,
 		previousMove,
@@ -44,6 +44,11 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 		setStepMs,
 		togglePlay
 	} = useReplay({ gameId: game?.game.gameId ?? null, open })
+
+	const engine = useMemo(() => getRoomEngine(gameType), [gameType])
+	// A player's card colour is the side they controlled; fall back to the seat facing
+	// the board bottom so both cards stay coloured even without a persisted mapping.
+	const cardTeam = (user: RoomUser | null) => user?.team ?? engine.teams[0]
 
 	const { top, bottom } = useMemo(() => {
 		if (!game) {
@@ -60,16 +65,20 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 			is_bot: false
 		}))
 
-		const sides = resolveSideUsers(joinedUsers, redFirst)
+		// Bottom seat = the side that opens; the opponent sits at the top.
+		const bottomTeam = engine.firstTurn(redFirst)
+		const bottomUser = joinedUsers.find(u => u.team === bottomTeam) ?? null
+		const topUser = joinedUsers.find(u => u.team !== null && u.team !== bottomTeam) ?? null
 		// Fallback for games without a persisted color mapping: keep both players
 		// visible by seating them in list order.
-		if (!sides.top && !sides.bottom && joinedUsers.length === 2) {
+		if (!topUser && !bottomUser && joinedUsers.length === 2) {
 			return { top: joinedUsers[1], bottom: joinedUsers[0] }
 		}
-		return sides
-	}, [game, redFirst])
+		return { top: topUser, bottom: bottomUser }
+	}, [game, engine, redFirst])
 
 	const hasMoves = board.length > 0
+	const isChess = gameType === "chess"
 
 	return (
 		<Dialog
@@ -97,15 +106,43 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 							<div className="player-info-row view">
 								<div className="player-section top-player">
 									<ReplayPlayerCard user={top} active={currentTurn === top?.team} />
-									<CapturedPiecesDisplay capturedPieces={capturedPieces} team={cardTeam(top)} />
+									<CapturedPiecesDisplay
+										capturedPieces={capturedPieces}
+										team={cardTeam(top)}
+										symbolOf={engine.symbolOf}
+										iconGlyph={isChess}
+										ownerTeam={engine.otherTeam(cardTeam(top))}
+									/>
 								</div>
 								<div className="player-section bottom-player">
-									<CapturedPiecesDisplay capturedPieces={capturedPieces} team={cardTeam(bottom)} />
+									<CapturedPiecesDisplay
+										capturedPieces={capturedPieces}
+										team={cardTeam(bottom)}
+										symbolOf={engine.symbolOf}
+										iconGlyph={isChess}
+										ownerTeam={engine.otherTeam(cardTeam(bottom))}
+									/>
 									<ReplayPlayerCard user={bottom} active={currentTurn === bottom?.team} />
 								</div>
 							</div>
 
-							<ReplayBoard board={board} currentTurn={currentTurn} previousMove={previousMove} />
+							{isChess ? (
+								<ChessBoard
+									board={board}
+									availableMoves={[]}
+									selected={null}
+									currentTurn={currentTurn}
+									myTeam={null}
+									previousMove={previousMove}
+									checkingPieces={[]}
+									isBoardRotated={false}
+									symbolOf={engine.symbolOf}
+									onPieceClick={() => () => {}}
+									onAnimateEnd={() => {}}
+								/>
+							) : (
+								<ReplayBoard board={board} currentTurn={currentTurn} previousMove={previousMove} />
+							)}
 						</Box>
 
 						<Stack direction="row" className="game-replay-controls">

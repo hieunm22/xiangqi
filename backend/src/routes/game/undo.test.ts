@@ -6,6 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 
 const redisGetMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
+const roomFindUniqueMock = vi.fn()
 const roomUserFindUniqueMock = vi.fn()
 const toArrayMock = vi.fn()
 const findMock = vi.fn()
@@ -28,6 +29,9 @@ vi.mock("prisma", () => ({
 	default: {
 		game: {
 			findUnique: gameFindUniqueMock
+		},
+		room: {
+			findUnique: roomFindUniqueMock
 		},
 		roomUser: {
 			findUnique: roomUserFindUniqueMock
@@ -62,6 +66,8 @@ describe("POST /api/game/undo", () => {
 	})
 
 	beforeEach(() => {
+		roomFindUniqueMock.mockResolvedValue({ pve_mode: true })
+
 		// Simple mock: find() returns an object with toArray() method
 		findMock.mockReturnValue({
 			toArray: toArrayMock
@@ -184,6 +190,29 @@ describe("POST /api/game/undo", () => {
 		expect(res.body).toMatchObject({
 			success: false,
 			message: "undo.messages.not-in-game",
+			status_code: 403
+		})
+	})
+
+	it("returns 403 when room is PvP (undo is PvE-only)", async () => {
+		const accessToken = buildAccessToken(1, "session-undo-pvp-only")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-1",
+			room_id: BigInt(1),
+			game_users: [{ user_id: BigInt(1) }]
+		})
+		roomFindUniqueMock.mockResolvedValue({ pve_mode: false })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ gameId: "game-1" })
+
+		expect(res.status).toBe(403)
+		expect(res.body).toMatchObject({
+			success: false,
+			message: "undo.messages.pve-only",
 			status_code: 403
 		})
 	})

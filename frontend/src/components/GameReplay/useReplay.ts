@@ -5,11 +5,8 @@ import {
 	useState
 } from "react"
 import { getToken } from "common/helper"
-import {
-	diffFenMove,
-	fenToBoard,
-	getCapturedPiecesFromHistory
-} from "pages/Room/variants/xiangqi/rules"
+import { GameType } from "common/variants"
+import { getRoomEngine, RoomEngine } from "pages/Room/engine"
 import { useAPI } from "hooks/useAPI"
 import {
 	CapturedPieces,
@@ -39,12 +36,18 @@ export const REPLAY_SPEEDS: { label: string; value: number }[] = [
 
 const EMPTY_CAPTURED: CapturedPieces = { red: [], black: [] }
 
+// The move-history records carry only a board-placement FEN; infer the variant from
+// its rank count (chess = 8, xiangqi = 10) so the replay routes through the right engine.
+const detectGameType = (fen: string): GameType =>
+	fen.trim().split(/\s+/)[0].split("/").length === 8 ? "chess" : "xiangqi"
+
 const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 	const { getGameMovementHistory } = useAPI()
 
 	const [board, setBoard] = useState<NullableCellProps[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>(EMPTY_CAPTURED)
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
+	const [gameType, setGameType] = useState<GameType>("xiangqi")
 	const [isLoading, setIsLoading] = useState(false)
 	const [isPlaying, setIsPlaying] = useState(false)
 	const [previousMove, setPreviousMove] = useState<MoveProps | null>(null)
@@ -52,6 +55,10 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 	const [stepIndex, setStepIndex] = useState(0)
 	const [stepMs, setStepMsState] = useState(STEP_NORMAL_MS)
 	const [totalMoves, setTotalMoves] = useState(0)
+
+	// Variant engine, resolved once the history loads. All FEN/diff/captured logic
+	// routes through it so this hook stays variant-agnostic.
+	const engineRef = useRef<RoomEngine>(getRoomEngine("xiangqi"))
 
 	const movementsRef = useRef<GameMovements[]>([])
 	const stepRef = useRef(0)
@@ -66,10 +73,10 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		const movements = movementsRef.current
 		stepRef.current = step
 		setStepIndex(step)
-		setBoard(fenToBoard(movements[step].fen))
+		setBoard(engineRef.current.fenToBoard(movements[step].fen))
 		setCurrentTurn(movements[step].team)
 		setPreviousMove(diff)
-		setCapturedPieces(getCapturedPiecesFromHistory(movements.slice(0, step + 1)))
+		setCapturedPieces(engineRef.current.capturedFromHistory(movements.slice(0, step + 1)))
 	}, [])
 
 	const flushPendingCommit = useCallback(() => {
@@ -105,13 +112,13 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 			return
 		}
 
-		const diff = diffFenMove(movements[current].fen, movements[next].fen)
-		const move: MoveProps | null = diff ? { from: diff.oldIndex, to: diff.newIndex } : null
+		const diff = engineRef.current.diffMove(movements[current].fen, movements[next].fen)
+		const move: MoveProps | null = diff ? { from: diff.from, to: diff.to } : null
 
 		if (animate && diff) {
-			const animatingBoard = fenToBoard(movements[current].fen)
-			const source = animatingBoard[diff.oldIndex] as CellProps
-			animatingBoard[diff.oldIndex] = { ...source, animateTo: diff.newIndex }
+			const animatingBoard = engineRef.current.fenToBoard(movements[current].fen)
+			const source = animatingBoard[diff.from] as CellProps
+			animatingBoard[diff.from] = { ...source, animateTo: diff.to }
 			setBoard(animatingBoard)
 
 			pendingCommitRef.current = { step: next, diff: move }
@@ -172,9 +179,9 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		}
 		const clamped = Math.max(0, Math.min(step, movements.length - 1))
 		const diff = clamped > 0
-			? diffFenMove(movements[clamped - 1].fen, movements[clamped].fen)
+			? engineRef.current.diffMove(movements[clamped - 1].fen, movements[clamped].fen)
 			: null
-		const move = diff ? { from: diff.oldIndex, to: diff.newIndex } : null
+		const move = diff ? { from: diff.from, to: diff.to } : null
 		commitStep({ step: clamped, diff: move })
 	}, [commitStep, pause])
 
@@ -207,6 +214,9 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 				return
 			}
 
+			const detected = detectGameType(records[0].fen)
+			engineRef.current = getRoomEngine(detected)
+			setGameType(detected)
 			setRedFirst(records[0].team === "red")
 			setTotalMoves(records.length - 1)
 			commitStep({ step: 0, diff: null })
@@ -236,6 +246,7 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		board,
 		capturedPieces,
 		currentTurn,
+		gameType,
 		isLoading,
 		isPlaying,
 		previousMove,
