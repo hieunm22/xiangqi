@@ -23,7 +23,7 @@ export interface BoardViewProps {
 	isBoardRotated: boolean
 	symbolOf: (piece: string) => string
 	onPieceClick: (id: number) => EmptyVoid
-	onAnimateEnd: EmptyVoid | Promise<void>
+	onAnimateEnd: EmptyVoid
 }
 
 export interface PieceItemProps {
