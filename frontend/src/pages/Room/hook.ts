@@ -192,6 +192,21 @@ const useRoomHook = () => {
 		return seatedTeams
 	}, [joinedUsers])
 
+	// single source of truth shared by the buttons' visible/enabled props
+	// and their click handlers
+	const currentUser = joinedUsers.find(user => user.id === currentUserId)
+	const isHost = room?.host_id === currentUserId
+	const isWaiting = room?.status === 1
+	const isPlaying = room?.status === 2 && game?.status === 1
+	const isPlayer = myTeam !== null
+	const hasAvailableSeat = seatSet.size < 2
+	const bothSeatsFilled = seatSet.has("red") && seatSet.has("black")
+	const allPlayersReady = bothSeatsFilled && !isStartBlockedByBackReady
+	// >80% of balance disqualifies a challenger; free rooms and PvE never block.
+	const canAffordBet = room && currentUser && currentUser.total_amount && room.pve_mode === false
+		? (room.bet_amount === 0 || room.bet_amount * 10 <= currentUser.total_amount * 8)
+		: true
+
 	const submitBackToRoom = useCallback(async (gameId: string) => {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
@@ -439,7 +454,7 @@ const useRoomHook = () => {
 				icon: "fas fa-hand-rock",
 				label: "room.actions.challenge",
 				onClick: handleChallenge,
-				visible: isWaiting && !isHost && mySeat === null,
+				visible: isWaiting && !isHost && !isPlayer,
 				enabled: hasAvailableSeat && canAffordBet
 			},
 			{
@@ -1035,12 +1050,7 @@ const useRoomHook = () => {
 	])
 
 	const handleStartGame = async () => {
-		const canStart = joinedUsers.length > 1
-			&& room !== null
-			&& room.status === 1
-			&& seatSet
-			&& !isStartBlockedByBackReady
-		if (!canStart) {
+		if (!(isHost && isWaiting && allPlayersReady)) {
 			return
 		}
 
@@ -1093,6 +1103,10 @@ const useRoomHook = () => {
 	}
 
 	const handleChallenge = async () => {
+		if (!isWaiting || isHost || isPlayer || !hasAvailableSeat || !canAffordBet) {
+			return
+		}
+
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -1111,6 +1125,10 @@ const useRoomHook = () => {
 	}
 
 	const handleLeaveSeat = async () => {
+		if (!isWaiting || !isPlayer || isHost) {
+			return
+		}
+
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -1133,21 +1151,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
-		const isInCurrentRoom = currentUser !== undefined
-		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-		const latest = history.length > 0 ? history[history.length - 1] : null
-		// const isMyTurn = Boolean(currentUser?.team && latest && currentUser.team === latest.team)
-		const canUndo = isInCurrentRoom
-			&& isCurrentlyPlayer
-			&& room.status === 2
-			&& room.pve_mode
-			// latest move is not a restore point for current user
-			&& (!latest?.undo || latest?.undo !== currentUserId)
-			// && isMyTurn
-
-		if (!canUndo) {
+		if (!isPlaying || !room.pve_mode || !isPlayer || history.length <= 2) {
 			return
 		}
 
@@ -1190,8 +1194,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const canDraw = room.status === 2 && game.status === 1 && myTeam !== null
-		if (!canDraw) {
+		if (!isPlaying || !isPlayer) {
 			return
 		}
 
@@ -1236,8 +1239,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const canSurrender = room.status === 2 && game.status === 1 && myTeam !== null
-		if (!canSurrender) {
+		if (!isPlaying || !isPlayer) {
 			return
 		}
 
