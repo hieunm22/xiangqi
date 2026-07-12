@@ -18,6 +18,8 @@ export interface PieceItemProps {
 	$turn: Team
 	$myTeam?: Team | null
 	$previousMove?: boolean
+	$checking?: boolean
+	$checkedGeneral?: boolean
 	$rotated?: boolean
 
 	$animateEnd?: EmptyVoid

@@ -74,6 +74,7 @@ model Room {
   id         BigInt     @id @default(autoincrement())
   name       String
   status     Int        @db.SmallInt
+  game_type  String     @default("xiangqi") @db.VarChar(16)
   red_first  Boolean    @default(true)
   pve_mode   Boolean    @default(false)
   bet_amount Int        @default(10)
@@ -110,6 +111,7 @@ model Game {
   winner_id      BigInt?       @db.BigInt
   status         Int           @default(0) @db.SmallInt
   bot_difficulty Int?          @db.SmallInt
+  game_type      String        @default("xiangqi") @db.VarChar(16)
   time_limit     Int?
   time_increment Int           @default(0)
   room           Room          @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)

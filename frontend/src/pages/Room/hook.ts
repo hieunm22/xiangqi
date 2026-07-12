@@ -45,7 +45,7 @@ import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import useGameClock from "./useGameClock"
 import { translate } from "locales/translate"
-import { setIsInGame, setPopup } from "toolkit/slice/game"
+import { setIsCurrentRoomPlayer, setIsInGame, setPopup } from "toolkit/slice/game"
 import { APIResponse, FenMoveDiffResult } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -141,8 +141,7 @@ const useRoomHook = () => {
 	const [availableMoves, setAvailableMoves] = useState<number[]>([])
 	const [previousMove, setPreviousMove] = useState<MoveProps | null>(null)
 	const [showConfetti, setShowConfetti] = useState(false)
-	// Indices of enemy pieces currently giving check to myTeam's general. Highlighted
-	// the same way as a previous-move cell so the player can see what's threatening them.
+	// Indices of pieces currently giving check to the side that is checked.
 	const [checkingPieces, setCheckingPieces] = useState<number[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>({ red: [], black: [] })
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
@@ -178,6 +177,13 @@ const useRoomHook = () => {
 		const me = joinedUsers.find(user => user.id === currentUserId)
 		return me?.team ?? null
 	}, [joinedUsers, currentUserId])
+
+	useEffect(() => {
+		dispatch(setIsCurrentRoomPlayer(myTeam !== null))
+		return () => {
+			dispatch(setIsCurrentRoomPlayer(false))
+		}
+	}, [dispatch, myTeam])
 
 	const isStartBlockedByBackReady = useMemo(() => {
 		if (!room || room.status !== 1) {
@@ -524,9 +530,8 @@ const useRoomHook = () => {
 			}
 		}
 
-		// Highlight enemy pieces giving check, but only against the logged-in player's
-		// general - spectators don't get the check highlight.
-		const nextCheckingPieces = myTeam ? findCheckingPieces(nextBoard, myTeam) : []
+		// The side to move is the side that must answer a check.
+		const nextCheckingPieces = findCheckingPieces(nextBoard, latest.team as Team)
 
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
@@ -1438,10 +1443,10 @@ const useRoomHook = () => {
 		setCapturedPieces(capturedPiecesClone)
 		setBoard(gameStateClone)
 		setSelected(null)
-		// The logged-in player's own move is never highlighted
-		setPreviousMove(null)
-		// A legal local move always resolves any check against the moving side.
-		setCheckingPieces([])
+		// Mark from/to right away so local moves get the same previous-move highlight
+		setPreviousMove({ from: selectedId, to: targetId })
+		// After a legal move, if the opponent is in check, highlight the checking piece(s).
+		setCheckingPieces(enemyCheckingPieces)
 		setCurrentTurn(enemyTeam)
 
 		if (room?.status === 2 && game) {

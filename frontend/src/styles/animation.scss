@@ -16,6 +16,44 @@
 	}
 }
 
+@keyframes checking-glow {
+	0%, 100% {
+		box-shadow:
+			0 2px 0 rgba(82, 42, 18, 0.45),
+			0 0 8px 2px rgba(255, 74, 74, 0.65);
+		filter: saturate(1);
+	}
+	50% {
+		box-shadow:
+			0 2px 0 rgba(82, 42, 18, 0.45),
+			0 0 18px 7px rgba(255, 0, 0, 0.95);
+		filter: saturate(1.4);
+	}
+}
+
+@keyframes previous-move-glow {
+	0%, 100% {
+		box-shadow:
+			0 2px 0 rgba(82, 42, 18, 0.45),
+			0 0 6px 2px rgba(60, 221, 95, 0.5);
+	}
+	50% {
+		box-shadow:
+			0 2px 0 rgba(82, 42, 18, 0.45),
+			0 0 16px 6px rgb(217 26 26 / 95%)
+	}
+}
+
+@keyframes player-card-turn-pulse {
+	0%, 100% {
+		box-shadow: 0 0 0 3px rgba(208, 10, 10, 0.7), 0 8px 14px rgba(52, 24, 8, 0.24);
+	}
+
+	50% {
+		box-shadow: 0 0 0 5px rgba(255, 209, 74, 0.7), 0 12px 20px rgba(52, 24, 8, 0.34);
+	}
+}
+
 @keyframes bonus-sunburst-spin {
 	to {
 		transform: translate(-50%, -50%) rotate(360deg);

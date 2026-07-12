@@ -3,6 +3,7 @@ import classnames from "classnames"
 import { Box, Stack } from "@mui/material"
 import ConfettiBoom from "react-confetti-boom"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
+import { getPieceFromCharacter, getTeamFromPieceChar } from "./common"
 import { markerPositions, pieceSymbolByType } from "./constant"
 import BotDifficultyPopup from "components/BotDifficulty"
 import CapturedPiecesDisplay from "./components/CapturedPiecesDisplay"
@@ -124,9 +125,12 @@ export default function RoomPage() {
 							// Flip the view 180° while keeping the real index for all game logic.
 							const col = isBoardRotated ? BOARD_COLUMNS - 1 - realCol : realCol
 							const row = isBoardRotated ? BOARD_ROWS - 1 - realRow : realRow
-							const isPreviousMove = (previousMove !== null
-								&& (id === previousMove.from || id === previousMove.to))
-								|| checkingPieces.includes(id)
+							const isPreviousMove = previousMove !== null
+								&& (id === previousMove.from || id === previousMove.to)
+							const isCheckingPiece = checkingPieces.includes(id)
+							const isCheckedKing = checkingPieces.length > 0
+								&& getPieceFromCharacter(cell?.piece) === "general"
+								&& getTeamFromPieceChar(cell?.piece) === currentTurn
 							if (!cell) {
 								const isAvailable = availableMoves.includes(id)
 								const emptyClass = classnames({
@@ -136,7 +140,8 @@ export default function RoomPage() {
 									// [`row-${row}-empty`]: true,
 									// [`col-${col}-empty`]: true,
 									"available": isAvailable,
-									"highlight": isPreviousMove,
+									"previous-move": isPreviousMove,
+									"checking": isCheckingPiece,
 									// "available-empty": isAvailable,
 									"cursor-pointer": isAvailable && selected !== null
 								})
@@ -160,6 +165,8 @@ export default function RoomPage() {
 									$turn={currentTurn}
 									$myTeam={myTeam}
 									$previousMove={isPreviousMove}
+									$checking={isCheckingPiece}
+									$checkedGeneral={isCheckedKing}
 									$rotated={isBoardRotated}
 									$click={onPieceClick(cell.id)}
 									$animateEnd={onAnimateEnd}

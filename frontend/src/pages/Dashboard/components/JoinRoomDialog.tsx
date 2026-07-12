@@ -65,7 +65,7 @@ export const JoinRoomDialog = () => {
 	const { gameState, dispatch } = useToolkit()
 	const { showProfilePopup } = useLayoutAuth()
 	const { profileUser } = useProfilePopup()
-	const { currentRoomId } = gameState
+	const { currentRoomId, isCurrentRoomPlayer, isInGame } = gameState
 	const [room, setRoom] = useState<DashboardRoom | null>(null)
 	const [isJoining, setIsJoining] = useState(false)
 
@@ -144,11 +144,13 @@ export const JoinRoomDialog = () => {
 		}
 	}
 
-	// Check if user is currently in a different room
+	// Check if user is currently playing in a different room
 	const isInDifferentRoom = currentRoomId != null
 		&& currentRoomId > 0
 		&& room
 		&& room.id > 0
+		&& isCurrentRoomPlayer
+		&& isInGame
 		&& currentRoomId !== room.id
 
 	const getHelpTexts = () => {

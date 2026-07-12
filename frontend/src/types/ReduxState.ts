@@ -10,5 +10,6 @@ export interface GameState {
 	roomHostId: number | null
 	inviteRoomId: number | null
 	currentRoomId: number | null
+	isCurrentRoomPlayer: boolean
 	isInGame: boolean
 }
