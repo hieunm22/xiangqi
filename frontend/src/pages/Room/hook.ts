@@ -396,10 +396,7 @@ const useRoomHook = () => {
 		if (history.length > 1) {
 			const latest = history[history.length - 1]
 			const prevLatest = history[history.length - 2]
-			const isOpponentMove = latest.userId !== currentUserId
-			if (isOpponentMove) {
-				diff = diffFenMove(prevLatest.fen, latest.fen)
-			}
+			diff = diffFenMove(prevLatest.fen, latest.fen)
 		}
 
 		const currentUser = joinedUsers.find(user => user.id === currentUserId)
@@ -464,8 +461,8 @@ const useRoomHook = () => {
 				icon: "fas fa-rotate-left",
 				label: "room.actions.undo",
 				onClick: handleUndo,
-				visible: isPlaying,
-				enabled: isPlaying && isPlayer && history.length > 2
+				visible: isPlaying && room.pve_mode,
+				enabled: isPlaying && room.pve_mode && isPlayer && history.length > 2
 			},
 			{
 				key: "draw",
@@ -506,28 +503,14 @@ const useRoomHook = () => {
 		const nextBoard = fenToBoard(fen)
 		setCurrentTurn(latest.team as Team)
 
-		// For spectators: highlight all moves
-		// For players: only highlight opponent moves.
+		// Always highlight the latest move regardless of who moved.
 		let nextPreviousMove: MoveProps | null = null
-		const isSpectator = myTeam === null
-		const isOpponentMove = latest.userId !== currentUserId
 
-		if (isSpectator) {
-			// Spectators see all moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
-			}
-		} else {
-			// Players only see opponent moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen && isOpponentMove) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (isOpponentMove && diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
-			}
+		if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
+			nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
+		}
+		else if (diff !== null) {
+			nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
 		}
 
 		// The side to move is the side that must answer a check.
@@ -1148,6 +1131,7 @@ const useRoomHook = () => {
 		const canUndo = isInCurrentRoom
 			&& isCurrentlyPlayer
 			&& room.status === 2
+			&& room.pve_mode
 			// latest move is not a restore point for current user
 			&& (!latest?.undo || latest?.undo !== currentUserId)
 			// && isMyTurn

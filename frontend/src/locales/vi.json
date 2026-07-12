@@ -525,6 +525,7 @@
 			"game-not-found": "Không tìm thấy trò chơi",
 			"not-in-game": "Bạn không phải là người chơi trong trò chơi này",
 			"not-in-room": "Bạn không trong phòng này",
+			"pve-only": "Hoàn tác chỉ khả dụng trong phòng PvE",
 			"spectator-cannot-undo": "Người xem không thể hoàn tác nước đi",
 			"no-moves": "Không có nước đi để hoàn tác",
 			"delete-failed": "Không thể hoàn tác nước đi",

@@ -258,20 +258,26 @@
 	box-sizing: border-box;
 	transition: transform 0.5s ease;
 
-	&.previous-move.piece {
-		animation: previous-move-glow 1.2s ease-in-out infinite;
-		box-shadow: 0 0 0 2px #258545;
+	&.previous-move {
+		.piece {
+			// animation: previous-move-glow 1.2s ease-in-out infinite;
+			box-shadow: 0 0 0 2px #258545;
+		}
 	}
 
-	&.checking.piece {
-		animation: checking-glow 800ms ease-in-out infinite;
+	&.checking {
+		.piece {
+			animation: checking-glow 800ms ease-in-out infinite;
+		}
 	}
 
-	&.checked-general.piece {
-		box-shadow:
-			0 0 0 2px #ffe08a,
-			0 0 0 5px rgba(224, 44, 44, 0.85);
-		animation: checking-glow 700ms ease-in-out infinite;
+	&.checked-general {
+		.piece {
+			box-shadow:
+				0 0 0 2px #ffe08a,
+				0 0 0 5px rgba(224, 44, 44, 0.85);
+			animation: checking-glow 700ms ease-in-out infinite;
+		}
 	}
 }
 

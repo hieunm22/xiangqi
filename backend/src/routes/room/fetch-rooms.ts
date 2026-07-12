@@ -105,6 +105,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 		const rooms = await prisma.room.findMany({
 			where: {
 				is_active: true,
+				game_type: "xiangqi",
 				...(status !== undefined && { status })
 			},
 			orderBy: { created_at: "asc" },
@@ -115,6 +116,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 				red_first: true,
 				bet_amount: true,
 				time_limit: true,
+				game_type: true,
 				host_id: true,
 				created_at: true,
 				updated_at: true,

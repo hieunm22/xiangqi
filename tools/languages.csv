@@ -320,6 +320,7 @@ undo.messages.unauthorized;Unauthorized;Không được phép truy cập
 undo.messages.game-not-found;Game not found;Không tìm thấy trò chơi
 undo.messages.not-in-game;You are not part of this game;Bạn không phải là người chơi trong trò chơi này
 undo.messages.not-in-room;You are not in this room;Bạn không trong phòng này
+undo.messages.pve-only;Undo is only available in PvE rooms;Hoàn tác chỉ khả dụng trong phòng PvE
 undo.messages.spectator-cannot-undo;Spectators cannot undo moves;Người xem không thể hoàn tác nước đi
 undo.messages.no-moves;No moves to undo;Không có nước đi để hoàn tác
 undo.messages.delete-failed;Failed to undo move;Không thể hoàn tác nước đi
