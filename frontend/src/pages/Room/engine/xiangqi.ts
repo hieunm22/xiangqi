@@ -60,6 +60,9 @@ export const xiangqiEngine: RoomEngine = {
 
 	emptyCaptured: () => ({ red: [], black: [] }),
 
+	// Xiangqi has no companion-piece moves (no castling).
+	coMoves: () => [],
+
 	symbolOf: piece => pieceSymbolByType[piece as XiangqiPieceCharacter] ?? "",
 
 	endsOnCapture: cell => getPieceFromCharacter(cell?.piece) === "general",

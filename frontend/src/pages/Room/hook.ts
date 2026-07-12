@@ -138,6 +138,7 @@ const useRoomHook = () => {
 	// Latest server countdown snapshot; useGameClock ticks it locally for display.
 	const [clock, setClock] = useState<ClockSnapshot | null>(null)
 	const boardRef = useRef(board)
+	const localCommitRef = useRef(false)
 	// The opponent's last move (from/to), keyed to the FEN it produces. Captured in
 	// handleMovePiece where the diff is computed against the live board, because the
 	// history-based diff in updateToState is unreliable in real time (local moves are
@@ -1345,6 +1346,16 @@ const useRoomHook = () => {
 				animateTo: id
 			}
 
+			// Companion slides (chess castling rook) animate alongside the primary piece.
+			for (const co of engine.coMoves(board, oldIndex, id)) {
+				gameStateClone[co.from] = {
+					...gameStateClone[co.from]!,
+					animateTo: co.to
+				}
+			}
+
+			// Arm the once-per-move commit guard (companion slides fire transitionend too).
+			localCommitRef.current = false
 			setAvailableMoves([])
 			setBoard(gameStateClone)
 			return
@@ -1387,6 +1398,11 @@ const useRoomHook = () => {
 		const selectedId = selected
 		const targetId = board[selectedId]!.animateTo
 		if (targetId === undefined) return
+
+		// Commit once even when several pieces animated (castling king + rook).
+		if (localCommitRef.current) return
+		localCommitRef.current = true
+
 		const oldTarget = board[targetId]
 		const movedTeam = engine.teamOf(board[selectedId]!.piece)
 		if (!movedTeam) {

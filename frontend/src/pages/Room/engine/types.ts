@@ -1,6 +1,6 @@
 import { GameType } from "common/variants"
 import { CapturedPieces, NullableCellProps, Team } from "types/GameState"
-import { HistoryData } from "../types"
+import { HistoryData, MoveProps } from "../types"
 
 // A RoomEngine encapsulates everything that differs between game variants
 // (xiangqi vs chess) so the Room hook and board can stay variant-agnostic: FEN
@@ -47,6 +47,8 @@ export interface RoomEngine {
 	// variant supports it).
 	availableMoves(board: NullableCellProps[], selectedId: number | null, ctx: BoardContext): number[]
 	applyMove(board: NullableCellProps[], from: number, to: number): AppliedMove
+	// Secondary piece slides that accompany the primary move
+	coMoves(board: NullableCellProps[], from: number, to: number): MoveProps[]
 	findCheckingPieces(board: NullableCellProps[], team: Team): number[]
 	countLegalMoves(board: NullableCellProps[], team: Team, redFirst: boolean): number
 

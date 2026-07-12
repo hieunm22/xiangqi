@@ -75,6 +75,14 @@ export const chessEngine: RoomEngine = {
 
 	emptyCaptured: () => ({ white: [], black: [] }),
 
+	coMoves(board, from, to) {
+		if (board[from]?.piece?.toLowerCase() !== "k") return []
+		if (Math.floor(from / 8) !== Math.floor(to / 8)) return []
+		if (to - from === 2) return [{ from: from + 3, to: from + 1 }] // kingside: h-rook -> f
+		if (to - from === -2) return [{ from: from - 4, to: from - 1 }] // queenside: a-rook -> d
+		return []
+	},
+
 	symbolOf: chessIconClass,
 
 	// Kings are never captured in legal chess; the game ends via checkmate.

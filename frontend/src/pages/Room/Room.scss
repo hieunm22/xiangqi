@@ -612,6 +612,10 @@
 	&.team-black {
 		color: black;
 	}
+
+	&.team-white {
+		color: white;
+	}
 }
 
 .player-section {
@@ -634,6 +638,7 @@
 	flex-wrap: wrap;
 	align-content: flex-start;
 	border-radius: 10px;
+	border: solid 2px black;
 	padding: 10px;
 	width: 100%;
 	// max-height: calc(20px * 7 + 2px * 6);
@@ -650,7 +655,19 @@
 	
 	&.team-black {
 		color: black;
+	}
+
+	&.team-white {
+		color: white;
+		border: solid 2px black;
+	}
+
+	&.mode-xiangqi.team-black {
 		border: solid 2px red;
+	}
+
+	&.mode-chess.team-black {
+		border: solid 2px white;
 	}
 }
 

@@ -340,7 +340,7 @@ function commitMove(board: NullableCellProps[], from: number, move: RawMove): {
 
 	if (move.rookFrom !== undefined && move.rookTo !== undefined) {
 		const rook = next[move.rookFrom]
-		next[move.rookTo] = { ...rook, id: move.rookTo, hasMoved: true }
+		next[move.rookTo] = { ...rook, id: move.rookTo, hasMoved: true, animateTo: undefined }
 		next[move.rookFrom] = { id: move.rookFrom, piece: null }
 	}
 

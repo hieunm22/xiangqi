@@ -23,7 +23,14 @@ export default function CapturedPiecesDisplay(props: CapturedPiecesDisplayProps)
 	const capturedTeam = ownerTeam ?? (team === "red" ? "black" : "red")
 	const capturedList = capturedPieces[team] ?? []
 
-	const containerClass = classnames("captured-pieces-display", `team-${capturedTeam}`)
+	const containerClass = classnames(
+		"captured-pieces-display",
+		`team-${capturedTeam}`,
+		{
+			"mode-chess": iconGlyph,
+			"mode-xiangqi": !iconGlyph
+		}
+	)
 
 	return (
 		<div className={containerClass}>
