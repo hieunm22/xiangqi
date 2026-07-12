@@ -638,19 +638,15 @@
 	flex-wrap: wrap;
 	align-content: flex-start;
 	border-radius: 10px;
-	border: solid 2px black;
-	padding: 10px;
+	padding: 4px 8px;
 	width: 100%;
 	// max-height: calc(20px * 7 + 2px * 6);
 	max-height: 145px;
-	height: 145px;
 	gap: 2px;
 	direction: rtl;
-	background: linear-gradient(135deg, rgb(255, 245, 219), rgb(232, 197, 132));
 
 	&.team-red {
 		color: red;
-		border: solid 2px black;
 	}
 	
 	&.team-black {
@@ -659,15 +655,6 @@
 
 	&.team-white {
 		color: white;
-		border: solid 2px black;
-	}
-
-	&.mode-xiangqi.team-black {
-		border: solid 2px red;
-	}
-
-	&.mode-chess.team-black {
-		border: solid 2px white;
 	}
 }
 
