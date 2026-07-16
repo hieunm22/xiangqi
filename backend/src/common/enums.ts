@@ -1,7 +1,5 @@
 /**
- * Five named difficulty tiers exposed to the client. Stored as small integers in
- * `Game.bot_difficulty` so they survive across processes / DB without coupling to
- * the enum names.
+ * Five named difficulty tiers exposed to the client.
  */
 export enum BotDifficulty {
 	BEGINNER = 1,
@@ -9,4 +7,14 @@ export enum BotDifficulty {
 	INTERMEDIATE = 3,
 	ADVANCED = 4,
 	MASTER = 5
+}
+
+/**
+ * `user_amount_history.type` — how a coin change was earned.
+ */
+export enum AmountHistoryType {
+	LuckyWheel = 1,
+	BonusCoin = 2,
+	DailyBonusNormal = 3,
+	DailyBonusDouble = 4,
 }

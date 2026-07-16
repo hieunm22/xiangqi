@@ -1,23 +1,23 @@
-export interface BrowserModel {
+interface BrowserModel {
 	name: string | null
 	version: string | null
 	getOSInformation: () => string
 }
 
-export type OSModel = BrowserModel
-
-export interface ScreenModel {
+interface ScreenModel {
 	colors: number
 	dppx: number
 	height: number
 	width: number
 }
 
-export interface ViewportModel {
+interface ViewportModel {
 	height: number
 	width: number
 	zoom: number
 }
+
+export type OSModel = BrowserModel
 
 export interface ReportModel {
 	browser: Partial<BrowserModel>

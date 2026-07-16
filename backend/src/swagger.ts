@@ -33,6 +33,12 @@ const options: Options = {
 					scheme: "bearer",
 					bearerFormat: "JWT",
 					description: "JWT access token from login endpoint"
+				},
+				ApiKeyAuth: {
+					type: "apiKey",
+					in: "header",
+					name: "x-api-key",
+					description: "Shared API key (TOOL_API_KEY) for internal tool endpoints"
 				}
 			}
 		},

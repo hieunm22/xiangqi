@@ -10,7 +10,7 @@ export const GameMenu = (props: GameMenuProps) => (
 			const iconClass = classnames("game-more-action", item.icon, {
 				"disabled": !item.enabled
 			})
-			const handleClick = item.enabled ? item.onClick : undefined
+			const handleClick = item.visible && item.enabled ? item.onClick : undefined
 
 			return (
 				<TTooltip title={item.label} key={item.key} placement="left">

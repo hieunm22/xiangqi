@@ -153,9 +153,8 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 		loadMessages()
 	}, [props.open, refId])
 
-	// After messages render: on the initial load of a conversation scroll to the
-	// first unread message (falling back to the bottom when all read); afterwards
-	// (sending / receiving) keep the view pinned to the bottom.
+	// On initial load, scroll to the first unread message (or bottom if all read).
+	// After that, keep pinned to the bottom on send/receive.
 	useLayoutEffect(() => {
 		if (!messages.length) {
 			return
@@ -211,6 +210,11 @@ const ChatDialog = forwardRef<ChatDialogHandle, ChatDialogProps>((props, ref) =>
 			setMessages([...messages, nextMessage])
 			setFirstUnreadId(null)
 			setMessageContent("")
+			props.onMessageSent && props.onMessageSent({
+				message,
+				receiverId: refId,
+				timestamp: nextMessage.timestamp
+			})
 		}
 		setSending(false)
 	}

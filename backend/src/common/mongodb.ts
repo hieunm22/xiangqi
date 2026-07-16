@@ -8,14 +8,17 @@ export const getMongoDb = async (): Promise<Db> => {
 		return cachedDb
 	}
 
-	const mongoUri = process.env.MONGO_CONNECTION_STRING?.trim()
+	const serverName = process.env.SERVER_IP?.trim() || "localhost"
 	const mongoDbName = process.env.MONGODB_DB_NAME?.trim() || "xiangqi"
+	const mongoPassword = process.env.MONGO_PASSWORD?.trim()
 
-	if (!mongoUri) {
+	if (!mongoPassword) {
 		throw new Error(
-			"Missing MongoDB connection string: set MONGODB_URI, MONGODB_URL, MONGO_CONNECTION_STRING, MONGO_URI, or MONGO_URL"
+			"Missing MongoDB password: set MONGO_PASSWORD in your environment variables"
 		)
 	}
+
+	const mongoUri = `mongodb://root:${mongoPassword}@${serverName}:27017/?authSource=admin`
 
 	cachedClient = new MongoClient(mongoUri)
 	await cachedClient.connect()

@@ -32,6 +32,11 @@ export const AuthProvider = (props: ComponentWithChild) => {
 		}
 	}
 
+	const markAuthenticated = () => {
+		setIsValidToken(true)
+		setIsLoading(false)
+	}
+
 	const handleLogout = () => {
 		setIsValidToken(false)
 		setIsLoading(false)
@@ -46,6 +51,7 @@ export const AuthProvider = (props: ComponentWithChild) => {
 			isLoading,
 			isValidToken,
 			refreshAuth: checkToken,
+			markAuthenticated,
 			setLogout: handleLogout
 		}}>
 			{props.children}

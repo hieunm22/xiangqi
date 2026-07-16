@@ -51,9 +51,19 @@ export async function invalidateAchievementsCache(): Promise<void> {
 	}
 }
 
+// Terminal reason + winner for reason-specific achievements.
+export interface AchievementEndContext {
+	endReason: string
+	winnerId: bigint | null
+}
+
 // Award achievements to the game's human participants based on their
 // win/draw counts in the `game_users` ledger (win: amount > 0, draw: amount = 0)
-export async function evaluateAchievements(tx: Prisma.TransactionClient, gameId: string): Promise<void> {
+export async function evaluateAchievements(
+	tx: Prisma.TransactionClient,
+	gameId: string,
+	context?: AchievementEndContext
+): Promise<void> {
 	const achievements = await getCachedAchievements()
 
 	if (achievements.length === 0) {
@@ -103,6 +113,10 @@ export async function evaluateAchievements(tx: Prisma.TransactionClient, gameId:
 		}
 		if (drawCount >= DRAW_50_THRESHOLD) {
 			grant(ACHIEVEMENT_TITLE.DRAW_50)
+		}
+		// Stalemate (困毙)
+		if (context?.endReason === "stalemate" && context.winnerId != null && userId === context.winnerId) {
+			grant(ACHIEVEMENT_TITLE.NO_LEGAL_MOVES)
 		}
 	}
 

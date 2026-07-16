@@ -61,10 +61,13 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		active = false,
 		botLevel,
 		remainingMs = null,
+		perMoveMs = null,
+		timePerMove = 0,
 		roomId,
 		team,
-		user,		
+		user,
 	} = props
+	const showPerMove = timePerMove > 0 && perMoveMs !== null
 	const { showProfilePopup } = useLayoutAuth()
 	const { state, gameState, dispatch } = useToolkit()
 
@@ -117,6 +120,15 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		"is-ready": user.back_ready,
 		"is-waiting": !user.back_ready
 	})
+	const playerClockClass = classnames("player-clock", {
+		"is-active": active,
+		"low-time": remainingMs !== null && remainingMs <= LOW_TIME_MS
+	})
+	const playerClockPerMoveClass = classnames("player-clock-per-move", {
+		"low-time": active && (perMoveMs ?? 0) <= LOW_TIME_MS
+	})
+	
+	const isHost = props.roomHostId !== null && user.id === props.roomHostId
 
 	return (
 		<div className={containerClass}>
@@ -126,6 +138,13 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					src={fullAvatarUrl}
 					alt={user?.display_name}
 				/>
+				{isHost && (
+					<Tooltip title="Host" arrow placement="top">
+						<div className="player-host-badge" aria-label="Room host">
+							<i className="fas fa-crown" />
+						</div>
+					</Tooltip>
+				)}
 				{user.team !== null && user.back_ready !== null && (
 					<div className={backReadyClass} />
 				)}
@@ -157,14 +176,17 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 					</div>
 				)}
 				{remainingMs !== null && (
-					<div
-						className={classnames("player-clock", {
-							"is-active": active,
-							"low-time": remainingMs <= LOW_TIME_MS
-						})}
-					>
-						<i className="far fa-clock" />
-						<span className="player-clock-time">{formatClock(remainingMs)}</span>
+					<div className={playerClockClass}>
+						{showPerMove && (
+							<span className={playerClockPerMoveClass}>
+								<i className="far fa-stopwatch" />
+								{~~(perMoveMs / 1000)}s
+							</span>
+						)}
+						<span className="player-clock-total">
+							<i className="far fa-clock" />
+							<span className="player-clock-time">{formatClock(remainingMs)}</span>
+						</span>
 					</div>
 				)}
 			</div>

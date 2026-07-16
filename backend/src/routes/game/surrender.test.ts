@@ -215,7 +215,8 @@ describe("POST /api/game/surrender", () => {
 				fen: "latest-fen",
 				team: "black",
 				time_stamp: expect.any(Number),
-				surrender: 11
+				surrender: 11,
+				end_reason: "surrender"
 			})
 		)
 		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
@@ -223,7 +224,8 @@ describe("POST /api/game/surrender", () => {
 			roomId: BigInt(100),
 			winnerId: BigInt(12),
 			isBotGame: false,
-			betAmount: 50
+			betAmount: 50,
+			endReason: "surrender"
 		})
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-1", false)
 		expect(activatePostGameLockMock).toHaveBeenCalledWith(100n, "game-1")

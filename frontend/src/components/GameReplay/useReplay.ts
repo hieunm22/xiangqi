@@ -1,11 +1,17 @@
 import {
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState
 } from "react"
 import { diffFenMove, getToken } from "common/helper"
-import { fenToBoard, getCapturedPiecesFromHistory } from "pages/Room/common"
+import {
+	fenToBoard,
+	findCheckingPieces,
+	getCapturedPiecesFromHistory,
+	resolveSideUsers
+} from "pages/Room/common"
 import { useAPI } from "hooks/useAPI"
 import {
 	CapturedPieces,
@@ -13,12 +19,32 @@ import {
 	NullableCellProps,
 	Team
 } from "types/GameState"
-import { GameMovements, MoveProps } from "pages/Room/types"
-import {
-	PendingCommit,
-	UseReplayArgs,
-	UseReplayResult
-} from "./types"
+import { GameMovements, MoveProps, RoomUser } from "pages/Room/types"
+import { GameHistoryUser } from "components/Layout/types"
+import { PendingCommit, ReplayEndInfo, UseReplayArgs } from "./types"
+
+// Which field on the terminal history record holds the id of the player the end reason is about
+const END_REASON_PLAYER_FIELD: Record<string, keyof GameMovements> = {
+	surrender: "surrender",
+	leave: "leave",
+	timeout: "timeout",
+	checkmate: "winner_id",
+	"perpetual-check": "winner_id"
+}
+
+const resolveEndInfo = (users: GameHistoryUser[], last?: GameMovements): ReplayEndInfo => {
+	const reason = last?.end_reason ?? ""
+	const field = reason ? END_REASON_PLAYER_FIELD[reason] : undefined
+	const playerId = field && last ? (last[field] as number | undefined) : undefined
+	const userFind = users.find(user => user.id === playerId)
+	const playerName = playerId != null
+		? userFind?.display_name ?? null
+		: null
+	const playerAvatar = playerId != null
+		? userFind?.avatar_url ?? null
+		: null
+	return { playerAvatar, playerName, reason }
+}
 
 // The board slide is driven by the `.piece-wrapper` CSS transition (0.5s)
 const ANIMATION_MS = 520
@@ -28,18 +54,19 @@ const STEP_VFAST_MS = 2000
 
 // Playback speed options (YouTube-style). Multiplier is relative to normal speed.
 export const REPLAY_SPEEDS: { label: string; value: number }[] = [
-	{ label: "1x", value: STEP_NORMAL_MS },
+	{ label: "1x", value: STEP_VFAST_MS },
 	{ label: "1.5x", value: STEP_FAST_MS },
-	{ label: "2x", value: STEP_VFAST_MS },
+	{ label: "2x", value: STEP_NORMAL_MS },
 ]
 
 const EMPTY_CAPTURED: CapturedPieces = { red: [], black: [] }
 
-const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
+const useReplay = ({ game, onEnd }: UseReplayArgs) => {
 	const { getGameMovementHistory } = useAPI()
 
 	const [board, setBoard] = useState<NullableCellProps[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>(EMPTY_CAPTURED)
+	const [checkingPieces, setCheckingPieces] = useState<number[]>([])
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
 	const [isLoading, setIsLoading] = useState(false)
 	const [isPlaying, setIsPlaying] = useState(false)
@@ -56,16 +83,24 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 	const tickTimerRef = useRef<number | null>(null)
 	const commitTimerRef = useRef<number | null>(null)
 	const pendingCommitRef = useRef<PendingCommit | null>(null)
+	const onEndRef = useRef(onEnd)
+	const usersRef = useRef<GameHistoryUser[]>(game?.users ?? [])
+
+	const gameId = useMemo(() => game?.game.gameId ?? null, [game])
 
 	const commitStep = useCallback((pending: PendingCommit) => {
 		const { step, diff } = pending
 		const movements = movementsRef.current
+		const nextBoard = fenToBoard(movements[step].fen)
+		const team = movements[step].team
 		stepRef.current = step
 		setStepIndex(step)
-		setBoard(fenToBoard(movements[step].fen))
-		setCurrentTurn(movements[step].team)
+		setBoard(nextBoard)
+		setCurrentTurn(team)
 		setPreviousMove(diff)
 		setCapturedPieces(getCapturedPiecesFromHistory(movements.slice(0, step + 1)))
+		// Highlight enemy pieces checking the side-to-move's general (like the live board).
+		setCheckingPieces(findCheckingPieces(nextBoard, team))
 	}, [])
 
 	const flushPendingCommit = useCallback(() => {
@@ -98,6 +133,8 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		const next = current + 1
 		if (next >= movements.length) {
 			pause()
+			const endInfo = resolveEndInfo(usersRef.current, movements[movements.length - 1])
+			onEndRef.current(endInfo)
 			return
 		}
 
@@ -174,9 +211,14 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		commitStep({ step: clamped, diff: move })
 	}, [commitStep, pause])
 
+	useEffect(() => {
+		onEndRef.current = onEnd
+		usersRef.current = game?.users ?? []
+	})
+
 	// Load the move history whenever the popup opens for a game.
 	useEffect(() => {
-		if (!open || !gameId) {
+		if (game === null || !gameId) {
 			return
 		}
 
@@ -212,9 +254,6 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		return () => {
 			cancelled = true
 		}
-		// getGameMovementHistory (a fresh ref each render) and commitStep are intentionally
-		// omitted: re-fetch only when the popup opens for a game. Including the useAPI fn
-		// would re-fetch and reset to move 0 on every tick.
 	}, [open, gameId])
 
 	// Stop timers when the popup closes or the component unmounts.
@@ -228,21 +267,47 @@ const useReplay = ({ gameId, open }: UseReplayArgs): UseReplayResult => {
 		pause()
 	}, [pause])
 
+	const { top, bottom } = useMemo(() => {
+		if (!game) {
+			return { top: null, bottom: null }
+		}
+		// Each player's color comes from player-history (game_users.team).
+		const joinedUsers: RoomUser[] = game.users.map(user => ({
+			id: user.id,
+			display_name: user.display_name,
+			avatar_url: user.avatar_url,
+			back_ready: null,
+			team: user.team,
+			total_amount: 0,
+			is_bot: false
+		}))
+
+		const sides = resolveSideUsers(joinedUsers, redFirst)
+		// Fallback for games without a persisted color mapping: keep both players
+		// visible by seating them in list order.
+		if (!sides.top && !sides.bottom && joinedUsers.length === 2) {
+			return { top: joinedUsers[1], bottom: joinedUsers[0] }
+		}
+		return sides
+	}, [game, redFirst])
+
 	return {
 		board,
+		bottom,
 		capturedPieces,
+		checkingPieces,
 		currentTurn,
 		isLoading,
 		isPlaying,
 		previousMove,
-		redFirst,
 		stepIndex,
 		stepMs,
+		top,
 		totalMoves,
 
 		goToStep,
 		setStepMs,
-		togglePlay
+		togglePlay,
 	}
 }
 

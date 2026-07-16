@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { AmountHistoryType } from "common/enums"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -8,8 +9,6 @@ const router = Router()
 const DAILY_REWARDS = [1000, 1200, 1400, 1600, 1800, 2000, 4000]
 const TOTAL_DAYS = DAILY_REWARDS.length
 const DAY_MS = 24 * 60 * 60 * 1000
-// userAmountHistory.type for daily-bonus rewards (lucky wheel uses 1, bonus coin uses 2).
-const DAILY_BONUS_HISTORY_TYPE = 3
 
 /**
  * Start of the current UTC day (00:00 GMT). One chest may be claimed per day.
@@ -21,11 +20,8 @@ const getCurrentDay = (now: Date): Date => {
 }
 
 /**
- * Resolve the login streak for the current day.
- * - `claimedToday`: a chest was already claimed during today's slot
- * - `streak`: how many consecutive days are already claimed (also the next day's index)
- *
- * A missed day, or a previously completed 7-day streak, restarts the streak at 0.
+ * Resolve the login streak: returns `claimedToday` and `streak` (next day index).
+ * A missed day or a completed 7-day cycle resets the streak to 0.
  */
 const getStreakState = (count: number, claimedAt: Date | null, now: Date) => {
 	if (claimedAt === null) return { streak: 0, claimedToday: false }
@@ -218,7 +214,9 @@ router.post("/user/daily-bonus-claim", requireAuth(), async (req: AuthenticatedR
 				data: {
 					user_id: BigInt(userId),
 					amount: reward,
-					type: DAILY_BONUS_HISTORY_TYPE,
+					type: req.body?.double === true
+						? AmountHistoryType.DailyBonusDouble
+						: AmountHistoryType.DailyBonusNormal,
 					created_at: new Date()
 				}
 			})

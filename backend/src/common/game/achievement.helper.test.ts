@@ -7,9 +7,8 @@ import {
 	vi
 } from "vitest"
 
-// The achievement catalog is now read through getCachedAchievements, which hits
-// the global prisma client and Redis (not the transaction client).
-// vi.hoisted keeps these mocks available inside the hoisted vi.mock factories.
+// getCachedAchievements uses the global prisma+Redis (not the tx client).
+// vi.hoisted makes these mocks available inside vi.mock factories.
 const { achievementFindManyMock, redisGetMock, redisSetMock } = vi.hoisted(() => ({
 	achievementFindManyMock: vi.fn(),
 	redisGetMock: vi.fn(),
@@ -156,6 +155,47 @@ describe("evaluateAchievements", () => {
 		await evaluateAchievements(tx as never, "game-1")
 
 		expect(createManyMock).not.toHaveBeenCalled()
+	})
+
+	it("awards the no-legal-moves achievement to the stalemate winner", async () => {
+		achievementFindManyMock.mockResolvedValue([
+			...DB_ACHIEVEMENTS,
+			{ id: 4n, name: "achievement.title-03" }
+		])
+		const { tx, createManyMock } = buildTx({
+			participants: [{ user_id: 10n, is_bot: false }],
+			winCount: 1,
+			drawCount: 0
+		})
+
+		await evaluateAchievements(tx as never, "game-1", { endReason: "stalemate", winnerId: 10n })
+
+		expect(createManyMock).toHaveBeenCalledWith({
+			data: [
+				{ user_id: 10n, achievement_id: 1n },
+				{ user_id: 10n, achievement_id: 4n }
+			],
+			skipDuplicates: true
+		})
+	})
+
+	it("does not award no-legal-moves when the game did not end in stalemate", async () => {
+		achievementFindManyMock.mockResolvedValue([
+			...DB_ACHIEVEMENTS,
+			{ id: 4n, name: "achievement.title-03" }
+		])
+		const { tx, createManyMock } = buildTx({
+			participants: [{ user_id: 10n, is_bot: false }],
+			winCount: 1,
+			drawCount: 0
+		})
+
+		await evaluateAchievements(tx as never, "game-1", { endReason: "checkmate", winnerId: 10n })
+
+		expect(createManyMock).toHaveBeenCalledWith({
+			data: [{ user_id: 10n, achievement_id: 1n }],
+			skipDuplicates: true
+		})
 	})
 
 	it("serves the catalog from the Redis cache without querying the DB", async () => {

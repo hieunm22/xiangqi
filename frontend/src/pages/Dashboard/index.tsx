@@ -22,7 +22,7 @@ import { APIResponse } from "types/Common"
 import { DashboardFilter, DashboardRoom } from "./types"
 import "./Dashboard.scss"
 import useToolkit from "hooks/useToolkit"
-import { setCurrentRoomId } from "toolkit/slice/game"
+import { setCurrentRoomId, setIsCurrentRoomPlayer } from "toolkit/slice/game"
 
 const DashboardPage = () => {
 	useAutoTitle("dashboard.page.title")
@@ -49,6 +49,7 @@ const DashboardPage = () => {
 	useEffect(() => {
 		if (!profileUser?.id) {
 			dispatch(setCurrentRoomId(null))
+			dispatch(setIsCurrentRoomPlayer(false))
 			return
 		}
 
@@ -56,8 +57,11 @@ const DashboardPage = () => {
 			room.users.some(user => user.id === profileUser.id)
 		)
 		const userRoomId = currentRoom ? currentRoom.id : null
+		const roomUser = currentRoom?.users.find(user => user.id === profileUser.id) ?? null
+		const isCurrentRoomPlayer = roomUser?.team != null
 
 		dispatch(setCurrentRoomId(userRoomId))
+		dispatch(setIsCurrentRoomPlayer(isCurrentRoomPlayer))
 	}, [rooms])
 
 	useEffect(() => {
@@ -186,7 +190,7 @@ const DashboardPage = () => {
 	return (
 		<CreateRoomDialogContext.Provider value={{ open, setOpen }}>
 			<Box className="dashboard">
-				<Stack spacing={3}>
+				<Stack spacing={3} className="dashboard__content">
 					<TSpan className="dashboard__title" content="dashboard.page.title" />
 
 					<Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
@@ -204,26 +208,28 @@ const DashboardPage = () => {
 						)}
 					</Stack>
 
-					{errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+					<Box className="dashboard__scroll-area">
+						{errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
-					{loading ? (
-						<Grid container spacing={2}>
-							{loadingCards.map(card => <SkeletonRoom key={`loading-card-${card}`} />)}
-						</Grid>
-					) : null}
-
-					{!loading && !errorMessage ? (
-						<Stack spacing={2}>
+						{loading ? (
 							<Grid container spacing={2}>
-								<CreateRoomCard click={() => setOpen(true)} />
-								{rooms.map(room => <RoomCard key={room.id} room={room} />)}
+								{loadingCards.map(card => <SkeletonRoom key={`loading-card-${card}`} />)}
 							</Grid>
+						) : null}
 
-							{rooms.length === 0 && (
-								<Alert severity="info"> {translate("dashboard.feedback.empty")} </Alert>
-							)}
-						</Stack>
-					) : null}
+						{!loading && !errorMessage ? (
+							<Stack spacing={2}>
+								<Grid container spacing={2}>
+									<CreateRoomCard click={() => setOpen(true)} />
+									{rooms.map(room => <RoomCard key={room.id} room={room} />)}
+								</Grid>
+
+								{rooms.length === 0 && (
+									<Alert severity="info"> {translate("dashboard.feedback.empty")} </Alert>
+								)}
+							</Stack>
+						) : null}
+					</Box>
 				</Stack>
 
 				<CreateRoomDialog />

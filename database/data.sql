@@ -91,19 +91,14 @@ INSERT INTO user.users (id, user_name, password, email, display_name, gender, av
 (87, N'viet.johan', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vietjohan1983@gmail.com', N'Nguyễn Tường Việt', true, 0),
 (88, N'vo.thoai.580508', N'DA7E2532550C01A49F955FDD8F22B7FF', N'vothoai1503@gmail.com', N'Võ Thoại', true, 0),
 (89, N'ngocvan.ld', N'DA7E2532550C01A49F955FDD8F22B7FF', N'ledoanthanhhoa@gmail.com', N'Hoa Ngoc Van', false, 0),
-(90, N'tran.quan.755204', N'DA7E2532550C01A49F955FDD8F22B7FF', N'tranquan.network@gmail.com', N'Hoa Ngoc Van', true, 0);
-UPDATE user.users SET total_amount = 220 WHERE id = 83;
-UPDATE user.users SET total_amount = 180 WHERE id = 8;
-UPDATE user.users SET total_amount = 86940 WHERE id = 9;
-UPDATE user.users SET total_amount = 48392 WHERE id = 19;
-UPDATE user.users SET total_amount = 63820 WHERE id = 82;
+(90, N'tran.quan.755204', N'DA7E2532550C01A49F955FDD8F22B7FF', N'tranquan.network@gmail.com', N'Trần Hoàng Quân', true, 0);
 
 SELECT setval(pg_get_serial_sequence('user.users', 'id'), 90);
 
 INSERT INTO game.rooms (id, name, status, red_first, bet_amount, host_id, created_at, updated_at) OVERRIDING SYSTEM VALUE VALUES
 (1, 'chờ', 1, true, 10000, 9, '2026-05-01T10:00:00Z', '2026-05-01T10:00:00Z'),
 (2, 'đang chơi', 2, false, 500, 83, '2026-05-01T11:00:00Z', '2026-05-01T11:03:10Z'),
-(3, 'xem', 1, true, 20, 72, '2026-05-01T12:00:00Z', '2026-05-01T12:05:10Z');
+(3, 'xem', 1, true, 100, 72, '2026-05-01T12:00:00Z', '2026-05-01T12:05:10Z');
 
 SELECT setval(pg_get_serial_sequence('game.rooms', 'id'), (SELECT MAX(id) FROM game.rooms));
 
@@ -127,38 +122,21 @@ INSERT INTO game.room_users (room_id, user_id, team, joined_at) VALUES
 (3, 78, NULL, '2026-05-01T12:20:00Z'),
 (3, 72, NULL, '2026-05-01T12:25:00Z');
 
-INSERT INTO game.games (id, status, room_id, starts_at, ends_at) OVERRIDING SYSTEM VALUE VALUES
-('43be0c57-426b-4267-8088-ac38fe450fcc', 1, 2, '2026-05-01T11:03:10Z', null),
-('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 2, 3, '2026-05-01T12:05:10Z', '2026-05-01T12:15:10Z'),
-('de4671f8-f42c-4cf4-9a3f-426e399459ce', 2, 3, '2026-05-01T13:05:10Z', '2026-05-01T13:15:10Z'),
-('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 2, 3, '2026-05-01T14:05:10Z', '2026-05-01T14:15:10Z');
+INSERT INTO game.games (id, status, room_id, winner_id, starts_at, ends_at) OVERRIDING SYSTEM VALUE VALUES
+('43be0c57-426b-4267-8088-ac38fe450fcc', 1, 2, null, '2026-05-01T11:03:10Z', null),
+('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 2, 3, 83, '2026-05-01T12:05:10Z', '2026-05-01T12:15:10Z'),
+('de4671f8-f42c-4cf4-9a3f-426e399459ce', 2, 3, 83, '2026-05-01T13:05:10Z', '2026-05-01T13:15:10Z'),
+('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 2, 3, 8, '2026-05-01T14:05:10Z', '2026-05-01T14:15:10Z');
 
-INSERT INTO game.game_users (game_id, user_id, point) VALUES
-('43be0c57-426b-4267-8088-ac38fe450fcc', 49, null),
-('43be0c57-426b-4267-8088-ac38fe450fcc', 14, null),
-('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 83, 20),
-('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 8, -20),
-('de4671f8-f42c-4cf4-9a3f-426e399459ce', 83, 20),
-('de4671f8-f42c-4cf4-9a3f-426e399459ce', 8, -20),
-('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 83, -20),
-('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 8, 20);
-
-INSERT INTO game.user_point_history (user_id, point, type, created_at) VALUES
-(83, 20, 1, '2026-05-01T12:15:10Z'),
-(8, -20, 1, '2026-05-01T12:15:10Z'),
-(83, 20, 1, '2026-05-01T13:15:10Z'),
-(8, -20, 1, '2026-05-01T13:15:10Z'),
-(83, -20, 1, '2026-05-01T14:15:10Z'),
-(8, 20, 1, '2026-05-01T14:15:10Z');
-
-INSERT INTO game.game_history (game_id, fen, team, time_stamp, surrender_id) VALUES
-('43be0c57-426b-4267-8088-ac38fe450fcc', 'rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S1S/1C5C1/9/RHEAGAEHR', 'black', 1778596990, null),
-('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778600710, null),
-('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778597000, 8),
-('de4671f8-f42c-4cf4-9a3f-426e399459ce', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778603710, null),
-('de4671f8-f42c-4cf4-9a3f-426e399459ce', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778603760, 83),
-('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778606710, null),
-('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 'RHEAGAEHR/9/1C5C1/S1S1S1S1S/9/9/s1s1s1s1s/1c5c1/9/rheagaehr', 'red', 1778606760, 83);
+INSERT INTO game.game_users (game_id, user_id, amount, team) VALUES
+('43be0c57-426b-4267-8088-ac38fe450fcc', 49, null, 'black'),
+('43be0c57-426b-4267-8088-ac38fe450fcc', 14, null, 'red'),
+('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 83, 100, 'black'),
+('3b8bb8fe-b3b8-41ec-8cd6-144db77a3c4c', 8, -100, 'red'),
+('de4671f8-f42c-4cf4-9a3f-426e399459ce', 83, 100, 'black'),
+('de4671f8-f42c-4cf4-9a3f-426e399459ce', 8, -100, 'red'),
+('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 83, -100, 'black'),
+('0c5a2a28-7ecc-420f-9822-12a4cf115f00', 8, 100, 'red');
 
 INSERT INTO game.achievement (id, name) OVERRIDING SYSTEM VALUE VALUES
 (01, 'achievement.title-01'),

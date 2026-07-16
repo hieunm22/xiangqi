@@ -5,7 +5,14 @@ import { EndGameParams } from "types/game.type"
 
 // Atomically end a game and settle amounts.
 export async function runEndGameTransaction(params: EndGameParams): Promise<boolean> {
-	const { gameId, roomId, winnerId, isBotGame, betAmount } = params
+	const {
+		betAmount,
+		endReason,
+		gameId,
+		isBotGame,
+		roomId,
+		winnerId,
+	} = params
 
 	const ended = await prisma.$transaction(async tx => {
 		// Claim the game: only matches while it is still in progress (status != 2).
@@ -103,7 +110,10 @@ export async function runEndGameTransaction(params: EndGameParams): Promise<bool
 	// Award achievements after the game result is committed
 	if (ended) {
 		try {
-			await evaluateAchievements(prisma, gameId)
+			await evaluateAchievements(prisma, gameId, {
+				endReason,
+				winnerId
+			})
 		} catch (err) {
 			console.error(`[End-Game] achievement evaluation failed for game ${gameId}:`, err)
 		}

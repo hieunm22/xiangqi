@@ -1,3 +1,34 @@
+.layout-bg-shell {
+	position: relative;
+	isolation: isolate;
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		pointer-events: none;
+		opacity: 0.55;
+		background-image: var(--layout-bg-image, none);
+		background-size: cover;
+		background-position: center;
+		background-attachment: fixed;
+	}
+
+	> * {
+		position: relative;
+		z-index: 1;
+	}
+}
+
+@media screen and (max-width: 450px) {
+	.layout-bg-shell {
+		&::before {
+			background-image: var(--layout-bg-image-mobile, var(--layout-bg-image, none));
+		}
+	}
+}
+
 @media screen and (max-width: 376px) {
 	:root {
 		--cell-size: 40px;
@@ -31,16 +62,26 @@
 // all mobile devices with portrait orientation
 @media screen and (max-width: 450px) and (orientation: portrait) {
 	.dashboard {
+		// Subtract the 56px mobile AppBar spacer; dvh fallback for mobile browser
 		height: calc(100vh - 56px);
+		height: calc(100dvh - 56px);
 		min-height: calc(100vh - 56px);
+		min-height: calc(100dvh - 56px);
 
 		&__title {
 			font-size: 2rem;
+		}
+
+		&__create-room-dialog-paper {
+			width: 100%;
 		}
 	}
 
 	.room-container {
 		flex-direction: column;
+		justify-content: flex-start;
+		height: auto;
+		padding-top: 10px;
 	}
 
 	.xiangqi-board {
@@ -56,6 +97,12 @@
 	[class^=profile-avatar] {
 		width: 80px;
 		height: 80px;
+	}
+
+	.profile-achievements,
+	.profile-history {
+		// must fixed to 317px to make it equal to profile tab's width
+		height: 317px;
 	}
 
 	.player-info-row, .room-action-row {
@@ -108,6 +155,9 @@
 }
 
 @media screen and (min-height: 900px) and (min-width: 1440px) {
+	.layout-bg-shell::before {
+		background-image: var(--layout-bg-image-mobile, var(--layout-bg-image, none));
+	}
 	:root {
 		--cell-size: 63px;
 		--piece-size: 45px;

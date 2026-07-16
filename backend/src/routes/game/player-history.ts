@@ -45,6 +45,10 @@ const router = Router()
  *                           ends_at:
  *                             type: string
  *                             format: date-time
+ *                           winner_id:
+ *                             type: integer
+ *                             nullable: true
+ *                             description: Winning user's id, or null for a draw.
  *                       users:
  *                         type: array
  *                         items:
@@ -71,6 +75,10 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 		const userIdNum = typeof userIdRaw === "string" ? parseInt(userIdRaw, 10) : NaN
 		const userId = !isNaN(userIdNum) && userIdNum > 0 ? BigInt(userIdNum) : null
 
+		// Bot games are private to the human who played them.
+		const viewerId = req.auth?.userId ? BigInt(req.auth.userId) : null
+		const isOwnHistory = viewerId !== null && viewerId === userId
+
 		if (!userId) {
 			res.status(400).json({
 				success: false,
@@ -83,12 +91,10 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 		// Step 1: Get all games for this user
 		const gameUsers = await prisma.gameUser.findMany({
 			where: {
-				user_id: userId,
-				amount: { not: null }
+				user_id: userId
 			},
 			select: {
-				game_id: true,
-				amount: true
+				game_id: true
 			}
 		})
 
@@ -150,6 +156,7 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 				team: true,
 				games: {
 					select: {
+						winner_id: true,
 						ends_at: true
 					}
 				},
@@ -157,11 +164,15 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 					select: {
 						id: true,
 						display_name: true,
+						is_bot: true,
 						avatar_seq: true
 					}
 				}
 			}
 		})
+
+		// Games that include a bot participant are private to the human opponent
+		const botGameIds = new Set<string>()
 
 		// Group by game_id
 		const gameHistoryMap = new Map<string, any>()
@@ -171,11 +182,17 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 				gameHistoryMap.set(gameId, {
 					game: {
 						gameId: gameId,
+						// Authoritative result: null = draw, otherwise the winning user's id.
+						winner_id: gameUser.games.winner_id === null ? null : Number(gameUser.games.winner_id),
 						ends_at: gameUser.games.ends_at
 					},
 					users: [],
 					amount: 0
 				})
+			}
+
+			if (gameUser.users.is_bot) {
+				botGameIds.add(gameId)
 			}
 
 			const gameHistory = gameHistoryMap.get(gameId)
@@ -189,11 +206,16 @@ router.get("/game/player-history", requireAuth(), async (req: AuthenticatedReque
 
 			// Use amount from current user's game_user record
 			if (gameUser.user_id === userId) {
-				gameHistory.amount = gameUser.amount
+				gameHistory.amount = gameUser.amount ?? 0
 			}
 		}
 
-		const data = Array.from(gameHistoryMap.values())
+		let data = Array.from(gameHistoryMap.values())
+
+		// Hide bot games from anyone other than the human who played them.
+		if (!isOwnHistory) {
+			data = data.filter(item => !botGameIds.has(item.game.gameId))
+		}
 
 		res.status(200).json({
 			success: true,

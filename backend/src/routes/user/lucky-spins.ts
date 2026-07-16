@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { AmountHistoryType } from "common/enums"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -331,7 +332,7 @@ router.post("/user/lucky-spin", requireAuth(), async (req: AuthenticatedRequest,
 				data: {
 					user_id: BigInt(userId),
 					amount: amountNumber,
-					type: 1,
+					type: AmountHistoryType.LuckyWheel,
 					created_at: new Date()
 				}
 			})

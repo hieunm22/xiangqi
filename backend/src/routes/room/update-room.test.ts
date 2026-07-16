@@ -316,6 +316,34 @@ describe("PATCH /api/room/update", () => {
 		expect(prismaRoomUpdateMock).not.toHaveBeenCalled()
 	})
 
+	it("returns 400 when timeIncrement is not an accepted value", async () => {
+		const accessToken = buildAccessToken(11, "session-room-inc-bad")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.patch(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 1, name: "Room", timeIncrement: 7 })
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("update-room.messages.invalid-time-increment")
+		expect(prismaRoomUpdateMock).not.toHaveBeenCalled()
+	})
+
+	it("returns 400 when timePerMove is not an accepted value", async () => {
+		const accessToken = buildAccessToken(11, "session-room-pm-bad")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+
+		const res = await request(app)
+			.patch(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 1, name: "Room", timePerMove: 45 })
+
+		expect(res.status).toBe(400)
+		expect(res.body.message).toBe("update-room.messages.invalid-time-per-move")
+		expect(prismaRoomUpdateMock).not.toHaveBeenCalled()
+	})
+
 	it("updates the time limit when the host provides one", async () => {
 		const accessToken = buildAccessToken(11, "session-room-time-ok")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
@@ -344,6 +372,41 @@ describe("PATCH /api/room/update", () => {
 		)
 	})
 
+	it("applies the increment and per-move add-ons when the host provides them", async () => {
+		const accessToken = buildAccessToken(11, "session-room-time-addons")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
+		prismaRoomFindUniqueMock.mockResolvedValue({ id: BigInt(1), host_id: BigInt(11) })
+		prismaRoomUpdateMock.mockResolvedValue({
+			id: BigInt(1),
+			name: "Room",
+			status: 1,
+			red_first: true,
+			pve_mode: false,
+			bet_amount: 50,
+			time_limit: 900,
+			time_increment: 5,
+			time_per_move: 30
+		})
+
+		const res = await request(app)
+			.patch(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 1, name: "Room", timeLimit: 900, timeIncrement: 5, timePerMove: 30 })
+
+		expect(res.status).toBe(200)
+		expect(res.body.data.room).toMatchObject({
+			time_limit: 900,
+			time_increment: 5,
+			time_per_move: 30
+		})
+		// A total limit is set, so the add-ons are applied (not force-cleared).
+		expect(prismaRoomUpdateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: { name: "Room", time_limit: 900, time_increment: 5, time_per_move: 30 }
+			})
+		)
+	})
+
 	it("clears the time limit when the host passes null", async () => {
 		const accessToken = buildAccessToken(11, "session-room-time-null")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 11 }))
@@ -366,7 +429,7 @@ describe("PATCH /api/room/update", () => {
 		expect(res.status).toBe(200)
 		expect(prismaRoomUpdateMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: { name: "Room", time_limit: null }
+				data: { name: "Room", time_limit: null, time_increment: 0, time_per_move: 0 }
 			})
 		)
 	})
@@ -421,7 +484,9 @@ describe("PATCH /api/room/update", () => {
 				red_first: true,
 				pve_mode: true,
 				bet_amount: true,
-				time_limit: true
+				time_limit: true,
+				time_increment: true,
+				time_per_move: true
 			}
 		})
 	})
@@ -462,7 +527,9 @@ describe("PATCH /api/room/update", () => {
 				red_first: true,
 				pve_mode: true,
 				bet_amount: true,
-				time_limit: true
+				time_limit: true,
+				time_increment: true,
+				time_per_move: true
 			}
 		})
 	})

@@ -2,13 +2,13 @@ import { MAX_DIFFICULTY, MIN_DIFFICULTY } from "./constants"
 import { BotDifficulty } from "../enums"
 
 export interface DifficultyConfig {
-	/** UCI Skill Level option (0–20). Lower = engine deliberately plays weaker. */
+	// UCI Skill Level option (0–20). Lower = engine deliberately plays weaker.
 	skillLevel: number
-	/** Search depth cap. Lower = shallower lookahead, faster + weaker. */
+	// Search depth cap. Lower = shallower lookahead, faster + weaker.
 	depth: number
-	/** Hard time budget per move in ms. Lower = engine has less time to think. */
+	// Hard time budget per move in ms. Lower = engine has less time to think.
 	movetimeMs: number
-	/** Tag for logs/telemetry. */
+	// Tag for logs/telemetry.
 	label: string
 }
 

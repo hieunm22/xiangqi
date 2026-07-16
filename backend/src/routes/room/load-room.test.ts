@@ -130,6 +130,8 @@ describe("GET /api/room/info?id=:id", () => {
 			red_first: false,
 			bet_amount: 100,
 			time_limit: 600,
+			time_increment: 5,
+			time_per_move: 30,
 			host_id: BigInt(12),
 			created_at: new Date("2026-05-12T00:00:00.000Z"),
 			updated_at: new Date("2026-05-12T00:00:00.000Z"),
@@ -188,6 +190,8 @@ describe("GET /api/room/info?id=:id", () => {
 					red_first: false,
 					bet_amount: 100,
 					time_limit: 600,
+					time_increment: 5,
+					time_per_move: 30,
 					host_id: 12
 				},
 				chat: {

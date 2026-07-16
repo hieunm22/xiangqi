@@ -110,7 +110,7 @@ export default function DailyBonusTab() {
 	}
 
 	return (
-		<Box className="bonus-coin-tab daily-bonus-tab">
+		<Box className="daily-bonus-tab">
 			<TTypography
 				variant="subtitle1"
 				className="bonus-subtitle"

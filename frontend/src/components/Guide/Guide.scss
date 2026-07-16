@@ -14,13 +14,13 @@
 			border-collapse: collapse;
 		}
 
-		td,
-		th {
+		td, th {
 			border: 1px solid #ddd;
 			padding: 8px;
 		}
-
+		
 		th {
+			font-weight: bold;
 			background-color: #b5b5b5;
 		}
 	}
@@ -30,6 +30,7 @@
 		box-shadow: 0 2px 0 rgba(82, 42, 18, 0.45), 0 6px 10px rgba(70, 32, 13, 0.2);
 		font-weight: bold;
 		width: 32px;
+		font-size: 18px;
 
 		.MuiChip-label {
 			display: flex;

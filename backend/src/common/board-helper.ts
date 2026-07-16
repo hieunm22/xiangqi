@@ -1,3 +1,5 @@
+import { Team } from "types/game.type"
+
 const BOARD_ROWS = 10
 const BOARD_COLUMNS = 9
 
@@ -24,12 +26,38 @@ const pieceFenMap: Record<string, string> = {
 interface CellProps {
 	id: number
 	piece: string
-	team: "red" | "black"
+	team: Team
 	animateTo?: number
 }
 
+/**
+ * Read the half-move / full-move counters from a FEN. Board-only strings (no fields
+ * beyond the placement) default to half-move 0 and full-move 1.
+ */
+export const parseFenCounters = (fen: string): { halfmove: number; fullmove: number } => {
+	const parts = fen.trim().split(/\s+/)
+	const halfmove = parts.length >= 5 && Number.isInteger(Number(parts[4])) ? Number(parts[4]) : 0
+	const fullmove = parts.length >= 6 && Number.isInteger(Number(parts[5])) ? Number(parts[5]) : 1
+	return { halfmove, fullmove }
+}
+
+/**
+ * Build a standard 6-field xiangqi FEN
+ */
+export const toStandardFen = (
+	fen: string,
+	sideToMove: Team,
+	halfmove: number,
+	fullmove: number
+): string => {
+	const placement = fen.trim().split(/\s+/)[0]
+	const side = sideToMove === "red" ? "w" : "b"
+	return `${placement} ${side} - - ${halfmove} ${fullmove}`
+}
+
 export const fenToBoard = (fen: string): (CellProps | null)[] => {
-	const rows = fen.trim().split("/")
+	// Tolerate both board-only and full 6-field FENs: take the placement field only.
+	const rows = fen.trim().split(/\s+/)[0].split("/")
 	if (rows.length !== BOARD_ROWS) {
 		throw new Error(`Invalid FEN row count: expected ${BOARD_ROWS}, got ${rows.length}`)
 	}
@@ -75,17 +103,10 @@ export const fenToBoard = (fen: string): (CellProps | null)[] => {
 const ATTACKING_PIECES = new Set(["chariot", "horse", "cannon", "soldier"])
 
 /**
- * Whether `team` has at least one attacking piece (chariot / horse / cannon /
- * soldier) that has crossed the river into the opponent's half.
- *
- * Used by the game-clock time-out rule (vi.json result.paragraph4): when a
- * player runs out of time, the opponent only wins if they still have crossing
- * material capable of delivering mate; otherwise the game is drawn.
- *
- * The team's own half is identified by the row of its general (which can never
- * cross the river).
+ * Whether `team` has at least one attacking piece that has crossed the river.
+ * Used for the timeout rule: opponent wins only if they have crossing material, else draw.
  */
-export const hasPieceAcrossRiver = (fen: string, team: "red" | "black"): boolean => {
+export const hasPieceAcrossRiver = (fen: string, team: Team): boolean => {
 	const board = fenToBoard(fen)
 
 	let generalRow: number | null = null

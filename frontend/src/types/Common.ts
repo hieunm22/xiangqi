@@ -48,6 +48,7 @@ export interface ComponentWithChild {
 export interface ConfirmProps {
 	title?: string
 	message: string
+	icon?: React.ReactNode
 	okLabel?: string
 	countdownSeconds?: number
 	countdownMessageBuilder?: (secondsLeft: number) => string

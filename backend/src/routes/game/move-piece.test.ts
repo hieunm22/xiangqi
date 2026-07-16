@@ -284,7 +284,7 @@ describe("POST /api/game/move-piece", () => {
 		expect(insertOneMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} b - - 1 1`,
 				team: "black",
 				time_stamp: expect.any(Number)
 			})
@@ -296,7 +296,7 @@ describe("POST /api/game/move-piece", () => {
 			data: {
 				_id: "mongo-id-new",
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} b - - 1 1`,
 				team: "black"
 			}
 		})
@@ -328,7 +328,7 @@ describe("POST /api/game/move-piece", () => {
 		expect(insertOneMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} b - - 0 1`,
 				team: "black",
 				capture: "R",
 				time_stamp: expect.any(Number)
@@ -341,7 +341,7 @@ describe("POST /api/game/move-piece", () => {
 			data: {
 				_id: "mongo-id-new",
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} b - - 0 1`,
 				team: "black",
 				capture: "R"
 			}
@@ -372,7 +372,7 @@ describe("POST /api/game/move-piece", () => {
 		expect(insertOneMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} w - - 0 2`,
 				team: "red",
 				capture: "r",
 				time_stamp: expect.any(Number)
@@ -385,7 +385,7 @@ describe("POST /api/game/move-piece", () => {
 			data: {
 				_id: "mongo-id-new",
 				game_id: "game-1",
-				fen: INITIAL_FEN_BLACK_TOP,
+				fen: `${INITIAL_FEN_BLACK_TOP} w - - 0 2`,
 				team: "red",
 				capture: "r"
 			}

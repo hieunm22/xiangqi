@@ -34,7 +34,16 @@
 			"title": "Game Replay",
 			"no-moves": "No moves to replay",
 			"play": "Play",
-			"pause": "Pause"
+			"pause": "Pause",
+			"end-title": "Game over",
+			"reason-checkmate": "{{name}} won by checkmate",
+			"reason-stalemate": "Stalemate",
+			"reason-perpetual-check": "{{name}} won by opponent's perpetual check",
+			"reason-surrender": "{{name}} surrendered",
+			"reason-leave": "{{name}} left the game",
+			"reason-draw": "Draw",
+			"reason-timeout": "{{name}} ran out of time",
+			"reason-ended": "The game has ended"
 		}
 	},
 	"menu": {
@@ -120,9 +129,14 @@
 			"red-first": "Red first",
 			"pve-mode": "PVE mode",
 			"bet-amount": "Bet amount",
-			"time-limit": "Time per player",
+			"time-limit": "Time limit",
+			"time-limit-per-player": "Time per player",
 			"time-unlimited": "Unlimited",
 			"time-minutes": "{0} min",
+			"time-seconds": "{0}s",
+			"time-off": "Off",
+			"time-increment": "Bonus per move",
+			"time-per-move": "Time per move",
 			"room-name-label": "Room table name",
 			"room-name-helptext": "is required",
 			"play": "Play",
@@ -133,6 +147,7 @@
 		"header": "Settings",
 		"language": "Language",
 		"dark-mode": "Dark mode",
+		"sound": "Sound",
 		"debug-mode": "Debug mode",
 		"connected-accounts": {
 			"label": "Connected accounts",
@@ -158,6 +173,10 @@
 		"general": {
 			"captured": "General has been captured. Room over",
 			"in-check": "Your general is under attack"
+		},
+		"perpetual-check": {
+			"warning-self": "You are perpetual checking. If you make one more repeated check, you will lose",
+			"warning-sent": "A perpetual-check warning has been sent to your opponent"
 		},
 		"label": {
 			"win": "Win",
@@ -201,10 +220,16 @@
 			"confirm-accept-draw": "Opponent has proposed a draw. Do you accept?",
 			"insufficient-amount": "You do not have enough balance to join this room",
 			"will-leave-current-room": "You are currently in another room. Joining this room will remove you from the current room",
-			"all-seats-occupied": "All player seats are occupied",
 			"game-ended": "Game ended",
 			"you-win": "You win",
 			"you-lose": "You lose",
+			"you-win-perpetual-check": "You win — your opponent lost by perpetual check",
+			"you-lose-perpetual-check": "You lose by perpetual check",
+			"spectator-win-checkmate": "{0} won by checkmate",
+			"spectator-win-stalemate": "{0} won — opponent had no legal moves",
+			"spectator-win-timeout": "{0} won on time",
+			"spectator-win-perpetual-check": "{0} won — opponent lost by perpetual check",
+			"spectator-draw": "The game ended in a draw",
 			"back-to-room": "Back to room",
 			"auto-back-countdown": "{0}. Press the back button to return to the room. You will be automatically returned in {1}s"
 		},
@@ -371,6 +396,8 @@
 			"internal-server-error": "Internal server error while creating room",
 			"invalid-bet-amount": "Bet amount is required and must be one of the acceptable values",
 			"invalid-time-limit": "Invalid time limit",
+			"invalid-time-increment": "Invalid bonus per move",
+			"invalid-time-per-move": "Invalid time per move",
 			"invalid-redFirst": "'redFirst' must be a boolean",
 			"invalid-team-name": "Team name must be either 'red', 'black', or null",
 			"name-required": "Room name (tableName) is required and must not be empty",
@@ -490,6 +517,8 @@
 			"internal-server-error": "Internal server error",
 			"invalid-room-id": "Invalid room ID",
 			"invalid-time-limit": "Invalid time limit",
+			"invalid-time-increment": "Invalid bonus per move",
+			"invalid-time-per-move": "Invalid time per move",
 			"name-required": "Room name is required",
 			"room-not-found": "Room not found",
 			"forbidden": "You are not the host of this room"
@@ -525,6 +554,7 @@
 			"game-not-found": "Game not found",
 			"not-in-game": "You are not part of this game",
 			"not-in-room": "You are not in this room",
+			"pve-only": "Undo is only available in PvE rooms",
 			"spectator-cannot-undo": "Spectators cannot undo moves",
 			"no-moves": "No moves to undo",
 			"delete-failed": "Failed to undo move",

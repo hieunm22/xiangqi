@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
 import {
-	Dialog,
 	DialogContent,
 	DialogTitle,
 	Divider,
 	Grid,
 } from "@mui/material"
 import { PopupState } from "common/enums"
+import { ResponsiveDialog } from "components/ResponsiveDialog"
 import { TButton, TTypography } from "components/TranslationTag"
 import { BotDifficultySlider } from "./Slider"
 import useToolkit from "hooks/useToolkit"
@@ -39,7 +39,8 @@ export const BotDifficultyPopup = (props: BotDifficultyPopupProps) => {
 	}
 
 	return (
-		<Dialog
+		<ResponsiveDialog
+			drawerAnchor="bottom"
 			open={isOpen}
 			onClose={onDialogClose}
 			maxWidth="xs"
@@ -71,7 +72,7 @@ export const BotDifficultyPopup = (props: BotDifficultyPopupProps) => {
 					/>
 				</Grid>
 			</DialogContent>
-		</Dialog>
+		</ResponsiveDialog>
 	)
 }
 

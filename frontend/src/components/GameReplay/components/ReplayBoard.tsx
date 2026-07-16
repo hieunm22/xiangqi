@@ -1,27 +1,27 @@
 import React from "react"
 import classnames from "classnames"
 import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
-import { markerClass } from "pages/Room/common"
-import {
-	markerPositions,
-	pieceSymbolByType
-} from "pages/Room/constant"
+import { markerPositions, pieceSymbolByType } from "pages/Room/constant"
 import PieceItem from "pages/Room/components/Piece"
+import {
+	getPieceFromCharacter,
+	getTeamFromPieceChar,
+	markerClass
+} from "pages/Room/common"
 import { NullableCellProps, Team } from "types/GameState"
 import { MoveProps } from "pages/Room/types"
 
 interface ReplayBoardProps {
 	board: NullableCellProps[]
+	checkingPieces: number[]
 	currentTurn: Team
 	previousMove: MoveProps | null
 }
 
 const noop = () => () => {}
 
-// Read-only reproduction of the Room board (pages/Room/index.tsx render loop) for
-// replay: same grid, markers and PieceItem, but no click/selection/available-move
-// interaction. Reuses Room.scss classes (imported globally by App.tsx).
-const ReplayBoard = ({ board, currentTurn, previousMove }: ReplayBoardProps) => {
+// Read-only reproduction of the Room board (pages/Room/index.tsx render loop) for replay
+const ReplayBoard = ({ board, checkingPieces, currentTurn, previousMove }: ReplayBoardProps) => {
 	return (
 		<div className="xiangqi-board">
 			<div className="board-frame">
@@ -57,13 +57,18 @@ const ReplayBoard = ({ board, currentTurn, previousMove }: ReplayBoardProps) => 
 					const row = ~~(id / BOARD_COLUMNS)
 					const isPreviousMove = previousMove !== null
 						&& (id === previousMove.from || id === previousMove.to)
+					const isCheckingPiece = checkingPieces.includes(id)
+					const isCheckedKing = checkingPieces.length > 0
+						&& getPieceFromCharacter(cell?.piece) === "general"
+						&& getTeamFromPieceChar(cell?.piece) === currentTurn
 
 					if (!cell) {
 						const emptyClass = classnames({
 							"piece-wrapper-empty": true,
 							[`row-${row}-piece`]: true,
 							[`col-${col}-piece`]: true,
-							"highlight": isPreviousMove
+							"previous-move": isPreviousMove,
+							"checking": isCheckingPiece
 						})
 						return <div key={`empty-${id}`} className={emptyClass} />
 					}
@@ -79,6 +84,8 @@ const ReplayBoard = ({ board, currentTurn, previousMove }: ReplayBoardProps) => 
 							$turn={currentTurn}
 							$myTeam={null}
 							$previousMove={isPreviousMove}
+							$checking={isCheckingPiece}
+							$checkedGeneral={isCheckedKing}
 							$rotated={false}
 							$click={noop()}
 						>

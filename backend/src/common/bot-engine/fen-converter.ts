@@ -1,12 +1,14 @@
 import { BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE } from "./constants"
 import { projectPieceToStandard } from "./piece-map"
+import { Team } from "types/game.type"
 
 /**
  * Parse a project FEN (board-only, no side-to-move suffix) into a flat array of 90 cells.
  * Empty squares become null.
  */
 export const projectFenToFlatArray = (projectFen: string): (string | null)[] => {
-	const rows = projectFen.trim().split("/")
+	// Tolerate both board-only and full 6-field FENs: take the placement field only.
+	const rows = projectFen.trim().split(/\s+/)[0].split("/")
 	if (rows.length !== BOARD_ROWS) {
 		throw new Error(`Invalid project FEN: expected ${BOARD_ROWS} rows, got ${rows.length}`)
 	}
@@ -71,18 +73,13 @@ export const flatArrayToProjectFen = (cells: (string | null)[]): string => {
 }
 
 /**
- * Convert a project FEN to a fully-qualified standard xiangqi FEN that fairy-stockfish accepts.
- *
- * When `redFirst` is false, the project board is rotated 180° relative to the standard layout
- * (red at top, black at bottom). We rotate the cells back so standard FEN always has red at
- * the bottom — this is what fairy-stockfish requires.
- *
- * Returns: `<position> <side> - - 0 1`
+ * Convert a project FEN to a standard xiangqi FEN for fairy-stockfish.
+ * Rotates board when `redFirst` is false; returns `<placement> <side> - - 0 1`.
  */
 export const projectFenToStandardFen = (
 	projectFen: string,
 	redFirst: boolean,
-	sideToMove: "red" | "black"
+	sideToMove: Team
 ): string => {
 	let cells = projectFenToFlatArray(projectFen)
 	if (!redFirst) {

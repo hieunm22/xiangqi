@@ -1,5 +1,5 @@
-import { useMemo } from "react"
 import {
+	Avatar,
 	Box,
 	Dialog,
 	DialogContent,
@@ -12,68 +12,72 @@ import {
 	Stack,
 	Typography
 } from "@mui/material"
+import { openAlert } from "components/AlertProvider/helper"
 import { TI } from "components/TranslationTag"
-import { translate } from "locales/translate"
-import { resolveSideUsers } from "pages/Room/common"
 import CapturedPiecesDisplay from "pages/Room/components/CapturedPiecesDisplay"
-import { RoomUser } from "pages/Room/types"
 import ReplayBoard from "./components/ReplayBoard"
 import ReplayPlayerCard from "./components/ReplayPlayerCard"
+import { requireImage } from "common/helper"
+import { translate } from "locales/translate"
+import { RoomUser } from "pages/Room/types"
 import useReplay, { REPLAY_SPEEDS } from "./useReplay"
-import { GameReplayPopupProps } from "./types"
+import { GameReplayPopupProps, ReplayEndInfo } from "./types"
 import "./GameReplay.scss"
 
 const cardTeam = (user: RoomUser | null) => (user?.team === "black" ? "black" : "red")
 
-export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
-	const open = game !== null
+// Reasons whose message names a specific player (interpolated via {{name}}).
+const NAME_REASONS = ["surrender", "leave", "timeout", "checkmate", "perpetual-check"]
+// Reasons with a fixed message and no player name.
+const PLAIN_REASONS = ["stalemate", "draw"]
 
+const handleReplayEnd = ({ reason, playerName, playerAvatar }: ReplayEndInfo) => {
+	if (reason && playerName && NAME_REASONS.includes(reason)) {
+		const avatar = playerAvatar ? (
+			<Avatar
+				className="alert-message-avatar"
+				sx={{ width: 32, height: 32 }}
+				src={requireImage(playerAvatar ?? "")}
+			/>
+		) : undefined
+		openAlert({
+			title: "page.replay.end-title",
+			message: translate(`page.replay.reason-${reason}`, { name: playerName }),
+			icon: avatar
+		})
+		return
+	}
+	const message = reason && PLAIN_REASONS.includes(reason)
+		? translate(`page.replay.reason-${reason}`)
+		: translate("page.replay.reason-ended")
+	openAlert({ title: "page.replay.end-title", message })
+}
+
+export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 	const {
 		board,
+		bottom,
 		capturedPieces,
+		checkingPieces,
 		currentTurn,
 		isLoading,
 		isPlaying,
 		previousMove,
-		redFirst,
 		stepIndex,
 		stepMs,
+		top,
 		totalMoves,
 
 		goToStep,
 		setStepMs,
 		togglePlay
-	} = useReplay({ gameId: game?.game.gameId ?? null, open })
-
-	const { top, bottom } = useMemo(() => {
-		if (!game) {
-			return { top: null, bottom: null }
-		}
-		// Each player's color comes from player-history (game_users.team).
-		const joinedUsers: RoomUser[] = game.users.map(user => ({
-			id: user.id,
-			display_name: user.display_name,
-			avatar_url: user.avatar_url,
-			back_ready: null,
-			team: user.team,
-			total_amount: 0,
-			is_bot: false
-		}))
-
-		const sides = resolveSideUsers(joinedUsers, redFirst)
-		// Fallback for games without a persisted color mapping: keep both players
-		// visible by seating them in list order.
-		if (!sides.top && !sides.bottom && joinedUsers.length === 2) {
-			return { top: joinedUsers[1], bottom: joinedUsers[0] }
-		}
-		return sides
-	}, [game, redFirst])
+	} = useReplay({ game, onEnd: handleReplayEnd })
 
 	const hasMoves = board.length > 0
 
 	return (
 		<Dialog
-			open={open}
+			open={game !== null}
 			onClose={onClose}
 			fullScreen
 			disableEnforceFocus
@@ -105,7 +109,12 @@ export const GameReplayPopup = ({ game, onClose }: GameReplayPopupProps) => {
 								</div>
 							</div>
 
-							<ReplayBoard board={board} currentTurn={currentTurn} previousMove={previousMove} />
+							<ReplayBoard
+								board={board}
+								checkingPieces={checkingPieces}
+								currentTurn={currentTurn}
+								previousMove={previousMove}
+							/>
 						</Box>
 
 						<Stack direction="row" className="game-replay-controls">

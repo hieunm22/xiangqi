@@ -11,7 +11,7 @@ import { ForgotPasswordRequest } from "types/auth.type"
 const router = Router()
 
 const senderEmail = process.env.APP_EMAIL?.trim() || ""
-const senderPassword = process.env.APP_PASSWORD?.trim() || ""
+const senderPassword = process.env.GOOGLE_APP_PASSWORD?.trim() || ""
 
 const missingMailerCredentials = !senderEmail || !senderPassword
 

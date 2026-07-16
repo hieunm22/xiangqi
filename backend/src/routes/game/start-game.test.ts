@@ -244,7 +244,7 @@ describe("POST /api/room/start", () => {
 		expect(gameHistoryInsertOneMock).toHaveBeenCalledWith({
 			game_id: "c5afe4a6-48fd-47de-ac7e-1f635f859919",
 			team: "red",
-			fen: INITIAL_FEN_BLACK_TOP,
+			fen: `${INITIAL_FEN_BLACK_TOP} w - - 0 1`,
 			time_stamp: expect.any(Number)
 		})
 
@@ -386,7 +386,7 @@ describe("POST /api/room/start", () => {
 		expect(gameHistoryInsertOneMock).toHaveBeenCalledWith({
 			game_id: "d8d18f53-95f8-4e30-b834-f4b5adce4f22",
 			team: "black",
-			fen: INITIAL_FEN_BLACK_BOTTOM,
+			fen: `${INITIAL_FEN_BLACK_BOTTOM} b - - 0 1`,
 			time_stamp: expect.any(Number)
 		})
 
@@ -423,7 +423,8 @@ describe("POST /api/room/start", () => {
 			bet_amount: 50,
 			pve_mode: false,
 			time_limit: 600,
-			time_increment: 0
+			time_increment: 0,
+			time_per_move: 0
 		})
 		userFindUniqueMock.mockResolvedValue({ total_amount: 200 })
 		getGameHistoryCollectionMock.mockResolvedValue({ insertOne: gameHistoryInsertOneMock })
@@ -511,7 +512,7 @@ describe("POST /api/room/start", () => {
 		})
 		expect(roomFindUniqueMock).toHaveBeenCalledWith({
 			where: { id: BigInt(999) },
-			select: { id: true, host_id: true, bet_amount: true, pve_mode: true, time_limit: true, time_increment: true }
+			select: { id: true, host_id: true, bet_amount: true, pve_mode: true, time_limit: true, time_increment: true, time_per_move: true }
 		})
 		expect(transactionMock).not.toHaveBeenCalled()
 	})

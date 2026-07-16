@@ -22,7 +22,7 @@
 		}
 
 		.MuiTab-root {
-			border-radius: 8px 8px 0 0;
+			border-radius: 10px 10px 0 0;
 			transition: background-color 0.2s ease, box-shadow 0.2s ease;
 
 			&:hover {
@@ -45,33 +45,7 @@
 	}
 }
 
-.lucky-wheel-tab {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-
-	.page-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		flex: 1;
-	}
-
-	// Cream chip behind the description so it stays readable on the page background
-	.lucky-wheel-desc {
-		display: inline-block;
-		color: #5a2800;
-		font-weight: 600;
-		padding: 6px 14px;
-		border-radius: 8px;
-		background-color: rgba(255, 249, 240, 0.92);
-		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-		border: solid 2px black;
-	}
-}
-
-.bonus-coin-tab {
+.lucky-wheel-tab, .bonus-coin-tab, .daily-bonus-tab {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -82,6 +56,14 @@
 	.bonus-subtitle {
 		font-weight: 700;
 		color: #6b4423;
+	}
+
+	.page-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		flex: 1;
 	}
 
 	.bonus-grid {
@@ -222,11 +204,6 @@
 		text-transform: uppercase;
 		color: #fff;
 	}
-
-}
-
-.bonus-coin-tab > .bonus-next {
-	margin-top: auto;
 }
 
 // Shared "next reward in" countdown, used by the bonus-coin, daily-bonus and lucky-wheel tabs
@@ -240,6 +217,7 @@
 	border-radius: 999px;
 	background-color: rgba(255, 249, 240, 0.92);
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+	margin-top: auto;
 
 	.bonus-next-time {
 		font-size: 1.15rem;
@@ -299,6 +277,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	overflow: hidden;
 
 	.lucky-wheel {
 		width: 300px;

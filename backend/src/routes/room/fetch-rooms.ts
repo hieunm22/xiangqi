@@ -54,6 +54,13 @@ const router = Router()
  *                         type: boolean
  *                       bet_amount:
  *                         type: integer
+ *                       time_limit:
+ *                         type: integer
+ *                         nullable: true
+ *                       time_increment:
+ *                         type: integer
+ *                       time_per_move:
+ *                         type: integer
  *                       created_at:
  *                         type: string
  *                         format: date-time
@@ -105,6 +112,7 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 		const rooms = await prisma.room.findMany({
 			where: {
 				is_active: true,
+				game_type: "xiangqi",
 				...(status !== undefined && { status })
 			},
 			orderBy: { created_at: "asc" },
@@ -115,6 +123,9 @@ router.get("/room/fetch-rooms", requireAuth(), async (req: AuthenticatedRequest,
 				red_first: true,
 				bet_amount: true,
 				time_limit: true,
+				time_increment: true,
+				time_per_move: true,
+				game_type: true,
 				host_id: true,
 				created_at: true,
 				updated_at: true,

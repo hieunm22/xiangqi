@@ -247,6 +247,11 @@
 
 	.profile-tab {
 		min-height: 48px;
+		border-radius: 10px 10px 0 0;
+
+		&:hover {
+			background-color: #ccd6e0;
+		}
 	}
 }
 
@@ -354,11 +359,10 @@
 }
 
 .layout-page-shell {
+	width: 100%;
+	padding: 0;
 	min-height: 100vh;
 	min-height: 100dvh;
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
 }
 
 .layout-mobile-appbar {

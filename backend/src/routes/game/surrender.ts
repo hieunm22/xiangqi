@@ -179,7 +179,8 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			fen: latestRecord[0].fen,
 			team: surrenderingPlayer.team === "red" ? "black" : "red",
 			time_stamp: getUTCTimestamp(),
-			surrender: Number(userId)
+			surrender: Number(userId),
+			end_reason: "surrender"
 		})
 
 		// Fetch room to determine PvE mode and bet amount
@@ -193,7 +194,8 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			roomId: game.room_id,
 			winnerId: winner.user_id,
 			isBotGame: roomWithBet?.pve_mode ?? false,
-			betAmount: roomWithBet?.bet_amount ?? null
+			betAmount: roomWithBet?.bet_amount ?? null,
+			endReason: "surrender"
 		})
 
 		// Game over — clear players' "busy" presence back to their live status.

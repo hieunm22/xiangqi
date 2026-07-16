@@ -1,6 +1,5 @@
 import classnames from "classnames"
 import { Alert as MuiAlert, AlertProps } from "@mui/material"
-import { TI } from "components/TranslationTag"
 import { translate } from "locales/translate"
 import "./AlertWithIcon.scss"
 
@@ -15,7 +14,7 @@ export default function Alert(props: AlertProps) {
 	const severity = props.severity || "info"
 	const severityIcon = iconMap[severity]
 	const iconClass = classnames("alert-icon", severityIcon)
-	const icon = <TI className={iconClass} title={severity} />
+	const icon = <i className={iconClass} title={translate(severity)} />
 
 	const translatedChildren = typeof props.children === "string"
 		? translate(props.children)

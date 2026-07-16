@@ -9,7 +9,11 @@ import { useSocket } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
 import { setPopup, setUserId } from "toolkit/slice/game"
 import { APIResponse } from "types/Common"
-import { ChatDialogHandle, PrivateConversation } from "components/ChatDialog/types"
+import {
+	ChatDialogHandle,
+	PrivateConversation,
+	SentMessagePayload
+} from "components/ChatDialog/types"
 import "../Layout.scss"
 
 export const PrivateChatPopup = () => {
@@ -45,9 +49,8 @@ export const PrivateChatPopup = () => {
 			const response = await getPrivateConversations(token) as APIResponse<PrivateConversation[]>
 			if (response?.success && response.data) {
 				setConversations(response.data)
-				// Restore the title for the conversation still active from a previous
-				// session (e.g. reopened via the user menu); null falls back to the
-				// profile that opened the chat, or the loading label.
+					// Restore the active conversation title from a previous session.
+					// null falls back to the profile that opened the chat, or the loading label.
 				const activeConversation = gameState.activeUserId
 					? response.data.find(item => item.partner?.id === gameState.activeUserId)
 					: undefined
@@ -159,6 +162,50 @@ export const PrivateChatPopup = () => {
 		}
 	}
 
+	// After the current user sends a private message, upsert the drawer list
+	// to make brand-new conversation shows immediately
+	const handleMessageSent = (payload: SentMessagePayload) => {
+		if (!currentUserId) return
+
+		const { message, receiverId, timestamp } = payload
+		// Same key the backend derives (min_max of the two user ids)
+		const minId = Math.min(currentUserId, receiverId)
+		const maxId = Math.max(currentUserId, receiverId)
+		const conversationKey = `${minId}_${maxId}`
+		const lastMessage = {
+			_id: `local-${timestamp}`,
+			message,
+			sender_id: currentUserId,
+			timestamp
+		}
+
+		setConversations(prev => {
+			const index = prev.findIndex(item => item.conversation_key === conversationKey)
+			if (index === -1) {
+				// First message to this partner: the partner is the receiver we're
+				// chatting with (profileUser is set when the chat was opened).
+				const partner = profileUser && profileUser.id === receiverId
+					? {
+						id: profileUser.id,
+						display_name: profileUser.display_name,
+						avatar_url: profileUser.avatar_url
+					}
+					: null
+				const newConversation: PrivateConversation = {
+					conversation_key: conversationKey,
+					partner,
+					last_message: lastMessage,
+					unread_count: 0
+				}
+				return [newConversation, ...prev]
+			}
+
+			const existing = prev[index]
+			const updated: PrivateConversation = { ...existing, last_message: lastMessage }
+			return [updated, ...prev.filter((_, i) => i !== index)]
+		})
+	}
+
 	return (
 		<ChatDialog
 			ref={chatRef}
@@ -170,6 +217,7 @@ export const PrivateChatPopup = () => {
 			sendMessage={sendPrivateMessage}
 			markAsRead={markPrivateMessageAsRead}
 			refId={gameState.activeUserId}
+			onMessageSent={handleMessageSent}
 			// props for private chat popup
 			drawerContent={
 				<ConversationDrawer

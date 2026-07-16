@@ -1,6 +1,7 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { requireApiKey } from "middleware/api-key"
+import { AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
 
@@ -11,6 +12,8 @@ const router = Router()
  *     summary: Resync sequence for a table
  *     tags:
  *       - Tool
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -43,11 +46,14 @@ const router = Router()
  *                   type: integer
  *       400:
  *         description: Invalid request body
+ *       401:
+ *         description: Invalid or missing API key
  *       500:
  *         description: Internal server error
  */
 router.post(
 	"/tool/sequence",
+	requireApiKey(),
 	async (req: AuthenticatedRequest, res: Response) => {
 		const { tablename, schema } = req.body
 

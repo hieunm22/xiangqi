@@ -16,9 +16,6 @@
 .layout-unauth {
 	min-height: 100vh;
 	width: 100%;
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
 }
 
 .ios-switch {
@@ -53,19 +50,46 @@
 	}
 }
 
+.switch-with-icons {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.switch-icon {
+	height: 24px;
+	font-size: 20px;
+	line-height: 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: #bdbdbd;
+	transition: color 300ms;
+
+	&.switch-icon-active {
+		color: #0084ff;
+	}
+}
+
 .setting-title {
 	padding: 5px 20px !important;
 }
 
 .setting-row {
-	margin-bottom: 10px;
+	margin-bottom: 16px;
 	align-items: center;
 	gap: 16px !important;
+}
+
+.setting-button {
+	width: 120px;
+	margin-top: 16px !important;
 }
 
 .unauth-setting-btn {
 	position: fixed !important;
 	top: 16px;
 	right: 16px;
+	width: 120px;
 	z-index: 1400;
 }

@@ -63,6 +63,28 @@ const router = Router()
  *                         type: string
  *                       time_stamp:
  *                         type: integer
+ *                 clock:
+ *                   type: object
+ *                   nullable: true
+ *                   description: Countdown snapshot after the rewind (turn restarted from now); null when the game is not clocked.
+ *                   properties:
+ *                     redMs:
+ *                       type: integer
+ *                     blackMs:
+ *                       type: integer
+ *                     activeTeam:
+ *                       type: string
+ *                       enum: [red, black]
+ *                     perMoveRemainingMs:
+ *                       type: integer
+ *                     serverNow:
+ *                       type: integer
+ *                     timeLimit:
+ *                       type: integer
+ *                     timeIncrement:
+ *                       type: integer
+ *                     timePerMove:
+ *                       type: integer
  *       400:
  *         description: Invalid request (game not found, invalid game id, undo limit exceeded, no moves to undo, or delete failed)
  *       401:
@@ -114,6 +136,19 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 				success: false,
 				message: "undo.messages.game-not-found",
 				status_code: 400
+			})
+			return
+		}
+
+		const room = await prisma.room.findUnique({
+			where: { id: game.room_id },
+			select: { pve_mode: true }
+		})
+		if (!room?.pve_mode) {
+			res.status(403).json({
+				success: false,
+				message: "undo.messages.pve-only",
+				status_code: 403
 			})
 			return
 		}
@@ -226,9 +261,8 @@ router.post("/game/undo", requireAuth(), async (req: AuthenticatedRequest, res: 
 		// Get the last remaining record (oldest record after deletion)
 		const remainingRecord = gameHistories[gameHistories.length - recordsToDelete - 1] || null
 
-		// Update the last remaining record to add undo user_id. For clocked games,
-		// also restart the current turn from now and stamp a clock
-		// baseline capturing time already spent
+			// Update the last remaining record with the undo user_id; for clocked games,
+			// restart the turn from now and stamp a clock baseline for time already spent.
 		const undoUpdate: Record<string, unknown> = { undo: Number(userId) }
 		if (game.time_limit != null) {
 			const remainingClockRecords: ClockHistoryRecord[] = gameHistories

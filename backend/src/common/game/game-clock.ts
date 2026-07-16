@@ -15,17 +15,12 @@ import {
 	Team
 } from "types/game.type"
 
-// setTimeout truncates delays larger than a signed 32-bit int, which would fire
-// almost immediately. Clamp scheduling below that. Real budgets are minutes, so
-// this cap is only a safety net.
+// setTimeout truncates delays > signed 32-bit int (fires almost immediately).
+// Clamp scheduling below that; real game budgets are minutes so this is a safety net.
 const MAX_TIMEOUT_DELAY_MS = 2_000_000_000
 
-// In-memory per-game flag timers. A single timer per in-progress game fires when
-// the team on the move runs out of time without moving. Rescheduled on every
-// move; rehydrated on boot (see rehydrateClocks). Mirrors the in-memory timers
-// already used for presence and the post-game lock — assumes a single backend
-// instance; a horizontally-scaled deployment would move this to a Redis-backed
-// delayed job.
+// In-memory per-game flag timers; one per game, rescheduled on every move and rehydrated on boot.
+// Assumes a single backend instance — a scaled deployment would use a Redis-backed delayed job.
 const timers = new Map<string, NodeJS.Timeout>()
 
 /**
@@ -40,6 +35,7 @@ async function fetchConfig(gameId: string): Promise<ClockConfig | null> {
 			room_id: true,
 			time_limit: true,
 			time_increment: true,
+			time_per_move: true,
 			room: { select: { bet_amount: true, pve_mode: true } },
 			game_users: { select: { user_id: true, team: true } }
 		}
@@ -54,6 +50,7 @@ async function fetchConfig(gameId: string): Promise<ClockConfig | null> {
 		roomId: game.room_id,
 		timeLimit: game.time_limit,
 		timeIncrement: game.time_increment ?? 0,
+		timePerMove: game.time_per_move ?? 0,
 		betAmount: game.room?.bet_amount ?? null,
 		pveMode: game.room?.pve_mode ?? false,
 		participants: game.game_users.map(gu => ({
@@ -64,9 +61,8 @@ async function fetchConfig(gameId: string): Promise<ClockConfig | null> {
 }
 
 /**
- * Ordered move history (oldest first) reduced to the fields the clock needs.
- * The first record is the game-start marker; each subsequent record's timestamp
- * marks when the team named in the PREVIOUS record completed its move.
+ * Ordered move history (oldest first) reduced to clock-relevant fields.
+ * First record is game-start; each subsequent timestamp marks the previous mover's completion.
  */
 async function fetchHistory(gameId: string): Promise<ClockHistoryRecord[]> {
 	const collection = await getGameHistoryCollection()
@@ -84,10 +80,8 @@ async function fetchHistory(gameId: string): Promise<ClockHistoryRecord[]> {
 }
 
 /**
- * Time spent (ms) and completed moves per side, derived from the ordered
- * history. Honors resume anchors: computation starts from the LAST record that
- * carries a baseline (its accumulated totals), then adds only the gaps after it —
- * so the wall-clock time an undo removed is never charged to anyone.
+ * Time spent (ms) and moves completed per side, derived from history.
+ * Starts from the last baseline anchor so undone wall-clock time is never re-charged.
  */
 function deriveSpent(records: ClockHistoryRecord[]): {
 	spentMs: Record<Team, number>
@@ -128,22 +122,24 @@ export function computeUndoBaseline(records: ClockHistoryRecord[]): ClockBaselin
 }
 
 /**
- * Pure clock math: derive each side's remaining time (ms) and the active team's
- * flag deadline from the move history. Returns null when the game has no time
- * limit or no history yet.
+ * Derive each side's remaining time (ms) and the active team's flag deadline.
+ * Returns null when no time limit or no history.
  */
 export function computeClockState(
 	records: ClockHistoryRecord[],
-	config: Pick<ClockConfig, "timeLimit" | "timeIncrement">,
+	config: Pick<ClockConfig, "timeLimit" | "timeIncrement"> &
+		Partial<Pick<ClockConfig, "timePerMove">>,
 	nowMs: number
 ): ClockState | null {
 	const { timeLimit } = config
-	if (timeLimit == null || records.length === 0) {
+	// A null, zero, or negative limit means the game is unlimited (no clock).
+	if (timeLimit == null || timeLimit <= 0 || records.length === 0) {
 		return null
 	}
 
 	const budgetMs = timeLimit * 1000
 	const incrementMs = (config.timeIncrement ?? 0) * 1000
+	const perMoveMs = Math.max(0, config.timePerMove ?? 0) * 1000
 	const { spentMs, completedMoves } = deriveSpent(records)
 
 	const last = records[records.length - 1]
@@ -161,12 +157,16 @@ export function computeClockState(
 	}
 
 	const activeBudget = budgetMs + completedMoves[activeTeam] * incrementMs
+	const totalDeadlineMs = turnStartMs + activeBudget - spentMs[activeTeam]
+	const perMoveDeadlineMs = perMoveMs > 0 ? turnStartMs + perMoveMs : Infinity
+	const deadlineMs = Math.min(totalDeadlineMs, perMoveDeadlineMs)
 
 	return {
 		redMs: remainingMs("red"),
 		blackMs: remainingMs("black"),
 		activeTeam,
-		deadlineMs: turnStartMs + activeBudget - spentMs[activeTeam],
+		perMoveRemainingMs: perMoveMs > 0 ? Math.max(0, perMoveMs - inProgressMs) : 0,
+		deadlineMs,
 		serverNow: nowMs
 	}
 }
@@ -190,13 +190,17 @@ export async function computeClock(gameId: string): Promise<ClockSnapshot | null
 		redMs: state.redMs,
 		blackMs: state.blackMs,
 		activeTeam: state.activeTeam,
+		perMoveRemainingMs: state.perMoveRemainingMs,
 		serverNow: state.serverNow,
 		timeLimit: config.timeLimit,
-		timeIncrement: config.timeIncrement
+		timeIncrement: config.timeIncrement,
+		timePerMove: config.timePerMove
 	}
 }
 
-/** Cancel and forget a game's flag timer. Safe to call for unknown games. */
+/**
+ * Cancel and forget a game's flag timer. Safe to call for unknown games.
+ */
 export function stopClock(gameId: string): void {
 	const timer = timers.get(gameId)
 	if (timer) {
@@ -206,9 +210,8 @@ export function stopClock(gameId: string): void {
 }
 
 /**
- * (Re)schedule the flag timer for a game based on its current history, and
- * return the resulting clock snapshot (null when the game is not clocked).
- * Call after the game starts and after every move.
+ * (Re)schedule the flag timer from current history; returns the clock snapshot.
+ * Call after game starts and after every move. Null if game is unclocked.
  */
 export async function armClock(gameId: string): Promise<ClockSnapshot | null> {
 	const config = await fetchConfig(gameId)
@@ -236,16 +239,17 @@ export async function armClock(gameId: string): Promise<ClockSnapshot | null> {
 		redMs: state.redMs,
 		blackMs: state.blackMs,
 		activeTeam: state.activeTeam,
+		perMoveRemainingMs: state.perMoveRemainingMs,
 		serverNow: state.serverNow,
 		timeLimit: config.timeLimit,
-		timeIncrement: config.timeIncrement
+		timeIncrement: config.timeIncrement,
+		timePerMove: config.timePerMove
 	}
 }
 
 /**
- * The active team's flag has (supposedly) fallen. Re-verify against the latest
- * state, then end the game: the opponent wins if they have crossing material,
- * otherwise it is a draw (vi.json result.paragraph4).
+ * Handle a flag fall: re-verify, then end the game.
+ * Opponent wins if they have crossing material; otherwise draw (vi.json result.paragraph4).
  */
 async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 	timers.delete(gameId)
@@ -269,8 +273,9 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			return
 		}
 
-		const activeRemaining = state.activeTeam === "red" ? state.redMs : state.blackMs
-		if (activeRemaining > 0) {
+				// Flag only once the effective deadline has arrived (±250ms tolerance for jitter).
+				// If real time remains, reschedule and bail.
+		if (state.deadlineMs - Date.now() > 250) {
 			await armClock(gameId)
 			return
 		}
@@ -293,7 +298,8 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			team: winnerTeam,
 			time_stamp: getUTCTimestamp(),
 			timeout: loserUserId,
-			winner_id: winnerUserId
+			winner_id: winnerUserId,
+			end_reason: "timeout"
 		})
 
 		const ended = await runEndGameTransaction({
@@ -301,7 +307,8 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			roomId: config.roomId,
 			winnerId: winnerUserId == null ? null : BigInt(winnerUserId),
 			isBotGame: config.pveMode,
-			betAmount: config.betAmount
+			betAmount: config.betAmount,
+			endReason: "timeout"
 		})
 
 		if (ended) {
@@ -327,7 +334,7 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 export async function rehydrateClocks(): Promise<void> {
 	try {
 		const games = await prisma.game.findMany({
-			where: { status: 1, time_limit: { not: null } },
+			where: { status: 1, time_limit: { gt: 0 } },
 			select: { id: true }
 		})
 

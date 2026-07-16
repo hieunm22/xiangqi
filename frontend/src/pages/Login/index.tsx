@@ -33,7 +33,7 @@ export default function LoginPage() {
 	const [message, setMessage] = useState<string | null>(null)
 	const { facebookLogin, googleLogin, login } = useAPI()
 	const navigate = useNavigate()
-	const { refreshAuth } = useAuth()
+	const { markAuthenticated } = useAuth()
 
 	useEffect(() => {
 		// is this check development environment correct?
@@ -64,7 +64,7 @@ export default function LoginPage() {
 
 		setMessage(translate(response.message || "login.form.success"))
 		localStorage.setItem(LS_TOKEN_KEY, response.access_token)
-		await refreshAuth()
+		markAuthenticated()
 		navigate(HOME_PATH)
 	}
 

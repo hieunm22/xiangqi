@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express"
 import { parseUserIdSpec, reconcileAmount } from "job/reconcile-amount"
+import { requireApiKey } from "middleware/api-key"
 import { UserIdSelection } from "types/job.type"
 
 const router = Router()
@@ -14,6 +15,8 @@ const router = Router()
  *       SUM(UserAmountHistory.amount) and overrides any mismatch.
  *     tags:
  *       - Tool
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: false
  *       content:
@@ -56,12 +59,14 @@ const router = Router()
  *                         type: object
  *       400:
  *         description: Invalid user ids
+ *       401:
+ *         description: Invalid or missing API key
  *       404:
  *         description: Malformed userIds spec
  *       500:
  *         description: Internal server error
  */
-router.post("/tool/recalculate-amount", async (req: Request, res: Response) => {
+router.post("/tool/recalculate-amount", requireApiKey(), async (req: Request, res: Response) => {
 	try {
 		const userIdsRaw = req.body?.userIds
 		let selection: UserIdSelection | undefined

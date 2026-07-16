@@ -4,38 +4,10 @@ applyTo: "frontend/src/**/*.{ts,tsx}"
 
 # Frontend Authoring Convention
 
-Rules for authoring frontend types and MUI components. Also see
-`frontend-style.instructions.md` for import/export/destructuring formatting.
-
-## Types and interfaces
-
-Minimize optional (`?`) fields — an optional field forces every consumer to
-handle `undefined` and hides intent. Prefer a required field.
-
-* Do **not** mark a field optional just because it "might not always be set".
-  Make it required and provide a concrete value at the call site.
-* If a field maps to a **nullable database column**, model absence as `| null`
-  (a required field whose value can be `null`), **not** as optional `?`.
-  Keep the field name matching the DB column (usually `snake_case`).
-* Reserve `?` for fields that are genuinely absent from the object in some
-  shapes (e.g. optional React props, discriminated-union variants).
-
-```ts
-// Good — DB-nullable columns are required + nullable, matching the column name
-export interface RoomUser {
-	id: number
-	display_name: string
-	avatar_url: string | null
-	host_id: number | null
-}
-
-// Bad — optional used for values that always exist on the row
-export interface RoomUser {
-	id?: number
-	display_name?: string
-	avatar_url?: string
-}
-```
+Rules for styling MUI components. Authoring types/interfaces (minimize optional
+fields) is a shared frontend + backend rule — see
+`type-modeling.instructions.md`. Import/export/destructuring formatting lives in
+`frontend-style.instructions.md`.
 
 ## MUI components and styling
 

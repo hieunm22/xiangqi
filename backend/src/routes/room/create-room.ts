@@ -1,10 +1,16 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { BOT_USER_ID } from "common/bot-engine"
-import { ACCEPTABLE_TIME_LIMITS } from "common/constant"
+import { leaveRoomEffect } from "common/game/leave-room.helper"
+import {
+	ACCEPTABLE_TIME_INCREMENTS,
+	ACCEPTABLE_TIME_LIMITS,
+	ACCEPTABLE_TIME_PER_MOVE
+} from "common/constant"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomCreated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { Team } from "types/game.type"
 import { CreateRoomRequest } from "types/room.type"
 
 const router = Router()
@@ -51,6 +57,21 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *                 description: Bet amount for the room (valid values - 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000)
  *                 default: 10
  *                 enum: [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
+ *               timeLimit:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Total seconds per player. null/omitted = no clock. Ignored (forced null) in PvE mode.
+ *                 enum: [300, 600, 900, 1200, 1800, 3600]
+ *               timeIncrement:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Seconds added to a player's budget after each completed move (Fischer). 0/null = off. Forced to 0 unless timeLimit is set.
+ *                 enum: [0, 3, 5, 15, 30, 60, 90]
+ *               timePerMove:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Hard cap in seconds for a single move; exceeding it flags the mover. 0/null = off. Forced to 0 unless timeLimit is set.
+ *                 enum: [0, 30, 60, 90, 120, 180]
  *     responses:
  *       201:
  *         description: Room created successfully
@@ -85,6 +106,13 @@ const ACCEPTABLE_BET_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 100
  *                         pve_mode:
  *                           type: boolean
  *                         bet_amount:
+ *                           type: integer
+ *                         time_limit:
+ *                           type: integer
+ *                           nullable: true
+ *                         time_increment:
+ *                           type: integer
+ *                         time_per_move:
  *                           type: integer
  *                         created_at:
  *                           type: string
@@ -125,7 +153,9 @@ router.post(
 			redFirst = true,
 			pveMode = false,
 			betAmount = 10,
-			timeLimit = null
+			timeLimit = null,
+			timeIncrement = null,
+			timePerMove = null
 		} = req.body as CreateRoomRequest
 		const userId = req.auth?.userId
 
@@ -176,8 +206,40 @@ router.post(
 			return
 		}
 
-		// Clock applies to PvP only; PvE rooms never carry a time limit.
+		// Increment/per-move are optional add-ons: null/omitted or 0 means off,
+		// otherwise one of the accepted values.
+		if (
+			timeIncrement !== null &&
+			timeIncrement !== undefined &&
+			timeIncrement !== 0 &&
+			!ACCEPTABLE_TIME_INCREMENTS.includes(timeIncrement)
+		) {
+			res.status(400).json({
+				success: false,
+				message: "create-room.messages.invalid-time-increment",
+				status_code: 400
+			})
+			return
+		}
+
+		if (
+			timePerMove !== null &&
+			timePerMove !== undefined &&
+			timePerMove !== 0 &&
+			!ACCEPTABLE_TIME_PER_MOVE.includes(timePerMove)
+		) {
+			res.status(400).json({
+				success: false,
+				message: "create-room.messages.invalid-time-per-move",
+				status_code: 400
+			})
+			return
+		}
+
+		// Clock applies to PvP only
 		const effectiveTimeLimit = pveMode ? null : (timeLimit ?? null)
+		const effectiveTimeIncrement = effectiveTimeLimit == null ? 0 : (timeIncrement ?? 0)
+		const effectiveTimePerMove = effectiveTimeLimit == null ? 0 : (timePerMove ?? 0)
 
 		// Validate bet amount
 		const isValidBetAmount = pveMode
@@ -213,12 +275,13 @@ router.post(
 				}
 			}
 
-			// Remove existing room_users records for this user
-			await prisma.roomUser.deleteMany({
-				where: {
-					user_id: userIdBigInt
-				}
+			const existingRooms = await prisma.room.findMany({
+				where: { room_users: { some: { user_id: userIdBigInt } } },
+				select: { id: true }
 			})
+			for (const existing of existingRooms) {
+				await leaveRoomEffect(existing.id, userIdBigInt)
+			}
 
 			// Seed only the requester for PvP rooms. Add a bot seat too in PvE mode,
 			// on the team opposite to the requester.
@@ -227,7 +290,7 @@ router.post(
 			]
 			if (pveMode) {
 				// Determine bot team (opposite of user's team)
-				let botTeam: "red" | "black" = "red"
+				let botTeam: Team = "red"
 				if (teamName === "red") {
 					botTeam = "black"
 				}
@@ -242,6 +305,8 @@ router.post(
 					pve_mode: pveMode,
 					bet_amount: betAmount,
 					time_limit: effectiveTimeLimit,
+					time_increment: effectiveTimeIncrement,
+					time_per_move: effectiveTimePerMove,
 					host_id: userIdBigInt,
 					room_users: {
 						create: roomUserSeed
@@ -255,6 +320,8 @@ router.post(
 					pve_mode: true,
 					bet_amount: true,
 					time_limit: true,
+					time_increment: true,
+					time_per_move: true,
 					host_id: true,
 					created_at: true,
 					updated_at: true,

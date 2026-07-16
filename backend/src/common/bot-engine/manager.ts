@@ -18,7 +18,7 @@ class EngineManager {
 		this.engineFactory = engineFactory
 	}
 
-	/** Override the factory in tests to inject a fake. */
+	// Override the factory in tests to inject a fake.
 	setEngineFactory(factory: () => UciEngine): void {
 		this.engineFactory = factory
 	}

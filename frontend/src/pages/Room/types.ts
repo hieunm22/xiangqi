@@ -18,6 +18,8 @@ export interface PieceItemProps {
 	$turn: Team
 	$myTeam?: Team | null
 	$previousMove?: boolean
+	$checking?: boolean
+	$checkedGeneral?: boolean
 	$rotated?: boolean
 
 	$animateEnd?: EmptyVoid
@@ -32,15 +34,19 @@ export interface PlayerInfoCardProps {
 	roomHostId: number | null
 	roomId: number | null
 	remainingMs?: number | null
+	perMoveMs?: number | null
+	timePerMove?: number
 }
 
 export interface ClockSnapshot {
 	redMs: number
 	blackMs: number
 	activeTeam: Team
+	perMoveRemainingMs: number
 	serverNow: number
 	timeLimit: number
 	timeIncrement: number
+	timePerMove: number
 }
 
 export interface RoomUser {
@@ -62,12 +68,15 @@ export interface RoomInfo {
 	id: number
 	name: string
 	status: number
+	game_type: string
 	bet_amount: number
 	team: Team | null
 	red_first: boolean
 	pve_mode: boolean
 	host_id: number | null
 	time_limit: number | null
+	time_increment?: number
+	time_per_move?: number
 }
 
 interface RoomChatInfo {
@@ -87,6 +96,8 @@ export interface RoomWithUsers {
 	users: RoomUser[]
 }
 
+export type VerifyStatus = "ongoing" | "check" | "checkmate" | "stalemate" | "perpetual-check"
+
 export interface GameMovements {
 	_id: string
 	game_id: string
@@ -95,7 +106,12 @@ export interface GameMovements {
 	time_stamp: number
 	capture?: PieceCharacter
 	surrender?: number
+	leave?: number
+	timeout?: number
+	draw?: number
+	winner_id?: number
 	undo?: number
+	end_reason: string
 }
 
 export interface MovePieceRequest {
@@ -115,9 +131,10 @@ export interface VerifyStateResponseData {
 	gameEnded: boolean
 	inCheck: boolean
 	legalMovesCount: number
-	status: "ongoing" | "check" | "checkmate" | "stalemate"
+	status: VerifyStatus
 	checkedTeam: Team
 	winnerId: number | null
+	occurrences: number
 }
 
 export interface HistoryData {

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import wretch, { WretchOptions } from "wretch"
 import FormDataAddon from "wretch/addons/formData"
+import { resolveBackendBaseUrl } from "common/backend-url"
 import { LOGIN_PATH, LS_TOKEN_KEY } from "common/constant"
 import { getLanguage, getToken } from "common/helper"
 import { CreateRoomRequest } from "pages/Dashboard/types"
@@ -118,7 +119,7 @@ let refreshPromise: Promise<string> | null = null
 
 export const useAPI = () => {
 	const navigate = useNavigate()
-	const CLIENT_BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}/api`
+	const CLIENT_BASE_URL = `${resolveBackendBaseUrl()}/api`
 	const wretchOptions: WretchOptions = {
 		credentials: "include",
 		mode: "cors"

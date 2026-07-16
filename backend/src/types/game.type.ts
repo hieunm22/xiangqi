@@ -45,7 +45,7 @@ export interface RequestBotMoveParams {
 	gameId: string
 	projectFen: string
 	redFirst: boolean
-	botTeam: "red" | "black"
+	botTeam: Team
 	difficulty: number
 }
 
@@ -61,6 +61,9 @@ export interface EndGameParams {
 	winnerId: bigint | null
 	isBotGame: boolean
 	betAmount: number | null
+	// Terminal reason (checkmate | stalemate | perpetual-check | timeout |
+	// surrender | draw | leave)
+	endReason: string
 }
 
 export interface UserPresenceStatus {
@@ -81,23 +84,21 @@ export interface ClockConfig {
 	roomId: bigint
 	timeLimit: number | null
 	timeIncrement: number
+	timePerMove: number
 	betAmount: number | null
 	pveMode: boolean
 	participants: ClockParticipant[]
 }
 
-// Accumulated time (ms) and completed-move counts per side at a fixed point in
-// the game. Written onto the move-history record that an undo rewinds to, so the
-// clock can resume the current turn from "now" without re-charging the wall-clock
-// time the undo removed.
+// Clock baseline: accumulated time (ms) and move counts at a fixed point.
+// Stamped on the record an undo rewinds to, so the resumed turn doesn't re-charge undone time.
 export interface ClockBaseline {
 	spentMs: { red: number; black: number }
 	moves: { red: number; black: number }
 }
 
-// A single move-history record reduced to the fields the clock derives from.
-// `baseline`, when present, marks this record as a resume anchor: time spent up
-// to here is taken from the baseline and only later gaps are added on top.
+// Move-history record fields used by the clock.
+// `baseline` marks a resume anchor: only gaps after it are added to the baseline's accumulated time.
 export interface ClockHistoryRecord {
 	team: Team
 	timeStamp: number
@@ -110,6 +111,8 @@ export interface ClockState {
 	redMs: number
 	blackMs: number
 	activeTeam: Team
+	// active team's remaining time for the CURRENT move
+	perMoveRemainingMs: number
 	deadlineMs: number
 	serverNow: number
 }
@@ -120,9 +123,12 @@ export interface ClockSnapshot {
 	redMs: number
 	blackMs: number
 	activeTeam: Team
+	// Active team's remaining time for the current move
+	perMoveRemainingMs: number
 	serverNow: number
 	timeLimit: number
 	timeIncrement: number
+	timePerMove: number
 }
 
 export interface PostGameParticipant {

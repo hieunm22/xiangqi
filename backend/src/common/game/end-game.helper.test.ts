@@ -44,7 +44,8 @@ const PVP_WIN = {
 	roomId: BigInt(100),
 	winnerId: BigInt(11),
 	isBotGame: false,
-	betAmount: 50
+	betAmount: 50,
+	endReason: "checkmate"
 }
 
 describe("runEndGameTransaction", () => {
@@ -132,7 +133,8 @@ describe("runEndGameTransaction", () => {
 			roomId: BigInt(100),
 			winnerId: null,
 			isBotGame: false,
-			betAmount: 0
+			betAmount: 0,
+			endReason: "draw"
 		})
 
 		expect(result).toBe(true)
@@ -152,7 +154,8 @@ describe("runEndGameTransaction", () => {
 			roomId: BigInt(100),
 			winnerId: null,
 			isBotGame: true,
-			betAmount: 0
+			betAmount: 0,
+			endReason: "draw"
 		})
 
 		expect(gameUserUpdateManyMock).toHaveBeenCalledWith({
@@ -169,7 +172,8 @@ describe("runEndGameTransaction", () => {
 			roomId: BigInt(100),
 			winnerId: BigInt(11),
 			isBotGame: true,
-			betAmount: 100
+			betAmount: 100,
+			endReason: "checkmate"
 		})
 
 		expect(result).toBe(true)

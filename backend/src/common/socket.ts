@@ -116,9 +116,8 @@ export function initializeSocket(httpServer: HTTPServer) {
 			console.log(`[Socket.io] [${new Date().toISOString()}] User ${userId} (socket ${socket.id}) registered`)
 		})
 
-		// Presence heartbeat: the client only emits this while it has a visible
-		// tab. Each ping refreshes the user's online timestamp; the first ping
-		// after being offline is broadcast so others can update in real time.
+			// Presence heartbeat: each ping refreshes the user's online timestamp.
+			// The first ping after going offline is broadcast to update other clients.
 		socket.on("presence-ping", async (data: any) => {
 			const userId = typeof data === "object" ? Number(data?.userId) : Number(data)
 			if (!Number.isInteger(userId) || userId <= 0) return
@@ -149,14 +148,11 @@ export function initializeSocket(httpServer: HTTPServer) {
 					if (socketIds.size === 0) {
 						userIdToSocketIds.delete(disconnectedUserId)
 
-						// Auto-leave on socket disconnect disabled for now — was kicking users
-						// out of rooms on transient drops (refresh, brief network loss). Users
-						// must explicitly call /api/room/leave to exit a room.
-						// TODO
+						// Auto-leave on disconnect disabled (was kicking users on transient drops).
+						// Users must explicitly call /api/room/leave to exit. TODO
 
-						// Last tab/socket closed: after a short grace (to absorb refreshes
-						// and brief drops), force the user to "inactive" so they don't keep
-						// showing as online until their heartbeat ages out.
+						// Last socket closed: after a short grace period, force the user "inactive"
+						// so they stop showing as online before the heartbeat ages out.
 						const userId = disconnectedUserId
 						cancelInactiveTimer(userId)
 						const timer = setTimeout(async () => {
@@ -337,9 +333,8 @@ export function emitPrivateMessage(receiverId: number, message: any) {
 }
 
 /**
- * Broadcast a newly sent announcement to every connected client so their
- * announcement badge / open announcement screen can update in real time.
- * Payload carries `userId` (sender) so the sender's own client can ignore it.
+ * Broadcast a new announcement to all clients for real-time badge/screen updates.
+ * Payload includes `userId` so the sender's client can ignore the event.
  */
 export function emitAnnouncement(message: any, senderId: number) {
 	if (!io) {
@@ -385,6 +380,19 @@ export function emitGameEnded(roomId: string | number, data: any) {
 	const roomChannel = `room-${roomId}`
 	io.to(roomChannel).emit("game-ended", { roomId, ...data })
 	console.log(`[Socket.io] [${new Date().toISOString()}] Game ended emitted to ${roomChannel}`)
+}
+
+/**
+ * Emit a perpetual-check warning to all clients in a room.
+ */
+export function emitPerpetualCheckWarning(roomId: string | number, data: any) {
+	if (!io) {
+		console.warn(`[Socket.io] Cannot emit perpetual-check-warning: Socket.io server not initialized`)
+		return
+	}
+
+	const roomChannel = `room-${roomId}`
+	io.to(roomChannel).emit("perpetual-check-warning", { roomId, ...data })
 }
 
 /**

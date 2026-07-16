@@ -14,6 +14,7 @@ export interface ConversationDrawerProps {
 }
 
 export type ProfilePopupContextValue = {
+	currentUser: Users | null
 	profileUser: Users | null
 	setProfileUser: (user: Users | null) => void
 	gameStats: GameStats | null
@@ -62,6 +63,7 @@ export interface HistoryTabProps {
 interface GameHistory {
 	gameId: string
 	ends_at: string | Date | null
+	winner_id: number | null
 }
 
 export interface GameHistoryUser extends UserAvatarType {
@@ -76,7 +78,6 @@ export interface GameHistoryItem {
 
 export interface PlayerAvatarsProps {
 	game: GameHistoryItem
-	userId: number
 }
 
 interface UnreadCountByConversation {

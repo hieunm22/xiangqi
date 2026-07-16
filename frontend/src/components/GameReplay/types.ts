@@ -1,5 +1,3 @@
-import { EmptyVoid, NumberVoid } from "types/Common"
-import { CapturedPieces, NullableCellProps, Team } from "types/GameState"
 import { GameHistoryItem } from "components/Layout/types"
 import { MoveProps } from "pages/Room/types"
 
@@ -8,26 +6,15 @@ export interface GameReplayPopupProps {
 	onClose: () => void
 }
 
-export interface UseReplayArgs {
-	gameId: string | null
-	open: boolean
+export interface ReplayEndInfo {
+	reason: string
+	playerName: string | null
+	playerAvatar: string | null
 }
 
-export interface UseReplayResult {
-	board: NullableCellProps[]
-	capturedPieces: CapturedPieces
-	currentTurn: Team
-	isLoading: boolean
-	isPlaying: boolean
-	previousMove: MoveProps | null
-	redFirst: boolean
-	stepIndex: number
-	stepMs: number
-	totalMoves: number
-
-	goToStep: NumberVoid
-	setStepMs: NumberVoid
-	togglePlay: EmptyVoid
+export interface UseReplayArgs {
+	game: GameHistoryItem | null
+	onEnd: (info: ReplayEndInfo) => void
 }
 
 export interface PendingCommit {

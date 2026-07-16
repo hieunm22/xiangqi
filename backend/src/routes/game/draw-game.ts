@@ -172,7 +172,8 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 			fen: latestRecord[0].fen,
 			team: currentRoomUser.team === "red" ? "black" : "red",
 			draw: Number(userId),
-			time_stamp: getUTCTimestamp()
+			time_stamp: getUTCTimestamp(),
+			end_reason: "draw"
 		})
 
 		const roomWithMode = await prisma.room.findUnique({
@@ -185,7 +186,8 @@ router.post("/game/draw-game", requireAuth(), async (req: AuthenticatedRequest, 
 			roomId: game.room_id,
 			winnerId: null,
 			isBotGame: roomWithMode?.pve_mode ?? false,
-			betAmount: 0
+			betAmount: 0,
+			endReason: "draw"
 		})
 
 		// Game over — clear players' "busy" presence back to their live status.

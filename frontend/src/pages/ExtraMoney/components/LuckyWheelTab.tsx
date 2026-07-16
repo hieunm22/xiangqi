@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import classnames from "classnames"
-import { Box, Stack } from "@mui/material"
+import { Box } from "@mui/material"
 import { LUCKY_WHEEL_SLOT_HOURS } from "common/constant"
 import { TTypography } from "components/TranslationTag"
 import { getTimeToNextSlot, getToken, logger } from "common/helper"
@@ -203,16 +203,14 @@ export default function LuckyWheelTab() {
 				</Box>
 			</Box>
 
-			<Stack spacing={2} sx={{ mt: 4, alignItems: "center", width: "100%" }}>
-				<Box className="bonus-next">
-					<TTypography
-						component="span"
-						variant="h6"
-						content="extra-money.bonus-coin.next-in"
-					/>
-					<span className="bonus-next-time">{formatCountdown(timeLeft)}</span>
-				</Box>
-			</Stack>
+			<Box className="bonus-next">
+				<TTypography
+					component="span"
+					variant="h6"
+					content="extra-money.bonus-coin.next-in"
+				/>
+				<span className="bonus-next-time">{formatCountdown(timeLeft)}</span>
+			</Box>
 		</Box>
 	)
 }

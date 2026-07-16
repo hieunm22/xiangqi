@@ -88,6 +88,8 @@ describe("GET /api/room/fetch-rooms", () => {
 				red_first: true,
 				bet_amount: 50,
 				time_limit: 600,
+				time_increment: 5,
+				time_per_move: 30,
 				host_id: BigInt(12),
 				created_at: new Date("2026-05-12T00:00:00.000Z"),
 				updated_at: new Date("2026-05-12T00:00:00.000Z"),
@@ -128,6 +130,8 @@ describe("GET /api/room/fetch-rooms", () => {
 			red_first: true,
 			bet_amount: 50,
 			time_limit: 600,
+			time_increment: 5,
+			time_per_move: 30,
 			// host is independent of join order (Alice joined first, Bob is host)
 			host_id: 12
 		})
@@ -150,7 +154,7 @@ describe("GET /api/room/fetch-rooms", () => {
 		expect(roomFindManyMock).toHaveBeenCalledTimes(1)
 		expect(roomFindManyMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { is_active: true },
+				where: { is_active: true, game_type: "xiangqi" },
 				orderBy: { created_at: "asc" },
 				select: expect.objectContaining({
 					id: true,
@@ -187,7 +191,7 @@ describe("GET /api/room/fetch-rooms", () => {
 		})
 		expect(roomFindManyMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { is_active: true, status: 2 },
+				where: { is_active: true, game_type: "xiangqi", status: 2 },
 				orderBy: { created_at: "asc" }
 			})
 		)

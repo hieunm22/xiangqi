@@ -3,7 +3,24 @@
 	background-size: cover;
 	background-position: center;
 	background-attachment: fixed;
-	min-height: 100vh;
+	box-sizing: border-box;
+	height: 100vh;
+	height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	&__content {
+		flex: 1;
+		min-height: 0;
+	}
+
+	&__scroll-area {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
 
 	&__title {
 		font-weight: 700 !important;
@@ -49,12 +66,12 @@
 		}
 
 		&.is-available {
-			border: none;
+			border: solid 2px #2e06e2; // dominant solid red border
 		}
 
 		&.is-playing {
 			position: relative;
-			border: solid 3px #e20606; // dominant solid red border
+			border: solid 4px #e20606; // dominant solid red border
 
 			&::before {
 				content: "";

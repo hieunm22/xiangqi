@@ -1,10 +1,3 @@
-// Shared CORS origin rules for both the Express API (app.ts) and the Socket.io
-// server (socket.ts) so HTTP requests and WebSocket handshakes accept the same
-// set of origins. In development we additionally allow any localhost /
-// private-LAN origin on any port, so the app can be opened from a phone or
-// another device via the machine's LAN IP (e.g. http://192.168.1.3:3004)
-// without hardcoding every address. Never relaxed in production.
-
 /**
  * Explicit whitelist from CORS_ORIGINS, plus the Swagger UI origin (same host as
  * the API server) so the docs page can call the API.
@@ -22,7 +15,9 @@ export function getAllowedOrigins(): string[] {
 	return allowedOrigins
 }
 
-/** True for localhost and RFC1918 private-LAN hosts, on any port. */
+/**
+ * True for localhost and RFC1918 private-LAN hosts, on any port.
+ */
 export function isPrivateLanOrigin(requestOrigin: string): boolean {
 	try {
 		const { hostname } = new URL(requestOrigin)
@@ -40,9 +35,8 @@ export function isPrivateLanOrigin(requestOrigin: string): boolean {
 }
 
 /**
- * Whether a request origin is allowed. Server-to-server calls (no origin) and
- * whitelisted origins always pass; localhost/private-LAN origins pass only
- * outside production.
+ * Whether a request origin is allowed.
+ * No-origin and whitelisted origins always pass; LAN origins only outside production.
  */
 export function isOriginAllowed(requestOrigin: string | undefined, allowedOrigins: string[]): boolean {
 	const isDevelopment = process.env.NODE_ENV !== "production"

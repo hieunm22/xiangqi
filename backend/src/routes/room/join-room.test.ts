@@ -1,16 +1,18 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const redisGetMock = vi.fn()
 const roomFindUniqueMock = vi.fn()
+const roomFindManyMock = vi.fn()
 const roomUserDeleteManyMock = vi.fn()
 const roomUserFindUniqueMock = vi.fn()
 const roomUserUpdateMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const roomUserCreateMock = vi.fn()
 const userFindUniqueMock = vi.fn()
+const leaveRoomEffectMock = vi.fn()
 
 const PATH = "/api/room/join"
 
@@ -23,7 +25,8 @@ vi.mock("../../common/redis", () => ({
 vi.mock("prisma", () => ({
 	default: {
 		room: {
-			findUnique: roomFindUniqueMock
+			findUnique: roomFindUniqueMock,
+			findMany: roomFindManyMock
 		},
 		user: {
 			findUnique: userFindUniqueMock
@@ -38,6 +41,12 @@ vi.mock("prisma", () => ({
 	}
 }))
 
+// The route delegates leaving the user's other rooms to this helper (covered by
+// leave-room.test.ts); here we stub it and default the "other rooms" lookup to empty
+vi.mock("../../common/game/leave-room.helper", () => ({
+	leaveRoomEffect: leaveRoomEffectMock
+}))
+
 describe("POST /api/room/join", () => {
 	let app: express.Express
 	let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -50,6 +59,12 @@ describe("POST /api/room/join", () => {
 		app = express()
 		app.use(express.json())
 		app.use("/api", joinRoomRoutes)
+	})
+
+	beforeEach(() => {
+		// By default the user is in no other room, so no cross-room leave happens.
+		roomFindManyMock.mockResolvedValue([])
+		leaveRoomEffectMock.mockResolvedValue("left")
 	})
 
 	afterEach(() => {
@@ -750,5 +765,43 @@ describe("POST /api/room/join", () => {
 			message: "join-room.messages.internal-server-error",
 			status_code: 500
 		})
+	})
+
+	it("leaves the user's other rooms via leaveRoomEffect before joining", async () => {
+		const accessToken = buildAccessToken(41, "session-join-other-rooms")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 41 }))
+		roomFindUniqueMock.mockResolvedValue({ id: BigInt(101), pve_mode: false })
+		roomUserFindUniqueMock.mockResolvedValue(null)
+		// The user is still a member of rooms 202 and 203.
+		roomFindManyMock.mockResolvedValue([{ id: BigInt(202) }, { id: BigInt(203) }])
+		roomUserFindManyMock
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{
+					joined_at: new Date("2026-05-12T00:00:00.000Z"),
+					team: null,
+					users: { id: BigInt(41), display_name: "Alice", avatar_seq: 0, is_bot: false }
+				}
+			])
+		roomUserCreateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101, team: null })
+
+		expect(res.status).toBe(201)
+		// Other-room lookup excludes the room being joined.
+		expect(roomFindManyMock).toHaveBeenCalledWith({
+			where: {
+				id: { not: BigInt(101) },
+				room_users: { some: { user_id: BigInt(41) } }
+			},
+			select: { id: true }
+		})
+		// Each other room is left through the shared leave path.
+		expect(leaveRoomEffectMock).toHaveBeenCalledTimes(2)
+		expect(leaveRoomEffectMock).toHaveBeenCalledWith(BigInt(202), BigInt(41))
+		expect(leaveRoomEffectMock).toHaveBeenCalledWith(BigInt(203), BigInt(41))
 	})
 })

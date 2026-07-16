@@ -34,7 +34,16 @@
 			"title": "Xem lại ván đấu",
 			"no-moves": "Không có nước đi để xem lại",
 			"play": "Phát",
-			"pause": "Tạm dừng"
+			"pause": "Tạm dừng",
+			"end-title": "Ván đấu kết thúc",
+			"reason-checkmate": "{{name}} thắng bằng chiếu bí",
+			"reason-stalemate": "Hết nước đi",
+			"reason-perpetual-check": "{{name}} thắng do đối thủ chiếu tướng liên tục",
+			"reason-surrender": "{{name}} đã đầu hàng",
+			"reason-leave": "{{name}} đã rời trận",
+			"reason-draw": "Hoà",
+			"reason-timeout": "{{name}} đã hết giờ",
+			"reason-ended": "Ván đấu đã kết thúc"
 		}
 	},
 	"menu": {
@@ -120,9 +129,14 @@
 			"red-first": "Đỏ tiên",
 			"pve-mode": "Chơi với máy",
 			"bet-amount": "Giá trị cược",
-			"time-limit": "Thời gian mỗi người",
+			"time-limit": "Giới hạn thời gian",
+			"time-limit-per-player": "Thời gian mỗi người",
 			"time-unlimited": "Không giới hạn",
 			"time-minutes": "{0} phút",
+			"time-seconds": "{0}s",
+			"time-off": "Tắt",
+			"time-increment": "Cộng giờ mỗi nước",
+			"time-per-move": "Thời gian mỗi nước",
 			"room-name-label": "Tên phòng chơi",
 			"room-name-helptext": "không được để trống",
 			"play": "Chơi",
@@ -133,6 +147,7 @@
 		"header": "Cài đặt",
 		"language": "Ngôn ngữ",
 		"dark-mode": "Chế độ tối",
+		"sound": "Âm thanh",
 		"debug-mode": "Chế độ test",
 		"connected-accounts": {
 			"label": "Tài khoản liên kết",
@@ -158,6 +173,10 @@
 		"general": {
 			"captured": "Tướng đã bị bắt. Game kết thúc",
 			"in-check": "Tướng của bạn đang bị chiếu"
+		},
+		"perpetual-check": {
+			"warning-self": "Bạn đang chiếu quẩn, nếu thực hiện 1 nước nữa, bạn sẽ bị xử thua",
+			"warning-sent": "Đã gửi cảnh báo chiếu quẩn cho đối thủ"
 		},
 		"label": {
 			"win": "Thắng",
@@ -201,10 +220,16 @@
 			"confirm-accept-draw": "Đối phương đã chủ hòa, bạn có đồng ý không?",
 			"insufficient-amount": "Bạn không đủ tiền để tham gia bàn chơi này",
 			"will-leave-current-room": "Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại",
-			"all-seats-occupied": "Tất cả ghế chơi đã được chiếm",
 			"game-ended": "Ván đấu đã kết thúc",
 			"you-win": "Bạn đã chiến thắng",
 			"you-lose": "Bạn đã thua",
+			"you-win-perpetual-check": "Bạn thắng vì đối thủ chiếu quẩn",
+			"you-lose-perpetual-check": "Bạn thua do chiếu quẩn",
+			"spectator-win-checkmate": "{0} thắng do chiếu bí",
+			"spectator-win-stalemate": "{0} thắng do đối thủ hết nước đi",
+			"spectator-win-timeout": "{0} thắng do đối thủ hết giờ",
+			"spectator-win-perpetual-check": "{0} thắng do đối thủ chiếu quẩn",
+			"spectator-draw": "Ván đấu kết thúc với tỉ số hòa",
 			"back-to-room": "Quay lại phòng",
 			"auto-back-countdown": "{0}. Bấm nút quay lại để quay lại room. Bạn sẽ tự động quay lại trong {1}s"
 		},
@@ -371,6 +396,8 @@
 			"internal-server-error": "Lỗi máy chủ nội bộ khi tạo phòng",
 			"invalid-bet-amount": "Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận",
 			"invalid-time-limit": "Thời gian không hợp lệ",
+			"invalid-time-increment": "Thời gian cộng mỗi nước không hợp lệ",
+			"invalid-time-per-move": "Thời gian mỗi nước không hợp lệ",
 			"invalid-redFirst": "'redFirst' phải là giá trị boolean",
 			"invalid-team-name": "Tên đội phải là 'red', 'black' hoặc null",
 			"name-required": "Tên phòng (tableName) là bắt buộc và không được để trống",
@@ -490,6 +517,8 @@
 			"internal-server-error": "Lỗi máy chủ nội bộ",
 			"invalid-room-id": "ID phòng không hợp lệ",
 			"invalid-time-limit": "Thời gian không hợp lệ",
+			"invalid-time-increment": "Thời gian cộng mỗi nước không hợp lệ",
+			"invalid-time-per-move": "Thời gian mỗi nước không hợp lệ",
 			"name-required": "Tên phòng không được để trống",
 			"room-not-found": "Không tìm thấy phòng",
 			"forbidden": "Bạn không phải chủ phòng"
@@ -525,6 +554,7 @@
 			"game-not-found": "Không tìm thấy trò chơi",
 			"not-in-game": "Bạn không phải là người chơi trong trò chơi này",
 			"not-in-room": "Bạn không trong phòng này",
+			"pve-only": "Hoàn tác chỉ khả dụng trong phòng PvE",
 			"spectator-cannot-undo": "Người xem không thể hoàn tác nước đi",
 			"no-moves": "Không có nước đi để hoàn tác",
 			"delete-failed": "Không thể hoàn tác nước đi",

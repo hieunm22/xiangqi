@@ -363,6 +363,127 @@ describe("DELETE /api/room/leave", () => {
 		)
 	})
 
+	it("prefers the seated opponent over an earlier-joined spectator when the host leaves", async () => {
+		const accessToken = buildAccessToken(51, "session-leave-host-priority")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			pve_mode: false,
+			status: 1,
+			bet_amount: 100,
+			host_id: BigInt(51)
+		})
+		// Join order: host (t0) → spectator (t1) → opponent (t2). The spectator joined
+		// before the opponent, but the seated opponent must still receive the host role.
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				joined_at: new Date("2026-05-26T00:00:00.000Z"),
+				team: "red",
+				user_id: BigInt(51),
+				users: { id: BigInt(51), display_name: "Host", avatar_seq: 0, total_amount: undefined, is_bot: false }
+			},
+			{
+				joined_at: new Date("2026-05-26T00:00:01.000Z"),
+				team: null,
+				user_id: BigInt(77),
+				users: { id: BigInt(77), display_name: "Spectator", avatar_seq: 2, total_amount: undefined, is_bot: false }
+			},
+			{
+				joined_at: new Date("2026-05-26T00:00:02.000Z"),
+				team: "black",
+				user_id: BigInt(52),
+				users: { id: BigInt(52), display_name: "Player B", avatar_seq: 1, total_amount: undefined, is_bot: false }
+			}
+		])
+		gameFindFirstMock.mockResolvedValue(null)
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomUserCountMock.mockResolvedValue(2)
+		roomUpdateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.delete(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(200)
+		// Host goes to the seated opponent (52), not the earlier-joined spectator (77)
+		expect(roomUpdateMock).toHaveBeenCalledWith({
+			where: { id: BigInt(101) },
+			data: { host_id: BigInt(52) }
+		})
+		expect(emitRoomUsersUpdatedMock).toHaveBeenCalledWith(
+			101,
+			[
+				{
+					id: 77,
+					display_name: "Spectator",
+					avatar_seq: 2,
+					avatar_url: "/images/77_2.jpg",
+					team: null,
+					total_amount: undefined,
+					is_bot: false,
+					joined_at: new Date("2026-05-26T00:00:01.000Z")
+				},
+				{
+					id: 52,
+					display_name: "Player B",
+					avatar_seq: 1,
+					avatar_url: "/images/52_1.jpg",
+					team: "black",
+					total_amount: undefined,
+					is_bot: false,
+					joined_at: new Date("2026-05-26T00:00:02.000Z")
+				}
+			],
+			52
+		)
+		expect(emitRoomDeletedMock).not.toHaveBeenCalled()
+	})
+
+	it("deactivates the room and clears host when only a bot remains after the host leaves", async () => {
+		const accessToken = buildAccessToken(51, "session-leave-host-nobody")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
+		roomFindUniqueMock.mockResolvedValue({
+			id: BigInt(101),
+			pve_mode: false,
+			status: 1,
+			bet_amount: 100,
+			host_id: BigInt(51)
+		})
+		// Host is a spectator (team null); the only other member is the bot, which can
+		// never be host → the room must be deactivated and host cleared.
+		roomUserFindManyMock.mockResolvedValue([
+			{
+				joined_at: new Date("2026-05-26T00:00:00.000Z"),
+				team: null,
+				user_id: BigInt(51),
+				users: { id: BigInt(51), display_name: "Host", avatar_seq: 0, total_amount: undefined, is_bot: false }
+			},
+			{
+				joined_at: new Date("2026-05-26T00:00:01.000Z"),
+				team: "black",
+				user_id: BigInt(999),
+				users: { id: BigInt(999), display_name: "Bot", avatar_seq: 0, total_amount: undefined, is_bot: true }
+			}
+		])
+		roomUserDeleteManyMock.mockResolvedValue({ count: 1 })
+		roomUserCountMock.mockResolvedValue(1)
+		roomUpdateMock.mockResolvedValue({})
+
+		const res = await request(app)
+			.delete(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ id: 101 })
+
+		expect(res.status).toBe(200)
+		expect(roomUpdateMock).toHaveBeenCalledWith({
+			where: { id: BigInt(101) },
+			data: { host_id: null, is_active: false }
+		})
+		expect(emitRoomDeletedMock).toHaveBeenCalledWith(101)
+		expect(emitRoomUsersUpdatedMock).not.toHaveBeenCalled()
+	})
+
 	it("does not promote spectator when a player leaves", async () => {
 		const accessToken = buildAccessToken(51, "session-leave-3c")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 51 }))
@@ -509,7 +630,8 @@ describe("DELETE /api/room/leave", () => {
 			roomId: BigInt(101),
 			winnerId: BigInt(999),
 			isBotGame: true,
-			betAmount: 100
+			betAmount: 100,
+			endReason: "leave"
 		})
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-uuid-1", false)
 		expect(roomUserDeleteManyMock).toHaveBeenCalledWith({

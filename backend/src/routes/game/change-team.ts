@@ -4,7 +4,7 @@ import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { ChangeTeamRequest } from "types/game.type"
+import { ChangeTeamRequest, Team } from "types/game.type"
 
 const router = Router()
 
@@ -160,7 +160,7 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 			return
 		}
 
-		let newTeam: "red" | "black" | null
+		let newTeam: Team | null
 
 		if (isLeaveToSeat) {
 			newTeam = null
@@ -212,11 +212,10 @@ router.post("/game/change-team", requireAuth(), async (req: AuthenticatedRequest
 				}
 			}
 
-			const oppositeTeam: "red" | "black" = host.team === "red" ? "black" : "red"
+			const oppositeTeam: Team = host.team === "red" ? "black" : "red"
 
-			// Return 400 if opposite seat is already occupied by another user (covers both
-			// the "opposite seat taken" and "both seats taken" cases, since the host always
-			// occupies one seat at this point)
+				// Return 400 if the opposite seat is already taken by another user.
+				// (Covers both "opposite taken" and "both taken" since host occupies one seat.)
 			const seatOccupied = roomUsers.some(
 				u => u.team === oppositeTeam && u.user_id !== userIdBigInt
 			)

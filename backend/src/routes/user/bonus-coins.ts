@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { AmountHistoryType } from "common/enums"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
 
 const router = Router()
@@ -9,8 +10,6 @@ const router = Router()
 const BONUS_REWARDS = [800, 900, 1000, 1100, 1200, 1300, 2000]
 const TOTAL_TREASURES = BONUS_REWARDS.length
 const SLOT_HOURS = 8
-// userAmountHistory.type for bonus-coin rewards (lucky wheel uses 1).
-const BONUS_COIN_HISTORY_TYPE = 2
 
 /**
  * Return the most recent 8-hour boundary (00:00, 08:00, 16:00 UTC) at or
@@ -203,7 +202,7 @@ router.post("/user/bonus-coins-claim", requireAuth(), async (req: AuthenticatedR
 				data: {
 					user_id: BigInt(userId),
 					amount: reward,
-					type: BONUS_COIN_HISTORY_TYPE,
+					type: AmountHistoryType.BonusCoin,
 					created_at: new Date()
 				}
 			})

@@ -1,10 +1,9 @@
 import { fenToBoard } from "common/board-helper"
-import { GameStateStatus } from "types/game.type"
+import { GameStateStatus, Team } from "types/game.type"
 
 const BOARD_COLUMNS = 9
 const BOARD_ROWS = 10
 
-type Team = "red" | "black"
 type BoardState = ReturnType<typeof fenToBoard>
 type BoardCell = BoardState[number]
 

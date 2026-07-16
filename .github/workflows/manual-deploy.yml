@@ -32,11 +32,23 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DEPLOY_BRANCH,INSTALL_DEPS
+          envs: DEPLOY_BRANCH,INSTALL_DEPS,SERVER_IP,JWT_SECRET,GOOGLE_APP_PASSWORD,GOOGLE_CLIENT_ID,FACEBOOK_APP_ID,AD_TAG_URL,FACEBOOK_APP_SECRET,REDIS_PASSWORD,MONGO_PASSWORD,AWS_ACCESS_ID,AWS_SECRET_KEY,TOOL_API_KEY
           script_path: .github/workflows/full-deploy.sh
         env:
           DEPLOY_BRANCH: ${{ github.ref_name }}
           INSTALL_DEPS: ${{ inputs.install_deps }}
+          SERVER_IP: ${{ vars.SERVER_IP }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_APP_PASSWORD: ${{ secrets.GOOGLE_APP_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          FACEBOOK_APP_ID: ${{ vars.FACEBOOK_APP_ID }}
+          AD_TAG_URL: ${{ vars.AD_TAG_URL }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          AWS_ACCESS_ID: ${{ secrets.AWS_ACCESS_ID }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          TOOL_API_KEY: ${{ secrets.TOOL_API_KEY }}
 
       - name: Backend deploy
         if: ${{ inputs.target == 'Backend' }}
@@ -46,11 +58,23 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DEPLOY_BRANCH,INSTALL_DEPS
+          envs: DEPLOY_BRANCH,INSTALL_DEPS,SERVER_IP,JWT_SECRET,GOOGLE_APP_PASSWORD,GOOGLE_CLIENT_ID,FACEBOOK_APP_ID,AD_TAG_URL,FACEBOOK_APP_SECRET,REDIS_PASSWORD,MONGO_PASSWORD,AWS_ACCESS_ID,AWS_SECRET_KEY,TOOL_API_KEY
           script_path: .github/workflows/be-deploy.sh
         env:
           DEPLOY_BRANCH: ${{ github.ref_name }}
           INSTALL_DEPS: ${{ inputs.install_deps }}
+          SERVER_IP: ${{ vars.SERVER_IP }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_APP_PASSWORD: ${{ secrets.GOOGLE_APP_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          FACEBOOK_APP_ID: ${{ vars.FACEBOOK_APP_ID }}
+          AD_TAG_URL: ${{ vars.AD_TAG_URL }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          AWS_ACCESS_ID: ${{ secrets.AWS_ACCESS_ID }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          TOOL_API_KEY: ${{ secrets.TOOL_API_KEY }}
 
       - name: Frontend deploy
         if: ${{ inputs.target == 'Frontend' }}
@@ -60,11 +84,23 @@ jobs:
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DEPLOY_BRANCH,INSTALL_DEPS
+          envs: DEPLOY_BRANCH,INSTALL_DEPS,SERVER_IP,JWT_SECRET,GOOGLE_APP_PASSWORD,GOOGLE_CLIENT_ID,FACEBOOK_APP_ID,AD_TAG_URL,FACEBOOK_APP_SECRET,REDIS_PASSWORD,MONGO_PASSWORD,AWS_ACCESS_ID,AWS_SECRET_KEY,TOOL_API_KEY
           script_path: .github/workflows/fe-deploy.sh
         env:
           DEPLOY_BRANCH: ${{ github.ref_name }}
           INSTALL_DEPS: ${{ inputs.install_deps }}
+          SERVER_IP: ${{ vars.SERVER_IP }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_APP_PASSWORD: ${{ secrets.GOOGLE_APP_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          FACEBOOK_APP_ID: ${{ vars.FACEBOOK_APP_ID }}
+          AD_TAG_URL: ${{ vars.AD_TAG_URL }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          AWS_ACCESS_ID: ${{ secrets.AWS_ACCESS_ID }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          TOOL_API_KEY: ${{ secrets.TOOL_API_KEY }}
 
   notify:
     needs: deploy

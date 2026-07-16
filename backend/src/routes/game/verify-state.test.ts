@@ -13,10 +13,12 @@ import { INITIAL_FEN_BLACK_TOP } from "common/constant"
 
 const redisGetMock = vi.fn()
 const evaluateTeamStateMock = vi.fn()
+const evaluatePerpetualCheckMock = vi.fn()
 const runEndGameTransactionMock = vi.fn()
 const activatePostGameLockMock = vi.fn()
 const syncPlayersPresenceMock = vi.fn()
 const emitGameEndedMock = vi.fn()
+const emitPerpetualCheckWarningMock = vi.fn()
 const findGameHistoryMock = vi.fn()
 const sortGameHistoryMock = vi.fn()
 const limitGameHistoryMock = vi.fn()
@@ -39,6 +41,10 @@ vi.mock("common/game/state-evaluator", () => ({
 	evaluateTeamState: evaluateTeamStateMock
 }))
 
+vi.mock("common/game/perpetual-check.helper", () => ({
+	evaluatePerpetualCheck: evaluatePerpetualCheckMock
+}))
+
 vi.mock("common/game/end-game.helper", () => ({
 	runEndGameTransaction: runEndGameTransactionMock
 }))
@@ -56,7 +62,8 @@ vi.mock("common/mongodb", () => ({
 }))
 
 vi.mock("common/socket", () => ({
-	emitGameEnded: emitGameEndedMock
+	emitGameEnded: emitGameEndedMock,
+	emitPerpetualCheckWarning: emitPerpetualCheckWarningMock
 }))
 
 vi.mock("common/game/game-clock", () => ({
@@ -99,6 +106,7 @@ describe("POST /api/game/verify-state", () => {
 			legalMovesCount: 1,
 			status: "check"
 		})
+		evaluatePerpetualCheckMock.mockResolvedValue({ status: "none", occurrencesCount: 1 })
 		runEndGameTransactionMock.mockResolvedValue(true)
 		activatePostGameLockMock.mockResolvedValue(undefined)
 		syncPlayersPresenceMock.mockResolvedValue(undefined)
@@ -282,6 +290,141 @@ describe("POST /api/game/verify-state", () => {
 		expect(stopClockMock).not.toHaveBeenCalled()
 	})
 
+	it("ends the game on perpetual check with the checked side as the winner", async () => {
+		resetRouteMocks()
+		// A plain check (not checkmate), but detected as perpetual check.
+		evaluateTeamStateMock.mockReturnValue({
+			inCheck: true,
+			legalMovesCount: 3,
+			status: "check"
+		})
+		evaluatePerpetualCheckMock.mockResolvedValue({ status: "loss", occurrencesCount: 4 })
+		toArrayGameHistoryMock.mockResolvedValue([{ _id: "mongo-last-id-perpetual" }])
+
+		const accessToken = buildAccessToken(91, "session-verify-state-perpetual")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-3",
+			room_id: 13n,
+			room: {
+				bet_amount: 150,
+				pve_mode: false,
+				red_first: true
+			}
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: 201n, team: "red" },
+			{ user_id: 202n, team: "black" }
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-3",
+				newFen: "4g4/9/4r4/9/9/9/9/9/9/4G4",
+				checkedTeam: "black"
+			})
+
+		expect(res.status).toBe(200)
+		// The checked side (black) wins; the perpetual checker (red) loses.
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "game-3",
+			roomId: 13n,
+			winnerId: 202n,
+			isBotGame: false,
+			betAmount: 150,
+			endReason: "perpetual-check"
+		})
+		expect(emitGameEndedMock).toHaveBeenCalledWith(13, {
+			gameId: "game-3",
+			status: "perpetual-check",
+			winnerId: 202
+		})
+		expect(stopClockMock).toHaveBeenCalledWith("game-3")
+		expect(res.body.data).toMatchObject({
+			gameEnded: true,
+			status: "perpetual-check",
+			winnerId: 202,
+			checkedTeam: "black"
+		})
+	})
+
+	it("warns both sides (no game end) when perpetual check reaches the warning stage", async () => {
+		resetRouteMocks()
+		evaluateTeamStateMock.mockReturnValue({
+			inCheck: true,
+			legalMovesCount: 3,
+			status: "check"
+		})
+		evaluatePerpetualCheckMock.mockResolvedValue({ status: "warning", occurrencesCount: 3 })
+
+		const accessToken = buildAccessToken(91, "session-verify-state-warning")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-5",
+			room_id: 15n,
+			room: { bet_amount: 100, pve_mode: false, red_first: true }
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-5",
+				newFen: "4g4/9/4r4/9/9/9/9/9/9/4G4",
+				checkedTeam: "black"
+			})
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toMatchObject({
+			gameEnded: false,
+			status: "check",
+			occurrences: 3
+		})
+		// Offender is the checker (red); the checked side is black.
+		expect(emitPerpetualCheckWarningMock).toHaveBeenCalledWith(15, {
+			gameId: "game-5",
+			offenderTeam: "red",
+			checkedTeam: "black"
+		})
+		expect(runEndGameTransactionMock).not.toHaveBeenCalled()
+		expect(stopClockMock).not.toHaveBeenCalled()
+	})
+
+	it("does not end the game on a check that is not perpetual", async () => {
+		resetRouteMocks()
+		evaluateTeamStateMock.mockReturnValue({
+			inCheck: true,
+			legalMovesCount: 2,
+			status: "check"
+		})
+		evaluatePerpetualCheckMock.mockResolvedValue({ status: "none", occurrencesCount: 1 })
+
+		const accessToken = buildAccessToken(91, "session-verify-state-not-perpetual")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-4",
+			room_id: 14n,
+			room: { bet_amount: 100, pve_mode: false, red_first: true }
+		})
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-4",
+				newFen: "4g4/9/4r4/9/9/9/9/9/9/4G4",
+				checkedTeam: "black"
+			})
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toMatchObject({ gameEnded: false, status: "check", occurrences: 1 })
+		expect(runEndGameTransactionMock).not.toHaveBeenCalled()
+		expect(emitPerpetualCheckWarningMock).not.toHaveBeenCalled()
+		expect(stopClockMock).not.toHaveBeenCalled()
+	})
+
 	it("ends the game on checkmate, updates latest history winner_id and emits game-ended", async () => {
 		resetRouteMocks()
 		evaluateTeamStateMock.mockReturnValue({
@@ -322,11 +465,12 @@ describe("POST /api/game/verify-state", () => {
 			roomId: 11n,
 			winnerId: 91n,
 			isBotGame: false,
-			betAmount: 100
+			betAmount: 100,
+			endReason: "checkmate"
 		})
 		expect(updateOneGameHistoryMock).toHaveBeenCalledWith(
 			{ _id: "mongo-last-id" },
-			{ $set: { winner_id: 91 } }
+			{ $set: { winner_id: 91, end_reason: "checkmate" } }
 		)
 		expect(emitGameEndedMock).toHaveBeenCalledWith(11, {
 			gameId: "game-1",
@@ -384,11 +528,12 @@ describe("POST /api/game/verify-state", () => {
 			roomId: 12n,
 			winnerId: 102n,
 			isBotGame: false,
-			betAmount: 200
+			betAmount: 200,
+			endReason: "stalemate"
 		})
 		expect(updateOneGameHistoryMock).toHaveBeenCalledWith(
 			{ _id: "mongo-last-id-stalemate" },
-			{ $set: { winner_id: 102 } }
+			{ $set: { winner_id: 102, end_reason: "stalemate" } }
 		)
 		expect(emitGameEndedMock).toHaveBeenCalledWith(12, {
 			gameId: "game-2",

@@ -1,32 +1,64 @@
 import { ChangeEvent, useEffect, useState } from "react"
+import classnames from "classnames"
 import {
-	Dialog,
+	CircularProgress,
 	DialogContent,
 	DialogTitle,
 	Divider,
 	Grid,
-	Button,
-	CircularProgress,
-	Switch
+	Switch,
 } from "@mui/material"
 import {
 	COUNTRIES_OPTIONS,
 	LS_DARKMODE,
 	LS_DEBUG,
-	LS_LANGUAGE
+	LS_LANGUAGE,
+	LS_SOUND
 } from "common/constant"
 import { PopupState } from "common/enums"
+import { ResponsiveDialog } from "components/ResponsiveDialog"
 import { TButton, TSpan, TTypography } from "components/TranslationTag"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
 import { useFacebookAuth } from "hooks/useFacebookAuth"
 import useToolkit from "hooks/useToolkit"
 import i18n from "locales/i18n"
-import { translate } from "locales/translate"
 import { setPopup } from "toolkit/slice/game"
-import { setDebug, setDarkMode, setLanguage } from "toolkit/slice/home"
+import {
+	setDebug,
+	setDarkMode,
+	setLanguage,
+	setSoundEnabled
+} from "toolkit/slice/home"
 
 const FACEBOOK_PROVIDER = "facebook"
+
+type SwitchWithIconsProps = {
+	checked: boolean
+	onChange: (e: ChangeEvent<HTMLElement>) => void
+	offIcon: string
+	onIcon: string
+}
+
+const SwitchWithIcons = ({ checked, onChange, offIcon, onIcon }: SwitchWithIconsProps) => {
+	const leftIconClass = classnames("switch-icon", "fas", offIcon, {
+		"switch-icon-active": !checked
+	})
+	const rightIconClass = classnames("switch-icon", "fas", onIcon, {
+		"switch-icon-active": checked
+	})
+	return (
+		<div className="switch-with-icons">
+			<i className={leftIconClass} />
+			<Switch
+				className="ios-switch"
+				checked={checked}
+				onChange={onChange}
+			/>
+			<i className={rightIconClass} />
+		</div>
+	)
+}
 
 export const SettingsPopup = () => {
 	const { state, gameState, dispatch } = useToolkit()
@@ -47,8 +79,11 @@ export const SettingsPopup = () => {
 		const savedLang = localStorage.getItem(LS_LANGUAGE) || "en"
 		dispatch(setLanguage(savedLang))
 
-		const debugMode = localStorage.getItem(LS_DEBUG) === "1"
+		const debugMode = localStorage.getItem(LS_DEBUG) === "on"
 		dispatch(setDebug(debugMode))
+
+		const soundEnabled = localStorage.getItem(LS_SOUND) === "on"
+		dispatch(setSoundEnabled(soundEnabled))
 	}, [])
 
 	// Refresh linked-provider status each time the dialog opens.
@@ -127,9 +162,16 @@ export const SettingsPopup = () => {
 
 	const toogleDebugMode = (e: ChangeEvent<HTMLElement>) => {
 		e.stopPropagation()
-		const isDebugMode = localStorage.getItem(LS_DEBUG) === "1"
+		const isDebugMode = localStorage.getItem(LS_DEBUG) === "on"
 		dispatch(setDebug(!isDebugMode))
-		localStorage.setItem(LS_DEBUG, isDebugMode ? "0" : "1")
+		localStorage.setItem(LS_DEBUG, isDebugMode ? "off" : "on")
+	}
+
+	const toogleSound = (e: ChangeEvent<HTMLElement>) => {
+		e.stopPropagation()
+		const soundEnabled = localStorage.getItem(LS_SOUND) === "on"
+		dispatch(setSoundEnabled(!soundEnabled))
+		localStorage.setItem(LS_SOUND, soundEnabled ? "off" : "on")
 	}
 
 	const handleLanguageChange = (languageCode: string) => {
@@ -146,8 +188,13 @@ export const SettingsPopup = () => {
 		}
 	}
 
+	const linkFbText = isFacebookLinked
+		? "settings.connected-accounts.unlink-facebook"
+		: "settings.connected-accounts.link-facebook"
+
 	return (
-		<Dialog
+		<ResponsiveDialog
+			drawerAnchor="top"
 			open={gameState.popupState === PopupState.SETTINGS}
 			onClose={handleCloseSettings}
 			className="settings-dialog"
@@ -162,7 +209,7 @@ export const SettingsPopup = () => {
 					<TTypography className="setting-label" content="settings.language" />
 					<Grid container className="setting-options-grid">
 						{COUNTRIES_OPTIONS.map(option => (
-							<Button
+							<TButton
 								key={option.key}
 								variant={state.lang === option.key ? "contained" : "outlined"}
 								disabled={option.disabled}
@@ -177,32 +224,42 @@ export const SettingsPopup = () => {
 									)
 								}
 								size="small"
-							>
-								{option.value}
-							</Button>
+								value={option.value}
+							/>
 						))}
 					</Grid>
 				</Grid>
 				<Grid container className="setting-row">
 					<TTypography className="setting-label-fixed" content="settings.dark-mode" />
-					<Switch
-						className="ios-switch"
+					<SwitchWithIcons
 						checked={state.darkMode}
 						onChange={toogleDarkMode}
+						offIcon="fa-sun"
+						onIcon="fa-moon"
+					/>
+				</Grid>
+				<Grid container className="setting-row">
+					<TTypography className="setting-label-fixed" content="settings.sound" />
+					<SwitchWithIcons
+						checked={state.soundEnabled}
+						onChange={toogleSound}
+						offIcon="fa-volume-xmark"
+						onIcon="fa-volume-high"
 					/>
 				</Grid>
 				<Grid container className="setting-row">
 					<TTypography className="setting-label-fixed" content="settings.debug-mode" />
-					<Switch
-						className="ios-switch"
+					<SwitchWithIcons
 						checked={state.debugMode}
 						onChange={toogleDebugMode}
+						offIcon="fa-bug-slash"
+						onIcon="fa-bug"
 					/>
 				</Grid>
 				{isFacebookConfigured && (
 					<Grid container className="setting-row setting-row-aligned">
 						<TTypography className="setting-label" content="settings.connected-accounts.label" />
-						<Button
+						<TButton
 							variant={isFacebookLinked ? "outlined" : "contained"}
 							color={isFacebookLinked ? "error" : "primary"}
 							size="small"
@@ -211,11 +268,8 @@ export const SettingsPopup = () => {
 							startIcon={facebookLoading
 								? <CircularProgress size={16} color="inherit" />
 								: <i className="fab fa-facebook-f" />}
-						>
-							{translate(isFacebookLinked
-								? "settings.connected-accounts.unlink-facebook"
-								: "settings.connected-accounts.link-facebook")}
-						</Button>
+							value={linkFbText}
+						/>
 						{facebookFeedback && (
 							<TSpan className="setting-feedback" content={facebookFeedback} />
 						)}
@@ -230,8 +284,9 @@ export const SettingsPopup = () => {
 					size="small"
 					onClick={closeSettings}
 					value="settings.close"
+					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</Grid>
-		</Dialog>
+		</ResponsiveDialog>
 	)
 }

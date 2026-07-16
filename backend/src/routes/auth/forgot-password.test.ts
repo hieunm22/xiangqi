@@ -41,9 +41,9 @@ const buildApp = async (options?: { appEmail?: string; appPassword?: string }) =
 
 	process.env.APP_EMAIL = options?.appEmail ?? "noreply@example.com"
 	if (typeof options?.appPassword === "string") {
-		process.env.APP_PASSWORD = options.appPassword
+		process.env.GOOGLE_APP_PASSWORD = options.appPassword
 	} else {
-		delete process.env.APP_PASSWORD
+		delete process.env.GOOGLE_APP_PASSWORD
 	}
 
 	const { default: forgotPasswordRoutes } = await import("./forgot-password")

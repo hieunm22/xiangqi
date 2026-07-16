@@ -5,6 +5,7 @@ const initialState: ReduxState = {
 	darkMode: false,
 	lang: "en",
 	debugMode: false,
+	soundEnabled: true,
 }
 
 const homeSlice = createSlice({
@@ -20,6 +21,9 @@ const homeSlice = createSlice({
 		setLanguage: (state, body: PayloadAction<string>) => {
 			state.lang = body.payload
 		},
+		setSoundEnabled: (state, body: PayloadAction<boolean>) => {
+			state.soundEnabled = body.payload
+		},
 	},
 })
 
@@ -27,6 +31,7 @@ export const {
 	setDarkMode,
 	setDebug,
 	setLanguage,
+	setSoundEnabled,
 } = homeSlice.actions
 
 const { reducer } = homeSlice

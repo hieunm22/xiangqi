@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 const redisGetMock = vi.fn()
 const userFindUniqueMock = vi.fn()
 const userUpdateMock = vi.fn()
+const PATH = "/api/user/selected-tab"
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -49,7 +50,7 @@ describe("selected-tab routes", () => {
 
 	describe("GET /api/user/selected-tab", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).get("/api/user/selected-tab")
+			const res = await request(app).get(PATH)
 
 			expect(res.status).toBe(401)
 			expect(res.body).toMatchObject({
@@ -66,7 +67,7 @@ describe("selected-tab routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.get("/api/user/selected-tab")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(404)
@@ -83,7 +84,7 @@ describe("selected-tab routes", () => {
 			userFindUniqueMock.mockResolvedValue({ selected_tab: 2 })
 
 			const res = await request(app)
-				.get("/api/user/selected-tab")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -96,7 +97,7 @@ describe("selected-tab routes", () => {
 			userFindUniqueMock.mockResolvedValue({ selected_tab: 5 })
 
 			const res = await request(app)
-				.get("/api/user/selected-tab")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -111,7 +112,7 @@ describe("selected-tab routes", () => {
 			userFindUniqueMock.mockResolvedValue({ selected_tab: -1 })
 
 			const res = await request(app)
-				.get("/api/user/selected-tab")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -125,7 +126,7 @@ describe("selected-tab routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("Database connection error"))
 
 			const res = await request(app)
-				.get("/api/user/selected-tab")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(500)
@@ -140,7 +141,7 @@ describe("selected-tab routes", () => {
 
 	describe("PATCH /api/user/selected-tab", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).patch("/api/user/selected-tab").send({ tab: 1 })
+			const res = await request(app).patch(PATH).send({ tab: 1 })
 
 			expect(res.status).toBe(401)
 			expect(res.body).toMatchObject({
@@ -156,7 +157,7 @@ describe("selected-tab routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 6 }))
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({})
 
@@ -170,7 +171,7 @@ describe("selected-tab routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 7 }))
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ tab: 1.5 })
 
@@ -183,7 +184,7 @@ describe("selected-tab routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 8 }))
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ tab: -1 })
 
@@ -196,7 +197,7 @@ describe("selected-tab routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 9 }))
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ tab: 3 })
 
@@ -210,7 +211,7 @@ describe("selected-tab routes", () => {
 			userUpdateMock.mockResolvedValue({ selected_tab: 2 })
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ tab: 2 })
 
@@ -229,7 +230,7 @@ describe("selected-tab routes", () => {
 			userUpdateMock.mockRejectedValue(new Error("Database connection error"))
 
 			const res = await request(app)
-				.patch("/api/user/selected-tab")
+				.patch(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ tab: 1 })
 

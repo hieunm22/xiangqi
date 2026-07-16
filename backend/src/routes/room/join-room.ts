@@ -1,9 +1,11 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { leaveRoomEffect } from "common/game/leave-room.helper"
 import { decorateRoomUsersWithBackReady } from "common/game/post-game.helper"
 import { getAvatarUrl, getUTCNow } from "common/helper"
 import { emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { Team } from "types/game.type"
 import { JoinRoomRequest } from "types/room.type"
 
 const router = Router()
@@ -150,15 +152,16 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 		}
 		const now = getUTCNow()
 
-		// Remove user from all other rooms to ensure single-room participation
-		await prisma.roomUser.deleteMany({
+		const otherRooms = await prisma.room.findMany({
 			where: {
-				user_id: userIdBigInt,
-				room_id: {
-					not: roomId
-				}
-			}
+				id: { not: roomId },
+				room_users: { some: { user_id: userIdBigInt } }
+			},
+			select: { id: true }
 		})
+		for (const other of otherRooms) {
+			await leaveRoomEffect(other.id, userIdBigInt)
+		}
 
 		const existingRoomUser = await prisma.roomUser.findUnique({
 			where: {
@@ -169,7 +172,7 @@ router.post("/room/join", requireAuth(), async (req: AuthenticatedRequest, res: 
 			}
 		})
 
-		let assignedTeam: "red" | "black" | null = null
+		let assignedTeam: Team | null = null
 
 		if (!room.pve_mode) {
 			const existingMembers = await prisma.roomUser.findMany({

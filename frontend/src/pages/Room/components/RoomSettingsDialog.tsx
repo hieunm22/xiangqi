@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import {
 	Box,
-	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
@@ -9,8 +8,9 @@ import {
 	Grid,
 } from "@mui/material"
 import { openAlert } from "components/AlertProvider/helper"
-import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import { BotDifficultySlider } from "components/BotDifficulty/Slider"
+import { ResponsiveDialog } from "components/ResponsiveDialog"
+import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import { UserAvatarGroup } from "pages/Dashboard/components/UserAvatar"
 import { getToken } from "common/helper"
 import { useAPI } from "hooks/useAPI"
@@ -96,7 +96,8 @@ const RoomSettingsDialog = () => {
 	if (!room) return null
 
 	return (
-		<Dialog
+		<ResponsiveDialog
+			drawerAnchor="bottom"
 			open={isOpen}
 			onClose={handleDialogClose}
 			disableEnforceFocus
@@ -127,6 +128,20 @@ const RoomSettingsDialog = () => {
 					<Grid className="room-time-limit">
 						<i className="far fa-clock" />
 						{translate("dashboard.popup.time-minutes").format(room.time_limit / 60)}
+					</Grid>
+				)}
+				{!!room.time_increment && (
+					<Grid className="room-time-limit">
+						<i className="far fa-circle-plus" />
+						{translate("dashboard.popup.time-increment")}:{" "}
+						{translate("dashboard.popup.time-seconds").format(room.time_increment)}
+					</Grid>
+				)}
+				{!!room.time_per_move && (
+					<Grid className="room-time-limit">
+						<i className="far fa-stopwatch" />
+						{translate("dashboard.popup.time-per-move")}:{" "}
+						{translate("dashboard.popup.time-seconds").format(room.time_per_move)}
 					</Grid>
 				)}
 				{game && game.bot_difficulty !== null && (
@@ -167,7 +182,7 @@ const RoomSettingsDialog = () => {
 					value="popup.confirm.cancel"
 				/>
 			</DialogActions>
-		</Dialog>
+		</ResponsiveDialog>
 	)
 }
 

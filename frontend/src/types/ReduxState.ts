@@ -2,6 +2,7 @@ export interface ReduxState {
 	darkMode: boolean
 	lang: string
 	debugMode: boolean
+	soundEnabled: boolean
 }
 
 export interface GameState {
@@ -10,5 +11,6 @@ export interface GameState {
 	roomHostId: number | null
 	inviteRoomId: number | null
 	currentRoomId: number | null
+	isCurrentRoomPlayer: boolean
 	isInGame: boolean
 }

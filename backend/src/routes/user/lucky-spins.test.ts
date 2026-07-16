@@ -2,11 +2,15 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { AmountHistoryType } from "common/enums"
 
 const redisGetMock = vi.fn()
 const userFindUniqueMock = vi.fn()
 const userUpdateMock = vi.fn()
 const userAmountHistoryCreateMock = vi.fn()
+const PATH = "/api/user/lucky-spins"
+const CLAIM_PATH = "/api/user/lucky-spins-claim"
+const SPIN_PATH = "/api/user/lucky-spin"
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -68,7 +72,7 @@ describe("lucky-spins routes", () => {
 
 	describe("GET /api/user/lucky-spins", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).get("/api/user/lucky-spins")
+			const res = await request(app).get(PATH)
 
 			expect(res.status).toBe(401)
 			expect(res.body).toMatchObject({
@@ -85,7 +89,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.get("/api/user/lucky-spins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(404)
@@ -102,7 +106,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ lucky_spins: 2, lucky_claimed_at: null })
 
 			const res = await request(app)
-				.get("/api/user/lucky-spins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -115,7 +119,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ lucky_spins: 1, lucky_claimed_at: OLD_SLOT })
 
 			const res = await request(app)
-				.get("/api/user/lucky-spins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -132,7 +136,7 @@ describe("lucky-spins routes", () => {
 			})
 
 			const res = await request(app)
-				.get("/api/user/lucky-spins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -146,7 +150,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("db error"))
 
 			const res = await request(app)
-				.get("/api/user/lucky-spins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(500)
@@ -161,7 +165,7 @@ describe("lucky-spins routes", () => {
 
 	describe("POST /api/user/lucky-spins-claim", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).post("/api/user/lucky-spins-claim")
+			const res = await request(app).post(CLAIM_PATH)
 
 			expect(res.status).toBe(401)
 			expect(userUpdateMock).not.toHaveBeenCalled()
@@ -173,7 +177,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.post("/api/user/lucky-spins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(404)
@@ -188,7 +192,7 @@ describe("lucky-spins routes", () => {
 			userUpdateMock.mockResolvedValue({ lucky_spins: 5 })
 
 			const res = await request(app)
-				.post("/api/user/lucky-spins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -213,7 +217,7 @@ describe("lucky-spins routes", () => {
 			})
 
 			const res = await request(app)
-				.post("/api/user/lucky-spins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -228,7 +232,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("db error"))
 
 			const res = await request(app)
-				.post("/api/user/lucky-spins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(500)
@@ -238,7 +242,7 @@ describe("lucky-spins routes", () => {
 
 	describe("POST /api/user/lucky-spin", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).post("/api/user/lucky-spin").send({ amount: 100 })
+			const res = await request(app).post(SPIN_PATH).send({ amount: 100 })
 
 			expect(res.status).toBe(401)
 			expect(userUpdateMock).not.toHaveBeenCalled()
@@ -249,7 +253,7 @@ describe("lucky-spins routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 9 }))
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({})
 
@@ -264,7 +268,7 @@ describe("lucky-spins routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 9 }))
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: null })
 
@@ -279,7 +283,7 @@ describe("lucky-spins routes", () => {
 			redisGetMock.mockResolvedValue(JSON.stringify({ userId: 9 }))
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: 12.5 })
 
@@ -295,7 +299,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: 100 })
 
@@ -310,7 +314,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ lucky_spins: 0 })
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: 100 })
 
@@ -328,7 +332,7 @@ describe("lucky-spins routes", () => {
 			userUpdateMock.mockResolvedValue({ lucky_spins: 2 })
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: 150 })
 
@@ -339,7 +343,7 @@ describe("lucky-spins routes", () => {
 					data: {
 						user_id: BigInt(11),
 						amount: 150,
-						type: 1,
+						type: AmountHistoryType.LuckyWheel,
 						created_at: expect.any(Date)
 					}
 				})
@@ -362,7 +366,7 @@ describe("lucky-spins routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("db error"))
 
 			const res = await request(app)
-				.post("/api/user/lucky-spin")
+				.post(SPIN_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 				.send({ amount: 100 })
 

@@ -31,8 +31,6 @@ model User {
   hosted_rooms          Room[]                 @relation("RoomHost")
   won_games             Game[]                 @relation("Game_winner")
   game_users            GameUser[]
-  surrendered_histories GameHistory[]          @relation("GameHistory_surrender")
-  undone_histories      GameHistory[]          @relation("GameHistory_undo")
   announcement_reads    UserAnnouncementRead[]
   user_amount_histories UserAmountHistory[]
   identities            UserIdentity[]
@@ -74,11 +72,13 @@ model Room {
   id         BigInt     @id @default(autoincrement())
   name       String
   status     Int        @db.SmallInt
+  game_type  String     @default("xiangqi") @db.VarChar(16)
   red_first  Boolean    @default(true)
   pve_mode   Boolean    @default(false)
   bet_amount Int        @default(10)
   time_limit     Int?
   time_increment Int    @default(0)
+  time_per_move  Int    @default(0)
   host_id    BigInt?
   created_at DateTime   @default(now()) @db.Timestamptz(6)
   updated_at DateTime   @default(now()) @db.Timestamptz(6)
@@ -110,34 +110,17 @@ model Game {
   winner_id      BigInt?       @db.BigInt
   status         Int           @default(0) @db.SmallInt
   bot_difficulty Int?          @db.SmallInt
+  game_type      String        @default("xiangqi") @db.VarChar(16)
   time_limit     Int?
   time_increment Int           @default(0)
+  time_per_move  Int           @default(0)
   room           Room          @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   winner         User?         @relation("Game_winner", fields: [winner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   starts_at      DateTime      @default(now()) @db.Timestamptz(6)
   ends_at        DateTime?
   game_users     GameUser[]
-  game_histories GameHistory[]
 
   @@map("games")
-  @@schema("game")
-}
-
-model GameHistory {
-  id           BigInt  @id @default(autoincrement())
-  game_id      String  @db.Uuid
-  fen          String
-  team         String
-  capture      String?
-  time_stamp   Int
-  surrender_id BigInt?
-  undo_id      BigInt?
-  games        Game    @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  surrenders   User?   @relation("GameHistory_surrender", fields: [surrender_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  undoes       User?   @relation("GameHistory_undo", fields: [undo_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-
-  @@index([game_id])
-  @@map("game_history")
   @@schema("game")
 }
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import {
-	Dialog,
 	DialogContent,
 	DialogTitle,
 	Divider,
@@ -11,8 +10,9 @@ import {
 import { PopupState } from "common/enums"
 import { openAlert } from "components/AlertProvider/helper"
 import { GameReplayPopup } from "components/GameReplay"
-import { HistoryTab, ProfileAchievement, ProfileTab } from "./ProfileTabs"
+import { ResponsiveDialog } from "components/ResponsiveDialog"
 import { TButton, TTab } from "components/TranslationTag"
+import { HistoryTab, ProfileAchievement, ProfileTab } from "./ProfileTabs"
 import {
 	getCurrentUserId,
 	getToken,
@@ -182,7 +182,8 @@ export const ProfilePopup = () => {
 		&& (gameState.popupState & PopupState.SEND_PM) !== PopupState.SEND_PM
 
 	return (
-		<Dialog
+		<ResponsiveDialog
+			drawerAnchor="top"
 			open={profileOpen}
 			onClose={handleCloseProfilePopup}
 			className="profile-dialog"
@@ -281,6 +282,6 @@ export const ProfilePopup = () => {
 				/>
 			</Grid>
 			<GameReplayPopup game={replayGame} onClose={() => setReplayGame(null)} />
-		</Dialog>
+		</ResponsiveDialog>
 	)
 }

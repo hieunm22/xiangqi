@@ -53,7 +53,7 @@ export const MessageInput = (props: MessageInputProps) => {
 	const sendClass = classnames("fas fa-paper-plane message-send-icon", { disabled })
 
 	return (
-		<Box className="message-input-row">
+		<Box className="message-input-row" sx={{ backgroundColor: "background.paper" }}>
 			<TTextField
 				id={inputId}
 				name="message-input"

@@ -6,10 +6,10 @@ import {
 	Divider,
 	Grid,
 } from "@mui/material"
+import { TButton, TTypography } from "components/TranslationTag"
+import { setAlertHandler } from "./helper"
 import { ComponentWithChild, ConfirmProps } from "types/Common"
 import { AlertQueueItem } from "./types"
-import { setAlertHandler } from "./helper"
-import { TButton, TTypography } from "components/TranslationTag"
 import "./AlertProvider.scss"
 
 export const AlertProvider = (props: ComponentWithChild) => {
@@ -108,11 +108,14 @@ export const AlertProvider = (props: ComponentWithChild) => {
 				</DialogTitle>
 				<Divider className="divider" />
 				<DialogContent>
-					<TTypography className="alert-message" content={getAlertMessage()} />
+					<div className="alert-message-row">
+						{current?.options.icon}
+						<TTypography className="alert-message" content={getAlertMessage()} />
+					</div>
 					<Grid container className="button-container">
 						<TButton
 							className="btn btn-primary center"
-							variant="contained"
+							variant="outlined"
 							size="small"
 							onClick={onOk}
 							value={current?.options.okLabel ?? "settings.close"}

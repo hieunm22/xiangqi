@@ -40,13 +40,20 @@ import {
 	UpdateUserInfoResponse
 } from "../types"
 
-const getClassNameForScore = (game: GameHistoryItem) => {
-	if (game.amount > 0) {
-		return "game-score win"
-	} else if (game.amount < 0) {
-		return "game-score lose"
+type GameResult = "win" | "lose" | "draw"
+
+const getGameResult = (game: GameHistoryItem, userId: number | null): GameResult => {
+	const winnerId = game.game.winner_id
+	if (winnerId === null || !userId) {
+		return "draw"
 	}
-	return "game-score draw"
+	return winnerId === userId ? "win" : "lose"
+}
+
+const RESULT_ICON: Record<GameResult, string> = {
+	win: "fas fa-trophy",
+	lose: "fas fa-flag",
+	draw: "fas fa-handshake history-handshake"
 }
 
 export const ProfileTab = ({ user }: ProfileTabProps) => {
@@ -373,6 +380,7 @@ export const HistoryTab = (props: HistoryTabProps) => {
 						const [dateLabel, timeLabel] = item.game.ends_at
 							? formatTimestampToDateTimeArray(String(item.game.ends_at), state.lang)
 							: [null, ""]
+						const result = getGameResult(item, gameState.activeUserId)
 						return (
 							<Paper
 								key={item.game.gameId}
@@ -391,11 +399,11 @@ export const HistoryTab = (props: HistoryTabProps) => {
 									</Typography>
 								</Box>
 								<Box className="game-history-content">
-									<PlayerAvatars game={item} userId={gameState.activeUserId!} />
-									<span className={getClassNameForScore(item)}>
+									<PlayerAvatars game={item} />
+									<span className={`game-score ${result}`}>
 										{item.amount !== 0
 											? item.amount.toLocaleString(state.lang)
-											: <i className="fas fa-handshake history-handshake" />}
+											: <i className={RESULT_ICON[result]} />}
 									</span>
 								</Box>
 							</Paper>

@@ -1,3 +1,5 @@
+import { Team } from "./game.type"
+
 export interface CreateRoomRequest {
 	tableName: string
 	teamName: string | null
@@ -5,6 +7,8 @@ export interface CreateRoomRequest {
 	pveMode: boolean
 	betAmount: number
 	timeLimit?: number | null
+	timeIncrement?: number | null
+	timePerMove?: number | null
 }
 
 export enum RoomStatus {
@@ -16,7 +20,7 @@ interface RoomRequestBase {
 	id: number
 }
 
-export type JoinRoomTeam = "red" | "black" | null
+export type JoinRoomTeam = Team | null
 
 export interface JoinRoomRequest extends RoomRequestBase {
 	team?: JoinRoomTeam

@@ -3,19 +3,15 @@ import { DifficultyConfig } from "./difficulty"
 import { DEFAULT_ENGINE_PATH, ENGINE_MOVE_TIMEOUT_MS } from "./constants"
 
 /**
- * Thin async wrapper around a fairy-stockfish UCI child process.
- *
- * Spawns one process per instance, runs UCI handshake, sets the xiangqi variant, and
- * exposes `findBestMove(fen, config)` for issuing search requests.
- *
- * Not designed for concurrent calls — callers must await each `findBestMove` before
- * the next. The manager ensures one engine per game so this is naturally serial.
+ * Thin async wrapper around a fairy-stockfish UCI process for xiangqi.
+ * Exposes `findBestMove(fen, config)`; not concurrent — one call at a time.
  */
 export class UciEngine {
 	private process: ChildProcessWithoutNullStreams | null = null
 	private stdoutBuffer = ""
 	private listeners: Array<(line: string) => void> = []
 	private currentSkillLevel: number | null = null
+	private currentMultiPV: number | null = null
 	private readonly enginePath: string
 
 	constructor(enginePath: string = DEFAULT_ENGINE_PATH) {
@@ -44,11 +40,8 @@ export class UciEngine {
 			throw new Error("UciEngine.init() must be called before findBestMove")
 		}
 
-		if (this.currentSkillLevel !== config.skillLevel) {
-			this.writeLine(`setoption name Skill Level value ${config.skillLevel}`)
-			this.currentSkillLevel = config.skillLevel
-		}
-
+		this.applySkillLevel(config)
+		this.applyMultiPV(1)
 		this.writeLine(`position fen ${standardFen}`)
 
 		const goCmd = `go depth ${config.depth} movetime ${config.movetimeMs}`
@@ -59,6 +52,80 @@ export class UciEngine {
 			return null
 		}
 		return move
+	}
+
+	/**
+	 * Like `findBestMove` but returns up to `multipv` ranked alternatives (MultiPV).
+	 * Used to avoid losing moves (e.g. perpetual check). Returns [] if no legal moves.
+	 */
+	async findBestMoves(standardFen: string, config: DifficultyConfig, multipv: number): Promise<string[]> {
+		if (!this.process) {
+			throw new Error("UciEngine.init() must be called before findBestMoves")
+		}
+
+		this.applySkillLevel(config)
+		this.applyMultiPV(Math.max(1, multipv))
+		this.writeLine(`position fen ${standardFen}`)
+
+		const goCmd = `go depth ${config.depth} movetime ${config.movetimeMs}`
+		return this.collectRankedMoves(goCmd)
+	}
+
+	private applySkillLevel(config: DifficultyConfig): void {
+		if (this.currentSkillLevel !== config.skillLevel) {
+			this.writeLine(`setoption name Skill Level value ${config.skillLevel}`)
+			this.currentSkillLevel = config.skillLevel
+		}
+	}
+
+	private applyMultiPV(value: number): void {
+		if (this.currentMultiPV !== value) {
+			this.writeLine(`setoption name MultiPV value ${value}`)
+			this.currentMultiPV = value
+		}
+	}
+
+	/**
+	 * Run a `go` command and collect the best move from each `multipv` PV,
+	 * ranked best-first, resolving on the terminal `bestmove` line.
+	 */
+	private collectRankedMoves(goCmd: string): Promise<string[]> {
+		return new Promise((resolve, reject) => {
+			const bestByRank = new Map<number, string>()
+			const timer = setTimeout(() => {
+				this.detach(listener)
+				reject(new Error(`UCI command '${goCmd}' timed out after ${ENGINE_MOVE_TIMEOUT_MS}ms`))
+			}, ENGINE_MOVE_TIMEOUT_MS)
+
+			const listener = (line: string) => {
+				if (line.startsWith("info")) {
+					const rankMatch = line.match(/\bmultipv (\d+)\b/)
+					const pvMatch = line.match(/\bpv (\S+)/)
+					if (rankMatch && pvMatch) {
+						bestByRank.set(Number(rankMatch[1]), pvMatch[1])
+					}
+					return
+				}
+				if (line.startsWith("bestmove")) {
+					clearTimeout(timer)
+					this.detach(listener)
+					const ranked = [...bestByRank.entries()]
+						.sort((a, b) => a[0] - b[0])
+						.map(entry => entry[1])
+						.filter(move => move !== "(none)" && move !== "0000")
+					if (ranked.length === 0) {
+						// No `info multipv` lines seen — fall back to the bestmove line.
+						const move = line.trim().split(/\s+/)[1]
+						if (move && move !== "(none)" && move !== "0000") {
+							ranked.push(move)
+						}
+					}
+					resolve(ranked)
+				}
+			}
+			this.listeners.push(listener)
+			this.writeLine(goCmd)
+		})
 	}
 
 	async quit(): Promise<void> {
@@ -96,8 +163,8 @@ export class UciEngine {
 	}
 
 	/**
-	 * Send a UCI command and wait for a line that satisfies `until`. If `until` is
-	 * omitted the promise resolves immediately after the write.
+	 * Send a UCI command and wait for a line satisfying `until`.
+	 * Resolves immediately if `until` is omitted.
 	 */
 	private send(cmd: string, until?: (line: string) => boolean): Promise<string> {
 		return new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { fenToBoard } from "common/board-helper"
+import { fenToBoard, parseFenCounters, toStandardFen } from "common/board-helper"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { armClock, computeClock } from "common/game/game-clock"
 import { getGameHistoryCollection } from "common/mongodb"
@@ -79,8 +79,33 @@ const router = Router()
  *                       description: Present only when a piece is captured
  *                     _id:
  *                       type: string
+ *                     clock:
+ *                       type: object
+ *                       nullable: true
+ *                       description: Countdown snapshot after this move; null when the game is not clocked.
+ *                       properties:
+ *                         redMs:
+ *                           type: integer
+ *                         blackMs:
+ *                           type: integer
+ *                         activeTeam:
+ *                           type: string
+ *                           enum: [red, black]
+ *                         perMoveRemainingMs:
+ *                           type: integer
+ *                         serverNow:
+ *                           type: integer
+ *                         timeLimit:
+ *                           type: integer
+ *                         timeIncrement:
+ *                           type: integer
+ *                         timePerMove:
+ *                           type: integer
  *       400:
- *         description: Invalid request (invalid game id, invalid fen, invalid team, invalid capture piece, or game history not found)
+ *         description: >-
+ *           Invalid request (invalid game id, invalid fen, invalid team, invalid capture piece,
+ *           or game history not found). Also returned as move-piece.messages.time-expired when the
+ *           moving player has already run out of time.
  *       401:
  *         description: Unauthorized (missing, invalid, or expired token)
  *       500:
@@ -192,10 +217,16 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		// Calculate next team (toggle)
 		const nextTeam = team === "red" ? "black" : "red"
 
+		// Persist the standard 6-field FEN
+		const prevCounters = parseFenCounters(latestRecord[0].fen)
+		const halfmove = capturePiece ? 0 : prevCounters.halfmove + 1
+		const fullmove = team === "black" ? prevCounters.fullmove + 1 : prevCounters.fullmove
+		const standardFen = toStandardFen(newFen, nextTeam, halfmove, fullmove)
+
 		// Insert new record
 		const newRecord: any = {
 			game_id: gameId,
-			fen: newFen,
+			fen: standardFen,
 			team: nextTeam,
 			time_stamp: getUTCTimestamp()
 		}
@@ -207,17 +238,6 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 		}
 
 		const insertResult = await collection.insertOne(newRecord)
-
-		// Also save to PostgreSQL for test data
-		await prisma.gameHistory.create({
-			data: {
-				game_id: gameId,
-				fen: newFen,
-				team: nextTeam,
-				capture: capturePiece ? (team === "red" ? capturePiece.toUpperCase() : capturePiece.toLowerCase()) : null,
-				time_stamp: getUTCTimestamp()
-			}
-		})
 
 		// Reschedule the flag timer for the next player and snapshot the clock
 		const clock = await armClock(gameId)

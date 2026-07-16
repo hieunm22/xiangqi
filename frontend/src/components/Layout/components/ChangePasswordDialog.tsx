@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import classnames from "classnames"
 import {
-	Dialog,
 	DialogContent,
 	DialogTitle,
 	Divider,
@@ -9,6 +8,7 @@ import {
 	Stack
 } from "@mui/material"
 import { PopupState } from "common/enums"
+import { ResponsiveDialog } from "components/ResponsiveDialog"
 import { getToken } from "common/helper"
 import { isPasswordPolicyMet } from "common/password"
 import { openSnackbar } from "components/SnackbarProvider/helper"
@@ -126,7 +126,8 @@ export const ChangePasswordDialog = () => {
 	)
 
 	return (
-		<Dialog
+		<ResponsiveDialog
+			drawerAnchor="top"
 			open={isOpen}
 			onClose={handleClose}
 			className="change-password-dialog"
@@ -219,6 +220,6 @@ export const ChangePasswordDialog = () => {
 					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</Grid>
-		</Dialog>
+		</ResponsiveDialog>
 	)
 }

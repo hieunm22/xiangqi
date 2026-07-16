@@ -11,6 +11,8 @@ export const INITIAL_FEN_BLACK_BOTTOM = "rheagaehr/9/1c5c1/s1s1s1s1s/9/9/S1S1S1S
 export const INITIAL_AMOUNT = 200
 
 export const ACCEPTABLE_TIME_LIMITS = [300, 600, 900, 1200, 1800, 3600]
+export const ACCEPTABLE_TIME_INCREMENTS = [3, 5, 15, 30, 60, 90]
+export const ACCEPTABLE_TIME_PER_MOVE = [30, 60, 90, 120, 180]
 
 export const ACCESS_TOKEN_EXPIRES_IN = "1h"
 export const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60

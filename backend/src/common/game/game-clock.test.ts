@@ -72,6 +72,7 @@ const setConfig = (overrides: Record<string, unknown> = {}) => {
 		room_id: BigInt(101),
 		time_limit: 60,
 		time_increment: 0,
+		time_per_move: 0,
 		room: { bet_amount: 50, pve_mode: false },
 		game_users: [
 			{ user_id: BigInt(11), team: "red" },
@@ -91,6 +92,39 @@ describe("computeClockState", () => {
 
 	it("returns null when there is no history", () => {
 		expect(computeClockState([], { timeLimit: 60, timeIncrement: 0 }, BASE_MS)).toBeNull()
+	})
+
+	it("treats a zero (or negative) time limit as unlimited, not an instant flag", () => {
+		const records: ClockHistoryRecord[] = [{ team: "red", timeStamp: T0, fen: "x" }]
+		expect(computeClockState(records, { timeLimit: 0, timeIncrement: 0 }, BASE_MS)).toBeNull()
+		expect(computeClockState(records, { timeLimit: -5, timeIncrement: 0 }, BASE_MS)).toBeNull()
+	})
+
+	it("exposes the active team's per-move remaining and caps the deadline by it", () => {
+		const records: ClockHistoryRecord[] = [{ team: "red", timeStamp: T0, fen: "x" }]
+		// 15min total, 60s per move: 20s into the move -> 40s left on the move cap,
+		// and the flag deadline is the per-move cap (T0+60s), not the far-off total.
+		const state = computeClockState(
+			records,
+			{ timeLimit: 900, timeIncrement: 0, timePerMove: 60 },
+			(T0 + 20) * 1000
+		)
+
+		expect(state?.perMoveRemainingMs).toBe(40_000)
+		expect(state?.redMs).toBe(880_000) // total still counts down independently
+		expect(state?.deadlineMs).toBe(T0 * 1000 + 60_000) // capped by per-move
+	})
+
+	it("keeps the total-time deadline when it is sooner than the per-move cap", () => {
+		// Only 5s of total left but a 60s per-move cap -> total wins the deadline.
+		const records: ClockHistoryRecord[] = [{ team: "red", timeStamp: T0, fen: "x" }]
+		const state = computeClockState(
+			records,
+			{ timeLimit: 5, timeIncrement: 0, timePerMove: 60 },
+			(T0 + 1) * 1000
+		)
+		expect(state?.deadlineMs).toBe(T0 * 1000 + 5_000)
+		expect(state?.perMoveRemainingMs).toBe(59_000)
 	})
 
 	it("counts down the active team's clock from the last move timestamp", () => {
@@ -232,6 +266,42 @@ describe("game-clock flag timer", () => {
 
 		const snapshot = await armClock(GAME_ID)
 		expect(snapshot).toBeNull()
+	})
+
+	it("does not flag a zero-limit game (treated as unlimited, no instant draw)", async () => {
+		setConfig({ time_limit: 0 })
+		setHistory([{ team: "red", time_stamp: T0, fen: "4G4/9/9/9/9/9/9/9/9/4g4" }])
+
+		const snapshot = await armClock(GAME_ID)
+		expect(snapshot).toBeNull()
+
+		await vi.advanceTimersByTimeAsync(60_000)
+		expect(runEndGameTransactionMock).not.toHaveBeenCalled()
+		expect(emitGameEndedMock).not.toHaveBeenCalled()
+	})
+
+	it("flags on the per-move cap even when total time remains", async () => {
+		// 15min total but only 30s per move; red sits -> flags at 30s. Red has no
+		// crossing material, so it is a draw (winnerId null).
+		setConfig({ time_limit: 900, time_per_move: 30 })
+		setHistory([{ team: "red", time_stamp: T0, fen: "4G4/9/9/9/9/9/9/9/9/4g4" }])
+
+		const snapshot = await armClock(GAME_ID)
+		expect(snapshot).toMatchObject({
+			activeTeam: "red",
+			perMoveRemainingMs: 30_000,
+			timePerMove: 30,
+			redMs: 900_000
+		})
+
+		await vi.advanceTimersByTimeAsync(30_000)
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith(
+			expect.objectContaining({ gameId: GAME_ID, winnerId: null })
+		)
+		expect(emitGameEndedMock).toHaveBeenCalledWith(
+			101,
+			expect.objectContaining({ gameId: GAME_ID, status: "timeout", isDraw: true })
+		)
 	})
 
 	it("returns a snapshot and flags the active team when time runs out", async () => {

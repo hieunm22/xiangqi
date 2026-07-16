@@ -1,5 +1,5 @@
 import classnames from "classnames"
-import { BOARD_COLUMNS, BOARD_ROWS } from "common/constant"
+import { BOARD_COLUMNS, BOARD_ROWS, LS_SOUND } from "common/constant"
 import { fenPieceMap } from "./constant"
 import { getAvailableMoves } from "common/helper"
 import { NullableCellProps, Piece, PieceCharacter, Team } from "types/GameState"
@@ -30,6 +30,10 @@ export function playSound(url: string) {
 	if (typeof Audio === "undefined") {
 		return
 	}
+	// Don't play sound if it's disabled.
+	if (localStorage.getItem(LS_SOUND) === "off") {
+		return
+	}
 	if (!soundCache[url]) {
 		soundCache[url] = new Audio(url)
 	}
@@ -40,9 +44,8 @@ export function playSound(url: string) {
 }
 
 /**
- * Scans a single line from `from` in the given `step` direction.
- * In chariot mode: adds all empty squares and the first enemy piece.
- * In cannon mode: adds empty squares before the screen, then only an enemy piece after it.
+ * Scan moves in one direction from `from` using `step`.
+ * Chariot: all empty squares + first enemy. Cannon: empties before screen, then enemy after.
  */
 export function scanLine(
 	gameState: NullableCellProps[],
@@ -173,7 +176,8 @@ export function findCheckingPieces(board: NullableCellProps[], team: Team): numb
 }
 
 export function fenToBoard(fen: string): NullableCellProps[] {
-	const rows = fen.trim().split("/")
+	// Tolerate both board-only and full 6-field FENs: take the placement field only.
+	const rows = fen.trim().split(/\s+/)[0].split("/")
 	if (rows.length !== BOARD_ROWS) {
 		throw new Error(`Invalid FEN row count: expected ${BOARD_ROWS}, got ${rows.length}`)
 	}
@@ -251,7 +255,9 @@ export function boardToFen(board: NullableCellProps[]): string {
 	return rows.join("/")
 }
 
-/** CSS classes for an intersection marker at the given column/row. */
+/**
+ * CSS classes for an intersection marker at the given column/row.
+ */
 export function markerClass(col: number, row: number): string {
 	return classnames("marker", {
 		"left-edge": col === 0,
@@ -269,7 +275,9 @@ export function getMoveDirection(redFirst: boolean, turn: Team): -1 | 1 {
 	return turn === bottomTeam ? -1 : 1
 }
 
-/** Split the two players into top/bottom seats based on which side moves first. */
+/**
+ * Split the two players into top/bottom seats based on which side moves first.
+ */
 export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): PieceSideUser {
 	const bottomTeam: Team = redFirst ? "red" : "black"
 	const bottomUser = joinedUsers.find(ju => ju.team === bottomTeam) ?? null
@@ -280,7 +288,9 @@ export function resolveSideUsers(joinedUsers: RoomUser[], redFirst: boolean): Pi
 	}
 }
 
-/** Return a new board with the piece at `fromId` moved to `toId`. */
+/**
+ * Return a new board with the piece at `fromId` moved to `toId`.
+ */
 export function applyMove(board: NullableCellProps[], fromId: number, toId: number) {
 	const next = [...board]
 	const moving = next[fromId]!

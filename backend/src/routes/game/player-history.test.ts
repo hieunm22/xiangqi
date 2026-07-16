@@ -177,16 +177,16 @@ describe("GET /api/game/player-history", () => {
 				user_id: BigInt(1),
 				amount: 10,
 				team: "red",
-				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
-				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0) }
+				games: { ends_at: new Date("2025-01-10T10:00:00Z"), winner_id: BigInt(1) },
+				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0), is_bot: false }
 			},
 			{
 				game_id: "game-1",
 				user_id: BigInt(2),
 				amount: -10,
 				team: "black",
-				games: { ends_at: new Date("2025-01-10T10:00:00Z") },
-				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(1) }
+				games: { ends_at: new Date("2025-01-10T10:00:00Z"), winner_id: BigInt(1) },
+				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(1), is_bot: false }
 			}
 		])
 
@@ -203,7 +203,8 @@ describe("GET /api/game/player-history", () => {
 				{
 					game: {
 						gameId: "game-1",
-						ends_at: expect.any(String)
+						ends_at: expect.any(String),
+						winner_id: 1
 					},
 					amount: 10,
 					users: expect.arrayContaining([
@@ -386,5 +387,100 @@ describe("GET /api/game/player-history", () => {
 		// game-1 (older) should come second
 		expect(res.body.data[1].game.gameId).toBe("game-1")
 		expect(res.body.data[1].amount).toBe(10)
+	})
+
+	// A PvE game between user 1 (human) and the bot. The human won, so the game's
+	// winner_id is the human even though amount stays null (no coin stake).
+	const botGameRows = [
+		{
+			game_id: "bot-game-1",
+			user_id: BigInt(1),
+			amount: null,
+			team: "red",
+			games: { ends_at: new Date("2025-02-01T10:00:00Z"), winner_id: BigInt(1) },
+			users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0), is_bot: false }
+		},
+		{
+			game_id: "bot-game-1",
+			user_id: BigInt(9223372036854),
+			amount: null,
+			team: "black",
+			games: { ends_at: new Date("2025-02-01T10:00:00Z"), winner_id: BigInt(1) },
+			users: { id: BigInt(9223372036854), display_name: "Bot", avatar_seq: BigInt(0), is_bot: true }
+		}
+	]
+
+	it("exposes winner_id for a bot game so it is not shown as a draw (own history)", async () => {
+		const token = buildAccessToken(1, "session-ph-12")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 1 }))
+
+		gameUserFindManyMock.mockResolvedValueOnce([{ game_id: "bot-game-1" }])
+		gameFindManyMock.mockResolvedValueOnce([{ id: "bot-game-1" }])
+		gameUserFindManyMock.mockResolvedValueOnce(botGameRows)
+
+		const res = await request(app)
+			.get(`${PATH}?userId=1`)
+			.set("Authorization", `Bearer ${token}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0].game.gameId).toBe("bot-game-1")
+		// amount still normalizes to 0 (no coin stake) ...
+		expect(res.body.data[0].amount).toBe(0)
+		// ... but winner_id identifies the human winner, so the UI shows a win, not a draw.
+		expect(res.body.data[0].game.winner_id).toBe(1)
+	})
+
+	it("hides bot games when a different user views the history", async () => {
+		// Viewer is user 2, browsing user 1's profile history.
+		const token = buildAccessToken(2, "session-ph-13")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 2 }))
+
+		gameUserFindManyMock.mockResolvedValueOnce([{ game_id: "bot-game-1" }])
+		gameFindManyMock.mockResolvedValueOnce([{ id: "bot-game-1" }])
+		gameUserFindManyMock.mockResolvedValueOnce(botGameRows)
+
+		const res = await request(app)
+			.get(`${PATH}?userId=1`)
+			.set("Authorization", `Bearer ${token}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toEqual([])
+	})
+
+	it("still shows PvP games when a different user views the history", async () => {
+		// Viewer is user 3, browsing user 1's profile; the PvP game stays visible.
+		const token = buildAccessToken(3, "session-ph-14")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 3 }))
+
+		gameUserFindManyMock.mockResolvedValueOnce([{ game_id: "game-1" }])
+		gameFindManyMock.mockResolvedValueOnce([{ id: "game-1" }])
+		gameUserFindManyMock.mockResolvedValueOnce([
+			{
+				game_id: "game-1",
+				user_id: BigInt(1),
+				amount: 10,
+				team: "red",
+				games: { ends_at: new Date("2025-01-10T10:00:00Z"), winner_id: BigInt(1) },
+				users: { id: BigInt(1), display_name: "Player One", avatar_seq: BigInt(0), is_bot: false }
+			},
+			{
+				game_id: "game-1",
+				user_id: BigInt(2),
+				amount: -10,
+				team: "black",
+				games: { ends_at: new Date("2025-01-10T10:00:00Z"), winner_id: BigInt(1) },
+				users: { id: BigInt(2), display_name: "Player Two", avatar_seq: BigInt(1), is_bot: false }
+			}
+		])
+
+		const res = await request(app)
+			.get(`${PATH}?userId=1`)
+			.set("Authorization", `Bearer ${token}`)
+
+		expect(res.status).toBe(200)
+		expect(res.body.data).toHaveLength(1)
+		expect(res.body.data[0].game.gameId).toBe("game-1")
+		expect(res.body.data[0].game.winner_id).toBe(1)
 	})
 })

@@ -30,10 +30,9 @@ import {
 	LUCKY_WHEEL_SLOT_HOURS
 } from "common/constant"
 import { PopupState } from "common/enums"
-import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { TI, TSpan, TTypography } from "components/TranslationTag"
-import { ProfilePopupProvider, useAuth } from "hooks/useAppContext"
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog"
+import { PrivateChatPopup } from "./components/PrivateChatPopup"
 import { GuidePopup } from "./components/GuidePopup"
 import { ProfilePopup } from "./components/ProfilePopup"
 import { SearchUserPopup } from "./components/SearchUserPopup"
@@ -48,6 +47,7 @@ import {
 	requireImage
 } from "common/helper"
 import { OnlinePresenceProvider } from "hooks/OnlinePresenceProvider"
+import { ProfilePopupProvider, useAuth } from "hooks/useAppContext"
 import { useAPI } from "hooks/useAPI"
 import { useSocket } from "hooks/useSocket"
 import useAutoTitle from "hooks/useAutoTitle"
@@ -71,6 +71,7 @@ export default function Layout() {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+	const [currentUser, setCurrentUser] = useState<Users | null>(null)
 	const [profileUser, setProfileUser] = useState<Users | null>(null)
 	const [gameStats, setGameStats] = useState<GameStats | null>(null)
 	const [userDisplayName, setUserDisplayName] = useState("")
@@ -119,6 +120,16 @@ export default function Layout() {
 	}, [])
 
 	useEffect(() => {
+		document.documentElement.style.setProperty("--layout-bg-image", `url(${landscapeBg})`)
+		document.documentElement.style.setProperty("--layout-bg-image-mobile", `url(${portraitBg})`)
+
+		return () => {
+			document.documentElement.style.removeProperty("--layout-bg-image")
+			document.documentElement.style.removeProperty("--layout-bg-image-mobile")
+		}
+	}, [])
+
+	useEffect(() => {
 		const getLoginUserInfo = async () => {
 			const token = getToken()
 			const claims = decodePayload(token)
@@ -133,6 +144,7 @@ export default function Layout() {
 
 			setUserImage(avatar)
 			setUserDisplayName(display_name)
+			setCurrentUser(user.data.user)
 			setProfileUser(user.data.user)
 		}
 
@@ -155,9 +167,8 @@ export default function Layout() {
 		getPrivateMessagesUnread()
 	}, [])
 
-	// Show a badge on the wheel menu when a slot bonus (+3 spins per 0/6/12/18h
-	// GMT boundary) is waiting to be claimed. Re-check at the next boundary so the
-	// badge appears even if the app stays open across it.
+	// Show a badge on the wheel menu when a slot bonus (+3 spins per 6h boundary) is pending.
+	// Re-check at the next boundary so the badge appears even if the app stays open.
 	useEffect(() => {
 		let timer: ReturnType<typeof setTimeout>
 
@@ -181,9 +192,8 @@ export default function Layout() {
 		return () => clearTimeout(timer)
 	}, [])
 
-	// Live-update the announcement badge when another client sends one. Ignore
-	// our own announcement, and don't bump the badge while the user is actively
-	// viewing the announcement screen (it marks everything read on open).
+	// Live-update the announcement badge on new announcements from other clients.
+	// Ignore own announcements and skip the bump when the user is viewing the announcement screen.
 	useEffect(() => {
 		const handleAnnouncement = (data: any) => {
 			if (data?.userId === currentUserId) return
@@ -210,7 +220,15 @@ export default function Layout() {
 			const response = await getRoomById(token, data.roomId) as APIResponse<RoomInfoData>
 			if (!response?.success || !response.data) return
 			const { room, users } = response.data
-			openJoinRoom({ ...room, users, created_at: "", updated_at: "" })
+			openJoinRoom({
+				...room,
+				users,
+				created_at: "",
+				updated_at: "",
+				time_limit: null,
+				time_increment: null,
+				time_per_move: null
+			})
 		}
 
 		onRoomInvite(handleRoomInvite)
@@ -226,8 +244,6 @@ export default function Layout() {
 			if (token) {
 				await logout(token)
 			}
-		} catch (error) {
-			logger.error("Logout failed:", error)
 		} finally {
 			localStorage.removeItem(LS_TOKEN_KEY)
 			setLogout()
@@ -375,6 +391,7 @@ export default function Layout() {
 	})
 
 	const profileProviderValue = {
+		currentUser,
 		gameStats,
 		profileUser,
 		unreadCount,
@@ -603,18 +620,7 @@ export default function Layout() {
 			{/* popups */}
 			<ProfilePopupProvider value={profileProviderValue}>
 				<OnlinePresenceProvider>
-					<Box
-						component="div"
-						className="layout-page-shell"
-						sx={{
-							width: "100%",
-							p: 0,
-							backgroundImage: `url(${landscapeBg})`,
-							"@media (max-width: 450px)": {
-								backgroundImage: `url(${portraitBg})`
-							}
-						}}
-					>
+					<Box component="div" className="layout-page-shell layout-bg-shell">
 						{isMobile && <Toolbar />}
 						<Outlet />
 

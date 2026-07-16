@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Team } from "types/GameState"
 import { ClockSnapshot } from "./types"
 
 const TICK_MS = 250
@@ -6,16 +7,15 @@ const TICK_MS = 250
 export interface ClockDisplay {
 	redMs: number
 	blackMs: number
-	activeTeam: "red" | "black"
+	activeTeam: Team
+	timePerMove: number
+	redPerMoveMs: number
+	blackPerMoveMs: number
 }
 
 /**
- * Turn the latest server clock snapshot into a smoothly-ticking display.
- *
- * The server is authoritative for the actual time-out; this only drives the UI
- * between updates. We anchor to the client-local time the snapshot arrived
- * (rather than the server timestamp) so client/server clock skew never makes the
- * clock jump — only the active team's remaining time counts down.
+ * Convert the server clock snapshot into a smoothly-ticking local display.
+ * Anchors to client-local arrival time to avoid clock-skew jumps.
  */
 export default function useGameClock(
 	snapshot: ClockSnapshot | null,
@@ -51,14 +51,22 @@ export default function useGameClock(
 	const { snapshot: s, receivedAt } = base
 	const elapsed = running ? Math.max(0, now - receivedAt) : 0
 
+	const perMoveCapMs = (s.timePerMove ?? 0) * 1000
+	const activePerMoveMs = Math.max(0, (s.perMoveRemainingMs ?? 0) - elapsed)
+
 	return {
 		redMs: s.activeTeam === "red" ? Math.max(0, s.redMs - elapsed) : s.redMs,
 		blackMs: s.activeTeam === "black" ? Math.max(0, s.blackMs - elapsed) : s.blackMs,
-		activeTeam: s.activeTeam
+		activeTeam: s.activeTeam,
+		timePerMove: s.timePerMove ?? 0,
+		redPerMoveMs: s.activeTeam === "red" ? activePerMoveMs : perMoveCapMs,
+		blackPerMoveMs: s.activeTeam === "black" ? activePerMoveMs : perMoveCapMs,
 	}
 }
 
-/** Format a millisecond duration as mm:ss (rounding up so a full budget reads e.g. 10:00). */
+/**
+ * Format a millisecond duration as mm:ss (rounding up so a full budget reads e.g. 10:00).
+ */
 export function formatClock(ms: number): string {
 	const totalSeconds = Math.max(0, Math.ceil(ms / 1000))
 	const minutes = Math.floor(totalSeconds / 60)

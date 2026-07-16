@@ -1,43 +1,57 @@
-import { getGameHistoryCollection } from "../mongodb"
 import prisma from "prisma"
+import { parseFenCounters, toStandardFen } from "../board-helper"
+import { concludeGame } from "../game/conclude-game.helper"
+import { evaluatePerpetualCheck, wouldCompletePerpetualLoss } from "../game/perpetual-check.helper"
+import { evaluateTeamState } from "../game/state-evaluator"
 import { getUTCNow, getUTCTimestamp } from "../helper"
-import { emitMovePiece, emitSurrender } from "../socket"
+import { getGameHistoryCollection } from "../mongodb"
+import {
+	emitMovePiece,
+	emitPerpetualCheckWarning,
+	emitSurrender
+} from "../socket"
 import { syncPlayersPresence } from "../game/presence-sync"
 import { BOT_USER_ID, requestBotMove } from "./index"
+import { Team } from "types/game.type"
 
 export interface PlayBotMoveParams {
 	gameId: string
 	roomId: bigint | number
 	projectFen: string
 	redFirst: boolean
-	botTeam: "red" | "black"
+	botTeam: Team
 	difficulty: number
 }
 
 /**
- * Run one bot move end-to-end: ask the engine, persist the resulting position to
- * MongoDB game_history, and broadcast `piece-moved` to the room over Socket.IO.
- *
- * Mirrors the persistence side of `move-piece.ts` so a bot move is indistinguishable
- * from a human move to listening clients.
- *
- * If the engine has no legal moves (bot is checkmated), the bot automatically
- * surrenders: persists a surrender record, updates game/room status, and emits a
- * `surrender` event to the room.
- *
- * Returns the inserted history record (or null on engine/network failure — the caller
- * decides whether to surface or swallow the error).
+ * Run one bot move: ask engine, persist to MongoDB, broadcast `piece-moved` via Socket.IO.
+ * Auto-surrenders if no legal moves; returns the inserted record or null on failure.
  */
 export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null> => {
 	const { gameId, roomId, projectFen, redFirst, botTeam, difficulty } = params
 
-	const result = await requestBotMove({
-		gameId,
-		projectFen,
-		redFirst,
-		botTeam,
-		difficulty
-	})
+	// The side to move after the bot — i.e. the human in a PvE game.
+	const nextTeam: Team = botTeam === "red" ? "black" : "red"
+
+	const result = await requestBotMove(
+		{
+			gameId,
+			projectFen,
+			redFirst,
+			botTeam,
+			difficulty
+		},
+		{
+			// Avoid a perpetual check the bot would lose: reject a candidate that keeps
+			// the human in check AND completes the losing repetition. Non-checks are fine.
+			rejectMove: async candidate => {
+				if (!evaluateTeamState(candidate.newFen, nextTeam, redFirst).inCheck) {
+					return false
+				}
+				return wouldCompletePerpetualLoss(gameId, candidate.newFen, nextTeam, redFirst)
+			}
+		}
+	)
 
 	// Bot has no legal moves — it is checkmated; auto-surrender on behalf of the bot
 	if (result === null) {
@@ -61,18 +75,6 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 				team: botTeam === "red" ? "black" : "red",
 				time_stamp: getUTCTimestamp(),
 				surrender: Number(BOT_USER_ID)
-			})
-
-			// Also save to PostgreSQL for test data
-			await prisma.gameHistory.create({
-				data: {
-					game_id: gameId,
-					fen: currentFen,
-					team: botTeam === "red" ? "black" : "red",
-					capture: null,
-					time_stamp: getUTCTimestamp(),
-					surrender_id: BOT_USER_ID
-				}
 			})
 
 			// Find the human opponent (winner)
@@ -111,10 +113,17 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 
 	const collection = await getGameHistoryCollection()
 
-	const nextTeam = botTeam === "red" ? "black" : "red"
+	// Persist the standard 6-field FEN, mirroring move-piece: advance counters from
+	// the latest record (half-move resets on a capture, full-move bumps after black).
+	const latest = await collection.find({ game_id: gameId }).sort({ _id: -1 }).limit(1).toArray()
+	const prevCounters = parseFenCounters(latest[0]?.fen ?? "")
+	const halfmove = capturePiece ? 0 : prevCounters.halfmove + 1
+	const fullmove = botTeam === "black" ? prevCounters.fullmove + 1 : prevCounters.fullmove
+	const standardFen = toStandardFen(newFen, nextTeam, halfmove, fullmove)
+
 	const record: any = {
 		game_id: gameId,
-		fen: newFen,
+		fen: standardFen,
 		team: nextTeam,
 		time_stamp: getUTCTimestamp()
 	}
@@ -125,21 +134,61 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 	const insertResult = await collection.insertOne(record)
 	const broadcast = { ...record, _id: insertResult.insertedId.toString() }
 
-	// Also save to PostgreSQL for test data
-	await prisma.gameHistory.create({
-		data: {
-			game_id: gameId,
-			fen: newFen,
-			team: nextTeam,
-			capture: capturePiece || null,
-			time_stamp: getUTCTimestamp()
-		}
-	})
-
 	try {
 		emitMovePiece(Number(roomId), broadcast, Number(BOT_USER_ID))
 	} catch (err) {
 		console.error("[bot-engine] socket emit failed:", err)
+	}
+
+	// Evaluate the human side right after the bot move. This makes bot-delivered
+	// checkmate/stalemate end the game immediately
+	const humanTeam = nextTeam
+	const humanEvaluation = evaluateTeamState(newFen, humanTeam, redFirst)
+	if (humanEvaluation.status === "checkmate" || humanEvaluation.status === "stalemate") {
+		try {
+			const room = await prisma.room.findUnique({
+				where: { id: BigInt(roomId) },
+				select: { pve_mode: true, bet_amount: true }
+			})
+			await concludeGame({
+				gameId,
+				roomId: BigInt(roomId),
+				winnerTeam: botTeam,
+				isBotGame: room?.pve_mode ?? true,
+				betAmount: room?.bet_amount ?? null,
+				statusForEvent: humanEvaluation.status
+			})
+		} catch (err) {
+			console.error(`[bot-engine] failed to conclude ${humanEvaluation.status} for game ${gameId}:`, err)
+		}
+
+		return broadcast
+	}
+
+	// Safety net: if avoidance couldn't prevent it (forced) and the bot's move still
+	// completes a perpetual check, the bot (checker) loses; warn on the near-miss.
+	try {
+		if (evaluateTeamState(newFen, humanTeam, redFirst).inCheck) {
+			const perpetual = await evaluatePerpetualCheck(gameId, newFen, humanTeam, redFirst)
+			if (perpetual.status === "loss") {
+				const room = await prisma.room.findUnique({
+					where: { id: BigInt(roomId) },
+					select: { pve_mode: true, bet_amount: true }
+				})
+				await concludeGame({
+					gameId,
+					roomId: BigInt(roomId),
+					winnerTeam: humanTeam,
+					isBotGame: room?.pve_mode ?? true,
+					betAmount: room?.bet_amount ?? null,
+					statusForEvent: "perpetual-check"
+				})
+			} else if (perpetual.status === "warning") {
+				emitPerpetualCheckWarning(Number(roomId), { gameId, offenderTeam: botTeam, checkedTeam: humanTeam })
+			}
+		}
+	} catch (err) {
+		console.error(`[bot-engine] perpetual-check detection failed for game ${gameId}:`, err)
 	}
 
 	return broadcast

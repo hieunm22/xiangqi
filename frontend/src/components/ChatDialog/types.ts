@@ -13,6 +13,15 @@ export interface ChatDialogProps {
 	// Optional content for the in-dialog slide-out drawer. When provided, a
 	// hamburger toggle appears in the title bar; otherwise the drawer is hidden.
 	drawerContent?: ReactNode
+	// Callback invoked after a message is successfully sent.
+	onMessageSent?: (message: SentMessagePayload) => void
+}
+
+// Minimal payload the dialog hands back on a successful send
+export interface SentMessagePayload {
+	message: string
+	receiverId: number
+	timestamp: string
 }
 
 // Imperative handle so callers can push a real-time message into the open dialog

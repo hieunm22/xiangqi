@@ -1,27 +1,9 @@
 import { Avatar, Stack, Tooltip } from "@mui/material"
 import { requireImage } from "common/helper"
-import { GameHistoryItem, PlayerAvatarsProps } from "../types"
+import { PlayerAvatarsProps } from "../types"
 
-const getWinnerUserId = (game: GameHistoryItem, currentUserId: number) => {
-	if (game.amount === 0 || !currentUserId) {
-		return null
-	}
-
-	const users = game.users.slice(0, 2)
-	if (users.length < 2 || !users.some(user => user.id === currentUserId)) {
-		return null
-	}
-
-	if (game.amount > 0) {
-		return currentUserId
-	}
-
-	const findUser = users.find(user => user.id !== currentUserId)
-	return findUser ? findUser.id : null
-}
-
-export const PlayerAvatars = ({ game, userId: currentUserId }: PlayerAvatarsProps) => {
-	const winnerUserId = getWinnerUserId(game, currentUserId)
+export const PlayerAvatars = ({ game }: PlayerAvatarsProps) => {
+	const winnerUserId = game.game.winner_id
 
 	return (
 		<Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-start" }}>

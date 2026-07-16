@@ -21,6 +21,15 @@ page.replay.title;Game Replay;Xem lại ván đấu
 page.replay.no-moves;No moves to replay;Không có nước đi để xem lại
 page.replay.play;Play;Phát
 page.replay.pause;Pause;Tạm dừng
+page.replay.end-title;Game over;Ván đấu kết thúc
+page.replay.reason-checkmate;{{name}} won by checkmate;{{name}} thắng bằng chiếu bí
+page.replay.reason-stalemate;Stalemate;Hết nước đi
+page.replay.reason-perpetual-check;{{name}} won by opponent's perpetual check;{{name}} thắng do đối thủ chiếu tướng liên tục
+page.replay.reason-surrender;{{name}} surrendered;{{name}} đã đầu hàng
+page.replay.reason-leave;{{name}} left the game;{{name}} đã rời trận
+page.replay.reason-draw;Draw;Hoà
+page.replay.reason-timeout;{{name}} ran out of time;{{name}} đã hết giờ
+page.replay.reason-ended;The game has ended;Ván đấu đã kết thúc
 menu.app-name;Xiangqi;Cờ tướng
 menu.profile;Profile;Trang cá nhân
 menu.messages;Message;Tin nhắn
@@ -71,9 +80,14 @@ dashboard.popup.piece-selection;Select team;Chọn quân
 dashboard.popup.red-first;Red first;Đỏ tiên
 dashboard.popup.pve-mode;PVE mode;Chơi với máy
 dashboard.popup.bet-amount;Bet amount;Giá trị cược
-dashboard.popup.time-limit;Time per player;Thời gian mỗi người
+dashboard.popup.time-limit;Time limit;Giới hạn thời gian
+dashboard.popup.time-limit-per-player;Time per player;Thời gian mỗi người
 dashboard.popup.time-unlimited;Unlimited;Không giới hạn
 dashboard.popup.time-minutes;{0} min;{0} phút
+dashboard.popup.time-seconds;{0}s;{0}s
+dashboard.popup.time-off;Off;Tắt
+dashboard.popup.time-increment;Bonus per move;Cộng giờ mỗi nước
+dashboard.popup.time-per-move;Time per move;Thời gian mỗi nước
 dashboard.popup.room-name-label;Room table name;Tên phòng chơi
 dashboard.popup.room-name-helptext;is required;không được để trống
 dashboard.popup.play;Play;Chơi
@@ -81,6 +95,7 @@ dashboard.popup.view;View;Xem
 settings.header;Settings;Cài đặt
 settings.language;Language;Ngôn ngữ
 settings.dark-mode;Dark mode;Chế độ tối
+settings.sound;Sound;Âm thanh
 settings.debug-mode;Debug mode;Chế độ test
 settings.connected-accounts.label;Connected accounts;Tài khoản liên kết
 settings.connected-accounts.link-facebook;Link Facebook;Liên kết Facebook
@@ -95,6 +110,8 @@ popup.confirm.ok;Ok;Ok
 popup.confirm.cancel;Cancel;Huỷ
 game.general.captured;General has been captured. Room over;Tướng đã bị bắt. Game kết thúc
 game.general.in-check;Your general is under attack;Tướng của bạn đang bị chiếu
+game.perpetual-check.warning-self;You are perpetual checking. If you make one more repeated check, you will lose;Bạn đang chiếu quẩn, nếu thực hiện 1 nước nữa, bạn sẽ bị xử thua
+game.perpetual-check.warning-sent;A perpetual-check warning has been sent to your opponent;Đã gửi cảnh báo chiếu quẩn cho đối thủ
 game.label.win;Win;Thắng
 game.label.draw;Draw;Hoà
 game.label.lose;Lose;Thua
@@ -176,6 +193,8 @@ create-room.messages.insufficient-amount;You do not have enough balance to creat
 create-room.messages.internal-server-error;Internal server error while creating room;Lỗi máy chủ nội bộ khi tạo phòng
 create-room.messages.invalid-bet-amount;Bet amount is required and must be one of the acceptable values;Số tiền cược là bắt buộc và phải là một trong các giá trị được chấp nhận
 create-room.messages.invalid-time-limit;Invalid time limit;Thời gian không hợp lệ
+create-room.messages.invalid-time-increment;Invalid bonus per move;Thời gian cộng mỗi nước không hợp lệ
+create-room.messages.invalid-time-per-move;Invalid time per move;Thời gian mỗi nước không hợp lệ
 create-room.messages.invalid-redFirst;'redFirst' must be a boolean;'redFirst' phải là giá trị boolean
 create-room.messages.invalid-team-name;Team name must be either 'red', 'black', or null;Tên đội phải là 'red', 'black' hoặc null
 create-room.messages.name-required;Room name (tableName) is required and must not be empty;Tên phòng (tableName) là bắt buộc và không được để trống
@@ -272,10 +291,16 @@ room.messages.confirm-draw;Are you sure you want to draw?;Bạn có chắc chắ
 room.messages.confirm-accept-draw;Opponent has proposed a draw. Do you accept?;Đối phương đã chủ hòa, bạn có đồng ý không?
 room.messages.insufficient-amount;You do not have enough balance to join this room;Bạn không đủ tiền để tham gia bàn chơi này
 room.messages.will-leave-current-room;You are currently in another room. Joining this room will remove you from the current room;Bạn đang ở trong một phòng khác. Tham gia phòng này sẽ loại bạn ra khỏi phòng hiện tại
-room.messages.all-seats-occupied;All player seats are occupied;Tất cả ghế chơi đã được chiếm
 room.messages.game-ended;Game ended;Ván đấu đã kết thúc
 room.messages.you-win;You win;Bạn đã chiến thắng
 room.messages.you-lose;You lose;Bạn đã thua
+room.messages.you-win-perpetual-check;You win — your opponent lost by perpetual check;Bạn thắng vì đối thủ chiếu quẩn
+room.messages.you-lose-perpetual-check;You lose by perpetual check;Bạn thua do chiếu quẩn
+room.messages.spectator-win-checkmate;{0} won by checkmate;{0} thắng do chiếu bí
+room.messages.spectator-win-stalemate;{0} won — opponent had no legal moves;{0} thắng do đối thủ hết nước đi
+room.messages.spectator-win-timeout;{0} won on time;{0} thắng do đối thủ hết giờ
+room.messages.spectator-win-perpetual-check;{0} won — opponent lost by perpetual check;{0} thắng do đối thủ chiếu quẩn
+room.messages.spectator-draw;The game ended in a draw;Ván đấu kết thúc với tỉ số hòa
 room.messages.back-to-room;Back to room;Quay lại phòng
 room.messages.auto-back-countdown;{0}. Press the back button to return to the room. You will be automatically returned in {1}s;{0}. Bấm nút quay lại để quay lại room. Bạn sẽ tự động quay lại trong {1}s
 room.notifications.joined;{0} joined the room;{0} đã vào phòng
@@ -297,6 +322,8 @@ update-room.messages.success;Room updated successfully;Cập nhật phòng thàn
 update-room.messages.internal-server-error;Internal server error;Lỗi máy chủ nội bộ
 update-room.messages.invalid-room-id;Invalid room ID;ID phòng không hợp lệ
 update-room.messages.invalid-time-limit;Invalid time limit;Thời gian không hợp lệ
+update-room.messages.invalid-time-increment;Invalid bonus per move;Thời gian cộng mỗi nước không hợp lệ
+update-room.messages.invalid-time-per-move;Invalid time per move;Thời gian mỗi nước không hợp lệ
 update-room.messages.name-required;Room name is required;Tên phòng không được để trống
 update-room.messages.room-not-found;Room not found;Không tìm thấy phòng
 update-room.messages.forbidden;You are not the host of this room;Bạn không phải chủ phòng
@@ -320,6 +347,7 @@ undo.messages.unauthorized;Unauthorized;Không được phép truy cập
 undo.messages.game-not-found;Game not found;Không tìm thấy trò chơi
 undo.messages.not-in-game;You are not part of this game;Bạn không phải là người chơi trong trò chơi này
 undo.messages.not-in-room;You are not in this room;Bạn không trong phòng này
+undo.messages.pve-only;Undo is only available in PvE rooms;Hoàn tác chỉ khả dụng trong phòng PvE
 undo.messages.spectator-cannot-undo;Spectators cannot undo moves;Người xem không thể hoàn tác nước đi
 undo.messages.no-moves;No moves to undo;Không có nước đi để hoàn tác
 undo.messages.delete-failed;Failed to undo move;Không thể hoàn tác nước đi

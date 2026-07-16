@@ -2,11 +2,14 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import request from "supertest"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { AmountHistoryType } from "common/enums"
 
 const redisGetMock = vi.fn()
 const userFindUniqueMock = vi.fn()
 const userUpdateMock = vi.fn()
 const userAmountHistoryCreateMock = vi.fn()
+const PATH = "/api/user/bonus-coins"
+const CLAIM_PATH = "/api/user/bonus-coins-claim"
 
 vi.mock("../../common/redis", () => ({
 	default: {
@@ -71,7 +74,7 @@ describe("bonus-coins routes", () => {
 
 	describe("GET /api/user/bonus-coins", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).get("/api/user/bonus-coins")
+			const res = await request(app).get(PATH)
 
 			expect(res.status).toBe(401)
 			expect(res.body).toMatchObject({
@@ -88,7 +91,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(404)
@@ -105,7 +108,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ bonus_claimed_count: 0, bonus_claimed_at: null })
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -118,7 +121,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ bonus_claimed_count: 4, bonus_claimed_at: OLD_SLOT })
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -131,7 +134,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockResolvedValue({ bonus_claimed_count: 3, bonus_claimed_at: FUTURE_SLOT })
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -147,7 +150,7 @@ describe("bonus-coins routes", () => {
 			})
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -161,7 +164,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("db error"))
 
 			const res = await request(app)
-				.get("/api/user/bonus-coins")
+				.get(PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(500)
@@ -176,7 +179,7 @@ describe("bonus-coins routes", () => {
 
 	describe("POST /api/user/bonus-coins-claim", () => {
 		it("returns 401 when authorization token is missing", async () => {
-			const res = await request(app).post("/api/user/bonus-coins-claim")
+			const res = await request(app).post(CLAIM_PATH)
 
 			expect(res.status).toBe(401)
 			expect(userUpdateMock).not.toHaveBeenCalled()
@@ -188,7 +191,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockResolvedValue(null)
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(404)
@@ -204,7 +207,7 @@ describe("bonus-coins routes", () => {
 			userUpdateMock.mockResolvedValue({ bonus_claimed_count: 1 })
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -214,7 +217,7 @@ describe("bonus-coins routes", () => {
 					data: {
 						user_id: BigInt(6),
 						amount: 800,
-						type: 2,
+						type: AmountHistoryType.BonusCoin,
 						created_at: expect.any(Date)
 					}
 				})
@@ -239,7 +242,7 @@ describe("bonus-coins routes", () => {
 			userUpdateMock.mockResolvedValue({ bonus_claimed_count: 3 })
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -247,7 +250,7 @@ describe("bonus-coins routes", () => {
 			expect(res.body.data).toMatchObject({ claimed: 3, reward: 1000 })
 			expect(userAmountHistoryCreateMock).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: expect.objectContaining({ amount: 1000, type: 2 })
+					data: expect.objectContaining({ amount: 1000, type: AmountHistoryType.BonusCoin })
 				})
 			)
 		})
@@ -260,7 +263,7 @@ describe("bonus-coins routes", () => {
 			userUpdateMock.mockResolvedValue({ bonus_claimed_count: 1 })
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(200)
@@ -276,7 +279,7 @@ describe("bonus-coins routes", () => {
 			})
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(409)
@@ -292,7 +295,7 @@ describe("bonus-coins routes", () => {
 			userFindUniqueMock.mockRejectedValue(new Error("db error"))
 
 			const res = await request(app)
-				.post("/api/user/bonus-coins-claim")
+				.post(CLAIM_PATH)
 				.set("Authorization", `Bearer ${accessToken}`)
 
 			expect(res.status).toBe(500)

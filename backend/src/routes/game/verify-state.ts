@@ -1,15 +1,12 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
 import { fenToBoard } from "common/board-helper"
-import { runEndGameTransaction } from "common/game/end-game.helper"
-import { stopClock } from "common/game/game-clock"
-import { activatePostGameLock } from "common/game/post-game.helper"
-import { syncPlayersPresence } from "common/game/presence-sync"
+import { concludeGame } from "common/game/conclude-game.helper"
+import { evaluatePerpetualCheck } from "common/game/perpetual-check.helper"
 import { evaluateTeamState } from "common/game/state-evaluator"
-import { getGameHistoryCollection } from "common/mongodb"
-import { emitGameEnded } from "common/socket"
+import { emitPerpetualCheckWarning } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { VerifyStateRequestDto } from "types/game.type"
+import { Team, VerifyStateRequestDto } from "types/game.type"
 
 const router = Router()
 
@@ -78,6 +75,9 @@ const router = Router()
  *                     winnerId:
  *                       type: integer
  *                       nullable: true
+ *                     occurrences:
+ *                       type: integer
+ *                       description: Number of times the current checking position has recurred in the game.
  *       400:
  *         description: Invalid request body (invalid game id, fen, or checked team)
  *       401:
@@ -160,55 +160,42 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 		const evaluation = evaluateTeamState(newFen, checkedTeam, game.room.red_first)
 		let gameEnded = false
 		let winnerId: number | null = null
+		let endStatus: string = evaluation.status
+		// Number of times the current checking position has recurred in the game.
+		let occurrences = 0
 
-		if (evaluation.status === "checkmate" || evaluation.status === "stalemate") {
-			const winnerTeam = checkedTeam === "red" ? "black" : "red"
-			const roomUsers = await prisma.roomUser.findMany({
-				where: { room_id: game.room_id },
-				select: {
-					team: true,
-					user_id: true
-				}
-			})
-
-			const winner = roomUsers.find(user => user.team === winnerTeam)
-			winnerId = winner ? Number(winner.user_id) : null
-
-			const ended = await runEndGameTransaction({
+		// End the game for `winnerTeam` (null = draw) via the shared conclude helper.
+		const finalizeGameEnd = async (winnerTeam: Team | null, statusForEvent: string) => {
+			const result = await concludeGame({
 				gameId,
 				roomId: game.room_id,
-				winnerId: winnerId == null ? null : BigInt(winnerId),
+				winnerTeam,
 				isBotGame: game.room.pve_mode,
-				betAmount: game.room.bet_amount
+				betAmount: game.room.bet_amount,
+				statusForEvent
 			})
 
-			if (ended) {
+			winnerId = result.winnerId
+			if (result.ended) {
 				gameEnded = true
-				stopClock(gameId)
-				await syncPlayersPresence(gameId, false)
-				await activatePostGameLock(game.room_id, gameId)
+				endStatus = statusForEvent
+			}
+		}
 
-				const collection = await getGameHistoryCollection()
-				const latestRecord = await collection
-					.find({
-						$or: [{ game_id: gameId }, { gameId }]
-					})
-					.sort({ _id: -1 })
-					.limit(1)
-					.toArray()
-
-				if (latestRecord.length > 0) {
-					await collection.updateOne(
-						{ _id: latestRecord[0]._id },
-						{ $set: { winner_id: winnerId } }
-					)
-				}
-
-				emitGameEnded(Number(game.room_id), {
-					gameId,
-					status: evaluation.status,
-					winnerId
-				})
+		if (evaluation.status === "checkmate" || evaluation.status === "stalemate") {
+			// The checked/stalemated side loses; its opponent wins.
+			const winnerTeam = checkedTeam === "red" ? "black" : "red"
+			await finalizeGameEnd(winnerTeam, evaluation.status)
+		} else if (evaluation.inCheck) {
+				// Check if this move creates a perpetual check.
+				// "loss" = checker loses (checkedTeam wins); "warning" = one repetition away, notify both.
+			const perpetual = await evaluatePerpetualCheck(gameId, newFen, checkedTeam, game.room.red_first)
+			occurrences = perpetual.occurrencesCount
+			if (perpetual.status === "loss") {
+				await finalizeGameEnd(checkedTeam, "perpetual-check")
+			} else if (perpetual.status === "warning") {
+				const offenderTeam = checkedTeam === "red" ? "black" : "red"
+				emitPerpetualCheckWarning(Number(game.room_id), { gameId, offenderTeam, checkedTeam })
 			}
 		}
 
@@ -220,9 +207,10 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 				gameEnded,
 				inCheck: evaluation.inCheck,
 				legalMovesCount: evaluation.legalMovesCount,
-				status: evaluation.status,
+				status: endStatus,
 				checkedTeam,
-				winnerId
+				winnerId,
+				occurrences
 			}
 		})
 	} catch (err) {

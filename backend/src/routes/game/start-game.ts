@@ -1,5 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
+import { toStandardFen } from "common/board-helper"
 import { BOT_USER_ID, isValidDifficulty } from "common/bot-engine"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { INITIAL_FEN_BLACK_BOTTOM, INITIAL_FEN_BLACK_TOP } from "common/constant"
@@ -10,6 +11,7 @@ import { getGameHistoryCollection } from "common/mongodb"
 import { syncPlayersPresence } from "common/game/presence-sync"
 import { emitGameStarted, emitRoomUsersUpdated } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
+import { Team } from "types/game.type"
 import { RoomStatus, StartGameRequest } from "types/room.type"
 
 const router = Router()
@@ -136,6 +138,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 			pve_mode: true,
 			time_limit: true,
 			time_increment: true,
+			time_per_move: true,
 		}
 	})
 	if (!existingRoom) {
@@ -187,7 +190,7 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 	}
 
 	try {
-		let botTeam: "red" | "black" | null = null
+		let botTeam: Team | null = null
 		if (requestedDifficulty !== null) {
 			const requester = await prisma.roomUser.findUnique({
 				where: {
@@ -232,13 +235,13 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 					bot_difficulty: requestedDifficulty,
 					time_limit: isPvE ? null : existingRoom.time_limit,
 					time_increment: isPvE ? 0 : existingRoom.time_increment,
+					time_per_move: isPvE ? 0 : existingRoom.time_per_move,
 				},
 				select: { id: true, status: true, room_id: true, bot_difficulty: true }
 			})
 
-			// Add game_users records for the 2 active players (with assigned teams)
-			// Persist each player's color so a finished game can be replayed later
-			// (room_users.team is mutable and not a per-game snapshot).
+				// Snapshot each seated player's team into game_users for replay integrity,
+				// since room_users.team is mutable and doesn't preserve per-game assignments.
 			const roomPlayers = await tx.roomUser.findMany({
 				where: { room_id: roomIdBigInt, team: { not: null } },
 				select: { user_id: true, team: true }
@@ -261,11 +264,11 @@ router.post("/room/start", requireAuth(), async (req: AuthenticatedRequest, res:
 
 		const collection = await getGameHistoryCollection()
 		const initialFen = room.red_first ? INITIAL_FEN_BLACK_TOP : INITIAL_FEN_BLACK_BOTTOM
-		const firstTeam: "red" | "black" = room.red_first ? "red" : "black"
+		const firstTeam: Team = room.red_first ? "red" : "black"
 		const startRecord = {
 			game_id: game.id,
 			team: firstTeam,
-			fen: initialFen,
+			fen: toStandardFen(initialFen, firstTeam, 0, 1),
 			time_stamp: getUTCTimestamp()
 		}
 		await collection.insertOne(startRecord)

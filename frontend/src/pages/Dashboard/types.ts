@@ -15,7 +15,9 @@ export type DashboardRoom = {
 	updated_at: string
 	users: RoomUser[]
 	// Per-player total time budget in seconds; null / omitted = no clock.
-	time_limit?: number | null
+	time_limit: number | null
+	time_increment: number | null
+	time_per_move: number | null
 }
 
 export interface UserAvatarGroupProps {
@@ -59,4 +61,6 @@ export interface CreateRoomRequest {
 	betAmount: number
 	// Per-player total time budget in seconds; null = no clock.
 	timeLimit: number | null
+	timeIncrement?: number | null
+	timePerMove?: number | null
 }

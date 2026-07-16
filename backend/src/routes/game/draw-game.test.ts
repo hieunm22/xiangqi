@@ -330,7 +330,8 @@ describe("POST /api/game/draw-game", () => {
 				fen: "latest-fen",
 				team: "black",
 				draw: 11,
-				time_stamp: expect.any(Number)
+				time_stamp: expect.any(Number),
+				end_reason: "draw"
 			})
 		)
 		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
@@ -338,7 +339,8 @@ describe("POST /api/game/draw-game", () => {
 			roomId: BigInt(100),
 			winnerId: null,
 			isBotGame: false,
-			betAmount: 0
+			betAmount: 0,
+			endReason: "draw"
 		})
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-1", false)
 		expect(activatePostGameLockMock).toHaveBeenCalledWith(100n, "game-1")

@@ -60,6 +60,13 @@ const router = Router()
  *                           type: boolean
  *                         bet_amount:
  *                           type: integer
+ *                         time_limit:
+ *                           type: integer
+ *                           nullable: true
+ *                         time_increment:
+ *                           type: integer
+ *                         time_per_move:
+ *                           type: integer
  *                         created_at:
  *                           type: string
  *                           format: date-time
@@ -103,6 +110,29 @@ const router = Router()
  *                         bot_difficulty:
  *                           type: integer
  *                           nullable: true
+ *                     clock:
+ *                       type: object
+ *                       nullable: true
+ *                       description: Live countdown snapshot for an in-progress clocked game; null otherwise.
+ *                       properties:
+ *                         redMs:
+ *                           type: integer
+ *                         blackMs:
+ *                           type: integer
+ *                         activeTeam:
+ *                           type: string
+ *                           enum: [red, black]
+ *                         perMoveRemainingMs:
+ *                           type: integer
+ *                           description: Active team's remaining time for the current move; 0 when per-move is off.
+ *                         serverNow:
+ *                           type: integer
+ *                         timeLimit:
+ *                           type: integer
+ *                         timeIncrement:
+ *                           type: integer
+ *                         timePerMove:
+ *                           type: integer
  *       400:
  *         description: Invalid room id
  *       401:
@@ -128,7 +158,10 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 	try {
 		const roomIdBigInt = BigInt(roomId)
 		const room = await prisma.room.findUnique({
-			where: { id: roomIdBigInt, is_active: true },
+			where: {
+				id: roomIdBigInt,
+				is_active: true,
+			},
 			select: {
 				id: true,
 				name: true,
@@ -137,7 +170,10 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 				pve_mode: true,
 				bet_amount: true,
 				time_limit: true,
+				time_increment: true,
+				time_per_move: true,
 				host_id: true,
+				game_type: true,
 				created_at: true,
 				updated_at: true,
 				games: {
@@ -267,7 +303,10 @@ router.get("/room/info", requireAuth(), async (req: AuthenticatedRequest, res: R
 					pve_mode: room.pve_mode,
 					bet_amount: room.bet_amount,
 					time_limit: room.time_limit,
+					time_increment: room.time_increment,
+					time_per_move: room.time_per_move,
 					host_id: room.host_id === null ? null : Number(room.host_id),
+					game_type: room.game_type,
 					created_at: room.created_at,
 					updated_at: room.updated_at
 				},

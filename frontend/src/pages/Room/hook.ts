@@ -45,7 +45,7 @@ import useAutoTitle from "hooks/useAutoTitle"
 import useToolkit from "hooks/useToolkit"
 import useGameClock from "./useGameClock"
 import { translate } from "locales/translate"
-import { setIsInGame, setPopup } from "toolkit/slice/game"
+import { setIsCurrentRoomPlayer, setIsInGame, setPopup } from "toolkit/slice/game"
 import { APIResponse, FenMoveDiffResult } from "types/Common"
 import { GameInfo } from "types/Entities"
 import {
@@ -107,6 +107,7 @@ const useRoomHook = () => {
 		offGameStarted,
 		offGameUndo,
 		offMovePiece,
+		offPerpetualCheckWarning,
 		offRoomMessageSent,
 		offRoomUsersUpdated,
 		offSurrender,
@@ -117,6 +118,7 @@ const useRoomHook = () => {
 		onGameStarted,
 		onGameUndo,
 		onMovePiece,
+		onPerpetualCheckWarning,
 		onRoomMessageSent,
 		onRoomUsersUpdated,
 		onSurrender,
@@ -128,6 +130,7 @@ const useRoomHook = () => {
 	const [game, setGame] = useState<GameInfo | null>(null)
 	const [history, setHistory] = useState<HistoryData[]>([])
 	const [isOpen, setIsOpen] = useState(false)
+	const [isRoomLoading, setIsRoomLoading] = useState(true)
 	// Flip the board view 180° (change the viewing side)
 	// while game state and all move logic keep using the real cell index
 	const [isBoardRotated, setIsBoardRotated] = useState(false)
@@ -141,8 +144,7 @@ const useRoomHook = () => {
 	const [availableMoves, setAvailableMoves] = useState<number[]>([])
 	const [previousMove, setPreviousMove] = useState<MoveProps | null>(null)
 	const [showConfetti, setShowConfetti] = useState(false)
-	// Indices of enemy pieces currently giving check to myTeam's general. Highlighted
-	// the same way as a previous-move cell so the player can see what's threatening them.
+	// Indices of pieces currently giving check to the side that is checked.
 	const [checkingPieces, setCheckingPieces] = useState<number[]>([])
 	const [capturedPieces, setCapturedPieces] = useState<CapturedPieces>({ red: [], black: [] })
 	const [currentTurn, setCurrentTurn] = useState<Team>("red")
@@ -155,10 +157,8 @@ const useRoomHook = () => {
 	// Latest server countdown snapshot; useGameClock ticks it locally for display.
 	const [clock, setClock] = useState<ClockSnapshot | null>(null)
 	const boardRef = useRef(board)
-	// The opponent's last move (from/to), keyed to the FEN it produces. Captured in
-	// handleMovePiece where the diff is computed against the live board, because the
-	// history-based diff in updateToState is unreliable in real time (local moves are
-	// never appended to history, so consecutive history entries can span two moves).
+	// Opponent's last move (from/to), keyed to the FEN it produces; captured in handleMovePiece.
+	// History-based diff is unreliable in real time since local moves are never in history.
 	const remoteMoveRef = useRef<RemoteMoveProps | null>(null)
 	// Mirror the chat-open state into a ref so the room-message-sent listener can
 	// decide whether to bump the unread badge without re-subscribing on toggle.
@@ -179,6 +179,13 @@ const useRoomHook = () => {
 		return me?.team ?? null
 	}, [joinedUsers, currentUserId])
 
+	useEffect(() => {
+		dispatch(setIsCurrentRoomPlayer(myTeam !== null))
+		return () => {
+			dispatch(setIsCurrentRoomPlayer(false))
+		}
+	}, [dispatch, myTeam])
+
 	const isStartBlockedByBackReady = useMemo(() => {
 		if (!room || room.status !== 1) {
 			return false
@@ -197,6 +204,21 @@ const useRoomHook = () => {
 		return seatedTeams
 	}, [joinedUsers])
 
+	// single source of truth shared by the buttons' visible/enabled props
+	// and their click handlers
+	const currentUser = joinedUsers.find(user => user.id === currentUserId)
+	const isHost = room?.host_id === currentUserId
+	const isWaiting = room?.status === 1
+	const isPlaying = room?.status === 2 && game?.status === 1
+	const isPlayer = myTeam !== null
+	const hasAvailableSeat = seatSet.size < 2
+	const bothSeatsFilled = seatSet.has("red") && seatSet.has("black")
+	const allPlayersReady = bothSeatsFilled && !isStartBlockedByBackReady
+	// >80% of balance disqualifies a challenger; free rooms and PvE never block.
+	const canAffordBet = room && currentUser && currentUser.total_amount && room.pve_mode === false
+		? (room.bet_amount === 0 || room.bet_amount * 10 <= currentUser.total_amount * 8)
+		: true
+
 	const submitBackToRoom = useCallback(async (gameId: string) => {
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
@@ -213,16 +235,44 @@ const useRoomHook = () => {
 		}
 	}, [backToRoom, roomId])
 
-	const buildPostGameAlertMessage = useCallback((isWinner: boolean, secondsLeft: number) => {
-		const resultText = isWinner ? "room.messages.you-win" : "room.messages.you-lose"
-		return translate("room.messages.auto-back-countdown").format(
-			translate(resultText),
-			secondsLeft)
-	}, [])
+	const buildPostGameAlertMessage = useCallback(
+		(isWinner: boolean, secondsLeft: number, status?: string) => {
+			let resultText = isWinner ? "room.messages.you-win" : "room.messages.you-lose"
+			if (status === "perpetual-check") {
+				// show the reason to let both side to know the game ended on the 長將 rule.
+				resultText = isWinner
+					? "room.messages.you-win-perpetual-check"
+					: "room.messages.you-lose-perpetual-check"
+			}
+			return translate("room.messages.auto-back-countdown").format(
+				translate(resultText),
+				secondsLeft)
+		}, [])
+
+	// Spectator end-of-game message: names winner and reason (or announces draw).
+	// Falls back to a generic message when the winner can't be resolved.
+	const buildSpectatorEndMessage = useCallback(
+		(status: string, winnerId: number | null): string => {
+			if (winnerId === null) {
+				return translate("room.messages.spectator-draw")
+			}
+			const winner = joinedUsers.find(user => user.id === winnerId)
+			const keyByStatus: Record<string, string> = {
+				checkmate: "room.messages.spectator-win-checkmate",
+				stalemate: "room.messages.spectator-win-stalemate",
+				timeout: "room.messages.spectator-win-timeout",
+				"perpetual-check": "room.messages.spectator-win-perpetual-check"
+			}
+			const key = keyByStatus[status]
+			if (!winner || !key) {
+				return translate("room.messages.game-ended")
+			}
+			return translate(key).format(winner.display_name)
+		}, [joinedUsers])
 
 	const handleGameEnded = useCallback(async (data: {
 		gameId: string
-		status: "checkmate" | "stalemate" | "timeout"
+		status: "checkmate" | "stalemate" | "timeout" | "perpetual-check"
 		winnerId: number | null
 	}) => {
 		const dedupeKey = `${data.gameId}-${data.status}-${data.winnerId ?? "draw"}`
@@ -238,23 +288,39 @@ const useRoomHook = () => {
 		}
 
 		if (myTeam !== null) {
-			const alertMessage = buildPostGameAlertMessage(isWinner, POST_GAME_BACK_COUNTDOWN_SECONDS)
+			const alertMessage = buildPostGameAlertMessage(
+				isWinner,
+				POST_GAME_BACK_COUNTDOWN_SECONDS,
+				data.status
+			)
 
 			await openAlert({
 				title: "popup.alert.title",
 				message: alertMessage,
 				okLabel: "room.messages.back-to-room",
 				countdownSeconds: POST_GAME_BACK_COUNTDOWN_SECONDS,
-				countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(isWinner, secondsLeft)
+				countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(
+					isWinner,
+					secondsLeft,
+					data.status
+				)
 			})
 
 			await submitBackToRoom(data.gameId)
+		} else {
+			// Spectator: no win/lose alert, just a neutral snackbar naming the result.
+			openSnackbar({
+				avatar: null,
+				message: buildSpectatorEndMessage(data.status, data.winnerId),
+				severity: "info",
+				duration: 5000
+			})
 		}
 
 		resetToWaitingRoom()
 		setShowConfetti(false)
 		await enforcePostGameBalance()
-	}, [buildPostGameAlertMessage, currentUserId, myTeam, submitBackToRoom])
+	}, [buildPostGameAlertMessage, buildSpectatorEndMessage, currentUserId, myTeam, submitBackToRoom])
 
 	// Reset client state to the post-game "waiting" view (room.status === 1, no active game)
 	const resetToWaitingRoom = () => {
@@ -308,45 +374,57 @@ const useRoomHook = () => {
 	}
 
 	async function loadCurrentRoom() {
+		setIsRoomLoading(true)
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
+			setIsRoomLoading(false)
 			return
 		}
 
-		const roomInfoResponse: APIResponse<RoomInfoData> = await getRoomById(token, roomId)
-		if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
-			// navigate to home if room doesn't exist or failed to load
-			navigate(HOME_PATH)
-			return
-		}
-		const roomData = roomInfoResponse.data
-		const roomUsers = (roomData.users || []) as RoomUser[]
-		previousJoinedUsersRef.current = roomUsers
+		try {
+			const roomInfoResponse: APIResponse<RoomInfoData> = await getRoomById(token, roomId)
+			if (!roomInfoResponse || !roomInfoResponse.success || !roomInfoResponse.data) {
+				// navigate to home if room doesn't exist or failed to load
+				navigate(HOME_PATH)
+				return
+			}
 
-		const isUserAlreadyInRoom = roomUsers.some(user => user.id === currentUserId)
+			if (roomInfoResponse.data.room.game_type !== "xiangqi") {
+				// do nothing if the room is not a Xiangqi game type
+				return
+			}
 
-		if (!isUserAlreadyInRoom) {
-			const joinRoomResponse = await joinRoom(token, roomId)
-			setJoinedUsers(joinRoomResponse.data as RoomUser[])
-		}
-		else {
-			setJoinedUsers(roomUsers)
-		}
+			const roomData = roomInfoResponse.data
+			const roomUsers = (roomData.users || []) as RoomUser[]
+			previousJoinedUsersRef.current = roomUsers
 
-		setRoom(roomData.room)
-		setGame(roomData.game)
-		setClock(roomData.clock ?? null)
-		setUnreadChatCount(roomData.chat.unread_count)
+			const isUserAlreadyInRoom = roomUsers.some(user => user.id === currentUserId)
 
-		if (!roomData.game) {
-			setHistory([])
-			setAvailableMoves([])
-			setBoard(fenToBoard(EMPTY_BOARD_FEN))
-			setSelected(null)
-			setCurrentTurn(roomData.room.red_first ? "red" : "black")
-			setPreviousMove(null)
-			setCheckingPieces([])
-			setCapturedPieces({ red: [], black: [] })
+			if (!isUserAlreadyInRoom) {
+				const joinRoomResponse = await joinRoom(token, roomId)
+				setJoinedUsers(joinRoomResponse.data as RoomUser[])
+			}
+			else {
+				setJoinedUsers(roomUsers)
+			}
+
+			setRoom(roomData.room)
+			setGame(roomData.game)
+			setClock(roomData.clock ?? null)
+			setUnreadChatCount(roomData.chat.unread_count)
+
+			if (!roomData.game) {
+				setHistory([])
+				setAvailableMoves([])
+				setBoard(fenToBoard(EMPTY_BOARD_FEN))
+				setSelected(null)
+				setCurrentTurn(roomData.room.red_first ? "red" : "black")
+				setPreviousMove(null)
+				setCheckingPieces([])
+				setCapturedPieces({ red: [], black: [] })
+			}
+		} finally {
+			setIsRoomLoading(false)
 		}
 	}
 
@@ -390,35 +468,12 @@ const useRoomHook = () => {
 		if (history.length > 1) {
 			const latest = history[history.length - 1]
 			const prevLatest = history[history.length - 2]
-			const isOpponentMove = latest.userId !== currentUserId
-			if (isOpponentMove) {
-				diff = diffFenMove(prevLatest.fen, latest.fen)
-			}
+			diff = diffFenMove(prevLatest.fen, latest.fen)
 		}
-
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
 
 		const { top, bottom } = resolveSideUsers(joinedUsers, room.red_first)
 		setTopSideUser(top)
 		setBottomSideUser(bottom)
-
-		const teams = joinedUsers.filter(u => u.team).map(u => u.team)
-		const hasAvailableSeat = new Set(teams).size < 2
-
-		// Check if current user can afford this room's bet for challenge
-		const canAffordBet = room && currentUser && currentUser.total_amount && room.pve_mode === false
-			? (room.bet_amount === 0 || room.bet_amount * 10 <= currentUser.total_amount * 8)
-			: true
-
-		// Shared button-state flags. "Waiting" = room open before a game; "playing" =
-		// a game is actively running (room.status 2 AND game.status 1 = ongoing).
-		const isHost = room.host_id === currentUserId
-		const isWaiting = room.status === 1
-		const isPlaying = room.status === 2 && game?.status === 1
-		const mySeat = currentUser?.team ?? null
-		const isPlayer = mySeat !== null
-		const bothSeatsFilled = seatSet.has("red") && seatSet.has("black")
-		const allPlayersReady = bothSeatsFilled && !isStartBlockedByBackReady
 
 		const menus: RoomActionButton[] = [
 			{
@@ -442,7 +497,7 @@ const useRoomHook = () => {
 				icon: "fas fa-hand-rock",
 				label: "room.actions.challenge",
 				onClick: handleChallenge,
-				visible: isWaiting && !isHost && mySeat === null,
+				visible: isWaiting && !isHost && !isPlayer,
 				enabled: hasAvailableSeat && canAffordBet
 			},
 			{
@@ -458,8 +513,8 @@ const useRoomHook = () => {
 				icon: "fas fa-rotate-left",
 				label: "room.actions.undo",
 				onClick: handleUndo,
-				visible: isPlaying,
-				enabled: isPlaying && isPlayer && history.length > 2
+				visible: isPlaying && room.pve_mode,
+				enabled: isPlaying && room.pve_mode && isPlayer && history.length > 2
 			},
 			{
 				key: "draw",
@@ -500,33 +555,18 @@ const useRoomHook = () => {
 		const nextBoard = fenToBoard(fen)
 		setCurrentTurn(latest.team as Team)
 
-		// For spectators: highlight all moves
-		// For players: only highlight opponent moves.
+		// Always highlight the latest move regardless of who moved.
 		let nextPreviousMove: MoveProps | null = null
-		const isSpectator = myTeam === null
-		const isOpponentMove = latest.userId !== currentUserId
 
-		if (isSpectator) {
-			// Spectators see all moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
-			}
-		} else {
-			// Players only see opponent moves
-			if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen && isOpponentMove) {
-				nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
-			}
-			else if (isOpponentMove && diff !== null) {
-				nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
-			}
+		if (remoteMoveRef.current && remoteMoveRef.current.fen === latest.fen) {
+			nextPreviousMove = { from: remoteMoveRef.current.from, to: remoteMoveRef.current.to }
+		}
+		else if (diff !== null) {
+			nextPreviousMove = { from: diff.oldIndex, to: diff.newIndex }
 		}
 
-		// Highlight enemy pieces giving check, but only against the logged-in player's
-		// general - spectators don't get the check highlight.
-		const nextCheckingPieces = myTeam ? findCheckingPieces(nextBoard, myTeam) : []
+		// The side to move is the side that must answer a check.
+		const nextCheckingPieces = findCheckingPieces(nextBoard, latest.team as Team)
 
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
@@ -628,9 +668,8 @@ const useRoomHook = () => {
 		}
 	}, [isConnected, roomId, currentUserId, onRoomUsersUpdated, offRoomUsersUpdated])
 
-	// Socket.io: When the host kicks me out of this room, leave the socket channel,
-	// notify me, and return to the home page. Other clients just see the seat list
-	// refresh via `room-users-updated`.
+	// Socket.io: on kick, leave the socket channel and redirect home.
+	// Other clients see the seat list refresh via `room-users-updated`.
 	useEffect(() => {
 		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -701,11 +740,8 @@ const useRoomHook = () => {
 			// Update board state first
 			setBoard(boardClone)
 
-			// Defer history update until the move's CSS transition completes
-			// (consumed in onAnimateEnd). Updating history right away would trigger
-			// updateToState → dispatch fenToBoard(fen) on the next render, replacing
-			// the animated piece (cell.id changes → React remounts) and killing the
-			// transition before it can run.
+			// Defer history update until the CSS transition completes (see onAnimateEnd).
+			// Updating early would remount the animated piece and kill the transition.
 			setPendingRemoteMove(moveRecord)
 		}
 
@@ -876,7 +912,7 @@ const useRoomHook = () => {
 		const handleGameEndedEvent = async (data: {
 			roomId: string | number
 			gameId: string
-			status: "checkmate" | "stalemate"
+			status: "checkmate" | "stalemate" | "perpetual-check"
 			winnerId: number | null
 		}) => {
 			if (!data || Number(data.roomId) !== roomId) {
@@ -900,6 +936,47 @@ const useRoomHook = () => {
 			offGameEnded(handleGameEndedEvent)
 		}
 	}, [isConnected, roomId, game, onGameEnded, offGameEnded, handleGameEnded])
+
+	// Socket.io: perpetual check warning. Checked side is notified;
+	// checker (offender) is warned that one more repetition will forfeit the game.
+	useEffect(() => {
+		if (!isConnected || !roomId) {
+			return
+		}
+
+		const handlePerpetualCheckWarning = (data: {
+			roomId: string | number
+			gameId: string
+			offenderTeam: Team
+			checkedTeam: Team
+		}) => {
+			if (Number(data.roomId) !== roomId) {
+				return
+			}
+			if (game && data.gameId !== game.id) {
+				return
+			}
+			if (myTeam === data.checkedTeam) {
+				openSnackbar({
+					avatar: null,
+					message: translate("game.perpetual-check.warning-sent"),
+					severity: "warning",
+					duration: 4000
+				})
+			} else if (myTeam === data.offenderTeam) {
+				void openAlert({
+					title: "popup.alert.title",
+					message: "game.perpetual-check.warning-self"
+				})
+			}
+		}
+
+		onPerpetualCheckWarning(handlePerpetualCheckWarning)
+
+		return () => {
+			offPerpetualCheckWarning(handlePerpetualCheckWarning)
+		}
+	}, [isConnected, roomId, game, myTeam, onPerpetualCheckWarning, offPerpetualCheckWarning])
 
 	// Socket.io: Play the gong and initialize the board when a game starts in this room.
 	// Fires for everyone in the room (host, opponent, spectators)
@@ -939,10 +1016,8 @@ const useRoomHook = () => {
 		}
 	}, [isConnected, roomId, onGameStarted, offGameStarted])
 
-	// Socket.io: mirror an opponent's undo. The player who pressed undo already
-	// rewound locally via the HTTP response, so ignore our own event; everyone else
-	// trims the same number of trailing moves (updateToState rebuilds the board)
-	// and syncs to the server's rewound clock.
+	// Socket.io: mirror an opponent's undo (ignore our own — already rewound via HTTP).
+	// Everyone else trims the same trailing moves and syncs to the rewound clock.
 	useEffect(() => {
 		if (!isConnected || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -1036,12 +1111,7 @@ const useRoomHook = () => {
 	])
 
 	const handleStartGame = async () => {
-		const canStart = joinedUsers.length > 1
-			&& room !== null
-			&& room.status === 1
-			&& seatSet
-			&& !isStartBlockedByBackReady
-		if (!canStart) {
+		if (!(isHost && isWaiting && allPlayersReady)) {
 			return
 		}
 
@@ -1094,6 +1164,10 @@ const useRoomHook = () => {
 	}
 
 	const handleChallenge = async () => {
+		if (!isWaiting || isHost || isPlayer || !hasAvailableSeat || !canAffordBet) {
+			return
+		}
+
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -1112,6 +1186,10 @@ const useRoomHook = () => {
 	}
 
 	const handleLeaveSeat = async () => {
+		if (!isWaiting || !isPlayer || isHost) {
+			return
+		}
+
 		const token = getToken()
 		if (!token || !Number.isInteger(roomId) || roomId <= 0) {
 			return
@@ -1134,20 +1212,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const playerIds = joinedUsers.slice(0, 2).map(user => user.id)
-		const currentUser = joinedUsers.find(user => user.id === currentUserId)
-		const isInCurrentRoom = currentUser !== undefined
-		const isCurrentlyPlayer = currentUserId !== null && playerIds.includes(currentUserId)
-		const latest = history.length > 0 ? history[history.length - 1] : null
-		// const isMyTurn = Boolean(currentUser?.team && latest && currentUser.team === latest.team)
-		const canUndo = isInCurrentRoom
-			&& isCurrentlyPlayer
-			&& room.status === 2
-			// latest move is not a restore point for current user
-			&& (!latest?.undo || latest?.undo !== currentUserId)
-			// && isMyTurn
-
-		if (!canUndo) {
+		if (!isPlaying || !room.pve_mode || !isPlayer || history.length <= 2) {
 			return
 		}
 
@@ -1190,8 +1255,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const canDraw = room.status === 2 && game.status === 1 && myTeam !== null
-		if (!canDraw) {
+		if (!isPlaying || !isPlayer) {
 			return
 		}
 
@@ -1236,8 +1300,7 @@ const useRoomHook = () => {
 			return
 		}
 
-		const canSurrender = room.status === 2 && game.status === 1 && myTeam !== null
-		if (!canSurrender) {
+		if (!isPlaying || !isPlayer) {
 			return
 		}
 
@@ -1316,9 +1379,8 @@ const useRoomHook = () => {
 		const isAvailableMove = availableMoves.includes(id)
 
 		if (!state.debugMode) {
-			// Only seated players may control pieces. Spectators (no assigned team) are
-			// locked out entirely - otherwise a third user in a B-vs-bot room could move
-			// B's pieces.
+			// Only seated players (myTeam set) may control pieces.
+			// Spectators are locked out to prevent e.g. a 3rd user moving bot-opponent's pieces.
 			if (!myTeam) return
 
 			// And a seated player may only control their own pieces. Capturing via an
@@ -1355,9 +1417,8 @@ const useRoomHook = () => {
 	}
 
 	const onAnimateEnd = async () => {
-		// Remote move animation finished - now commit it to history. updateToState
-		// will then rebuild the board from FEN; visually seamless because the piece
-		// already animated to its final on-screen position.
+		// Animation finished — commit remote move to history.
+		// updateToState rebuilds from FEN; seamless since piece is already at its final position.
 		if (pendingRemoteMove) {
 			const moveRecord = pendingRemoteMove
 			setPendingRemoteMove(null)
@@ -1438,10 +1499,10 @@ const useRoomHook = () => {
 		setCapturedPieces(capturedPiecesClone)
 		setBoard(gameStateClone)
 		setSelected(null)
-		// The logged-in player's own move is never highlighted
-		setPreviousMove(null)
-		// A legal local move always resolves any check against the moving side.
-		setCheckingPieces([])
+		// Mark from/to right away so local moves get the same previous-move highlight
+		setPreviousMove({ from: selectedId, to: targetId })
+		// After a legal move, if the opponent is in check, highlight the checking piece(s).
+		setCheckingPieces(enemyCheckingPieces)
 		setCurrentTurn(enemyTeam)
 
 		if (room?.status === 2 && game) {
@@ -1471,16 +1532,18 @@ const useRoomHook = () => {
 						checkedTeam: enemyTeam
 					}) as APIResponse<VerifyStateResponseData>
 
-					const isCheckmate = verify.data?.gameEnded && verify.data.status === "checkmate"
 					if (!verify?.success) {
 						logger.warn("[Room] verify-state failed", verify)
-					} else if (isCheckmate) {
+					} else if (verify.data?.gameEnded) {
+						// Covers checkmate, stalemate and perpetual check (長將).
 						await handleGameEnded({
 							gameId: game.id,
-							status: verify.data.status as "checkmate" | "stalemate",
+							status: verify.data.status as "checkmate" | "stalemate" | "perpetual-check",
 							winnerId: verify.data.winnerId
 						})
 					}
+					// Perpetual-check warning is handled via the "perpetual-check-warning" socket event;
+					// nothing more to do in the verify-state response.
 				}
 			} finally {
 				setIsMovePending(false)
@@ -1549,6 +1612,7 @@ const useRoomHook = () => {
 		gameButtons,
 		isBoardRotated,
 		isInGame,
+		isRoomLoading,
 		myTeam,
 		previousMove,
 		roomChatDialogContext,

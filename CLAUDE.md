@@ -8,9 +8,12 @@ Before making any changes, review and follow:
 ## Localization
 - docs/language-generation.md
 
+## Type modeling (frontend + backend)
+- docs/type-modeling.md (minimize optional fields; prefer required / `| null` for {frontend,backend}/src/**/*.{ts,tsx})
+
 ## Frontend coding convention
 - docs/react-guidelines.md
-- docs/frontend-authoring.md (type field & MUI styling rules for frontend/src/**/*.{ts,tsx})
+- docs/frontend-authoring.md (MUI styling rules for frontend/src/**/*.{ts,tsx})
 
 ## New function / entry convention
 - docs/new-function-convention.md (e.g. when editing frontend/src/hooks/useAPI.ts)

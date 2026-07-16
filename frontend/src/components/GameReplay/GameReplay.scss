@@ -36,6 +36,17 @@
 		box-sizing: border-box;
 		padding: 4px 0;
 	}
+
+	.captured-pieces-display {
+		overflow: hidden;
+	}
+
+	.captured-piece {
+		width: 24px;
+		height: 24px;
+		font-size: 14px;
+		z-index: auto;
+	}
 }
 
 .game-replay-controls {
