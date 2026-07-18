@@ -9,8 +9,8 @@ import { formatClock } from "../useGameClock"
 import { setInviteRoomId, setPopup, setRoomHostId } from "toolkit/slice/game"
 import { PlayerInfoCardProps } from "../types"
 
-// Below this many ms remaining, the clock turns "low" (red/urgent styling).
-const LOW_TIME_MS = 30_000
+const PER_MOVE_LOW_TIME_RATIO = 0.2
+const PER_MOVE_LOW_TIME_MIN_MS = 10_000
 
 // Bots are rated on a fixed 1–5 difficulty scale
 const MAX_BOT_LEVEL = 5
@@ -115,6 +115,10 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 		if (botLevel === null) return "far fa-star bot-level-star"
 		return index < botLevel ? "fas fa-star bot-level-star" : "far fa-star bot-level-star"
 	}
+	const perMoveLowTimeMs = Math.max(
+		timePerMove * PER_MOVE_LOW_TIME_RATIO * 1000,
+		PER_MOVE_LOW_TIME_MIN_MS
+	)
 
 	const backReadyClass = classnames("player-back-ready-badge", {
 		"is-ready": user.back_ready,
@@ -122,10 +126,10 @@ export default function PlayerInfoCard(props: PlayerInfoCardProps) {
 	})
 	const playerClockClass = classnames("player-clock", {
 		"is-active": active,
-		"low-time": remainingMs !== null && remainingMs <= LOW_TIME_MS
+		"low-time": remainingMs !== null && remainingMs <= perMoveLowTimeMs
 	})
 	const playerClockPerMoveClass = classnames("player-clock-per-move", {
-		"low-time": active && (perMoveMs ?? 0) <= LOW_TIME_MS
+		"low-time": active && (perMoveMs ?? 0) <= perMoveLowTimeMs
 	})
 	
 	const isHost = props.roomHostId !== null && user.id === props.roomHostId

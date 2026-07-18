@@ -1,12 +1,14 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { fenToBoard } from "common/board-helper"
+import { fenToBoard, hasAttackingMaterial, parseFenCounters } from "common/board-helper"
+import { NATURAL_MOVE_LIMIT_PLIES } from "common/constant"
 import { concludeGame } from "common/game/conclude-game.helper"
 import { evaluatePerpetualCheck } from "common/game/perpetual-check.helper"
 import { evaluateTeamState } from "common/game/state-evaluator"
+import { getGameHistoryCollection } from "common/mongodb"
 import { emitPerpetualCheckWarning } from "common/socket"
 import { requireAuth, AuthenticatedRequest } from "middleware/auth"
-import { Team, VerifyStateRequestDto } from "types/game.type"
+import { GameEndReason, Team, VerifyStateRequestDto } from "types/game.type"
 
 const router = Router()
 
@@ -165,7 +167,7 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 		let occurrences = 0
 
 		// End the game for `winnerTeam` (null = draw) via the shared conclude helper.
-		const finalizeGameEnd = async (winnerTeam: Team | null, statusForEvent: string) => {
+		const finalizeGameEnd = async (winnerTeam: Team | null, statusForEvent: GameEndReason) => {
 			const result = await concludeGame({
 				gameId,
 				roomId: game.room_id,
@@ -182,10 +184,35 @@ router.post("/game/verify-state", requireAuth(), async (req: AuthenticatedReques
 			}
 		}
 
+		// No-progress ply count, resets only on a capture or forward soldier advance.
+		let plyCount = 0
+		try {
+			const collection = await getGameHistoryCollection()
+			const latest = await collection
+				.find({ $or: [{ game_id: gameId }, { gameId }] })
+				.sort({ _id: -1 })
+				.limit(1)
+				.toArray()
+			if (latest.length > 0 && typeof latest[0].fen === "string") {
+				plyCount = parseFenCounters(latest[0].fen).halfmove
+			}
+		} catch (err) {
+			console.error(`[Verify-State] failed to read ply counter for game ${gameId}:`, err)
+		}
+
 		if (evaluation.status === "checkmate" || evaluation.status === "stalemate") {
 			// The checked/stalemated side loses; its opponent wins.
 			const winnerTeam = checkedTeam === "red" ? "black" : "red"
 			await finalizeGameEnd(winnerTeam, evaluation.status)
+		} else if (
+			!hasAttackingMaterial(newFen, "red") &&
+			!hasAttackingMaterial(newFen, "black")
+		) {
+			// Neither side has any attacking piece left
+			await finalizeGameEnd(null, "draw")
+		} else if (plyCount >= NATURAL_MOVE_LIMIT_PLIES) {
+			// Natural move-limit: too long with no capture and no forward soldier advance.
+			await finalizeGameEnd(null, "draw")
 		} else if (evaluation.inCheck) {
 				// Check if this move creates a perpetual check.
 				// "loss" = checker loses (checkedTeam wins); "warning" = one repetition away, notify both.

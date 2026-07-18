@@ -392,6 +392,75 @@ describe("POST /api/game/move-piece", () => {
 		})
 	})
 
+	it("resets the half-move clock to 0 when a soldier advances forward", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-soldier-advance")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		// Prev clock at 5; red soldier on row 6 about to step forward to row 5.
+		toArrayMock.mockResolvedValue([
+			{
+				_id: { toString: () => "mongo-id-prev" },
+				game_id: "game-1",
+				fen: "4G4/9/9/9/9/9/s8/9/9/4g4 w - - 5 3",
+				team: "red"
+			}
+		])
+		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "mongo-id-new" } })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-1",
+				newFen: "4G4/9/9/9/9/s8/9/9/9/4g4",
+				capturePiece: null,
+				team: "red"
+			})
+
+		expect(res.status).toBe(201)
+		expect(insertOneMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				game_id: "game-1",
+				fen: "4G4/9/9/9/9/s8/9/9/9/4g4 b - - 0 3",
+				team: "black"
+			})
+		)
+	})
+
+	it("keeps counting when a soldier only shifts sideways (no forward progress)", async () => {
+		const accessToken = buildAccessToken(91, "session-move-piece-soldier-sideways")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		// Prev clock at 5; red soldier already across the river shuffles sideways.
+		toArrayMock.mockResolvedValue([
+			{
+				_id: { toString: () => "mongo-id-prev" },
+				game_id: "game-1",
+				fen: "4G4/9/9/s8/9/9/9/9/9/4g4 w - - 5 3",
+				team: "red"
+			}
+		])
+		insertOneMock.mockResolvedValue({ insertedId: { toString: () => "mongo-id-new" } })
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-1",
+				newFen: "4G4/9/9/1s7/9/9/9/9/9/4g4",
+				capturePiece: null,
+				team: "red"
+			})
+
+		expect(res.status).toBe(201)
+		// Sideways is not progress -> the clock advances from 5 to 6.
+		expect(insertOneMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				game_id: "game-1",
+				fen: "4G4/9/9/1s7/9/9/9/9/9/4g4 b - - 6 3",
+				team: "black"
+			})
+		)
+	})
+
 	it("returns 400 when team does not match latest history record", async () => {
 		const accessToken = buildAccessToken(91, "session-move-piece-invalid-team")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))

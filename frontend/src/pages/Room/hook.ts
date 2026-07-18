@@ -57,6 +57,7 @@ import {
 import {
 	ClockSnapshot,
 	DrawRequest,
+	GameEndReason,
 	GameMovements,
 	HistoryData,
 	MovePieceRequest,
@@ -236,13 +237,20 @@ const useRoomHook = () => {
 	}, [backToRoom, roomId])
 
 	const buildPostGameAlertMessage = useCallback(
-		(isWinner: boolean, secondsLeft: number, status?: string) => {
+		(isWinner: boolean, secondsLeft: number, status?: string, isDraw = false) => {
 			let resultText = isWinner ? "room.messages.you-win" : "room.messages.you-lose"
-			if (status === "perpetual-check") {
+			if (isDraw) {
+				resultText = "room.messages.you-draw"
+			} else if (status === "perpetual-check") {
 				// show the reason to let both side to know the game ended on the 長將 rule.
 				resultText = isWinner
 					? "room.messages.you-win-perpetual-check"
 					: "room.messages.you-lose-perpetual-check"
+			} else if (status === "per-move-timeout") {
+				// Per-move timeout is an unconditional win/loss (never a draw).
+				resultText = isWinner
+					? "room.messages.you-win-per-move-timeout"
+					: "room.messages.you-lose-per-move-timeout"
 			}
 			return translate("room.messages.auto-back-countdown").format(
 				translate(resultText),
@@ -261,6 +269,7 @@ const useRoomHook = () => {
 				checkmate: "room.messages.spectator-win-checkmate",
 				stalemate: "room.messages.spectator-win-stalemate",
 				timeout: "room.messages.spectator-win-timeout",
+				"per-move-timeout": "room.messages.spectator-win-per-move-timeout",
 				"perpetual-check": "room.messages.spectator-win-perpetual-check"
 			}
 			const key = keyByStatus[status]
@@ -272,7 +281,7 @@ const useRoomHook = () => {
 
 	const handleGameEnded = useCallback(async (data: {
 		gameId: string
-		status: "checkmate" | "stalemate" | "timeout" | "perpetual-check"
+		status: GameEndReason
 		winnerId: number | null
 	}) => {
 		const dedupeKey = `${data.gameId}-${data.status}-${data.winnerId ?? "draw"}`
@@ -282,6 +291,7 @@ const useRoomHook = () => {
 		processedGameEndRef.current = dedupeKey
 
 		const isWinner = data.winnerId !== null && currentUserId === data.winnerId
+		const isDraw = data.winnerId === null
 
 		if (isWinner) {
 			setShowConfetti(true)
@@ -291,7 +301,8 @@ const useRoomHook = () => {
 			const alertMessage = buildPostGameAlertMessage(
 				isWinner,
 				POST_GAME_BACK_COUNTDOWN_SECONDS,
-				data.status
+				data.status,
+				isDraw
 			)
 
 			await openAlert({
@@ -302,7 +313,8 @@ const useRoomHook = () => {
 				countdownMessageBuilder: secondsLeft => buildPostGameAlertMessage(
 					isWinner,
 					secondsLeft,
-					data.status
+					data.status,
+					isDraw
 				)
 			})
 
@@ -912,7 +924,7 @@ const useRoomHook = () => {
 		const handleGameEndedEvent = async (data: {
 			roomId: string | number
 			gameId: string
-			status: "checkmate" | "stalemate" | "perpetual-check"
+			status: GameEndReason
 			winnerId: number | null
 		}) => {
 			if (!data || Number(data.roomId) !== roomId) {

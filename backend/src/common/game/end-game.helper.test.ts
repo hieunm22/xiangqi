@@ -1,4 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { EndGameParams } from "types/game.type"
 
 const transactionMock = vi.fn()
 const gameUpdateManyMock = vi.fn()
@@ -39,7 +40,7 @@ vi.mock("./achievement.helper", () => ({
 // over the mock consts) are evaluated only after those consts are initialized.
 let runEndGameTransaction: typeof import("./end-game.helper").runEndGameTransaction
 
-const PVP_WIN = {
+const PVP_WIN: EndGameParams = {
 	gameId: "game-1",
 	roomId: BigInt(100),
 	winnerId: BigInt(11),

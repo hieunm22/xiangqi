@@ -42,7 +42,8 @@
 			"reason-surrender": "{{name}} surrendered",
 			"reason-leave": "{{name}} left the game",
 			"reason-draw": "Draw",
-			"reason-timeout": "{{name}} ran out of time",
+			"reason-timeout": "{{name}} ran out of total game time",
+			"reason-per-move-timeout": "{{name}} ran out of time for a move",
 			"reason-ended": "The game has ended"
 		}
 	},
@@ -54,6 +55,7 @@
 		"guide": "Guide",
 		"announce": "Announcement",
 		"extra": "Daily tasks",
+		"leaderboard": "Leaderboard",
 		"setting": {
 			"button": "Settings"
 		},
@@ -104,6 +106,12 @@
 		"button": {
 			"search": "Search"
 		}
+	},
+	"leaderboard": {
+		"title": "Leaderboard",
+		"search-placeholder": "Search user...",
+		"no-results": "No users found",
+		"empty": "No players yet"
 	},
 	"dashboard": {
 		"page": {
@@ -223,11 +231,15 @@
 			"game-ended": "Game ended",
 			"you-win": "You win",
 			"you-lose": "You lose",
+			"you-draw": "The game is a draw",
 			"you-win-perpetual-check": "You win — your opponent lost by perpetual check",
 			"you-lose-perpetual-check": "You lose by perpetual check",
+			"you-win-per-move-timeout": "You win — your opponent ran out of move time",
+			"you-lose-per-move-timeout": "You lose — you ran out of move time",
 			"spectator-win-checkmate": "{0} won by checkmate",
 			"spectator-win-stalemate": "{0} won — opponent had no legal moves",
 			"spectator-win-timeout": "{0} won on time",
+			"spectator-win-per-move-timeout": "{0} won — opponent ran out of move time",
 			"spectator-win-perpetual-check": "{0} won — opponent lost by perpetual check",
 			"spectator-draw": "The game ended in a draw",
 			"back-to-room": "Back to room",
@@ -652,7 +664,7 @@
 			"paragraph2": "If a player runs out of time for a single move (for example: 90s) without moving, the other side is awarded a <b>win</b>.",
 			"paragraph3": "If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.",
 			"paragraph4": "If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.",
-			"paragraph5": "Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>."
+			"paragraph5": "Within 50 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>."
 		}
 	},
 	"extra-money": {

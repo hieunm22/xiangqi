@@ -5,7 +5,7 @@ import { runEndGameTransaction } from "./end-game.helper"
 import { stopClock } from "./game-clock"
 import { activatePostGameLock } from "./post-game.helper"
 import { syncPlayersPresence } from "./presence-sync"
-import { Team } from "types/game.type"
+import { GameEndReason, Team } from "types/game.type"
 
 export interface ConcludeGameParams {
 	gameId: string
@@ -13,8 +13,7 @@ export interface ConcludeGameParams {
 	winnerTeam: Team | null
 	isBotGame: boolean
 	betAmount: number | null
-	// Terminal reason broadcast to clients (checkmate | stalemate | perpetual-check | ...).
-	statusForEvent: string
+	statusForEvent: GameEndReason
 }
 
 export interface ConcludeGameResult {

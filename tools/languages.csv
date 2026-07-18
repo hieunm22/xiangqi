@@ -28,7 +28,8 @@ page.replay.reason-perpetual-check;{{name}} won by opponent's perpetual check;{{
 page.replay.reason-surrender;{{name}} surrendered;{{name}} đã đầu hàng
 page.replay.reason-leave;{{name}} left the game;{{name}} đã rời trận
 page.replay.reason-draw;Draw;Hoà
-page.replay.reason-timeout;{{name}} ran out of time;{{name}} đã hết giờ
+page.replay.reason-timeout;{{name}} ran out of total game time;{{name}} đã hết giờ cả ván
+page.replay.reason-per-move-timeout;{{name}} ran out of time for a move;{{name}} đã hết giờ cho một nước đi
 page.replay.reason-ended;The game has ended;Ván đấu đã kết thúc
 menu.app-name;Xiangqi;Cờ tướng
 menu.profile;Profile;Trang cá nhân
@@ -37,6 +38,7 @@ menu.change-password;Change password;Đổi mật khẩu
 menu.guide;Guide;Luật chơi
 menu.announce;Announcement;Thông báo
 menu.extra;Daily tasks;Kiếm tiền
+menu.leaderboard;Leaderboard;Bảng xếp hạng
 menu.setting.button;Settings;Cài đặt
 menu.app-name;Xiangqi;Cờ tướng
 menu.home;Home;Trang chủ
@@ -68,6 +70,10 @@ search.user.title;Search user;Tìm kiếm
 search.user.placeholder;Search user...;Tìm kiếm người dùng...
 search.user.no-results;No users found;Không tìm thấy người dùng
 search.button.search;Search;Tìm kiếm
+leaderboard.title;Leaderboard;Bảng xếp hạng
+leaderboard.search-placeholder;Search user...;Tìm kiếm người dùng...
+leaderboard.no-results;No users found;Không tìm thấy người dùng
+leaderboard.empty;No players yet;Chưa có người chơi nào
 dashboard.page.title;Room list;Danh sách phòng
 dashboard.filters.all;All;Tất cả
 dashboard.filters.available;Available;Chờ
@@ -294,11 +300,15 @@ room.messages.will-leave-current-room;You are currently in another room. Joining
 room.messages.game-ended;Game ended;Ván đấu đã kết thúc
 room.messages.you-win;You win;Bạn đã chiến thắng
 room.messages.you-lose;You lose;Bạn đã thua
+room.messages.you-draw;The game is a draw;Ván đấu hòa
 room.messages.you-win-perpetual-check;You win — your opponent lost by perpetual check;Bạn thắng vì đối thủ chiếu quẩn
 room.messages.you-lose-perpetual-check;You lose by perpetual check;Bạn thua do chiếu quẩn
+room.messages.you-win-per-move-timeout;You win — your opponent ran out of move time;Bạn thắng vì đối thủ hết giờ đi một nước
+room.messages.you-lose-per-move-timeout;You lose — you ran out of move time;Bạn thua do hết giờ đi một nước
 room.messages.spectator-win-checkmate;{0} won by checkmate;{0} thắng do chiếu bí
 room.messages.spectator-win-stalemate;{0} won — opponent had no legal moves;{0} thắng do đối thủ hết nước đi
 room.messages.spectator-win-timeout;{0} won on time;{0} thắng do đối thủ hết giờ
+room.messages.spectator-win-per-move-timeout;{0} won — opponent ran out of move time;{0} thắng do đối thủ hết giờ đi một nước
 room.messages.spectator-win-perpetual-check;{0} won — opponent lost by perpetual check;{0} thắng do đối thủ chiếu quẩn
 room.messages.spectator-draw;The game ended in a draw;Ván đấu kết thúc với tỉ số hòa
 room.messages.back-to-room;Back to room;Quay lại phòng
@@ -403,7 +413,7 @@ guide.result.paragraph1;When one side gives Check and the other side has no lega
 guide.result.paragraph2;If a player runs out of time for a single move (for example: 90s) without moving, the other side is awarded a <b>win</b>.;Khi hết thời gian một nước đi (ví dụ: 90s) mà vẫn chưa di chuyển quân thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph3;If a player runs out of total game time (for example: 5 minutes or 10 minutes), the other side is awarded a <b>win</b>.;Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.
 guide.result.paragraph4;If both sides have no pieces that have crossed the river, the game is declared a <b>draw</b>. If one side still has pieces across the river but runs out of time, while the other side still has time but has no pieces across the river, the game is declared a <b>draw</b>.;Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.
-guide.result.paragraph5;Within 40 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
+guide.result.paragraph5;Within 50 moves, if there is no capture and no Soldier advances by one square, the game is declared a <b>draw</b>.;Trong vòng 50 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>.
 extra-money.title;Daily tasks;Kiếm tiền
 extra-money.tab.lucky-wheel;Lucky Wheel;Vòng Quay May Mắn
 extra-money.tab.bonus-coin;Bonus Coin;Xu Thưởng

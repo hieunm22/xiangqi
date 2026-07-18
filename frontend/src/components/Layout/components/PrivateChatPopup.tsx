@@ -33,9 +33,6 @@ export const PrivateChatPopup = () => {
 		registerUser
 	} = useSocket()
 	const [conversations, setConversations] = useState<PrivateConversation[]>([])
-	// Display name of the partner picked from the drawer; falls back to the
-	// profile that originally opened the chat.
-	const [activeTitle, setActiveTitle] = useState<string | null>(null)
 	const chatRef = useRef<ChatDialogHandle>(null)
 
 	const isOpen = (gameState.popupState & PopupState.SEND_PM) === PopupState.SEND_PM
@@ -49,12 +46,6 @@ export const PrivateChatPopup = () => {
 			const response = await getPrivateConversations(token) as APIResponse<PrivateConversation[]>
 			if (response?.success && response.data) {
 				setConversations(response.data)
-					// Restore the active conversation title from a previous session.
-					// null falls back to the profile that opened the chat, or the loading label.
-				const activeConversation = gameState.activeUserId
-					? response.data.find(item => item.partner?.id === gameState.activeUserId)
-					: undefined
-				setActiveTitle(activeConversation?.partner?.display_name ?? null)
 			}
 		}
 
@@ -146,10 +137,8 @@ export const PrivateChatPopup = () => {
 
 	const handleSelectConversation = (conversation: PrivateConversation) => {
 		if (!conversation.partner) return
-		setActiveTitle(conversation.partner.display_name)
 		dispatch(setUserId(conversation.partner.id))
-		// Clear the unread badge immediately; ChatDialog marks the conversation
-		// as read on the backend when it loads the messages.
+		// Clear the unread badge immediately
 		setConversations(prev => prev.map(item =>
 			item.conversation_key === conversation.conversation_key
 				? { ...item, unread_count: 0 }
@@ -206,12 +195,17 @@ export const PrivateChatPopup = () => {
 		})
 	}
 
+	const activePartner = conversations
+		.find(item => item.partner?.id === gameState.activeUserId)?.partner
+	const targetName = profileUser?.id === gameState.activeUserId ? profileUser.display_name : null
+	const chatTitle = activePartner?.display_name || targetName || "menu.messages"
+
 	return (
 		<ChatDialog
 			ref={chatRef}
 			open={isOpen}
 			onClose={onClose}
-			title={activeTitle || profileUser?.display_name || ""}
+			title={chatTitle}
 			dialogType="private"
 			getMessages={getPrivateMessages}
 			sendMessage={sendPrivateMessage}

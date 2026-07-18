@@ -23,6 +23,7 @@ import validateTokenRoutes from "./routes/auth/validate-token"
 import bonusCoinsRoutes from "./routes/user/bonus-coins"
 import dailyBonusRoutes from "./routes/user/daily-bonus"
 import getAchievementsRoutes from "./routes/user/get-achievements"
+import leaderboardRoutes from "./routes/user/leaderboard"
 import luckySpinsRoutes from "./routes/user/lucky-spins"
 import searchUserRoutes from "./routes/user/search-user"
 import selectedTabRoutes from "./routes/user/selected-tab"
@@ -105,6 +106,7 @@ app.use("/api", refreshTokenRoutes)
 app.use("/api", bonusCoinsRoutes)
 app.use("/api", dailyBonusRoutes)
 app.use("/api", getAchievementsRoutes)
+app.use("/api", leaderboardRoutes)
 app.use("/api", luckySpinsRoutes)
 app.use("/api", searchUserRoutes)
 app.use("/api", selectedTabRoutes)

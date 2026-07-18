@@ -17,6 +17,7 @@ import { betOptions } from "../constants"
 import Alert from "components/AlertWithIcon"
 import { ResponsiveDialog } from "components/ResponsiveDialog"
 import { TButton, TTextField, TTooltip } from "components/TranslationTag"
+import { ClaimIconButton } from "pages/ExtraMoney/components/Icons"
 import { PieceSelection } from "./PieceSelection"
 import { translate } from "locales/translate"
 import { getToken } from "common/helper"
@@ -328,12 +329,14 @@ export const CreateRoomDialog = () => {
 					onClick={handleCreateRoom}
 					disabled={isRoomNameEmpty || submitting || !canAffordBet(betAmount)}
 					value="popup.confirm.ok"
+					startIcon={<ClaimIconButton isClaiming={submitting} icon="fa-plus" />}
 				/>
 				<TButton
 					variant="outlined"
 					onClick={handleClose}
 					disabled={submitting}
 					value="popup.confirm.cancel"
+					startIcon={<i className="fas fa-xmark" />}
 				/>
 			</DialogActions>
 		</ResponsiveDialog>

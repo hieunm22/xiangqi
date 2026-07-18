@@ -137,13 +137,15 @@ export default function RewardAdDialog({ open, onClose, onReward }: RewardAdDial
 									variant="contained"
 									size="small"
 									value="extra-money.reward-ad.retry"
-									onClick={() => setAttempt((value) => value + 1)}
+									onClick={() => setAttempt(val => val + 1)}
+									startIcon={<i className="fas fa-rotate-right" />}
 								/>
 								<TButton
 									variant="outlined"
 									size="small"
 									value="extra-money.reward-ad.close"
 									onClick={onClose}
+									startIcon={<i className="fas fa-xmark" />}
 								/>
 							</Box>
 						</Box>

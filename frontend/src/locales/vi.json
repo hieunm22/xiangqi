@@ -42,7 +42,8 @@
 			"reason-surrender": "{{name}} đã đầu hàng",
 			"reason-leave": "{{name}} đã rời trận",
 			"reason-draw": "Hoà",
-			"reason-timeout": "{{name}} đã hết giờ",
+			"reason-timeout": "{{name}} đã hết giờ cả ván",
+			"reason-per-move-timeout": "{{name}} đã hết giờ cho một nước đi",
 			"reason-ended": "Ván đấu đã kết thúc"
 		}
 	},
@@ -54,6 +55,7 @@
 		"guide": "Luật chơi",
 		"announce": "Thông báo",
 		"extra": "Kiếm tiền",
+		"leaderboard": "Bảng xếp hạng",
 		"setting": {
 			"button": "Cài đặt"
 		},
@@ -104,6 +106,12 @@
 		"button": {
 			"search": "Tìm kiếm"
 		}
+	},
+	"leaderboard": {
+		"title": "Bảng xếp hạng",
+		"search-placeholder": "Tìm kiếm người dùng...",
+		"no-results": "Không tìm thấy người dùng",
+		"empty": "Chưa có người chơi nào"
 	},
 	"dashboard": {
 		"page": {
@@ -223,11 +231,15 @@
 			"game-ended": "Ván đấu đã kết thúc",
 			"you-win": "Bạn đã chiến thắng",
 			"you-lose": "Bạn đã thua",
+			"you-draw": "Ván đấu hòa",
 			"you-win-perpetual-check": "Bạn thắng vì đối thủ chiếu quẩn",
 			"you-lose-perpetual-check": "Bạn thua do chiếu quẩn",
+			"you-win-per-move-timeout": "Bạn thắng vì đối thủ hết giờ đi một nước",
+			"you-lose-per-move-timeout": "Bạn thua do hết giờ đi một nước",
 			"spectator-win-checkmate": "{0} thắng do chiếu bí",
 			"spectator-win-stalemate": "{0} thắng do đối thủ hết nước đi",
 			"spectator-win-timeout": "{0} thắng do đối thủ hết giờ",
+			"spectator-win-per-move-timeout": "{0} thắng do đối thủ hết giờ đi một nước",
 			"spectator-win-perpetual-check": "{0} thắng do đối thủ chiếu quẩn",
 			"spectator-draw": "Ván đấu kết thúc với tỉ số hòa",
 			"back-to-room": "Quay lại phòng",
@@ -652,7 +664,7 @@
 			"paragraph2": "Khi hết thời gian một nước đi (ví dụ: 90s) mà vẫn chưa di chuyển quân thì bên còn lại sẽ được <b>xử Thắng</b>.",
 			"paragraph3": "Khi một bên hết thời gian ván đấu (ví dụ: 5 phút, 10 phút) thì bên còn lại sẽ được <b>xử Thắng</b>.",
 			"paragraph4": "Khi cả 2 bên đều không còn quân qua sông, ván đấu sẽ được <b>xử Hòa</b>. Khi một bên còn quân qua sông nhưng cạn thời gian, một bên còn thời gian nhưng hết quân qua sông, ván đấu sẽ được <b>xử Hòa</b>.",
-			"paragraph5": "Trong vòng 40 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>."
+			"paragraph5": "Trong vòng 50 nước nếu không phát sinh nước bắt quân, Tốt không tiến 1 ô thì ván đấu sẽ được <b>xử Hòa</b>."
 		}
 	},
 	"extra-money": {

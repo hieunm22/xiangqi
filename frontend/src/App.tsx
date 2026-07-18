@@ -23,6 +23,7 @@ import "styles/animation.scss"
 import "pages/Announce/Announce.scss"
 import "pages/Dashboard/Dashboard.scss"
 import "pages/ExtraMoney/ExtraMoney.scss"
+import "pages/Leaderboard/Leaderboard.scss"
 import "pages/Login/Login.scss"
 import "pages/LostPassword/LostPassword.scss"
 import "pages/NotFound/NotFound.scss"
@@ -30,11 +31,13 @@ import "pages/Register/Register.scss"
 import "pages/ResetPassword/ResetPassword.scss"
 import "pages/Room/Room.scss"
 import "styles/responsive.scss"
+import "styles/mui.scss"
 import "styles/common.scss"
 
 const AnnouncePage = lazy(() => import("pages/Announce"))
 const Dashboard = lazy(() => import("pages/Dashboard"))
 const ExtraMoneyPage = lazy(() => import("pages/ExtraMoney"))
+const LeaderboardPage = lazy(() => import("pages/Leaderboard"))
 const LoginPage = lazy(() => import("pages/Login"))
 const LostPasswordPage = lazy(() => import("pages/LostPassword"))
 const NotFoundPage = lazy(() => import("pages/NotFound"))
@@ -177,6 +180,14 @@ function AppWithTheme() {
 							element={
 								<ProtectedRoute>
 									<ExtraMoneyPage />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/leaderboard"
+							element={
+								<ProtectedRoute>
+									<LeaderboardPage />
 								</ProtectedRoute>
 							}
 						/>

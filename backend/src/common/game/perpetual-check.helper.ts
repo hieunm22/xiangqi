@@ -2,8 +2,8 @@ import { getGameHistoryCollection } from "common/mongodb"
 import { Team } from "types/game.type"
 import { evaluateTeamState } from "./state-evaluator"
 
-export const PERPETUAL_CHECK_WARNING_REPETITION = 3
-export const PERPETUAL_CHECK_LOSS_REPETITION = 4
+export const PERPETUAL_CHECK_WARNING_REPETITION = 5
+export const PERPETUAL_CHECK_LOSS_REPETITION = 6
 
 // none = not (yet) perpetual, warning = repeated enough to warn, loss = checker loses.
 export type PerpetualCheckStatus = "none" | "warning" | "loss"

@@ -16,18 +16,16 @@ import { PopupState } from "common/enums"
 import { TButton, TTextField, TTypography } from "components/TranslationTag"
 import { formatNumber, getClaimsFromLocalStorage, getToken } from "common/helper"
 import { UserAvatar } from "pages/Dashboard/components/UserAvatar"
+import { ClaimIconButton } from "pages/ExtraMoney/components/Icons"
 import { useAPI } from "hooks/useAPI"
 import { useProfilePopup } from "hooks/useAppContext"
 import { useSocket } from "hooks/useSocket"
 import useToolkit from "hooks/useToolkit"
 import { setInviteRoomId, setPopup, setUserId } from "toolkit/slice/game"
-import { APIResponse, UserAvatarType } from "types/Common"
+import { APIResponse } from "types/Common"
 import { Users } from "types/Entities"
+import { SearchUserType } from "../types"
 import "../../../pages/Dashboard/Dashboard.scss"
-
-type SearchUserType = UserAvatarType & {
-	total_amount: number
-}
 
 export const SearchUserPopup = () => {
 	const { gameState, state, dispatch } = useToolkit()
@@ -197,8 +195,19 @@ export const SearchUserPopup = () => {
 			</DialogContent>
 			<Divider className="menu-divider" />
 			<DialogActions className="pb-16">
-				<TButton variant="contained" size="medium" value="search.button.search" />
-				<TButton variant="outlined" size="medium" onClick={closePopup} value="settings.close" />
+				<TButton
+					variant="contained"
+					size="medium"
+					value="search.button.search"
+					startIcon={<ClaimIconButton isClaiming={loading} icon="fa-magnifying-glass" />}
+				/>
+				<TButton
+					variant="outlined"
+					size="medium"
+					onClick={closePopup}
+					value="settings.close"
+					startIcon={<i className="fas fa-xmark" />}
+				/>
 			</DialogActions>
 		</Dialog>
 	)

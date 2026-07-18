@@ -215,7 +215,8 @@ describe("POST /api/game/surrender", () => {
 				fen: "latest-fen",
 				team: "black",
 				time_stamp: expect.any(Number),
-				surrender: 11,
+				surrender_id: 11,
+				winner_id: 12,
 				end_reason: "surrender"
 			})
 		)

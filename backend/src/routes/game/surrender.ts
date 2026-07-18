@@ -179,7 +179,8 @@ router.post("/game/surrender", requireAuth(), async (req: AuthenticatedRequest, 
 			fen: latestRecord[0].fen,
 			team: surrenderingPlayer.team === "red" ? "black" : "red",
 			time_stamp: getUTCTimestamp(),
-			surrender: Number(userId),
+			surrender_id: Number(userId),
+			winner_id: Number(winner.user_id),
 			end_reason: "surrender"
 		})
 

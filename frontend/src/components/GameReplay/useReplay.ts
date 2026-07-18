@@ -23,11 +23,11 @@ import { GameMovements, MoveProps, RoomUser } from "pages/Room/types"
 import { GameHistoryUser } from "components/Layout/types"
 import { PendingCommit, ReplayEndInfo, UseReplayArgs } from "./types"
 
-// Which field on the terminal history record holds the id of the player the end reason is about
 const END_REASON_PLAYER_FIELD: Record<string, keyof GameMovements> = {
-	surrender: "surrender",
+	surrender: "surrender_id",
 	leave: "leave",
 	timeout: "timeout",
+	"per-move-timeout": "timeout",
 	checkmate: "winner_id",
 	"perpetual-check": "winner_id"
 }

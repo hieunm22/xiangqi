@@ -9,6 +9,16 @@ export interface ChangeTeamRequest {
 
 export type GameStateStatus = "ongoing" | "check" | "checkmate" | "stalemate"
 
+export type GameEndReason =
+	| "checkmate"
+	| "stalemate"
+	| "perpetual-check"
+	| "timeout"
+	| "per-move-timeout"
+	| "surrender"
+	| "leave"
+	| "draw"
+
 export interface VerifyStateRequestDto {
 	gameId: string
 	newFen: string
@@ -61,9 +71,7 @@ export interface EndGameParams {
 	winnerId: bigint | null
 	isBotGame: boolean
 	betAmount: number | null
-	// Terminal reason (checkmate | stalemate | perpetual-check | timeout |
-	// surrender | draw | leave)
-	endReason: string
+	endReason: GameEndReason
 }
 
 export interface UserPresenceStatus {
@@ -114,6 +122,7 @@ export interface ClockState {
 	// active team's remaining time for the CURRENT move
 	perMoveRemainingMs: number
 	deadlineMs: number
+	perMoveBinding: boolean
 	serverNow: number
 }
 

@@ -129,7 +129,7 @@ export default function DailyBonusTab() {
 
 			{!isLoading && (canClaim
 				? (
-					<Box className="flex center gap-2">
+					<Box className="get-reward">
 						<TButton
 							className="collect-btn"
 							variant="contained"

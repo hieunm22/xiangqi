@@ -138,6 +138,66 @@ export const hasPieceAcrossRiver = (fen: string, team: Team): boolean => {
 	return false
 }
 
+/**
+ * Check if the specified team has any attacking pieces (can cross river) on the board.
+ * @param fen the FEN string representing the board state
+ * @param team the team to check for attacking pieces ("red" or "black")
+ * @returns true if the team has at least one attacking piece, false otherwise
+ */
+export const hasAttackingMaterial = (fen: string, team: Team): boolean => {
+	const board = fenToBoard(fen)
+	for (const cell of board) {
+		if (cell && cell.team === team && ATTACKING_PIECES.has(cell.piece)) {
+			return true
+		}
+	}
+	return false
+}
+
+/**
+ * Check if the previous move is a forward soldier advance.
+ * Sideways soldier moves return false.
+ */
+export const isSoldierAdvance = (prevFen: string, newFen: string, team: Team): boolean => {
+	const prev = fenToBoard(prevFen)
+	const next = fenToBoard(newFen)
+
+	// Orientation: the side whose general sits in the top half advances toward higher rows.
+	let generalRow: number | null = null
+	for (const cell of next) {
+		if (cell && cell.team === team && cell.piece === "general") {
+			generalRow = Math.floor(cell.id / BOARD_COLUMNS)
+			break
+		}
+	}
+	if (generalRow === null) {
+		return false
+	}
+	const forwardSign = generalRow <= 4 ? 1 : -1
+
+	const isTeamSoldier = (cell: CellProps | null): boolean =>
+		cell !== null && cell.team === team && cell.piece === "soldier"
+
+	// Exactly one of the team's soldiers changes squares on a soldier move: it leaves
+	// `fromRow` and lands on `toRow`.
+	let fromRow: number | null = null
+	let toRow: number | null = null
+	for (let i = 0; i < prev.length; i += 1) {
+		const wasSoldier = isTeamSoldier(prev[i])
+		const isSoldier = isTeamSoldier(next[i])
+		if (wasSoldier && !isSoldier) {
+			fromRow = Math.floor(i / BOARD_COLUMNS)
+		} else if (!wasSoldier && isSoldier) {
+			toRow = Math.floor(i / BOARD_COLUMNS)
+		}
+	}
+
+	if (fromRow === null || toRow === null) {
+		return false
+	}
+	return forwardSign * (toRow - fromRow) > 0
+}
+
 export const boardToFen = (board: (CellProps | null)[]): string => {
 	const rows: string[] = []
 

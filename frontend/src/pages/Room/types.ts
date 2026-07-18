@@ -98,6 +98,16 @@ export interface RoomWithUsers {
 
 export type VerifyStatus = "ongoing" | "check" | "checkmate" | "stalemate" | "perpetual-check"
 
+export type GameEndReason =
+	| "checkmate"
+	| "stalemate"
+	| "perpetual-check"
+	| "timeout"
+	| "per-move-timeout"
+	| "surrender"
+	| "leave"
+	| "draw"
+
 export interface GameMovements {
 	_id: string
 	game_id: string
@@ -105,7 +115,7 @@ export interface GameMovements {
 	fen: string
 	time_stamp: number
 	capture?: PieceCharacter
-	surrender?: number
+	surrender_id?: number
 	leave?: number
 	timeout?: number
 	draw?: number

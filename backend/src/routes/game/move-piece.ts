@@ -1,6 +1,6 @@
 import { Response, Router } from "express"
 import prisma from "prisma"
-import { fenToBoard, parseFenCounters, toStandardFen } from "common/board-helper"
+import { fenToBoard, isSoldierAdvance, parseFenCounters, toStandardFen } from "common/board-helper"
 import { playBotMove } from "common/bot-engine/play-bot-move"
 import { armClock, computeClock } from "common/game/game-clock"
 import { getGameHistoryCollection } from "common/mongodb"
@@ -219,7 +219,8 @@ router.post("/game/move-piece", requireAuth(), async (req: AuthenticatedRequest,
 
 		// Persist the standard 6-field FEN
 		const prevCounters = parseFenCounters(latestRecord[0].fen)
-		const halfmove = capturePiece ? 0 : prevCounters.halfmove + 1
+		const madeProgress = capturePiece || isSoldierAdvance(latestRecord[0].fen, newFen, team)
+		const halfmove = madeProgress ? 0 : prevCounters.halfmove + 1
 		const fullmove = team === "black" ? prevCounters.fullmove + 1 : prevCounters.fullmove
 		const standardFen = toStandardFen(newFen, nextTeam, halfmove, fullmove)
 

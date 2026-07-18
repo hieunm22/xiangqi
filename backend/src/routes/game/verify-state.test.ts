@@ -10,10 +10,20 @@ import {
 	vi
 } from "vitest"
 import { INITIAL_FEN_BLACK_TOP } from "common/constant"
+import {
+	PERPETUAL_CHECK_LOSS_REPETITION,
+	PERPETUAL_CHECK_WARNING_REPETITION
+} from "common/game/perpetual-check.helper"
 
+// Hoisted so the perpetual-check importActual mock (which loads the real module and in
+// turn triggers the mongodb/state-evaluator mocks) sees these already initialised.
+const { evaluateTeamStateMock, evaluatePerpetualCheckMock, getGameHistoryCollectionMock } =
+	vi.hoisted(() => ({
+		evaluateTeamStateMock: vi.fn(),
+		evaluatePerpetualCheckMock: vi.fn(),
+		getGameHistoryCollectionMock: vi.fn()
+	}))
 const redisGetMock = vi.fn()
-const evaluateTeamStateMock = vi.fn()
-const evaluatePerpetualCheckMock = vi.fn()
 const runEndGameTransactionMock = vi.fn()
 const activatePostGameLockMock = vi.fn()
 const syncPlayersPresenceMock = vi.fn()
@@ -24,7 +34,6 @@ const sortGameHistoryMock = vi.fn()
 const limitGameHistoryMock = vi.fn()
 const toArrayGameHistoryMock = vi.fn()
 const updateOneGameHistoryMock = vi.fn()
-const getGameHistoryCollectionMock = vi.fn()
 const gameFindUniqueMock = vi.fn()
 const roomUserFindManyMock = vi.fn()
 const stopClockMock = vi.fn()
@@ -41,7 +50,9 @@ vi.mock("common/game/state-evaluator", () => ({
 	evaluateTeamState: evaluateTeamStateMock
 }))
 
-vi.mock("common/game/perpetual-check.helper", () => ({
+// Keep the real threshold constants, mock only the evaluation function.
+vi.mock("common/game/perpetual-check.helper", async importActual => ({
+	...(await importActual<typeof import("common/game/perpetual-check.helper")>()),
 	evaluatePerpetualCheck: evaluatePerpetualCheckMock
 }))
 
@@ -298,7 +309,10 @@ describe("POST /api/game/verify-state", () => {
 			legalMovesCount: 3,
 			status: "check"
 		})
-		evaluatePerpetualCheckMock.mockResolvedValue({ status: "loss", occurrencesCount: 4 })
+		evaluatePerpetualCheckMock.mockResolvedValue({
+			status: "loss",
+			occurrencesCount: PERPETUAL_CHECK_LOSS_REPETITION
+		})
 		toArrayGameHistoryMock.mockResolvedValue([{ _id: "mongo-last-id-perpetual" }])
 
 		const accessToken = buildAccessToken(91, "session-verify-state-perpetual")
@@ -357,7 +371,10 @@ describe("POST /api/game/verify-state", () => {
 			legalMovesCount: 3,
 			status: "check"
 		})
-		evaluatePerpetualCheckMock.mockResolvedValue({ status: "warning", occurrencesCount: 3 })
+		evaluatePerpetualCheckMock.mockResolvedValue({
+			status: "warning",
+			occurrencesCount: PERPETUAL_CHECK_WARNING_REPETITION
+		})
 
 		const accessToken = buildAccessToken(91, "session-verify-state-warning")
 		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
@@ -380,7 +397,7 @@ describe("POST /api/game/verify-state", () => {
 		expect(res.body.data).toMatchObject({
 			gameEnded: false,
 			status: "check",
-			occurrences: 3
+			occurrences: PERPETUAL_CHECK_WARNING_REPETITION
 		})
 		// Offender is the checker (red); the checked side is black.
 		expect(emitPerpetualCheckWarningMock).toHaveBeenCalledWith(15, {
@@ -546,6 +563,120 @@ describe("POST /api/game/verify-state", () => {
 			status: "stalemate",
 			winnerId: 102,
 			checkedTeam: "red"
+		})
+	})
+
+	it("ends the game in a draw when neither side has attacking material left", async () => {
+		resetRouteMocks()
+		// Not a mate/stalemate: an ordinary position that just lost its last attacker.
+		evaluateTeamStateMock.mockReturnValue({
+			inCheck: false,
+			legalMovesCount: 5,
+			status: "ongoing"
+		})
+		toArrayGameHistoryMock.mockResolvedValue([{ _id: "mongo-last-id-draw" }])
+
+		const accessToken = buildAccessToken(91, "session-verify-state-draw")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-6",
+			room_id: 16n,
+			room: { bet_amount: 100, pve_mode: false, red_first: true }
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: 301n, team: "red" },
+			{ user_id: 302n, team: "black" }
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-6",
+				// Only generals + advisors remain on both sides.
+				newFen: "3AGA3/9/9/9/9/9/9/9/9/3aga3",
+				checkedTeam: "black"
+			})
+
+		expect(res.status).toBe(200)
+		// A draw has no winner.
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "game-6",
+			roomId: 16n,
+			winnerId: null,
+			isBotGame: false,
+			betAmount: 100,
+			endReason: "draw"
+		})
+		expect(updateOneGameHistoryMock).toHaveBeenCalledWith(
+			{ _id: "mongo-last-id-draw" },
+			{ $set: { winner_id: null, end_reason: "draw" } }
+		)
+		expect(emitGameEndedMock).toHaveBeenCalledWith(16, {
+			gameId: "game-6",
+			status: "draw",
+			winnerId: null
+		})
+		expect(stopClockMock).toHaveBeenCalledWith("game-6")
+		expect(res.body.data).toMatchObject({
+			gameEnded: true,
+			status: "draw",
+			winnerId: null,
+			checkedTeam: "black"
+		})
+	})
+
+	it("ends the game in a draw when the natural move-limit is reached", async () => {
+		resetRouteMocks()
+		// Ordinary position (attackers still on board), but the no-progress clock is at the limit.
+		evaluateTeamStateMock.mockReturnValue({
+			inCheck: false,
+			legalMovesCount: 5,
+			status: "ongoing"
+		})
+		toArrayGameHistoryMock.mockResolvedValue([
+			{ _id: "mongo-last-id-nml", fen: `${INITIAL_FEN_BLACK_TOP} b - - 100 50` }
+		])
+
+		const accessToken = buildAccessToken(91, "session-verify-state-nml")
+		redisGetMock.mockResolvedValue(JSON.stringify({ userId: 91 }))
+		gameFindUniqueMock.mockResolvedValue({
+			id: "game-7",
+			room_id: 17n,
+			room: { bet_amount: 100, pve_mode: false, red_first: true }
+		})
+		roomUserFindManyMock.mockResolvedValue([
+			{ user_id: 401n, team: "red" },
+			{ user_id: 402n, team: "black" }
+		])
+
+		const res = await request(app)
+			.post(PATH)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({
+				gameId: "game-7",
+				newFen: INITIAL_FEN_BLACK_TOP,
+				checkedTeam: "black"
+			})
+
+		expect(res.status).toBe(200)
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith({
+			gameId: "game-7",
+			roomId: 17n,
+			winnerId: null,
+			isBotGame: false,
+			betAmount: 100,
+			endReason: "draw"
+		})
+		expect(emitGameEndedMock).toHaveBeenCalledWith(17, {
+			gameId: "game-7",
+			status: "draw",
+			winnerId: null
+		})
+		expect(res.body.data).toMatchObject({
+			gameEnded: true,
+			status: "draw",
+			winnerId: null
 		})
 	})
 

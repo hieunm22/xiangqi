@@ -20,7 +20,7 @@ import {
 const MAX_TIMEOUT_DELAY_MS = 2_000_000_000
 
 // In-memory per-game flag timers; one per game, rescheduled on every move and rehydrated on boot.
-// Assumes a single backend instance — a scaled deployment would use a Redis-backed delayed job.
+// Assumes a single backend instance - a scaled deployment would use a Redis-backed delayed job.
 const timers = new Map<string, NodeJS.Timeout>()
 
 /**
@@ -167,6 +167,7 @@ export function computeClockState(
 		activeTeam,
 		perMoveRemainingMs: perMoveMs > 0 ? Math.max(0, perMoveMs - inProgressMs) : 0,
 		deadlineMs,
+		perMoveBinding: perMoveDeadlineMs < totalDeadlineMs,
 		serverNow: nowMs
 	}
 }
@@ -249,7 +250,9 @@ export async function armClock(gameId: string): Promise<ClockSnapshot | null> {
 
 /**
  * Handle a flag fall: re-verify, then end the game.
- * Opponent wins if they have crossing material; otherwise draw (vi.json result.paragraph4).
+ * - Per-move timeout: an unconditional loss - the opponent always wins.
+ * - Whole-game timeout: opponent wins only with crossing
+ *   material, otherwise draw
  */
 async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 	timers.delete(gameId)
@@ -283,7 +286,12 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 		const loserTeam = state.activeTeam
 		const winnerTeam: Team = loserTeam === "red" ? "black" : "red"
 		const latestFen = records[records.length - 1].fen
-		const winnerCanWin = hasPieceAcrossRiver(latestFen, winnerTeam)
+
+		const endReason = state.perMoveBinding ? "per-move-timeout" : "timeout"
+
+		// Per-move timeout is an unconditional loss; whole-game timeout only wins with
+		// crossing material, else draw.
+		const winnerCanWin = state.perMoveBinding || hasPieceAcrossRiver(latestFen, winnerTeam)
 
 		const findUser = (team: Team) =>
 			config.participants.find(p => p.team === team)?.userId ?? null
@@ -299,7 +307,7 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			time_stamp: getUTCTimestamp(),
 			timeout: loserUserId,
 			winner_id: winnerUserId,
-			end_reason: "timeout"
+			end_reason: endReason
 		})
 
 		const ended = await runEndGameTransaction({
@@ -308,7 +316,7 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			winnerId: winnerUserId == null ? null : BigInt(winnerUserId),
 			isBotGame: config.pveMode,
 			betAmount: config.betAmount,
-			endReason: "timeout"
+			endReason
 		})
 
 		if (ended) {
@@ -316,7 +324,7 @@ async function handleFlag(gameId: string, expectedTeam: Team): Promise<void> {
 			await activatePostGameLock(config.roomId, gameId)
 			emitGameEnded(Number(config.roomId), {
 				gameId,
-				status: "timeout",
+				status: endReason,
 				winnerId: winnerUserId,
 				loserId: loserUserId,
 				isDraw: winnerUserId == null

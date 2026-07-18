@@ -601,6 +601,7 @@ describe("DELETE /api/room/leave", () => {
 			}
 		])
 		gameFindFirstMock.mockResolvedValue({ id: "game-uuid-1" })
+		const leaveInsertOneMock = vi.fn().mockResolvedValue({})
 		getGameHistoryCollectionMock.mockResolvedValue({
 			find: vi.fn().mockReturnValue({
 				sort: vi.fn().mockReturnValue({
@@ -609,7 +610,7 @@ describe("DELETE /api/room/leave", () => {
 					})
 				})
 			}),
-			insertOne: vi.fn().mockResolvedValue({})
+			insertOne: leaveInsertOneMock
 		})
 		runEndGameTransactionMock.mockResolvedValue(true)
 		releaseEngineMock.mockResolvedValue(undefined)
@@ -633,6 +634,15 @@ describe("DELETE /api/room/leave", () => {
 			betAmount: 100,
 			endReason: "leave"
 		})
+		// The terminal record records the winner (bot) alongside who left.
+		expect(leaveInsertOneMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				game_id: "game-uuid-1",
+				leave: 51,
+				winner_id: 999,
+				end_reason: "leave"
+			})
+		)
 		expect(syncPlayersPresenceMock).toHaveBeenCalledWith("game-uuid-1", false)
 		expect(roomUserDeleteManyMock).toHaveBeenCalledWith({
 			where: { room_id: BigInt(101) }

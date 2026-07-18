@@ -11,7 +11,7 @@ import "./NotFound.scss"
 import { translate } from "locales/translate"
 
 export default function NotFoundPage() {
-	useAutoTitle("Page Not Found")
+	useAutoTitle("notfound.title")
 	const navigate = useNavigate()
 
 	return (

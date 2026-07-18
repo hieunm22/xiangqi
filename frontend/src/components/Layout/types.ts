@@ -47,6 +47,10 @@ interface UpdateUserInfo {
 	avatar_url: string
 }
 
+export type SearchUserType = UserAvatarType & {
+	total_amount: number
+}
+
 export interface ProfileTabProps {
 	user: Users | null
 }

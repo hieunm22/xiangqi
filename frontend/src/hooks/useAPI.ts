@@ -20,6 +20,7 @@ import {
 	Achievement,
 	ChangePasswordBodyType,
 	GameHistoryItem,
+	SearchUserType,
 	UpdateUserInfoPayload,
 	UpdateUserInfoResponse,
 	UnreadCountResponse,
@@ -63,6 +64,7 @@ const EP = { // end points
 
 	// user endpoints
 	getAchievements: "/user/achievements",
+	getLeaderboard: "/user/leaderboard",
 	bonusCoins: "/user/bonus-coins",
 	claimBonusCoin: "/user/bonus-coins-claim",
 	dailyBonus: "/user/daily-bonus",
@@ -299,6 +301,12 @@ export const useAPI = () => {
 							.auth(`Bearer ${token}`)
 							.get()
 							.json(getGameHistoryCallback)
+							.catch(handleError)
+
+	const getLeaderboard = async (token: string, offset: number, limit: number) => authFetch(`${EP.getLeaderboard}?offset=${offset}&limit=${limit}`)
+							.auth(`Bearer ${token}`)
+							.get()
+							.json(getLeaderboardCallback)
 							.catch(handleError)
 
 	const getLinkedProviders = async (token: string) => authFetch(EP.linkedProviders)
@@ -607,6 +615,10 @@ export const useAPI = () => {
 		return response
 	}
 
+	const getLeaderboardCallback = (response: APIResponse<SearchUserType[]>) => {
+		return response
+	}
+
 	const getLinkedProvidersCallback = (response: APIResponse<{ providers: string[] }>) => {
 		return response
 	}
@@ -827,6 +839,7 @@ export const useAPI = () => {
 		getBonusCoins,
 		getDailyBonus,
 		getGameMovementHistory,
+		getLeaderboard,
 		getLinkedProviders,
 		getLuckySpins,
 		getOnlineUsers,

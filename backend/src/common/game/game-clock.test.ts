@@ -113,6 +113,7 @@ describe("computeClockState", () => {
 		expect(state?.perMoveRemainingMs).toBe(40_000)
 		expect(state?.redMs).toBe(880_000) // total still counts down independently
 		expect(state?.deadlineMs).toBe(T0 * 1000 + 60_000) // capped by per-move
+		expect(state?.perMoveBinding).toBe(true) // per-move cap is the binding deadline
 	})
 
 	it("keeps the total-time deadline when it is sooner than the per-move cap", () => {
@@ -125,6 +126,7 @@ describe("computeClockState", () => {
 		)
 		expect(state?.deadlineMs).toBe(T0 * 1000 + 5_000)
 		expect(state?.perMoveRemainingMs).toBe(59_000)
+		expect(state?.perMoveBinding).toBe(false) // whole-game budget binds, not per-move
 	})
 
 	it("counts down the active team's clock from the last move timestamp", () => {
@@ -280,9 +282,10 @@ describe("game-clock flag timer", () => {
 		expect(emitGameEndedMock).not.toHaveBeenCalled()
 	})
 
-	it("flags on the per-move cap even when total time remains", async () => {
-		// 15min total but only 30s per move; red sits -> flags at 30s. Red has no
-		// crossing material, so it is a draw (winnerId null).
+	it("treats a per-move flag as an unconditional loss, even without crossing material", async () => {
+		// 15min total but only 30s per move; red sits -> flags at 30s on the per-move cap.
+		// Red has no crossing material, but a per-move timeout is an unconditional loss:
+		// black wins outright, NOT the river-crossing draw.
 		setConfig({ time_limit: 900, time_per_move: 30 })
 		setHistory([{ team: "red", time_stamp: T0, fen: "4G4/9/9/9/9/9/9/9/9/4g4" }])
 
@@ -296,11 +299,72 @@ describe("game-clock flag timer", () => {
 
 		await vi.advanceTimersByTimeAsync(30_000)
 		expect(runEndGameTransactionMock).toHaveBeenCalledWith(
-			expect.objectContaining({ gameId: GAME_ID, winnerId: null })
+			expect.objectContaining({ gameId: GAME_ID, winnerId: BigInt(12), endReason: "per-move-timeout" })
+		)
+		expect(historyInsertOneMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				game_id: GAME_ID,
+				timeout: 11,
+				winner_id: 12,
+				end_reason: "per-move-timeout"
+			})
 		)
 		expect(emitGameEndedMock).toHaveBeenCalledWith(
 			101,
-			expect.objectContaining({ gameId: GAME_ID, status: "timeout", isDraw: true })
+			expect.objectContaining({
+				gameId: GAME_ID,
+				status: "per-move-timeout",
+				winnerId: 12,
+				isDraw: false
+			})
+		)
+	})
+
+	it("classifies a mid-game per-move flag correctly (multiple moves + increment)", async () => {
+		// Black has ~30min of whole-game time left but sits out one move past the 30s cap.
+		// Mid-game, with increment and spent time, this must still be a per-move timeout:
+		// black (12) loses, red (11) wins outright.
+		setConfig({ time_limit: 1800, time_increment: 5, time_per_move: 30 })
+		const fen = "4G4/9/9/9/9/9/9/9/9/4g4"
+		setHistory([
+			{ team: "red", time_stamp: T0 - 60, fen },
+			{ team: "black", time_stamp: T0 - 50, fen },
+			{ team: "red", time_stamp: T0 - 40, fen },
+			{ team: "black", time_stamp: T0, fen }
+		])
+
+		await armClock(GAME_ID)
+		await vi.advanceTimersByTimeAsync(30_000)
+
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith(
+			expect.objectContaining({ gameId: GAME_ID, winnerId: BigInt(11), endReason: "per-move-timeout" })
+		)
+		expect(emitGameEndedMock).toHaveBeenCalledWith(
+			101,
+			expect.objectContaining({
+				gameId: GAME_ID,
+				status: "per-move-timeout",
+				winnerId: 11,
+				isDraw: false
+			})
+		)
+	})
+
+	it("uses the whole-game timeout (river draw) when total time runs out first, even with per-move on", async () => {
+		// Per-move cap (60s) is looser than the 30s of total left, so the total budget
+		// flags first at 30s -> a whole-game timeout, which draws without crossing material.
+		setConfig({ time_limit: 30, time_per_move: 60 })
+		setHistory([{ team: "red", time_stamp: T0, fen: "4G4/9/9/9/9/9/9/9/9/4g4" }])
+
+		await armClock(GAME_ID)
+		await vi.advanceTimersByTimeAsync(30_000)
+
+		expect(runEndGameTransactionMock).toHaveBeenCalledWith(
+			expect.objectContaining({ gameId: GAME_ID, winnerId: null, endReason: "timeout" })
+		)
+		expect(emitGameEndedMock).toHaveBeenCalledWith(
+			101,
+			expect.objectContaining({ status: "timeout", winnerId: null, isDraw: true })
 		)
 	})
 

@@ -278,6 +278,12 @@ export default function Layout() {
 		setLuckyPending(false)
 	}
 
+	const handleLeaderboardClick = () => {
+		(document.activeElement as HTMLElement)?.blur()
+		navigate("/leaderboard")
+		setMobileOpen(false)
+	}
+
 	const handleRestart = async () => {
 		const token = getToken()
 		if (!token) return
@@ -317,8 +323,6 @@ export default function Layout() {
 		const activeElement = document.activeElement as HTMLElement | null
 		activeElement?.blur()
 
-		// Open the private message popup without a preselected conversation;
-		// the user picks one from the drawer.
 		dispatch(setPopup(PopupState.SEND_PM))
 	}
 
@@ -375,6 +379,13 @@ export default function Layout() {
 			active: window.location.pathname === "/extra-money"
 				&& !menuInDrawer.includes(gameState.popupState),
 			dot: luckyPending
+		},
+		{
+			text: "menu.leaderboard",
+			icon: "fa-ranking-star",
+			click: handleLeaderboardClick,
+			active: window.location.pathname === "/leaderboard"
+				&& !menuInDrawer.includes(gameState.popupState),
 		},
 		{
 			text: "menu.setting.button",

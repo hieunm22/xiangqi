@@ -119,6 +119,7 @@ export async function leaveRoomEffect(
 					team: winnerTeam,
 					time_stamp: getUTCTimestamp(),
 					leave: Number(userIdBigInt),
+					winner_id: Number(winnerId),
 					end_reason: "leave"
 				})
 			}

@@ -27,7 +27,14 @@ import "./GameReplay.scss"
 const cardTeam = (user: RoomUser | null) => (user?.team === "black" ? "black" : "red")
 
 // Reasons whose message names a specific player (interpolated via {{name}}).
-const NAME_REASONS = ["surrender", "leave", "timeout", "checkmate", "perpetual-check"]
+const NAME_REASONS = [
+	"surrender",
+	"leave",
+	"timeout",
+	"per-move-timeout",
+	"checkmate",
+	"perpetual-check"
+]
 // Reasons with a fixed message and no player name.
 const PLAIN_REASONS = ["stalemate", "draw"]
 

@@ -1,5 +1,11 @@
 import prisma from "prisma"
-import { parseFenCounters, toStandardFen } from "../board-helper"
+import {
+	hasAttackingMaterial,
+	isSoldierAdvance,
+	parseFenCounters,
+	toStandardFen
+} from "../board-helper"
+import { NATURAL_MOVE_LIMIT_PLIES } from "../constant"
 import { concludeGame } from "../game/conclude-game.helper"
 import { evaluatePerpetualCheck, wouldCompletePerpetualLoss } from "../game/perpetual-check.helper"
 import { evaluateTeamState } from "../game/state-evaluator"
@@ -69,21 +75,23 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 
 			const currentFen = latestRecords[0]?.fen ?? projectFen
 
-			await collection.insertOne({
-				game_id: gameId,
-				fen: currentFen,
-				team: botTeam === "red" ? "black" : "red",
-				time_stamp: getUTCTimestamp(),
-				surrender: Number(BOT_USER_ID)
-			})
-
-			// Find the human opponent (winner)
+			// Find the human opponent (winner) before writing the terminal record.
 			const roomUsers = await prisma.roomUser.findMany({
 				where: { room_id: BigInt(roomId) },
 				select: { user_id: true, team: true }
 			})
 			const winnerTeam = botTeam === "red" ? "black" : "red"
 			const winner = roomUsers.find(u => u.team === winnerTeam)
+
+			await collection.insertOne({
+				game_id: gameId,
+				fen: currentFen,
+				team: winnerTeam,
+				time_stamp: getUTCTimestamp(),
+				surrender_id: Number(BOT_USER_ID),
+				winner_id: winner ? Number(winner.user_id) : null,
+				end_reason: "surrender"
+			})
 
 			if (winner) {
 				await prisma.$transaction([
@@ -116,8 +124,12 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 	// Persist the standard 6-field FEN, mirroring move-piece: advance counters from
 	// the latest record (half-move resets on a capture, full-move bumps after black).
 	const latest = await collection.find({ game_id: gameId }).sort({ _id: -1 }).limit(1).toArray()
-	const prevCounters = parseFenCounters(latest[0]?.fen ?? "")
-	const halfmove = capturePiece ? 0 : prevCounters.halfmove + 1
+	const prevFen = latest[0]?.fen as string | undefined
+	const prevCounters = parseFenCounters(prevFen ?? "")
+	// No-progress clock resets on a capture or a forward soldier advance (draw rule).
+	const madeProgress =
+		Boolean(capturePiece) || (prevFen ? isSoldierAdvance(prevFen, newFen, botTeam) : false)
+	const halfmove = madeProgress ? 0 : prevCounters.halfmove + 1
 	const fullmove = botTeam === "black" ? prevCounters.fullmove + 1 : prevCounters.fullmove
 	const standardFen = toStandardFen(newFen, nextTeam, halfmove, fullmove)
 
@@ -160,6 +172,50 @@ export const playBotMove = async (params: PlayBotMoveParams): Promise<any | null
 			})
 		} catch (err) {
 			console.error(`[bot-engine] failed to conclude ${humanEvaluation.status} for game ${gameId}:`, err)
+		}
+
+		return broadcast
+	}
+
+	// Dead draw: neither side has any attacking piece left.
+	if (!hasAttackingMaterial(newFen, "red") && !hasAttackingMaterial(newFen, "black")) {
+		try {
+			const room = await prisma.room.findUnique({
+				where: { id: BigInt(roomId) },
+				select: { pve_mode: true, bet_amount: true }
+			})
+			await concludeGame({
+				gameId,
+				roomId: BigInt(roomId),
+				winnerTeam: null,
+				isBotGame: room?.pve_mode ?? true,
+				betAmount: room?.bet_amount ?? null,
+				statusForEvent: "draw"
+			})
+		} catch (err) {
+			console.error(`[bot-engine] failed to conclude draw for game ${gameId}:`, err)
+		}
+
+		return broadcast
+	}
+
+	// Natural move-limit: too many plies with no capture and no forward soldier advance.
+	if (halfmove >= NATURAL_MOVE_LIMIT_PLIES) {
+		try {
+			const room = await prisma.room.findUnique({
+				where: { id: BigInt(roomId) },
+				select: { pve_mode: true, bet_amount: true }
+			})
+			await concludeGame({
+				gameId,
+				roomId: BigInt(roomId),
+				winnerTeam: null,
+				isBotGame: room?.pve_mode ?? true,
+				betAmount: room?.bet_amount ?? null,
+				statusForEvent: "draw"
+			})
+		} catch (err) {
+			console.error(`[bot-engine] failed to conclude natural-limit draw for game ${gameId}:`, err)
 		}
 
 		return broadcast
