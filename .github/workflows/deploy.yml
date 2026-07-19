@@ -12,12 +12,26 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
+        env:
+          SERVER_IP: ${{ vars.SERVER_IP }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          FACEBOOK_APP_ID: ${{ vars.FACEBOOK_APP_ID }}
+          AD_TAG_URL: ${{ vars.AD_TAG_URL }}
+          AWS_ACCESS_ID: ${{ vars.AWS_ACCESS_ID }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_APP_PASSWORD: ${{ secrets.GOOGLE_APP_PASSWORD }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          TOOL_API_KEY: ${{ secrets.TOOL_API_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
           host: ${{ vars.SERVER_IP }}
           username: root
           port: 23
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: SERVER_IP,JWT_SECRET,GOOGLE_APP_PASSWORD,GOOGLE_CLIENT_ID,FACEBOOK_APP_ID,AD_TAG_URL,FACEBOOK_APP_SECRET,REDIS_PASSWORD,MONGO_PASSWORD,AWS_ACCESS_ID,AWS_SECRET_KEY,TOOL_API_KEY
+          envs: SERVER_IP,JWT_SECRET,GOOGLE_APP_PASSWORD,GOOGLE_CLIENT_ID,FACEBOOK_APP_ID,AD_TAG_URL,FACEBOOK_APP_SECRET,REDIS_PASSWORD,MONGO_PASSWORD,AWS_ACCESS_ID,AWS_SECRET_KEY,TOOL_API_KEY,POSTGRES_PASSWORD
           script: |
             set -euo pipefail
 
@@ -55,6 +69,7 @@ jobs:
             load_config "AWS_ACCESS_ID"
             load_config "AWS_SECRET_KEY"
             load_config "TOOL_API_KEY"
+            load_config "POSTGRES_PASSWORD"
 
             # Generate frontend/.env.local with VITE_ prefix
 
@@ -62,27 +77,57 @@ jobs:
             echo "creating env file at $env_path"
             echo "VITE_BACKEND_BASE_URL=https://xaa.hieunm.io.vn" > $env_path
             echo "VITE_PUBLIC_DISTRIBUTION=https://clf.hieunm.io.vn" >> $env_path
-            echo "VITE_FACEBOOK_APP_ID=$FACEBOOK_APP_ID" >> $env_path
             echo "VITE_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> $env_path
             echo "VITE_FACEBOOK_APP_ID=$FACEBOOK_APP_ID" >> $env_path
             echo "VITE_AD_TAG_URL=$AD_TAG_URL" >> $env_path
 
             echo "env file created on $(date)"
 
-            # save commit before pull
-            OLD_COMMIT=$(git rev-parse HEAD)
+            # Regenerate backend/.env.local only if it was removed
+            backend_env="backend/.env.local"
+            if [ ! -f "$backend_env" ]; then
+              echo "backend/.env.local missing — regenerating from forwarded config"
+              echo "DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@${SERVER_IP}:5432/xiangqi" > "$backend_env"
+              echo "SERVER_IP=$SERVER_IP" >> "$backend_env"
+              echo "JWT_SECRET=$JWT_SECRET" >> "$backend_env"
+              echo "JWT_ISSUER=xaa.hieunm.io.vn" >> "$backend_env"
+              echo "GOOGLE_APP_PASSWORD=$GOOGLE_APP_PASSWORD" >> "$backend_env"
+              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> "$backend_env"
+              echo "FACEBOOK_APP_ID=$FACEBOOK_APP_ID" >> "$backend_env"
+              echo "FACEBOOK_APP_SECRET=$FACEBOOK_APP_SECRET" >> "$backend_env"
+              echo "REDIS_HOST=cache" >> "$backend_env"
+              echo "REDIS_PASSWORD=$REDIS_PASSWORD" >> "$backend_env"
+              echo "CORS_ORIGINS=http://localhost:3004,http://localhost:5001,http://localhost:8000,https://xaq.hieunm.io.vn,https://xaa.hieunm.io.vn" >> "$backend_env"
+              echo "API_HOST=https://xaa.hieunm.io.vn" >> "$backend_env"
+              echo "APP_EMAIL=hieuami@gmail.com" >> "$backend_env"
+              echo "MONGODB_DB_NAME=xiangqi" >> "$backend_env"
+              echo "MONGO_PASSWORD=$MONGO_PASSWORD" >> "$backend_env"
+              echo "FAIRY_STOCKFISH_PATH=/usr/local/bin/fairy-stockfish" >> "$backend_env"
+              echo "AWS_ACCESS_ID=$AWS_ACCESS_ID" >> "$backend_env"
+              echo "AWS_SECRET_KEY=$AWS_SECRET_KEY" >> "$backend_env"
+              echo "AMOUNT_RECONCILE_AUTOFIX=true" >> "$backend_env"
+              echo "TOOL_API_KEY=$TOOL_API_KEY" >> "$backend_env"
+            fi
 
             # Reset all changes
             git restore . :!backend/yarn.lock
             git clean -fd
 
-            # Fetch and pull the latest code
+            # Fetch and attach HEAD to the target branch BEFORE capturing OLD_COMMIT,
+            # so the diff base is the branch tip and not whatever HEAD happened to be
+            # (e.g. a detached HEAD left by a manual pull/checkout on the server).
             git fetch origin
             git checkout ${{ github.ref_name }}
-            git pull origin ${{ github.ref_name }}
+
+            # Currently-deployed commit (branch tip, now attached) before updating
+            OLD_COMMIT=$(git rev-parse HEAD)
+
+            # Deterministically match the remote (robust against manual pulls / drift)
+            git reset --hard origin/${{ github.ref_name }}
+            NEW_COMMIT=$(git rev-parse HEAD)
 
             # Get the list of changed files
-            CHANGED_FILES=$(git diff --name-only $OLD_COMMIT HEAD)
+            CHANGED_FILES=$(git diff --name-only "$OLD_COMMIT" "$NEW_COMMIT")
 
             echo "=== Changed files ==="
             echo "$CHANGED_FILES"

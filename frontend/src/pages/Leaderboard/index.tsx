@@ -30,6 +30,63 @@ const SCROLL_BOTTOM_THRESHOLD = 80
 // Debounce (ms) before firing a user search, matching SearchUserPopup.
 const SEARCH_DEBOUNCE_MS = 200
 
+interface NameSegment {
+	text: string
+	match: boolean
+}
+
+interface HighlightedNameProps {
+	name: string
+	query: string
+}
+
+const normalizeForMatch = (value: string) =>
+	value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+
+const getHighlightSegments = (name: string, query: string): NameSegment[] => {
+	const normalizedQuery = normalizeForMatch(query)
+	if (!normalizedQuery) return [{ text: name, match: false }]
+
+	const chars = Array.from(name)
+	let normalized = ""
+	const originIndexByNorm: number[] = []
+	chars.forEach((char, index) => {
+		for (const normalizedChar of normalizeForMatch(char)) {
+			normalized += normalizedChar
+			originIndexByNorm.push(index)
+		}
+	})
+
+	const start = normalized.indexOf(normalizedQuery)
+	if (start === -1) return [{ text: name, match: false }]
+
+	const originStart = originIndexByNorm[start]
+	const originEnd = originIndexByNorm[start + normalizedQuery.length - 1]
+
+	const segments: NameSegment[] = []
+	const before = chars.slice(0, originStart).join("")
+	const matched = chars.slice(originStart, originEnd + 1).join("")
+	const after = chars.slice(originEnd + 1).join("")
+	if (before) segments.push({ text: before, match: false })
+	segments.push({ text: matched, match: true })
+	if (after) segments.push({ text: after, match: false })
+	return segments
+}
+
+const HighlightedName = ({ name, query }: HighlightedNameProps) => {
+	if (!query) return <>{name}</>
+
+	return (
+		<>
+			{getHighlightSegments(name, query).map((segment, index) =>
+				segment.match
+					? <mark key={index} className="leaderboard-highlight">{segment.text}</mark>
+					: <span key={index}>{segment.text}</span>
+			)}
+		</>
+	)
+}
+
 export default function LeaderboardPage() {
 	useAutoTitle("leaderboard.title")
 	const { getLeaderboard, searchUsers } = useAPI()
@@ -132,13 +189,15 @@ export default function LeaderboardPage() {
 		debounceRef.current = setTimeout(() => performSearch(value), SEARCH_DEBOUNCE_MS)
 	}
 
-	const renderRow = (user: LeaderboardUser, rank: number | null) => (
+	const renderRow = (user: LeaderboardUser, rank: number | null, highlight: string) => (
 		<ListItem key={user.id} disablePadding>
 			<ListItemButton className="leaderboard-row" onClick={() => showProfilePopup(user.id)}>
 				{rank !== null && (
-					<span className={classnames("leaderboard-rank", { "leaderboard-rank--top": rank <= 3 })}>
+					<Typography className={classnames("leaderboard-rank", {
+						"top": rank <= 3
+					})}>
 						{rank}
-					</span>
+					</Typography>
 				)}
 				<UserAvatar
 					id={user.id}
@@ -148,7 +207,7 @@ export default function LeaderboardPage() {
 					size={40}
 				/>
 				<Typography variant="body2" className="leaderboard-name">
-					{user.display_name}
+					<HighlightedName name={user.display_name} query={highlight} />
 				</Typography>
 				<Typography variant="body2" className="leaderboard-amount">
 					<span className="mr-5">{formatNumber(user.total_amount, state.lang)}</span>
@@ -198,7 +257,7 @@ export default function LeaderboardPage() {
 						)}
 						{!searching && searchResults.length > 0 && (
 							<List className="no-padding">
-								{searchResults.map(user => renderRow(user, null))}
+								{searchResults.map(user => renderRow(user, null, searchQuery.trim()))}
 							</List>
 						)}
 					</>
@@ -226,7 +285,7 @@ export default function LeaderboardPage() {
 						)}
 						{!initialLoading && users.length > 0 && (
 							<List className="no-padding">
-								{users.map((user, index) => renderRow(user, index + 1))}
+								{users.map((user, index) => renderRow(user, index + 1, ""))}
 							</List>
 						)}
 						{loadingMore && (

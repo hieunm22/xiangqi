@@ -39,19 +39,26 @@
 		width: 28px;
 		text-align: center;
 		font-weight: 700;
-		color: #8a8a8a;
+		&.top {
+			color: #d4900f;
+		}
 	}
 
-	.leaderboard-rank--top {
-		color: #d4900f;
-	}
 
 	.leaderboard-name {
 		flex: 1;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-    font-size: 18px;
+		font-size: 18px;
+
+		.leaderboard-highlight {
+			background-color: rgba(229, 209, 15, 0.45);
+			color: inherit;
+			border-radius: 2px;
+			padding: 0 1px;
+			font-weight: 700;
+		}
 	}
 
 	.leaderboard-amount {

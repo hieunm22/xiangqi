@@ -16,7 +16,8 @@
 # AWS_ACCESS_ID        — AWS access ID
 # AWS_SECRET_KEY       — AWS secret key
 # TOOL_API_KEY         — Tool API key
-#
+# POSTGRES_PASSWORD    — Postgres password (used to build DATABASE_URL)
+
 set -euo pipefail
 
 export NVM_DIR="$HOME/.nvm"
@@ -54,6 +55,33 @@ load_config "MONGO_PASSWORD"
 load_config "AWS_ACCESS_ID"
 load_config "AWS_SECRET_KEY"
 load_config "TOOL_API_KEY"
+load_config "POSTGRES_PASSWORD"
+
+if [ ! -f backend/.env.local ]; then
+  echo "backend/.env.local missing — regenerating from forwarded config"
+  cat > backend/.env.local << EOF
+DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@${SERVER_IP}:5432/xiangqi
+SERVER_IP=$SERVER_IP
+JWT_SECRET=$JWT_SECRET
+JWT_ISSUER=xaa.hieunm.io.vn
+GOOGLE_APP_PASSWORD=$GOOGLE_APP_PASSWORD
+GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+FACEBOOK_APP_ID=$FACEBOOK_APP_ID
+FACEBOOK_APP_SECRET=$FACEBOOK_APP_SECRET
+REDIS_HOST=cache
+REDIS_PASSWORD=$REDIS_PASSWORD
+CORS_ORIGINS=http://localhost:3004,http://localhost:5001,http://localhost:8000,https://xaq.hieunm.io.vn,https://xaa.hieunm.io.vn
+API_HOST=https://xaa.hieunm.io.vn
+APP_EMAIL=hieuami@gmail.com
+MONGODB_DB_NAME=xiangqi
+MONGO_PASSWORD=$MONGO_PASSWORD
+FAIRY_STOCKFISH_PATH=/usr/local/bin/fairy-stockfish
+AWS_ACCESS_ID=$AWS_ACCESS_ID
+AWS_SECRET_KEY=$AWS_SECRET_KEY
+AMOUNT_RECONCILE_AUTOFIX=true
+TOOL_API_KEY=$TOOL_API_KEY
+EOF
+fi
 
 echo "=== Backend deploy, branch: $BRANCH ==="
 

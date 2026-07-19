@@ -85,6 +85,9 @@ const useReplay = ({ game, onEnd }: UseReplayArgs) => {
 	const pendingCommitRef = useRef<PendingCommit | null>(null)
 	const onEndRef = useRef(onEnd)
 	const usersRef = useRef<GameHistoryUser[]>(game?.users ?? [])
+	// Board orientation for check detection; read inside the stable commitStep
+	// callback (which can't close over the redFirst state without going stale).
+	const redFirstRef = useRef(true)
 
 	const gameId = useMemo(() => game?.game.gameId ?? null, [game])
 
@@ -100,7 +103,7 @@ const useReplay = ({ game, onEnd }: UseReplayArgs) => {
 		setPreviousMove(diff)
 		setCapturedPieces(getCapturedPiecesFromHistory(movements.slice(0, step + 1)))
 		// Highlight enemy pieces checking the side-to-move's general (like the live board).
-		setCheckingPieces(findCheckingPieces(nextBoard, team))
+		setCheckingPieces(findCheckingPieces(nextBoard, team, redFirstRef.current))
 	}, [])
 
 	const flushPendingCommit = useCallback(() => {
@@ -245,7 +248,9 @@ const useReplay = ({ game, onEnd }: UseReplayArgs) => {
 				return
 			}
 
-			setRedFirst(records[0].team === "red")
+			const isRedFirst = records[0].team === "red"
+			redFirstRef.current = isRedFirst
+			setRedFirst(isRedFirst)
 			setTotalMoves(records.length - 1)
 			commitStep({ step: 0, diff: null })
 		}

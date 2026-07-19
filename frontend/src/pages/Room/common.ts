@@ -153,19 +153,24 @@ export function getCapturedPiecesFromHistory(records: HistoryData[]) {
 	}
 }
 
-export function findCheckingPieces(board: NullableCellProps[], team: Team): number[] {
+export function findCheckingPieces(
+	board: NullableCellProps[],
+	team: Team,
+	redFirst: boolean
+): number[] {
 	const generalIndex = board.findIndex(cell => getPieceFromCharacter(cell?.piece) === "general"
 		&& getTeamFromPieceChar(cell?.piece) === team)
 	if (generalIndex < 0) return []
 
 	const enemyTeam: Team = team === "red" ? "black" : "red"
+	// Direction must follow board orientation, not piece color
+	const enemyDirection = getMoveDirection(redFirst, enemyTeam)
 	const checkers: number[] = []
 
 	for (let id = 0; id < board.length; id += 1) {
 		const cell = board[id]
 		if (!cell || getTeamFromPieceChar(cell.piece) !== enemyTeam) continue
 
-		const enemyDirection = enemyTeam === "red" ? -1 : 1
 		const moves = getAvailableMoves(board, id, enemyDirection)
 		if (moves.includes(generalIndex)) {
 			checkers.push(id)
@@ -315,7 +320,7 @@ export function countLegalMoves(board: NullableCellProps[], team: Team, redFirst
 		const candidateMoves = getAvailableMoves(board, id, direction)
 		for (const toId of candidateMoves) {
 			const nextBoard = applyMove(board, id, toId)
-			const checkingPieces = findCheckingPieces(nextBoard, team)
+			const checkingPieces = findCheckingPieces(nextBoard, team, redFirst)
 			if (checkingPieces.length === 0) {
 				legalMovesCount += 1
 			}

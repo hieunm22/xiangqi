@@ -578,7 +578,11 @@ const useRoomHook = () => {
 		}
 
 		// The side to move is the side that must answer a check.
-		const nextCheckingPieces = findCheckingPieces(nextBoard, latest.team as Team)
+		const nextCheckingPieces = findCheckingPieces(
+			nextBoard,
+			latest.team as Team,
+			room?.red_first ?? true
+		)
 
 		// teamTurn already applied above via setCurrentTurn(latest.team)
 		setAvailableMoves([])
@@ -1464,8 +1468,11 @@ const useRoomHook = () => {
 		// Create new board state with the move applied
 		const gameStateClone = applyMove(board, selectedId, targetId)
 
+		// Board orientation drives soldier attack direction in check detection.
+		const redFirst = room?.red_first ?? true
+
 		// Check if this move puts the moving team's general in check
-		const checkingPieces = findCheckingPieces(gameStateClone, movedTeam)
+		const checkingPieces = findCheckingPieces(gameStateClone, movedTeam, redFirst)
 		const isMovedTeamGeneralInCheck = checkingPieces.length > 0
 
 		if (isMovedTeamGeneralInCheck) {
@@ -1496,7 +1503,7 @@ const useRoomHook = () => {
 		}
 
 		const enemyTeam = movedTeam === "red" ? "black" : "red"
-		const enemyCheckingPieces = findCheckingPieces(gameStateClone, enemyTeam)
+		const enemyCheckingPieces = findCheckingPieces(gameStateClone, enemyTeam, redFirst)
 		const enemyInCheck = enemyCheckingPieces.length > 0
 		const enemyLegalMovesCount = room
 			? countLegalMoves(gameStateClone, enemyTeam, room.red_first)
